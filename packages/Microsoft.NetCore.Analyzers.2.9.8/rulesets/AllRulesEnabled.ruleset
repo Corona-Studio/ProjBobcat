@@ -1,0 +1,116 @@
+<?xml version="1.0"?>
+<RuleSet Name="All Rules Enabled with default severity" Description="All Rules are enabled with default severity. Rules with IsEnabledByDefault = false are force enabled with default severity." ToolsVersion="15.0">
+   <Rules AnalyzerId="Microsoft.NetCore.Analyzers" RuleNamespace="Microsoft.NetCore.Analyzers">
+      <Rule Id="CA1303" Action="Warning" />          <!-- Do not pass literals as localized parameters -->
+      <Rule Id="CA1304" Action="Warning" />          <!-- Specify CultureInfo -->
+      <Rule Id="CA1305" Action="Warning" />          <!-- Specify IFormatProvider -->
+      <Rule Id="CA1307" Action="Warning" />          <!-- Specify StringComparison -->
+      <Rule Id="CA1308" Action="Warning" />          <!-- Normalize strings to uppercase -->
+      <Rule Id="CA1309" Action="Warning" />          <!-- Use ordinal stringcomparison -->
+      <Rule Id="CA1401" Action="Warning" />          <!-- P/Invokes should not be visible -->
+      <Rule Id="CA1810" Action="Warning" />          <!-- Initialize reference type static fields inline -->
+      <Rule Id="CA1813" Action="Warning" />          <!-- Avoid unsealed attributes -->
+      <Rule Id="CA1816" Action="Warning" />          <!-- Dispose methods should call SuppressFinalize -->
+      <Rule Id="CA1820" Action="Warning" />          <!-- Test for empty strings using string length -->
+      <Rule Id="CA1824" Action="Warning" />          <!-- Mark assemblies with NeutralResourcesLanguageAttribute -->
+      <Rule Id="CA1825" Action="Warning" />          <!-- Avoid zero-length array allocations. -->
+      <Rule Id="CA1826" Action="Warning" />          <!-- Do not use Enumerable methods on indexable collections. Instead use the collection directly -->
+      <Rule Id="CA1827" Action="Warning" />          <!-- Do not use Count() or LongCount() when Any() can be used -->
+      <Rule Id="CA1828" Action="Warning" />          <!-- Do not use CountAsync() or LongCountAsync() when AnyAsync() can be used -->
+      <Rule Id="CA1829" Action="Warning" />          <!-- Use Length/Count property instead of Count() when available -->
+      <Rule Id="CA2000" Action="Warning" />          <!-- Dispose objects before losing scope -->
+      <Rule Id="CA2002" Action="Warning" />          <!-- Do not lock on objects with weak identity -->
+      <Rule Id="CA2008" Action="Warning" />          <!-- Do not create tasks without passing a TaskScheduler -->
+      <Rule Id="CA2009" Action="Warning" />          <!-- Do not call ToImmutableCollection on an ImmutableCollection value -->
+      <Rule Id="CA2010" Action="Warning" />          <!-- Always consume the value returned by methods marked with PreserveSigAttribute -->
+      <Rule Id="CA2100" Action="Warning" />          <!-- Review SQL queries for security vulnerabilities -->
+      <Rule Id="CA2101" Action="Warning" />          <!-- Specify marshaling for P/Invoke string arguments -->
+      <Rule Id="CA2201" Action="Warning" />          <!-- Do not raise reserved exception types -->
+      <Rule Id="CA2207" Action="Warning" />          <!-- Initialize value type static fields inline -->
+      <Rule Id="CA2208" Action="Warning" />          <!-- Instantiate argument exceptions correctly -->
+      <Rule Id="CA2213" Action="Warning" />          <!-- Disposable fields should be disposed -->
+      <Rule Id="CA2216" Action="Warning" />          <!-- Disposable types should declare finalizer -->
+      <Rule Id="CA2229" Action="Warning" />          <!-- Implement serialization constructors -->
+      <Rule Id="CA2235" Action="Warning" />          <!-- Mark all non-serializable fields -->
+      <Rule Id="CA2237" Action="Warning" />          <!-- Mark ISerializable types with serializable -->
+      <Rule Id="CA2241" Action="Warning" />          <!-- Provide correct arguments to formatting methods -->
+      <Rule Id="CA2242" Action="Warning" />          <!-- Test for NaN correctly -->
+      <Rule Id="CA2243" Action="Warning" />          <!-- Attribute string literals should parse correctly -->
+      <Rule Id="CA2300" Action="Warning" />          <!-- Do not use insecure deserializer BinaryFormatter -->
+      <Rule Id="CA2301" Action="Warning" />          <!-- Do not call BinaryFormatter.Deserialize without first setting BinaryFormatter.Binder -->
+      <Rule Id="CA2302" Action="Warning" />          <!-- Ensure BinaryFormatter.Binder is set before calling BinaryFormatter.Deserialize -->
+      <Rule Id="CA2305" Action="Warning" />          <!-- Do not use insecure deserializer LosFormatter -->
+      <Rule Id="CA2310" Action="Warning" />          <!-- Do not use insecure deserializer NetDataContractSerializer -->
+      <Rule Id="CA2311" Action="Warning" />          <!-- Do not deserialize without first setting NetDataContractSerializer.Binder -->
+      <Rule Id="CA2312" Action="Warning" />          <!-- Ensure NetDataContractSerializer.Binder is set before deserializing -->
+      <Rule Id="CA2315" Action="Warning" />          <!-- Do not use insecure deserializer ObjectStateFormatter -->
+      <Rule Id="CA2321" Action="Warning" />          <!-- Do not deserialize with JavaScriptSerializer using a SimpleTypeResolver -->
+      <Rule Id="CA2322" Action="Warning" />          <!-- Ensure JavaScriptSerializer is not initialized with SimpleTypeResolver before deserializing -->
+      <Rule Id="CA2326" Action="Warning" />          <!-- Do not use TypeNameHandling values other than None -->
+      <Rule Id="CA2327" Action="Warning" />          <!-- Do not use insecure JsonSerializerSettings -->
+      <Rule Id="CA2328" Action="Warning" />          <!-- Ensure that JsonSerializerSettings are secure -->
+      <Rule Id="CA2329" Action="Warning" />          <!-- Do not deserialize with JsonSerializer using an insecure configuration -->
+      <Rule Id="CA2330" Action="Warning" />          <!-- Ensure that JsonSerializer has a secure configuration when deserializing -->
+      <Rule Id="CA3001" Action="Warning" />          <!-- Review code for SQL injection vulnerabilities -->
+      <Rule Id="CA3002" Action="Warning" />          <!-- Review code for XSS vulnerabilities -->
+      <Rule Id="CA3003" Action="Warning" />          <!-- Review code for file path injection vulnerabilities -->
+      <Rule Id="CA3004" Action="Warning" />          <!-- Review code for information disclosure vulnerabilities -->
+      <Rule Id="CA3005" Action="Warning" />          <!-- Review code for LDAP injection vulnerabilities -->
+      <Rule Id="CA3006" Action="Warning" />          <!-- Review code for process command injection vulnerabilities -->
+      <Rule Id="CA3007" Action="Warning" />          <!-- Review code for open redirect vulnerabilities -->
+      <Rule Id="CA3008" Action="Warning" />          <!-- Review code for XPath injection vulnerabilities -->
+      <Rule Id="CA3009" Action="Warning" />          <!-- Review code for XML injection vulnerabilities -->
+      <Rule Id="CA3010" Action="Warning" />          <!-- Review code for XAML injection vulnerabilities -->
+      <Rule Id="CA3011" Action="Warning" />          <!-- Review code for DLL injection vulnerabilities -->
+      <Rule Id="CA3012" Action="Warning" />          <!-- Review code for regex injection vulnerabilities -->
+      <Rule Id="CA3061" Action="Warning" />          <!-- Do Not Add Schema By URL -->
+      <Rule Id="CA5350" Action="Warning" />          <!-- Do Not Use Weak Cryptographic Algorithms -->
+      <Rule Id="CA5351" Action="Warning" />          <!-- Do Not Use Broken Cryptographic Algorithms -->
+      <Rule Id="CA5358" Action="Warning" />          <!-- Do Not Use Unsafe Cipher Modes -->
+      <Rule Id="CA5359" Action="Warning" />          <!-- Do Not Disable Certificate Validation -->
+      <Rule Id="CA5360" Action="Warning" />          <!-- Do Not Call Dangerous Methods In Deserialization -->
+      <Rule Id="CA5361" Action="Warning" />          <!-- Do Not Disable SChannel Use of Strong Crypto -->
+      <Rule Id="CA5362" Action="Warning" />          <!-- Do Not Refer Self In Serializable Class -->
+      <Rule Id="CA5363" Action="Warning" />          <!-- Do Not Disable Request Validation -->
+      <Rule Id="CA5364" Action="Warning" />          <!-- Do Not Use Deprecated Security Protocols -->
+      <Rule Id="CA5365" Action="Warning" />          <!-- Do Not Disable HTTP Header Checking -->
+      <Rule Id="CA5366" Action="Warning" />          <!-- Use XmlReader For DataSet Read Xml -->
+      <Rule Id="CA5367" Action="Warning" />          <!-- Do Not Serialize Types With Pointer Fields -->
+      <Rule Id="CA5368" Action="Warning" />          <!-- Set ViewStateUserKey For Classes Derived From Page -->
+      <Rule Id="CA5369" Action="Warning" />          <!-- Use XmlReader For Deserialize -->
+      <Rule Id="CA5370" Action="Warning" />          <!-- Use XmlReader For Validating Reader -->
+      <Rule Id="CA5371" Action="Warning" />          <!-- Use XmlReader For Schema Read -->
+      <Rule Id="CA5372" Action="Warning" />          <!-- Use XmlReader For XPathDocument -->
+      <Rule Id="CA5373" Action="Warning" />          <!-- Do not use obsolete key derivation function -->
+      <Rule Id="CA5374" Action="Warning" />          <!-- Do Not Use XslTransform -->
+      <Rule Id="CA5375" Action="Warning" />          <!-- Do Not Use Account Shared Access Signature -->
+      <Rule Id="CA5376" Action="Warning" />          <!-- Use SharedAccessProtocol HttpsOnly -->
+      <Rule Id="CA5377" Action="Warning" />          <!-- Use Container Level Access Policy -->
+      <Rule Id="CA5378" Action="Warning" />          <!-- Do not disable ServicePointManagerSecurityProtocols -->
+      <Rule Id="CA5379" Action="Warning" />          <!-- Do Not Use Weak Key Derivation Function Algorithm -->
+      <Rule Id="CA5380" Action="Warning" />          <!-- Do Not Add Certificates To Root Store -->
+      <Rule Id="CA5381" Action="Warning" />          <!-- Ensure Certificates Are Not Added To Root Store -->
+      <Rule Id="CA5382" Action="Warning" />          <!-- Use Secure Cookies In ASP.Net Core -->
+      <Rule Id="CA5383" Action="Warning" />          <!-- Ensure Use Secure Cookies In ASP.Net Core -->
+      <Rule Id="CA5384" Action="Warning" />          <!-- Do Not Use Digital Signature Algorithm (DSA) -->
+      <Rule Id="CA5385" Action="Warning" />          <!-- Use Rivest–Shamir–Adleman (RSA) Algorithm With Sufficient Key Size -->
+      <Rule Id="CA5386" Action="Warning" />          <!-- Avoid hardcoding SecurityProtocolType value -->
+      <Rule Id="CA5387" Action="Warning" />          <!-- Do Not Use Weak Key Derivation Function With Insufficient Iteration Count -->
+      <Rule Id="CA5388" Action="Warning" />          <!-- Ensure Sufficient Iteration Count When Using Weak Key Derivation Function -->
+      <Rule Id="CA5389" Action="Warning" />          <!-- Do Not Add Archive Item's Path To The Target File System Path -->
+      <Rule Id="CA5390" Action="Warning" />          <!-- Do not hard-code encryption key -->
+      <Rule Id="CA5391" Action="Warning" />          <!-- Use antiforgery tokens in ASP.NET Core MVC controllers -->
+      <Rule Id="CA5392" Action="Warning" />          <!-- Use DefaultDllImportSearchPaths attribute for P/Invokes -->
+      <Rule Id="CA5393" Action="Warning" />          <!-- Do not use unsafe DllImportSearchPath value -->
+      <Rule Id="CA5394" Action="Warning" />          <!-- Do not use insecure randomness -->
+      <Rule Id="CA5395" Action="Warning" />          <!-- Miss HttpVerb attribute for action methods -->
+      <Rule Id="CA5396" Action="Warning" />          <!-- Set HttpOnly to true for HttpCookie -->
+      <Rule Id="CA5397" Action="Warning" />          <!-- Do not use deprecated SslProtocols values -->
+      <Rule Id="CA5398" Action="Warning" />          <!-- Avoid hardcoded SslProtocols values -->
+      <Rule Id="CA5399" Action="Warning" />          <!-- HttpClients should enable certificate revocation list checks -->
+      <Rule Id="CA5400" Action="Warning" />          <!-- Ensure HttpClient certificate revocation list check is not disabled -->
+      <Rule Id="CA5401" Action="Warning" />          <!-- Do not use CreateEncryptor with non-default IV -->
+      <Rule Id="CA5402" Action="Warning" />          <!-- Use CreateEncryptor with the default IV  -->
+      <Rule Id="CA5403" Action="Warning" />          <!-- Do not hard-code certificate -->
+   </Rules>
+</RuleSet>

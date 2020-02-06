@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<RuleSet Name="PortedFromFxCop Rules with default severity" Description="All PortedFromFxCop Rules with default severity. Rules with IsEnabledByDefault = false and non-PortedFromFxCop rules are disabled." ToolsVersion="15.0">
+   <!-- PortedFromFxCop Rules -->
+
+
+
+   <!-- Other Rules -->
+   <Rules AnalyzerId="Microsoft.CodeAnalysis.VersionCheckAnalyzer" RuleNamespace="Microsoft.CodeAnalysis.VersionCheckAnalyzer">
+      <Rule Id="CA9999" Action="None" />             <!-- Analyzer version mismatch -->
+   </Rules>
+</RuleSet>

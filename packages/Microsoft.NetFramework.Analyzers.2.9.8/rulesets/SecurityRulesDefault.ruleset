@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<RuleSet Name="Security Rules with default severity" Description="All Security Rules with default severity. Rules with IsEnabledByDefault = false or from a different category are disabled." ToolsVersion="15.0">
+   <!-- Security Rules -->
+   <Rules AnalyzerId="Microsoft.NetFramework.Analyzers" RuleNamespace="Microsoft.NetFramework.Analyzers">
+      <Rule Id="CA2153" Action="Warning" />          <!-- Do Not Catch Corrupted State Exceptions -->
+      <Rule Id="CA3075" Action="Warning" />          <!-- Insecure DTD processing in XML -->
+      <Rule Id="CA3076" Action="Warning" />          <!-- Insecure XSLT script processing. -->
+      <Rule Id="CA3077" Action="Warning" />          <!-- Insecure Processing in API Design, XmlDocument and XmlTextReader -->
+      <Rule Id="CA3147" Action="Warning" />          <!-- Mark Verb Handlers With Validate Antiforgery Token -->
+   </Rules>
+
+
+
+   <!-- Other Rules -->
+   <Rules AnalyzerId="Microsoft.NetFramework.Analyzers" RuleNamespace="Microsoft.NetFramework.Analyzers">
+      <Rule Id="CA1058" Action="None" />             <!-- Types should not extend certain base types -->
+   </Rules>
+</RuleSet>

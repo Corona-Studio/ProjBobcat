@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<RuleSet Name="Reliability Rules with default severity" Description="All Reliability Rules with default severity. Rules with IsEnabledByDefault = false or from a different category are disabled." ToolsVersion="15.0">
+   <!-- Reliability Rules -->
+   <Rules AnalyzerId="Microsoft.CodeAnalysis.VersionCheckAnalyzer" RuleNamespace="Microsoft.CodeAnalysis.VersionCheckAnalyzer">
+      <Rule Id="CA9999" Action="Warning" />          <!-- Analyzer version mismatch -->
+   </Rules>
+
+
+
+   <!-- Other Rules -->
+</RuleSet>

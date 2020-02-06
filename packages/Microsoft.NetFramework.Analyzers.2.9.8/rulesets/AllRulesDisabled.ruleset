@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<RuleSet Name="All Rules Disabled" Description="All Rules are disabled." ToolsVersion="15.0">
+   <Rules AnalyzerId="Microsoft.NetFramework.Analyzers" RuleNamespace="Microsoft.NetFramework.Analyzers">
+      <Rule Id="CA1058" Action="None" />             <!-- Types should not extend certain base types -->
+      <Rule Id="CA2153" Action="None" />             <!-- Do Not Catch Corrupted State Exceptions -->
+      <Rule Id="CA3075" Action="None" />             <!-- Insecure DTD processing in XML -->
+      <Rule Id="CA3076" Action="None" />             <!-- Insecure XSLT script processing. -->
+      <Rule Id="CA3077" Action="None" />             <!-- Insecure Processing in API Design, XmlDocument and XmlTextReader -->
+      <Rule Id="CA3147" Action="None" />             <!-- Mark Verb Handlers With Validate Antiforgery Token -->
+   </Rules>
+</RuleSet>

@@ -1,0 +1,11 @@
+# NOTE: Requires **VS2019 16.3** or later
+
+# All Rules Disabled
+# Description: All Rules are disabled.
+
+# Code files
+[*.{cs,vb}]
+
+
+# CA9999: Analyzer version mismatch
+dotnet_diagnostic.CA9999.severity = none

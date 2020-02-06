@@ -1,0 +1,16 @@
+# NOTE: Requires **VS2019 16.3** or later
+
+# Dataflow Rules with default severity
+# Description: All Dataflow Rules with default severity. Rules with IsEnabledByDefault = false and non-Dataflow rules are disabled.
+
+# Code files
+[*.{cs,vb}]
+
+# Dataflow Rules
+
+
+
+# Other Rules
+
+# CA9999: Analyzer version mismatch
+dotnet_diagnostic.CA9999.severity = none

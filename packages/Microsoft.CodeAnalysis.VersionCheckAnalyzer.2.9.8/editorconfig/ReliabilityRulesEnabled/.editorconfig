@@ -1,0 +1,16 @@
+# NOTE: Requires **VS2019 16.3** or later
+
+# Reliability Rules Enabled with default severity
+# Description: All Reliability Rules are enabled with default severity. Reliability Rules with IsEnabledByDefault = false are force enabled with default severity. Rules from a different category are disabled.
+
+# Code files
+[*.{cs,vb}]
+
+# Reliability Rules
+
+# CA9999: Analyzer version mismatch
+dotnet_diagnostic.CA9999.severity = warning
+
+
+
+# Other Rules

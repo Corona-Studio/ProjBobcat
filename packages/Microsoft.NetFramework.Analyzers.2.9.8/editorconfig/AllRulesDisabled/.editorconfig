@@ -1,0 +1,26 @@
+# NOTE: Requires **VS2019 16.3** or later
+
+# All Rules Disabled
+# Description: All Rules are disabled.
+
+# Code files
+[*.{cs,vb}]
+
+
+# CA1058: Types should not extend certain base types
+dotnet_diagnostic.CA1058.severity = none
+
+# CA2153: Do Not Catch Corrupted State Exceptions
+dotnet_diagnostic.CA2153.severity = none
+
+# CA3075: Insecure DTD processing in XML
+dotnet_diagnostic.CA3075.severity = none
+
+# CA3076: Insecure XSLT script processing.
+dotnet_diagnostic.CA3076.severity = none
+
+# CA3077: Insecure Processing in API Design, XmlDocument and XmlTextReader
+dotnet_diagnostic.CA3077.severity = none
+
+# CA3147: Mark Verb Handlers With Validate Antiforgery Token
+dotnet_diagnostic.CA3147.severity = none

@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<RuleSet Name="Dataflow Rules Enabled with default severity" Description="All Dataflow Rules are enabled with default severity. Dataflow Rules with IsEnabledByDefault = false are force enabled with default severity. Non-Dataflow Rules are disabled." ToolsVersion="15.0">
+   <!-- Dataflow Rules -->
+
+
+
+   <!-- Other Rules -->
+   <Rules AnalyzerId="Microsoft.CodeAnalysis.VersionCheckAnalyzer" RuleNamespace="Microsoft.CodeAnalysis.VersionCheckAnalyzer">
+      <Rule Id="CA9999" Action="None" />             <!-- Analyzer version mismatch -->
+   </Rules>
+</RuleSet>
