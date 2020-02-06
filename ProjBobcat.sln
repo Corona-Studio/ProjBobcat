@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.28803.156
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProjBobcat", "ProjBobcat\ProjBobcat.csproj", "{9777E280-8601-4A6C-BD75-0D29FD4F5D6F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bobcat.Test", "Bobcat.Test\Bobcat.Test.csproj", "{BC0F6695-9AE9-4542-AE98-C9B9D06D640B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProjBobcat.Test", "ProjBobcat.Test\ProjBobcat.Test.csproj", "{BC0F6695-9AE9-4542-AE98-C9B9D06D640B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
