@@ -1,6 +1,0 @@
-<?xml version="1.0"?>
-<RuleSet Name="All Rules Enabled with default severity" Description="All Rules are enabled with default severity. Rules with IsEnabledByDefault = false are force enabled with default severity." ToolsVersion="15.0">
-   <Rules AnalyzerId="Microsoft.CodeAnalysis.VersionCheckAnalyzer" RuleNamespace="Microsoft.CodeAnalysis.VersionCheckAnalyzer">
-      <Rule Id="CA9999" Action="Warning" />          <!-- Analyzer version mismatch -->
-   </Rules>
-</RuleSet>

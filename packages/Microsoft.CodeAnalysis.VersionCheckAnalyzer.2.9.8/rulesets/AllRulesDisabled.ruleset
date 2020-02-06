@@ -1,6 +1,0 @@
-<?xml version="1.0"?>
-<RuleSet Name="All Rules Disabled" Description="All Rules are disabled." ToolsVersion="15.0">
-   <Rules AnalyzerId="Microsoft.CodeAnalysis.VersionCheckAnalyzer" RuleNamespace="Microsoft.CodeAnalysis.VersionCheckAnalyzer">
-      <Rule Id="CA9999" Action="None" />             <!-- Analyzer version mismatch -->
-   </Rules>
-</RuleSet>
