@@ -1,5 +1,7 @@
 # ProjBobcat
 
+![bobcatlong.png](https://i.loli.net/2020/02/07/Hx18lYLKR43WAb2.png)
+
 The next generation Minecraft launcher core written in C# providing the freest, fastest and the most complete experience.
 
 Developed and maintained by Corona Studio.
