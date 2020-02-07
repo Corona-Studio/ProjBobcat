@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package >
+  <metadata>
+    <id>ProjBobcat</id>
+    <version>1.0.0</version>
+    <title>ProjBobcat</title>
+    <authors>laolarou, CodingEric</authors>
+    <owners>Corona Studio</owners>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <license type="expression">MIT</license>
+    <projectUrl>http://craftmine.fun</projectUrl>
+    <iconUrl>https://i.loli.net/2020/02/07/6ydTqVUtIO3FBLe.png</iconUrl>
+    <description>The next generation Minecraft launcher core written in C# providing the freest, fastest and the most complete experience.</description>
+    <releaseNotes>Project Initialize.</releaseNotes>
+    <copyright>Copyright 2020 Corona Studio</copyright>
+    <tags>minecraft-launcher minecraft launcher csharp</tags>
+  </metadata>
+</package>
