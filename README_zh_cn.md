@@ -1,5 +1,7 @@
 # ProjBobcat 中文文档
 
+# [English](https://github.com/Corona-Studio/ProjBobcat/blob/master/README.md)
+
 ![bobcatlong.png](https://i.loli.net/2020/02/07/Hx18lYLKR43WAb2.png)
 
 以C#写就的下一代Minecraft启动核心，提供最自由、快速和完整的开发和使用体验。
