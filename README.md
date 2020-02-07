@@ -4,11 +4,19 @@
 
 ![bobcatlong.png](https://i.loli.net/2020/02/07/Hx18lYLKR43WAb2.png)
 
-The next generation Minecraft launcher core written in C# providing the freest, fastest and the most complete experience.
+The next-generation Minecraft launcher core written in C# providing the freest, fastest and the most complete experience.
 
 Developed and maintained by Corona Studio.
 
 For Chinese version of README.md, see README_zh_cn.md.
+
+## Installation
+* Clone and copy ProjBobcat's source code to your solution folder, then add ProjBobcat's reference to your project.
+* Directly install ProjBobcat via Nuget Package Manager or simply execute 
+  ```
+  Install-Package ProjBobcat
+  ```
+  in Package Manager Console.
 
 ## Roadmap
 
@@ -32,7 +40,7 @@ ProjBobcat provides 3 main components & a core to form the whole core framework.
 | DefaultGameCore              | IGameCore              | NG                        | All Implementations of the Default Launch Core           |
 | DefaultLaunchArgumentParser  | IArgumentParser        | LaunchArgumentParserBase  | The Default Argument Analysis Tool               |
 | DefaultLauncherProfileParser | ILauncherProfileParser | LauncherProfileParserBase | The Default launcher_profiles.json Analysis Module |
-| DefaultVersionLocator        | IVersionLocator        | VersionLocatorBase        | Locate Game Version           |
+| DefaultVersionLocator        | IVersionLocator        | VersionLocatorBase        | Game Version Locator          |
 
 
 ### Quick Startup
