@@ -486,7 +486,7 @@ namespace ProjBobcat
 
             ProcessProfile:
             var oldProfile = LauncherProfileParser.LauncherProfile.Profiles.FirstOrDefault(p =>
-                p.Value.LastVersionId.Equals(id, StringComparison.Ordinal));
+                p.Value.LastVersionId?.Equals(id, StringComparison.Ordinal) ?? true);
             if (oldProfile.Equals(default(KeyValuePair<string, GameProfileModel>)))
             {
                 LauncherProfileParser.LauncherProfile.Profiles.Add(randomName.ToGuid().ToString("N"), new GameProfileModel

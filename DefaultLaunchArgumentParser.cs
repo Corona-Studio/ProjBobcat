@@ -141,7 +141,7 @@ namespace ProjBobcat
             var mcArgumentsDic = new Dictionary<string, string>
             {
                 { "${version_name}", LaunchSettings.Version },
-                { "${version_type}", GameProfile.Type ?? $"\"{LaunchSettings.LauncherName}\"" },
+                { "${version_type}", GameProfile?.Type ?? $"\"{LaunchSettings.LauncherName}\"" },
                 { "${assets_root}", $"\"{AssetRoot}\"" },
                 { "${assets_index_name}", $"\"{VersionInfo.AssetInfo.Id}\"" },
                 { "${game_directory}", $"\"{(string.IsNullOrWhiteSpace(LaunchSettings.GamePath) ? "/" : LaunchSettings.GamePath)}\"" },
