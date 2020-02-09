@@ -26,7 +26,6 @@
   ```
   Install-Package ProjBobcat
   ```
-  。
 
 ## 功能列表
 
