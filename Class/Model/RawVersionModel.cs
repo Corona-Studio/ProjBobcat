@@ -115,24 +115,28 @@ namespace ProjBobcat.Class.Model
     #endregion
 
     /// <summary>
-    ///     版本JSON
+    /// 版本JSON
+    /// Version's JSON Data Model
     /// </summary>
     public class RawVersionModel
     {
         /// <summary>
-        /// /启动参数（老版本）
+        /// 启动参数（老版本）
+        /// Launch arguments for the older versions
         /// </summary>
         [JsonProperty("minecraftArguments")]
         public string MinecraftArguments { get; set; }
 
         /// <summary>
-        ///     启动参数
+        /// 启动参数
+        /// Launch arguments
         /// </summary>
         [JsonProperty("arguments")]
         public Arguments Arguments { get; set; }
 
         /// <summary>
-        ///     资源信息
+        /// 资源信息
+        /// 
         /// </summary>
         [JsonProperty("assetIndex")]
         public Asset AssetIndex { get; set; }
@@ -156,7 +160,8 @@ namespace ProjBobcat.Class.Model
         public string Id { get; set; }
 
         /// <summary>
-        /// 继承于
+        /// 继承于...（对于有些游戏版本如forge，其JSON配置会直接从另一个版本中继承，并且在继承基础上进行优先级更高的修改）
+        /// Inherits from...(For some game versions like forge, their JSON configuration directly inherits from another version, based on which are be modifications with higher priority.)
         /// </summary>
         [JsonProperty("inheritsFrom")]
         public string InheritsFrom { get; set; }
