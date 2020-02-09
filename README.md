@@ -26,7 +26,7 @@ For Chinese version of README.md, see README_zh_cn.md.
 | Online Auth Model (Yggdrasil)               | ✅                 |
 | Version Isolation                   | ✅                 |
 | launcher_profiles.json Analysis | ✅                 |
-| Nuget Distribution          | ⚠️[WIP] |
+| Nuget Distribution          | ✅ |
 | Old Forge Installation Model          | ⚠️[WIP] |
 | New Forge Installation Model          | ⚠️[WIP] |
 | Native Auto Completion               | ⚠️[WIP] |
