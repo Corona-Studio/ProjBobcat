@@ -68,6 +68,8 @@ namespace ProjBobcat
         public void AddNewAuthInfo(AuthInfoModel authInfo, string guid)
         {
             if (IsAuthInfoExist(guid, authInfo.UserName)) return;
+            if(!(LauncherProfile.AuthenticationDatabase?.Any() ?? false))
+                LauncherProfile.AuthenticationDatabase = new Dictionary<string, AuthInfoModel>();
 
             LauncherProfile.AuthenticationDatabase.Add(
                 authInfo.Properties.Any() ? authInfo.Properties.First().UserId : authInfo.Profiles.First().Key,
@@ -134,6 +136,11 @@ namespace ProjBobcat
         /// <returns></returns>
         public bool IsAuthInfoExist(string uuid, string userName)
         {
+            if (!(LauncherProfile.AuthenticationDatabase?.Any() ?? false))
+            {
+                return false;
+            }
+
             return LauncherProfile.AuthenticationDatabase.Any(a =>
                        a.Value.Profiles?.First().Key.Equals(uuid, StringComparison.Ordinal) ?? false) &&
                    LauncherProfile.AuthenticationDatabase.Any(a =>
