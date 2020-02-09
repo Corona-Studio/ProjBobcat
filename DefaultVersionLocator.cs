@@ -339,12 +339,12 @@ namespace ProjBobcat
                     current = ParseRawVersion(current.InheritsFrom);
                 }
 
-                /*
+                
                 if (!inherits.Any() || inherits.Contains(null))
                 {
                     return null;
                 }
-                */
+                
             }
 
             // 生成一个随机的名字来防止重复。
