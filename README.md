@@ -51,7 +51,7 @@ ProjBobcat provides 3 main components & a core to form the whole core framework.
 
 var core = new DefaultGameCore
 {
-    ClientToken = clientToken,
+    ClientToken = clientToken, // Game's identifier, set it to any GUID you like, such as 88888888-8888-8888-8888-888888888888 or a randomly generated one.
     RootPath = rootPath, // Path of .minecraft/
     VersionLocator = new DefaultVersionLocator(rootPath, clientToken)
     {

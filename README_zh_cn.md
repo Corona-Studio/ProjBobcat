@@ -60,8 +60,8 @@ ProjBobcat提供了3大组件和一个核心总成来支撑起整个核心框架
 
 var core = new DefaultGameCore
 {
-    ClientToken = clientToken,
-    RootPath = rootPath, //.minecraft/的路径
+    ClientToken = clientToken, // 游戏客户端识别码，你可以设置成你喜欢的任何GUID，例如88888888-8888-8888-8888-888888888888，或者自己随机生成一个！
+    RootPath = rootPath, // .minecraft/的路径
     VersionLocator = new DefaultVersionLocator(rootPath, clientToken)
     {
         LauncherProfileParser = new DefaultLauncherProfileParser(rootPath, clientToken)
