@@ -19,38 +19,44 @@ namespace ProjBobcat
         public ILauncherProfileParser LauncherProfileParser { get; set; }
 
         /// <summary>
-        /// 构造函数
+        /// 构造函数。
+        /// Constructor.
         /// </summary>
-        /// <param name="rootPath"></param>
+        /// <param name="rootPath">指.minecraft/ Refers to .minecraft/</param>
         /// <param name="clientToken"></param>
         public DefaultVersionLocator(string rootPath, Guid clientToken)
         {
-            RootPath = rootPath;
+            RootPath = rootPath; // .minecraft/
             LauncherProfileParser = new DefaultLauncherProfileParser(rootPath, clientToken);
 
+            //防止给定路径不存在的时候Parser遍历文件夹爆炸。
+            //Prevents errors in the parser's folder traversal when the given path does not exist.
             if (!Directory.Exists(GamePathHelper.GetVersionPath(RootPath)))
                 Directory.CreateDirectory(GamePathHelper.GetVersionPath(RootPath));
         }
 
         /// <summary>
-        /// 获取所有能够正常被解析的游戏信息
+        /// 获取所有能够正常被解析的游戏信息。
+        /// Fetch all the game versions' information in the .minecraft/ folder.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>一个表，包含.minecraft文件夹中所有版本的所有信息。A list, containing all information of all games in .minecraft/ .</returns>
         public IEnumerable<VersionInfo> GetAllGames()
         {
+            // 把每个DirectoryInfo类映射到VersionInfo类。
+            // Map each DirectoryInfo dir to VersionInfo class.
             return new DirectoryInfo(GamePathHelper.GetVersionPath(RootPath)).EnumerateDirectories()
                 .Select(dir => ToVersion(dir.Name)).Where(ver => ver != null);
         }
 
         /// <summary>
-        /// 获取某个特定ID的游戏信息
+        /// 获取某个特定ID的游戏信息。
+        /// Get the game info with specific ID.
         /// </summary>
-        /// <param name="id"></param>
+        /// <param name="id">装有游戏版本的文件夹名。The game version folder's name.</param>
         /// <returns></returns>
         public VersionInfo GetGame(string id)
         {
             var version = ToVersion(id);
-
             return version;
         }
 
@@ -185,20 +191,28 @@ namespace ProjBobcat
 
         /// <summary>
         /// 获取Natives与Libraries（核心依赖）列表
+        /// Fetch list of Natives & Libraries.
         /// </summary>
-        /// <param name="libraries"></param>
-        /// <returns>二元组（包含一组list，T1是Natives列表，T2是Libraries列表）</returns>
+        /// <param name="libraries">反序列化后的库数据。Deserialized library data.</param>
+        /// <returns>二元组（包含一组list，T1是Natives列表，T2是Libraries列表）。A tuple.(T1 -> Natives, T2 -> Libraries)</returns>
         private protected override Tuple<List<NativeFileInfo>, List<FileInfo>> GetNatives(IEnumerable<Library> libraries)
         {
             var result = new Tuple<List<NativeFileInfo>, List<FileInfo>>(new List<NativeFileInfo>(), new List<FileInfo>());
 
+            // 扫描库数据。
+            // Scan the library data.
             foreach (var lib in libraries)
             {
-                if(!lib.ClientRequired) continue;
+                if (!lib.ClientRequired) continue;
                 if (!lib.Rules.CheckAllow()) continue;
+
+                // 不同版本的Minecraft有不同的library JSON字符串的结构。
+                // Different versions of Minecraft have different library JSON's structure.
 
                 if (lib.Downloads == null)
                 {
+                    // 一些Library项不包含下载数据，所以我们直接解析Maven的名称来猜测下载链接。
+                    // Some library items don't contain download data, so we directly resolve maven's name to guess the download link.
                     var mavenInfo = lib.Name.ResolveMavenString();
                     var downloadUrl = string.IsNullOrEmpty(lib.Url)
                         ? mavenInfo.OrganizationName.Equals("net.minecraftforge", StringComparison.Ordinal)
@@ -258,12 +272,15 @@ namespace ProjBobcat
         }
 
         /// <summary>
-        /// 解析基础游戏JSON信息
+        /// 反序列化基础游戏JSON信息，以供解析器处理。
+        /// Deserialize basic JSON data of the game to make the data processable for the analyzer.
         /// </summary>
-        /// <param name="id"></param>
+        /// <param name="id">游戏文件夹名。Name of the game's folder.</param>
         /// <returns></returns>
         private protected override RawVersionModel ParseRawVersion(string id)
         {
+            // 预防I/O的错误。
+            // Prevents errors related to I/O.
             if (!Directory.Exists(GamePathHelper.GetGamePath(RootPath, id)))
                 return null;
             if (!File.Exists(GamePathHelper.GetGameJsonPath(RootPath, id)))
@@ -280,24 +297,33 @@ namespace ProjBobcat
         }
 
         /// <summary>
-        /// 游戏信息解析总成（内部方法）
+        /// 游戏信息解析。
+        /// Game info analysis.
         /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
+        /// <param name="id">游戏文件夹名。Name of the game version's folder.</param>
+        /// <returns>一个VersionInfo类。A VersionInfo class.</returns>
         private protected override VersionInfo ToVersion(string id)
         {
+            // 反序列化。
+            // Deserialize.
             var rawVersion = ParseRawVersion(id);
-
             if (rawVersion == null)
                 return null;
 
             List<RawVersionModel> inherits = null;
+            // 检查游戏是否存在继承关系。
+            // Check if there is inheritance.
             if (!string.IsNullOrEmpty(rawVersion.InheritsFrom))
             {
-                inherits = new List<RawVersionModel>();
+                // 存在继承关系。
+                // Inheritance exists.
 
+                inherits = new List<RawVersionModel>();
                 var current = rawVersion;
                 var first = true;
+
+                // 递归式地将所有反序列化的版本继承塞进一个表中。
+                // Add all deserialized inherited version to a list recursively.
                 while (current != null && !string.IsNullOrEmpty(current.InheritsFrom))
                 {
                     if (first)
@@ -313,12 +339,16 @@ namespace ProjBobcat
                     current = ParseRawVersion(current.InheritsFrom);
                 }
 
+                /*
                 if (!inherits.Any() || inherits.Contains(null))
                 {
                     return null;
                 }
+                */
             }
 
+            // 生成一个随机的名字来防止重复。
+            // Generates a random name to avoid duplication.
             var rs = new RandomStringHelper().UseLower().UseUpper().UseNumbers().HardMix(1);
             var randomName =
                 $"{id}-{rs.Generate(5)}-{rs.Generate(5)}";
@@ -333,19 +363,25 @@ namespace ProjBobcat
                 Name = randomName
             };
 
+            // 检查游戏是否存在继承关系。
+            // Check if there is inheritance.
             if (inherits?.Any() ?? false)
             {
+                // 存在继承关系。
+                // Inheritance exists.
+
                 var flag = true;
                 var jvmSb = new StringBuilder();
                 var gameArgsSb = new StringBuilder();
 
                 result.RootVersion = inherits.Last().Id;
 
+                // 遍历所有的继承
+                // Go through all inherits
                 for (var i = inherits.Count - 1; i >= 0; i--)
                 {
-                    if (result.AssetInfo == null)
-                        if (inherits[i].AssetIndex != null)
-                            result.AssetInfo = inherits[i].AssetIndex;
+                    if (result.AssetInfo == null && inherits[i].AssetIndex != null)
+                        result.AssetInfo = inherits[i].AssetIndex;
 
                     if (flag)
                     {

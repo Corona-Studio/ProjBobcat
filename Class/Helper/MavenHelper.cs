@@ -6,17 +6,26 @@ namespace ProjBobcat.Class.Helper
 {
     public static class MavenHelper
     {
+        /// <summary>
+        /// 使用名字来解析Maven包信息。
+        /// Parse Maven package's info with its name.
+        /// </summary>
+        /// <param name="mavenString">Maven包的名称。Maven package's name.</param>
+        /// <returns></returns>
         public static MavenInfo ResolveMavenString(this string mavenString)
         {
             if (string.IsNullOrEmpty(mavenString))
                 return null;
-
+            #region '@'处理器 '@' Processor
+            // 一些安装有forge的游戏版本的Maven名包含@符号。此时type被包含在第二项。
+            // A few forge game version's maven's name contains @ symbol.
             var rawArray = mavenString.Split('@');
             var type = "jar";
             if (rawArray.Length == 2)
             {
                 type = rawArray[1];
             }
+            #endregion
 
             var classifier = string.Empty;
             var mavenArr = rawArray[0].Split(':');

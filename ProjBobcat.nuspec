@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>ProjBobcat</id>
-    <version>1.0.0</version>
+    <version>1.0.0.1</version>
     <title>ProjBobcat</title>
     <authors>laolarou, CodingEric</authors>
     <owners>Corona Studio</owners>
@@ -14,5 +14,9 @@
     <releaseNotes>Project Initialize.</releaseNotes>
     <copyright>Copyright 2020 Corona Studio</copyright>
     <tags>minecraft-launcher minecraft launcher csharp</tags>
+    <dependencies>
+      <dependency id="Newtonsoft.Json" version="12.0.3" />
+      <dependency id="sharpcompress" version="0.24.0" />
+    </dependencies>
   </metadata>
 </package>

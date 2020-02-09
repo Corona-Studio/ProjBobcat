@@ -37,7 +37,7 @@ namespace ProjBobcat
             try
             {
                 //逐步测量启动时间。
-                //To measure the launch time step by step.
+                //Measure the launch time step by step.
                 var prevSpan = new TimeSpan();
                 var stopwatch = new Stopwatch();
                 stopwatch.Start();
@@ -201,7 +201,7 @@ namespace ProjBobcat
                     RunTime = stopwatch.Elapsed
                 };
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return new LaunchResult
                 {
