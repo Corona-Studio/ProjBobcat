@@ -2,6 +2,9 @@
 
 # [English](https://github.com/Corona-Studio/ProjBobcat/blob/master/README.md)
 
+## 查看我们在MCBBS的教程贴
+[MCBBS教程](https://www.mcbbs.net/thread-956299-1-1.html)
+
 ![bobcatlong.png](https://i.loli.net/2020/02/07/Hx18lYLKR43WAb2.png)
 
 以C#写就的下一代Minecraft启动核心，提供最自由、快速和完整的开发和使用体验。
@@ -96,7 +99,7 @@ var launchSettings = new LaunchSettings
 
 launchSettings.GameArguments = new GameArguments // （可选）具体游戏启动参数
 {
-    AdvanceArguments = specificGCType, // GC类型
+    AdvanceArguments = specificArguments, // 高级启动参数
     JavaExecutable = specificJavaPath, // JAVA路径
     Resolution = specificResolution, // 游戏窗口分辨率
     MinMemory = specificMinMemory, // 最小内存
