@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>ProjBobcat</id>
-    <version>1.0.0.2</version>
+    <version>1.0.0.3</version>
     <title>ProjBobcat</title>
     <authors>Corona Studio</authors>
     <owners>Corona Studio</owners>
@@ -11,7 +11,7 @@
     <projectUrl>http://craftmine.fun</projectUrl>
     <icon>Bobcat.png</icon>
     <description>The next-generation Minecraft launcher core written in C# providing the freest, fastest and the most complete experience.</description>
-    <releaseNotes>Project Initialize.</releaseNotes>
+    <releaseNotes>Relative path issues solved.</releaseNotes>
     <copyright>Copyright © 2020 Corona Studio</copyright>
     <tags>minecraft-launcher minecraft launcher csharp</tags>
     <dependencies>
