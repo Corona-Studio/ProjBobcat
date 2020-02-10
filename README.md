@@ -88,7 +88,7 @@ var launchSettings = new LaunchSettings
 
 launchSettings.GameArguments = new GameArguments // (Optional) The arguments of specific game launch, the undefined settings here will be redirected to the fallback settings mentioned previously.
 {
-    AdvanceArguments = specificGCType , // GCType
+    AdvanceArguments = specificArguments , // Advance launch arguments
     JavaExecutable = specificJavaExecutable, // JAVA's path
     Resolution = specificResolution, // The window's size
     MinMemory = specificMinMemory, // Minimum Memory
