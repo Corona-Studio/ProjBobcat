@@ -61,6 +61,13 @@ var core = new DefaultGameCore
 
 ```
 
+#### Game Scaning
+```csharp
+
+List<VersionInfo> gameList = core.VersionLocator.GetAllGames().ToList();
+
+```
+
 #### Launch Configuration
 
 ```csharp
@@ -79,7 +86,7 @@ var launchSettings = new LaunchSettings
         MinMemory = 512, // Minimal Memory
         MaxMemory = 1024 // Maximum Memory
     },
-    Version = versionId, // The version ID of the game to launch
+    Version = versionId, // The version ID of the game to launch, such as 1.7.10 or 1.15.2
     VersionInsulation = false // Version Isolation
     GameResourcePath = Core.RootPath, // Root path of the game resource(.minecraft/)
     GamePath = path, // Root path of the game (.minecraft/versions/)
@@ -88,7 +95,7 @@ var launchSettings = new LaunchSettings
 
 launchSettings.GameArguments = new GameArguments // (Optional) The arguments of specific game launch, the undefined settings here will be redirected to the fallback settings mentioned previously.
 {
-    AdvanceArguments = specificArguments , // Advance launch arguments
+    AdvanceArguments = specificArguments , // Advanced launch arguments
     JavaExecutable = specificJavaExecutable, // JAVA's path
     Resolution = specificResolution, // The window's size
     MinMemory = specificMinMemory, // Minimum Memory

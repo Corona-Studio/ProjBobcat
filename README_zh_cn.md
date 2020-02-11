@@ -72,6 +72,13 @@ var core = new DefaultGameCore
 
 ```
 
+#### 扫描全部游戏
+```csharp
+
+List<VersionInfo> gameList = core.VersionLocator.GetAllGames().ToList();
+
+```
+
 #### 启动游戏前配置
 
 ```csharp
@@ -90,7 +97,7 @@ var launchSettings = new LaunchSettings
         MinMemory = 512, // 最小内存
         MaxMemory = 1024 // 最大内存
     },
-    Version = versionId, // 需要启动的游戏ID
+    Version = versionId, // 需要启动的游戏ID，例如1.7.10或者1.15.2
     VersionInsulation = false, // 版本隔离
     GameResourcePath = Core.RootPath, // 资源根目录
     GamePath = path, // 游戏根目录
