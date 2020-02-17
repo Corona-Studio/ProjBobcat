@@ -14,12 +14,11 @@ using ProjBobcat.Class.Model.YggdrasilAuth;
 using SharpCompress.Common;
 using SharpCompress.Readers;
 
-namespace ProjBobcat
+namespace ProjBobcat.DefaultComponent.Launch
 {
     public class DefaultGameCore : IGameCore, IDisposable
     {
-        private string AbsRootPath;
-        public string RootPath { get => AbsRootPath; set => AbsRootPath = Path.GetFullPath(value?.TrimEnd('/') + "//") + "//"; }
+        public string RootPath { get; set; }
         public IVersionLocator VersionLocator { get; set; }
         public Guid ClientToken { get; set; }
 
@@ -129,32 +128,29 @@ namespace ProjBobcat
                     if (!Directory.Exists(argumentParser.NativeRoot))
                         Directory.CreateDirectory(argumentParser.NativeRoot);
 
-                    if (!File.Exists(argumentParser.NativeRoot + "\\.cmfl"))
+                    //TODO
+                    DirectoryHelper.CleanDirectory(argumentParser.NativeRoot, false);
+                    version.Natives.ForEach(n =>
                     {
-                        DirectoryHelper.CleanDirectory(argumentParser.NativeRoot, false);
-                        version.Natives.ForEach(n =>
-                        {
-                            var path =
-                                $"{GamePathHelper.GetLibraryPath(RootPath.TrimEnd('\\'), string.Empty)}\\{n.FileInfo.Path.Replace('/', '\\')}";
-                            using var stream =
-                                File.OpenRead(path);
-                            using var reader = ReaderFactory.Open(stream);
+                        var path =
+                            $"{GamePathHelper.GetLibraryPath(RootPath.TrimEnd('\\'), string.Empty)}\\{n.FileInfo.Path.Replace('/', '\\')}";
+                        using var stream =
+                            File.OpenRead(path);
+                        using var reader = ReaderFactory.Open(stream);
 
-                            while (reader.MoveToNextEntry())
+                        while (reader.MoveToNextEntry())
+                        {
+                            if (!(n.Extract?.Exclude?.Contains(reader.Entry.Key) ?? false))
                             {
-                                if (!(n.Extract?.Exclude?.Contains(reader.Entry.Key) ?? false))
-                                {
-                                    reader.WriteEntryToDirectory(argumentParser.NativeRoot,
-                                        new ExtractionOptions
-                                        {
-                                            ExtractFullPath = true,
-                                            Overwrite = true
-                                        });
-                                }
+                                reader.WriteEntryToDirectory(argumentParser.NativeRoot,
+                                    new ExtractionOptions
+                                    {
+                                        ExtractFullPath = true,
+                                        Overwrite = true
+                                    });
                             }
-                        });
-                        File.Create(argumentParser.NativeRoot + "\\.cmfl");
-                    }
+                        }
+                    });
                 }
                 catch (Exception e)
                 {
@@ -192,7 +188,11 @@ namespace ProjBobcat
                 new Thread(async () =>
                 {
                     await Task.Run(launchWrapper.Process.WaitForExit).ContinueWith(task =>
-                                GameExit(launchWrapper, new GameExitEventArgs(task.Exception, launchWrapper.ExitCode)),
+                                GameExit(launchWrapper, new GameExitEventArgs
+                                {
+                                    Exception = task.Exception,
+                                    ExitCode = launchWrapper.ExitCode
+                                }),
                             CancellationToken.None, TaskContinuationOptions.DenyChildAttach, TaskScheduler.Default)
                         .ConfigureAwait(true);
                 }).Start();
@@ -228,7 +228,11 @@ namespace ProjBobcat
         /// <param name="sw"></param>
         private void InvokeLaunchLogThenStart(string item, ref TimeSpan time, ref Stopwatch sw)
         {
-            LogLaunchData(this, new LaunchLogEventArgs(item, sw.Elapsed - time));
+            LogLaunchData(this, new LaunchLogEventArgs
+            {
+                Item = item,
+                ItemRunTime = sw.Elapsed - time
+            });
             time = sw.Elapsed;
             sw.Start();
         }

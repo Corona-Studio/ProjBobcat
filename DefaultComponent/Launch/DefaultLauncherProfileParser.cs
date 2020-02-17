@@ -1,17 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.IO;
-using System.Linq;
-using System.Text;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Interface;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
 
-namespace ProjBobcat
+namespace ProjBobcat.DefaultComponent.Launch
 {
     public sealed class DefaultLauncherProfileParser : LauncherProfileParserBase, ILauncherProfileParser
     {

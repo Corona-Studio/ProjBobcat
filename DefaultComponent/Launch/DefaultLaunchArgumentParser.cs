@@ -8,7 +8,7 @@ using System.Linq;
 using System.Text;
 using Newtonsoft.Json;
 
-namespace ProjBobcat
+namespace ProjBobcat.DefaultComponent.Launch
 {
     public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentParser
     {
@@ -49,14 +49,9 @@ namespace ProjBobcat
         /// <returns></returns>
         public string ParseJvmHeadArguments()
         {
-            if (LaunchSettings == null || (LaunchSettings.GameArguments == null && LaunchSettings.FallBackGameArguments == null))
-            {
-                throw new ArgumentNullException();
-            }
-
             var sb = new StringBuilder();
 
-            if (!string.IsNullOrEmpty(LaunchSettings.GameArguments?.AgentPath))
+            if (!string.IsNullOrEmpty(LaunchSettings.GameArguments.AgentPath))
             {
                 sb.Append("-javaagent:").Append("\"").Append(LaunchSettings.GameArguments.AgentPath).Append("\"");
                 if (!string.IsNullOrEmpty(LaunchSettings.GameArguments.JavaAgentAdditionPara))
@@ -69,7 +64,7 @@ namespace ProjBobcat
 
             if (string.IsNullOrEmpty(GameProfile?.JavaArgs))
             {
-                if (LaunchSettings.GameArguments?.MaxMemory > 0)
+                if (LaunchSettings.GameArguments.MaxMemory > 0)
                 {
                     if (LaunchSettings.GameArguments.MinMemory < LaunchSettings.GameArguments.MaxMemory)
                     {
@@ -88,10 +83,10 @@ namespace ProjBobcat
                 }
 
 
-                if (LaunchSettings.GameArguments?.GcType == GcType.Disable)
+                if (LaunchSettings.GameArguments.GcType == GcType.Disable)
                     return sb.ToString();
 
-                var gcArg = LaunchSettings.GameArguments?.GcType switch
+                var gcArg = LaunchSettings.GameArguments.GcType switch
                 {
                     GcType.CmsGc => "-XX:+UseConcMarkSweepGC",
                     GcType.G1Gc => "-XX:+UseG1GC",

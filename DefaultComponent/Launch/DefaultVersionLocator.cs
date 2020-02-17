@@ -12,7 +12,7 @@ using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Interface;
 using FileInfo = ProjBobcat.Class.Model.FileInfo;
 
-namespace ProjBobcat
+namespace ProjBobcat.DefaultComponent.Launch
 {
     public sealed class DefaultVersionLocator : VersionLocatorBase, IVersionLocator
     {
@@ -339,12 +339,12 @@ namespace ProjBobcat
                     current = ParseRawVersion(current.InheritsFrom);
                 }
 
-                
+                /*
                 if (!inherits.Any() || inherits.Contains(null))
                 {
                     return null;
                 }
-                
+                */
             }
 
             // 生成一个随机的名字来防止重复。
