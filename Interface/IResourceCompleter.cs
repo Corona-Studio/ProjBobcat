@@ -1,13 +1,20 @@
-﻿using System;
-using System.Net;
+﻿using ProjBobcat.Class.Model;
 using ProjBobcat.Event;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace ProjBobcat.Interface
 {
     public interface IResourceCompleter
     {
-        string DownloadPath { get; set; }
         int DownloadThread { get; set; }
+        int TotalRetry { get; set; }
+        IEnumerable<IResourceInfoResolver> ResourceInfoResolvers { get; set; }
+        bool CheckAndDownload();
+        Task<TaskResult<bool>> CheckAndDownloadTaskAsync();
+
+        event EventHandler<GameResourceInfoResolveEventArgs> GameResourceInfoResolveStatus; 
         event EventHandler<DownloadFileChangedEventArgs> DownloadFileChangedEvent;
         event EventHandler<DownloadFileCompletedEventArgs> DownloadFileCompletedEvent;
     }

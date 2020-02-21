@@ -6,11 +6,5 @@ namespace ProjBobcat.Event
     {
         public string Item { get; set; }
         public TimeSpan ItemRunTime { get; set; }
-
-        public LaunchLogEventArgs(string item, TimeSpan runTime)
-        {
-            Item = item;
-            ItemRunTime = runTime;
-        }
     }
 }

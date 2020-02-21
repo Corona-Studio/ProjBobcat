@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Threading;
 
 namespace ProjBobcat.Class.Helper
 {
@@ -18,6 +19,7 @@ namespace ProjBobcat.Class.Helper
             sw.Close();
         }
 
+        private static readonly ReaderWriterLock Locker = new ReaderWriterLock();
         /// <summary>
         ///     将二进制文件保存到磁盘
         /// </summary>
@@ -37,13 +39,17 @@ namespace ProjBobcat.Class.Helper
                     File.Delete(fileName);
 
                 using var outStream = File.Create(fileName);
-                int l;
-                do
+
+                lock (Locker)
                 {
-                    l = stream.Read(buffer, 0, buffer.Length);
-                    if (l > 0)
-                        outStream.Write(buffer, 0, l);
-                } while (l > 0);
+                    int l;
+                    do
+                    {
+                        l = stream.Read(buffer, 0, buffer.Length);
+                        if (l > 0)
+                            outStream.Write(buffer, 0, l);
+                    } while (l > 0);
+                }
 
                 outStream.Close();
                 stream.Close();
@@ -53,6 +59,10 @@ namespace ProjBobcat.Class.Helper
                 value = false;
             }
             catch (IOException)
+            {
+                value = false;
+            }
+            catch (UnauthorizedAccessException)
             {
                 value = false;
             }
