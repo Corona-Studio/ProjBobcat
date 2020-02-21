@@ -11,7 +11,7 @@
     <projectUrl>http://craftmine.fun</projectUrl>
     <icon>Bobcat.png</icon>
     <description>The next-generation Minecraft launcher core written in C# providing the freest, fastest and the most complete experience.</description>
-    <releaseNotes>Relative path issues solved.</releaseNotes>
+    <releaseNotes>Implement Resource Completer.</releaseNotes>
     <copyright>Copyright © 2020 Corona Studio</copyright>
     <tags>minecraft-launcher minecraft launcher csharp</tags>
     <dependencies>
