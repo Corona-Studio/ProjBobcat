@@ -7,8 +7,9 @@ namespace ProjBobcat.Interface
 {
     public interface IForgeInstaller
     {
-        string RootPath { get; set; }
+        string ForgeExecutablePath { get; set; }
         string ForgeInstallPath { get; set; }
+        ForgeInstallResult InstallForge();
         Task<ForgeInstallResult> InstallForgeTaskAsync();
 
         event EventHandler<ForgeInstallStageChangedEventArgs> StageChangedEventDelegate;

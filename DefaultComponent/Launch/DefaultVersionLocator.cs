@@ -70,17 +70,16 @@ namespace ProjBobcat.DefaultComponent.Launch
             var sb = new StringBuilder();
             var availableArguments = new Dictionary<string, string>();
 
-            var (mcArguments, newMcArguments) = arguments;
-            if (!string.IsNullOrEmpty(mcArguments))
+            if (!string.IsNullOrEmpty(arguments.Item1))
             {
-                sb.Append(mcArguments);
+                sb.Append(arguments.Item1);
                 return new Tuple<string, Dictionary<string, string>>(sb.ToString(), availableArguments);
             }
 
-            if (!(newMcArguments?.Any() ?? false))
+            if (!(arguments.Item2?.Any() ?? false))
                 return new Tuple<string, Dictionary<string, string>>(sb.ToString(), availableArguments);
 
-            foreach (var gameRule in newMcArguments)
+            foreach (var gameRule in arguments.Item2)
             {
                 if (!(gameRule is JObject))
                 {
@@ -339,12 +338,10 @@ namespace ProjBobcat.DefaultComponent.Launch
                     current = ParseRawVersion(current.InheritsFrom);
                 }
 
-                /*
-                if (!inherits.Any() || inherits.Contains(null))
+                if (inherits.Contains(null))
                 {
                     return null;
                 }
-                */
             }
 
             // 生成一个随机的名字来防止重复。
@@ -385,25 +382,25 @@ namespace ProjBobcat.DefaultComponent.Launch
 
                     if (flag)
                     {
-                        var (rootNatives, rootLibraries) = GetNatives(inherits[i].Libraries);
+                        var rootLibs= GetNatives(inherits[i].Libraries);
 
-                        result.Libraries = rootLibraries;
-                        result.Natives = rootNatives;
+                        result.Libraries = rootLibs.Item2;
+                        result.Natives = rootLibs.Item1;
 
                         jvmSb.Append(ParseJvmArguments(inherits[i].Arguments?.Jvm));
 
-                        var (rootGameArgument, rootAvailableGameArguments) = ParseGameArguments(
+                        var rootArgs = ParseGameArguments(
                             new Tuple<string, List<object>>(inherits[i].MinecraftArguments, inherits[i].Arguments?.Game));
-                        gameArgsSb.Append(rootGameArgument);
-                        result.AvailableGameArguments = rootAvailableGameArguments;
+                        gameArgsSb.Append(rootArgs.Item1);
+                        result.AvailableGameArguments = rootArgs.Item2;
 
                         flag = false;
                         continue;
                     }
 
-                    var (middleNatives, middleLibraries) = GetNatives(inherits[i].Libraries);
+                    var middleLibs = GetNatives(inherits[i].Libraries);
 
-                    foreach (var mL in middleLibraries)
+                    foreach (var mL in middleLibs.Item2)
                     {
                         var mLMaven = mL.Name.ResolveMavenString();
                         var mLFlag = false;
@@ -434,27 +431,27 @@ namespace ProjBobcat.DefaultComponent.Launch
                         currentNativesNames.Add(n.FileInfo.Name);
                     });
                     var moreMiddleNatives =
-                        middleNatives.Where(mL => !currentNativesNames.Contains(mL.FileInfo.Name)).ToList();
+                        middleLibs.Item1.Where(mL => !currentNativesNames.Contains(mL.FileInfo.Name)).ToList();
                     result.Natives.AddRange(moreMiddleNatives);
                     
 
                     var jvmArgs = ParseJvmArguments(inherits[i].Arguments?.Jvm);
-                    var (middleGameArgument, middleAvailableGameArguments) = ParseGameArguments(
+                    var middleGameArgs = ParseGameArguments(
                         new Tuple<string, List<object>>(inherits[i].MinecraftArguments, inherits[i].Arguments?.Game));
 
                     if (string.IsNullOrEmpty(inherits[i].MinecraftArguments))
                     {
                         jvmSb.Append(" ").Append(jvmArgs);
-                        gameArgsSb.Append(" ").Append(middleGameArgument);
+                        gameArgsSb.Append(" ").Append(middleGameArgs.Item1);
                         result.AvailableGameArguments = result.AvailableGameArguments
-                            .Union(middleAvailableGameArguments)
+                            .Union(middleGameArgs.Item2)
                             .ToDictionary(x => x.Key, y => y.Value);
                     }
                     else
                     {
                         result.JvmArguments = jvmArgs;
-                        result.GameArguments = middleGameArgument;
-                        result.AvailableGameArguments = middleAvailableGameArguments;
+                        result.GameArguments = middleGameArgs.Item1;
+                        result.AvailableGameArguments = middleGameArgs.Item2;
                     }
 
                     result.Id = inherits[i].Id ?? result.Id;
@@ -472,17 +469,17 @@ namespace ProjBobcat.DefaultComponent.Launch
                 goto ProcessProfile;
             }
 
-            var (natives, libraries) = GetNatives(rawVersion.Libraries);
-            result.Libraries = libraries;
-            result.Natives = natives;
+            var libs = GetNatives(rawVersion.Libraries);
+            result.Libraries = libs.Item2;
+            result.Natives = libs.Item1;
 
             result.JvmArguments = ParseJvmArguments(rawVersion.Arguments?.Jvm);
 
-            var (gameArgument, availableGameArguments) =
+            var gameArgs =
                 ParseGameArguments(new Tuple<string, List<object>>(rawVersion.MinecraftArguments,
                     rawVersion.Arguments?.Game));
-            result.GameArguments = gameArgument;
-            result.AvailableGameArguments = availableGameArguments;
+            result.GameArguments = gameArgs.Item1;
+            result.AvailableGameArguments = gameArgs.Item2;
 
             ProcessProfile:
             var oldProfile = LauncherProfileParser.LauncherProfile.Profiles.FirstOrDefault(p =>

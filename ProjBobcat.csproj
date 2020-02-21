@@ -14,7 +14,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>ProjBobcat</RootNamespace>
     <AssemblyName>ProjBobcat</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
     <SccProjectName>SAK</SccProjectName>
@@ -23,6 +23,7 @@
     <SccProvider>SAK</SccProvider>
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -42,6 +43,8 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <LangVersion>8.0</LangVersion>
+    <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
+    <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationManifest>app.manifest</ApplicationManifest>
@@ -55,6 +58,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Management" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -67,12 +71,22 @@
     <Compile Include="Authenticator\YggdrasilAuthenticator.cs" />
     <Compile Include="Class\Helper\AuthPropertyHelper.cs" />
     <Compile Include="Class\Helper\DirectoryHelper.cs" />
+    <Compile Include="Class\Helper\DownloadHelper.cs" />
     <Compile Include="Class\Helper\FileHelper.cs" />
     <Compile Include="Class\Helper\MavenHelper.cs" />
+    <Compile Include="Class\Helper\ProcessorHelper.cs" />
     <Compile Include="Class\Helper\RandomHelper.cs" />
     <Compile Include="Class\Helper\RandomStringHelper.cs" />
     <Compile Include="Class\Helper\RulesHelper.cs" />
     <Compile Include="Class\LaunchWrapper.cs" />
+    <Compile Include="Class\Model\AssetObjectModel.cs" />
+    <Compile Include="Class\Model\DownloadCheckResult.cs" />
+    <Compile Include="Class\Model\DownloadFile.cs" />
+    <Compile Include="Class\Model\DownloadRange.cs" />
+    <Compile Include="Class\Model\ForgeInstallResult.cs" />
+    <Compile Include="Class\Model\Forge\ForgeInstallProfile.cs" />
+    <Compile Include="Class\Model\GameResource\AssetDownloadInfo.cs" />
+    <Compile Include="Class\Model\GameResource\LibraryDownloadInfo.cs" />
     <Compile Include="Class\Model\GcType.cs" />
     <Compile Include="Class\Model\LauncherProfile\AuthProfileModel.cs" />
     <Compile Include="Class\Model\LauncherProfile\AuthPropertyModel.cs" />
@@ -81,12 +95,21 @@
     <Compile Include="Class\Model\LaunchErrorType.cs" />
     <Compile Include="Class\LaunchArgumentParserBase.cs" />
     <Compile Include="Class\LauncherProfileParserBase.cs" />
+    <Compile Include="Class\Model\LogType.cs" />
     <Compile Include="Class\Model\MavenInfo.cs" />
+    <Compile Include="Class\Model\TaskResult.cs" />
+    <Compile Include="Class\Model\TaskResultStatus.cs" />
     <Compile Include="Class\VersionLocatorBase.cs" />
     <Compile Include="Class\Helper\GamePathHelper.cs" />
     <Compile Include="Class\Helper\GuidHelper.cs" />
     <Compile Include="Class\Helper\HttpHelper.cs" />
-    <Compile Include="DefaultLaunchArgumentParser.cs" />
+    <Compile Include="Class\WebClient.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="DefaultComponent\DefaultResourceCompleter.cs" />
+    <Compile Include="DefaultComponent\ForgeInstaller\HighVersionForgeInstaller.cs" />
+    <Compile Include="DefaultComponent\ForgeInstaller\LegacyForgeInstaller.cs" />
+    <Compile Include="DefaultComponent\Launch\DefaultLaunchArgumentParser.cs" />
     <Compile Include="Class\Helper\StringHelper.cs" />
     <Compile Include="Class\Helper\SystemInfoHelper.cs" />
     <Compile Include="Class\Model\AuthResult.cs" />
@@ -114,16 +137,26 @@
     <Compile Include="Class\Model\YggdrasilAuth\SignOutRequestModel.cs" />
     <Compile Include="Class\Model\YggdrasilAuth\TextureInfoModel.cs" />
     <Compile Include="Class\Model\YggdrasilAuth\UserInfoModel.cs" />
-    <Compile Include="DefaultGameCore.cs" />
-    <Compile Include="DefaultLauncherProfileParser.cs" />
-    <Compile Include="DefaultVersionLocator.cs" />
+    <Compile Include="DefaultComponent\Launch\DefaultGameCore.cs" />
+    <Compile Include="DefaultComponent\Launch\DefaultLauncherProfileParser.cs" />
+    <Compile Include="DefaultComponent\Launch\DefaultVersionLocator.cs" />
+    <Compile Include="DefaultComponent\ResourceInfoResolver\AssetInfoResolver.cs" />
+    <Compile Include="DefaultComponent\ResourceInfoResolver\LibraryInfoResolver.cs" />
+    <Compile Include="Event\DownloadFileChangedEventArgs.cs" />
+    <Compile Include="Event\DownloadFileCompletedEventArgs.cs" />
+    <Compile Include="Event\ForgeInstallStageChangedEventArgs.cs" />
     <Compile Include="Event\GameExitEventArgs.cs" />
     <Compile Include="Event\GameLogEventArgs.cs" />
+    <Compile Include="Event\GameResourceInfoResolveEventArgs.cs" />
     <Compile Include="Event\LaunchLogEventArgs.cs" />
     <Compile Include="Interface\IArgumentParser.cs" />
     <Compile Include="Interface\IAuthenticator.cs" />
+    <Compile Include="Interface\IForgeInstaller.cs" />
     <Compile Include="Interface\IGameCore.cs" />
+    <Compile Include="Interface\IGameResource.cs" />
     <Compile Include="Interface\ILauncherProfileParser.cs" />
+    <Compile Include="Interface\IResourceCompleter.cs" />
+    <Compile Include="Interface\IResourceInfoResolver.cs" />
     <Compile Include="Interface\IVersionLocator.cs" />
     <Compile Include="Class\Model\RawVersionModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -143,6 +176,7 @@
     <Analyzer Include="..\packages\Microsoft.NetFramework.Analyzers.2.9.8\analyzers\dotnet\cs\Microsoft.NetFramework.Analyzers.dll" />
     <Analyzer Include="..\packages\Microsoft.NetFramework.Analyzers.2.9.8\analyzers\dotnet\cs\Microsoft.NetFramework.CSharp.Analyzers.dll" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>

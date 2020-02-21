@@ -4,6 +4,7 @@ using ProjBobcat.Interface;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -137,7 +138,6 @@ namespace ProjBobcat.DefaultComponent.Launch
                         using var stream =
                             File.OpenRead(path);
                         using var reader = ReaderFactory.Open(stream);
-
                         while (reader.MoveToNextEntry())
                         {
                             if (!(n.Extract?.Exclude?.Contains(reader.Entry.Key) ?? false))
@@ -194,7 +194,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                                     ExitCode = launchWrapper.ExitCode
                                 }),
                             CancellationToken.None, TaskContinuationOptions.DenyChildAttach, TaskScheduler.Default)
-                        .ConfigureAwait(true);
+                        .ConfigureAwait(false);
                 }).Start();
                 #endregion
 

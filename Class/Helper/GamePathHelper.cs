@@ -46,6 +46,13 @@
         public static string GetLibraryPath(string rootPath, string libraryPath) => $"{rootPath}\\libraries\\{libraryPath}";
 
         /// <summary>
+        /// .minecraft/libraries/{libraryPath}/
+        /// </summary>
+        /// <param name="rootPath">指.minecraft/ Refers to .minecraft/</param>
+        /// <returns></returns>
+        public static string GetLibraryRootPath(string rootPath) => $"{rootPath}\\libraries";
+
+        /// <summary>
         /// .minecraft/versions/natives/
         /// </summary>
         /// <param name="rootPath">指.minecraft/ Refers to .minecraft/</param>
