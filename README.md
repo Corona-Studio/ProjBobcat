@@ -27,9 +27,9 @@ For Chinese version of README.md, see README_zh_cn.md.
 | Version Isolation                   | ✅                 |
 | launcher_profiles.json Analysis | ✅                 |
 | Nuget Distribution          | ✅ |
-| Old Forge Installation Model          | ⚠️[WIP] |
-| New Forge Installation Model          | ⚠️[WIP] |
-| Native Auto Completion               | ⚠️[WIP] |
+| Old Forge Installation Model          | ✅ |
+| New Forge Installation Model          | ✅ |
+| Native Auto Completion               | ✅ |
 
 ## Instruction
 
