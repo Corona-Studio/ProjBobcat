@@ -43,6 +43,12 @@ ProjBobcat provides 3 main components & a core to form the whole core framework.
 | DefaultVersionLocator        | IVersionLocator        | VersionLocatorBase        | Game Version Locator          |
 
 
+Selective components:
+| Class                           | Parent Interface               | Parent Class                      | Function                               |
+| ---------------------------- | ---------------------- | ------------------------- | ---------------------------------- |
+| DefaultResourceCompleter              | IResourceCompleter          | NG                        | All Implementations of the Default Resource Completer  |
+
+
 ### Quick Startup
 
 #### Core Initialization
@@ -52,7 +58,7 @@ ProjBobcat provides 3 main components & a core to form the whole core framework.
 var core = new DefaultGameCore
 {
     ClientToken = clientToken, // Game's identifier, set it to any GUID you like, such as 88888888-8888-8888-8888-888888888888 or a randomly generated one.
-    RootPath = rootPath, // Path of .minecraft/
+    RootPath = rootPath, // Path of .minecraft\
     VersionLocator = new DefaultVersionLocator(rootPath, clientToken)
     {
         LauncherProfileParser = new DefaultLauncherProfileParser(rootPath, clientToken)
@@ -67,6 +73,41 @@ var core = new DefaultGameCore
 List<VersionInfo> gameList = core.VersionLocator.GetAllGames().ToList();
 
 ```
+
+#### Resource Completion
+```csharp
+//Here we use mcbbs' download source, change the uri to meet your need.
+var drc = new DefaultResourceCompleter
+{
+    ResourceInfoResolvers = new List<IResourceInfoResolver>(2)
+    {
+        new AssetInfoResolver
+        {
+            AssetIndexUriRoot = "https://download.mcbbs.net/",
+            AssetUriRoot = "https://download.mcbbs.net/assets/",
+            BasePath = core.RootPath,
+            VersionInfo = gameList[0]
+        },
+        new LibraryInfoResolver
+        {
+            BasePath = core.RootPath,
+            LibraryUriRoot = "https://download.mcbbs.net/maven/",
+            VersionInfo = gameList[0]
+        }
+    }
+};
+
+await drc.CheckAndDownloadTaskAsync().ConfigureAwait(false);
+
+```
+
+Here are some events which you could bind to your program.
+
+| Name                   | Method Signature                              | Refers to             |
+| ---------------------- | ------------------------------------- | ---------------- |
+| GameResourceInfoResolveStatus  | (object sender, GameResourceInfoResolveEventArgs e)  | Resolver status |
+| DownloadFileChangedEvent   | (object sender, DownloadFileChangedEventArgs e)   | All files download status changed |
+| DownloadFileCompletedEvent | (object sender, DownloadFileCompletedEventArgs e) | Single file download completed |
 
 #### Launch Configuration
 
@@ -104,6 +145,14 @@ launchSettings.GameArguments = new GameArguments // (Optional) The arguments of 
 
 ```
 
+Here are some events which you could bind to your program.
+
+| Name                   | Method Signature                              | Refers to             |
+| ---------------------- | ------------------------------------- | ---------------- |
+| GameExitEventDelegate  | (object sender, GameExitEventArgs e)  | Game Exit     |
+| GameLogEventDelegate   | (object sender, GameLogEventArgs e)   | Game Log |
+| LaunchLogEventDelegate | (object sender, LaunchLogEventArgs e) | Core Log |
+
 #### Define Auth Model
 
 ```csharp
@@ -124,15 +173,7 @@ var result = await Core.LaunchTaskAsync(launchSettings).ConfigureAwait(true); //
 
 ```
 
-#### Event list
 
-You can bind your program to the following events to realize a complete logging system.
-
-| Name                   | Method Signature                              | Refers to             |
-| ---------------------- | ------------------------------------- | ---------------- |
-| GameExitEventDelegate  | (object sender, GameExitEventArgs e)  | Game Exit     |
-| GameLogEventDelegate   | (object sender, GameLogEventArgs e)   | Game Log |
-| LaunchLogEventDelegate | (object sender, LaunchLogEventArgs e) | Core Log |
 
 ## License
 MIT. This means that you can modify or use our code for any purpose, however copyright notice and permission notice shall be included in all copies or substantial portions of your software.
