@@ -8,7 +8,7 @@ namespace ProjBobcat.Class.Helper
     public static class SystemInfoHelper
     {
         /// <summary>
-        ///     从注册表中查找可能的javaw.exe位置，这段代码来自于KMCCC启动核心SystemTools.cs
+        /// 从注册表中查找可能的javaw.exe位置
         /// </summary>
         /// <returns>JAVA地址列表</returns>
         public static IEnumerable<string> FindJava()

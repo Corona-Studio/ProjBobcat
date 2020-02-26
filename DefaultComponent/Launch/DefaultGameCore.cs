@@ -37,7 +37,7 @@ namespace ProjBobcat.DefaultComponent.Launch
 
         public event EventHandler<GameExitEventArgs> GameExitEventDelegate;
         public event EventHandler<GameLogEventArgs> GameLogEventDelegate;
-        public event EventHandler<LaunchLogEventArgs> LaunchLogEventDelegate; 
+        public event EventHandler<LaunchLogEventArgs> LaunchLogEventDelegate;
 
         /// <summary>
         /// 启动游戏。

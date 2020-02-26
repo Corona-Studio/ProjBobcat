@@ -39,13 +39,13 @@
 | 版本隔离                   | ✅                 |
 | launcher_profiles.json解析 | ✅                 |
 | Nuget分发         | ✅ |
-| 旧版Forge安装模型          | ⚠️【开发中】 |
-| 新版Forge安装模型          | ⚠️【开发中】 |
-| 依赖自动补全               | ⚠️【开发中】 |
+| 旧版Forge安装模型          | ✅ |
+| 新版Forge安装模型          | ✅ |
+| 依赖自动补全               | ✅ |
 
 ## 使用说明
 
-ProjBobcat提供了3大组件和一个核心总成来支撑起整个核心框架
+ProjBobcat提供了3大必要组件和一个核心总成来支撑起整个核心框架
 
 | 类                           | 父级接口               | 父类                      | 作用                               |
 | ---------------------------- | ---------------------- | ------------------------- | ---------------------------------- |
@@ -53,6 +53,11 @@ ProjBobcat提供了3大组件和一个核心总成来支撑起整个核心框架
 | DefaultLaunchArgumentParser  | IArgumentParser        | LaunchArgumentParserBase  | 提供默认启动参数解析               |
 | DefaultLauncherProfileParser | ILauncherProfileParser | LauncherProfileParserBase | 提供默认launcher_profiles.json解析 |
 | DefaultVersionLocator        | IVersionLocator        | VersionLocatorBase        | 定位游戏版本           |
+
+选择性组件：
+| 类                           | 父级接口               | 父类                      | 作用                               |
+| ---------------------------- | ---------------------- | ------------------------- | ---------------------------------- |
+| DefaultResourceCompleter              | IResourceCompleter          | NG                        | 提供默认资源补全器所有实现  |
 
 ### 基本使用
 
@@ -63,7 +68,7 @@ ProjBobcat提供了3大组件和一个核心总成来支撑起整个核心框架
 var core = new DefaultGameCore
 {
     ClientToken = clientToken, // 游戏客户端识别码，你可以设置成你喜欢的任何GUID，例如88888888-8888-8888-8888-888888888888，或者自己随机生成一个！
-    RootPath = rootPath, // .minecraft/的路径
+    RootPath = rootPath, // .minecraft\的路径
     VersionLocator = new DefaultVersionLocator(rootPath, clientToken)
     {
         LauncherProfileParser = new DefaultLauncherProfileParser(rootPath, clientToken)
@@ -78,6 +83,42 @@ var core = new DefaultGameCore
 List<VersionInfo> gameList = core.VersionLocator.GetAllGames().ToList();
 
 ```
+
+#### 资源补全
+```csharp
+// 这里使用mcbbs源，请自行修改以满足您的需求。
+var drc = new DefaultResourceCompleter
+{
+    ResourceInfoResolvers = new List<IResourceInfoResolver>(2)
+    {
+        new AssetInfoResolver
+        {
+            AssetIndexUriRoot = "https://download.mcbbs.net/",
+            AssetUriRoot = "https://download.mcbbs.net/assets/",
+            BasePath = core.RootPath,
+            VersionInfo = gameList[...]
+        },
+        new LibraryInfoResolver
+        {
+            BasePath = core.RootPath,
+            LibraryUriRoot = "https://download.mcbbs.net/maven/",
+            VersionInfo = gameList[...]
+        }
+    }
+};
+
+await drc.CheckAndDownloadTaskAsync().ConfigureAwait(false);
+
+```
+
+这里是一些您可以绑定的事件：
+
+| 名称              | 签名                          | 作用           |
+| ---------------------- | ------------------------------------- | ---------------- |
+| GameResourceInfoResolveStatus  | (object sender, GameResourceInfoResolveEventArgs e)  | 获取解析器状态 |
+| DownloadFileChangedEvent   | (object sender, DownloadFileChangedEventArgs e)   | 总文件下载进度改变 |
+| DownloadFileCompletedEvent | (object sender, DownloadFileCompletedEventArgs e) | 单文件下载完成 |
+
 
 #### 启动游戏前配置
 
@@ -115,6 +156,14 @@ launchSettings.GameArguments = new GameArguments // （可选）具体游戏启�
 
 ```
 
+您可以在启动核心内注册以下事件来实现完整的日志记录
+
+| 名称                   | 方法签名                              | 作用             |
+| ---------------------- | ------------------------------------- | ---------------- |
+| GameExitEventDelegate  | (object sender, GameExitEventArgs e)  | 游戏退出事件     |
+| GameLogEventDelegate   | (object sender, GameLogEventArgs e)   | 游戏日志输出事件 |
+| LaunchLogEventDelegate | (object sender, LaunchLogEventArgs e) | 启动日志输出事件 |
+
 #### 确定验证模型
 
 ```csharp
@@ -134,16 +183,6 @@ launchSettings.Authenticator = new OfflineAuthenticator
 var result = await Core.LaunchTaskAsync(launchSettings).ConfigureAwait(true); // 返回游戏启动结果，以及异常信息（如果存在）
 
 ```
-
-#### 启动核心事件列表
-
-您可以在启动核心内注册以下事件来实现完整的日志记录
-
-| 名称                   | 方法签名                              | 作用             |
-| ---------------------- | ------------------------------------- | ---------------- |
-| GameExitEventDelegate  | (object sender, GameExitEventArgs e)  | 游戏退出事件     |
-| GameLogEventDelegate   | (object sender, GameLogEventArgs e)   | 游戏日志输出事件 |
-| LaunchLogEventDelegate | (object sender, LaunchLogEventArgs e) | 启动日志输出事件 |
 
 ## 协议
 MIT。这意味着你可以以任何目的修改和使用本项目的代码。但是您必须保留我们的版权声明和许可声明。
