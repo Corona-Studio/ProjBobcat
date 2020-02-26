@@ -19,7 +19,19 @@ namespace ProjBobcat.DefaultComponent.Launch
 {
     public class DefaultGameCore : IGameCore, IDisposable
     {
-        public string RootPath { get; set; }
+        private string _rootPath;
+
+        public string RootPath
+        {
+            get => _rootPath;
+            set
+            {
+                if (string.IsNullOrEmpty(value))
+                    return;
+
+                _rootPath = $"{Path.GetFullPath(value.TrimEnd('/'))}\\";
+            }
+        }
         public IVersionLocator VersionLocator { get; set; }
         public Guid ClientToken { get; set; }
 
@@ -124,36 +136,74 @@ namespace ProjBobcat.DefaultComponent.Launch
                 #endregion
 
                 #region 解压Natives Natives Decompresser
+
+                var nativesVerifyFilePath = $"{argumentParser.NativeRoot}\\.cmflVerified";
+
                 try
                 {
-                    if (!Directory.Exists(argumentParser.NativeRoot))
-                        Directory.CreateDirectory(argumentParser.NativeRoot);
-
-                    //TODO
-                    DirectoryHelper.CleanDirectory(argumentParser.NativeRoot, false);
-                    version.Natives.ForEach(n =>
+                    if (!File.Exists(nativesVerifyFilePath))
                     {
-                        var path =
-                            $"{GamePathHelper.GetLibraryPath(RootPath.TrimEnd('\\'), string.Empty)}\\{n.FileInfo.Path.Replace('/', '\\')}";
-                        using var stream =
-                            File.OpenRead(path);
-                        using var reader = ReaderFactory.Open(stream);
-                        while (reader.MoveToNextEntry())
+                        if (!Directory.Exists(argumentParser.NativeRoot))
+                            Directory.CreateDirectory(argumentParser.NativeRoot);
+
+                        //TODO
+                        DirectoryHelper.CleanDirectory(argumentParser.NativeRoot, false);
+                        version.Natives.ForEach(n =>
                         {
-                            if (!(n.Extract?.Exclude?.Contains(reader.Entry.Key) ?? false))
+                            var path =
+                                $"{GamePathHelper.GetLibraryPath(RootPath.TrimEnd('\\'), string.Empty)}\\{n.FileInfo.Path.Replace('/', '\\')}";
+                            using var stream =
+                                File.OpenRead(path);
+                            using var reader = ReaderFactory.Open(stream);
+                            while (reader.MoveToNextEntry())
                             {
-                                reader.WriteEntryToDirectory(argumentParser.NativeRoot,
-                                    new ExtractionOptions
-                                    {
-                                        ExtractFullPath = true,
-                                        Overwrite = true
-                                    });
+                                if (!(n.Extract?.Exclude?.Contains(reader.Entry.Key) ?? false))
+                                {
+                                    reader.WriteEntryToDirectory(argumentParser.NativeRoot,
+                                        new ExtractionOptions
+                                        {
+                                            ExtractFullPath = true,
+                                            Overwrite = true
+                                        });
+                                }
                             }
-                        }
-                    });
+                        });
+
+                        File.Create(nativesVerifyFilePath).Dispose();
+                    }
                 }
                 catch (Exception e)
                 {
+                    if (!File.Exists(nativesVerifyFilePath))
+                        return new LaunchResult
+                        {
+                            Error = new ErrorModel
+                            {
+                                Exception = e
+                            },
+                            ErrorType = LaunchErrorType.DecompressFailed,
+                            LaunchSettings = settings,
+                            RunTime = prevSpan
+                        };
+
+                    try
+                    {
+                        File.Delete(nativesVerifyFilePath);
+                    }
+                    catch
+                    {
+                        return new LaunchResult
+                        {
+                            Error = new ErrorModel
+                            {
+                                Exception = e
+                            },
+                            ErrorType = LaunchErrorType.OperationFailed,
+                            LaunchSettings = settings,
+                            RunTime = prevSpan
+                        };
+                    }
+
                     return new LaunchResult
                     {
                         Error = new ErrorModel

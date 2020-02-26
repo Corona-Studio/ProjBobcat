@@ -51,7 +51,10 @@ namespace ProjBobcat.DefaultComponent.Launch
         {
             var sb = new StringBuilder();
 
-            if (!string.IsNullOrEmpty(LaunchSettings.GameArguments.AgentPath))
+            if(LaunchSettings == null || LaunchSettings.GameArguments == null && LaunchSettings.FallBackGameArguments == null)
+                throw new ArgumentNullException("重要参数为Null!");
+
+            if (!string.IsNullOrEmpty(LaunchSettings.GameArguments?.AgentPath))
             {
                 sb.Append("-javaagent:").Append("\"").Append(LaunchSettings.GameArguments.AgentPath).Append("\"");
                 if (!string.IsNullOrEmpty(LaunchSettings.GameArguments.JavaAgentAdditionPara))
@@ -62,9 +65,21 @@ namespace ProjBobcat.DefaultComponent.Launch
                 sb.Append(" ");
             }
 
+            if (!string.IsNullOrEmpty(LaunchSettings.FallBackGameArguments.AgentPath))
+            {
+                sb.Append("-javaagent:").Append("\"").Append(LaunchSettings.FallBackGameArguments.AgentPath).Append("\"");
+                if (!string.IsNullOrEmpty(LaunchSettings.FallBackGameArguments.JavaAgentAdditionPara))
+                {
+                    sb.Append("=").Append(LaunchSettings.FallBackGameArguments.JavaAgentAdditionPara);
+                }
+
+                sb.Append(" ");
+            }
+            
+
             if (string.IsNullOrEmpty(GameProfile?.JavaArgs))
             {
-                if (LaunchSettings.GameArguments.MaxMemory > 0)
+                if (LaunchSettings.GameArguments?.MaxMemory > 0)
                 {
                     if (LaunchSettings.GameArguments.MinMemory < LaunchSettings.GameArguments.MaxMemory)
                     {
@@ -83,10 +98,10 @@ namespace ProjBobcat.DefaultComponent.Launch
                 }
 
 
-                if (LaunchSettings.GameArguments.GcType == GcType.Disable)
+                if (LaunchSettings.GameArguments?.GcType == GcType.Disable)
                     return sb.ToString();
 
-                var gcArg = LaunchSettings.GameArguments.GcType switch
+                var gcArg = LaunchSettings.GameArguments?.GcType switch
                 {
                     GcType.CmsGc => "-XX:+UseConcMarkSweepGC",
                     GcType.G1Gc => "-XX:+UseG1GC",
@@ -178,7 +193,6 @@ namespace ProjBobcat.DefaultComponent.Launch
             }
 
             if (LaunchSettings.GameArguments.ServerSettings == null) return sb.ToString();
-
             sb.Append($"--server {LaunchSettings.GameArguments.ServerSettings.Address}");
             sb.Append($"--port {LaunchSettings.GameArguments.ServerSettings.Port}");
 
