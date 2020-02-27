@@ -142,7 +142,7 @@ namespace ProjBobcat.Class.Helper
 
                 using (var webResponse = webRequest.GetResponse())
                 {
-                    parallelDownloadSupported = webResponse.Headers.Get("Accept-Ranges").Contains("bytes");
+                    parallelDownloadSupported = webResponse.Headers.Get("Accept-Ranges")?.Contains("bytes") ?? false;
                     responseLength = long.TryParse(webResponse.Headers.Get("Content-Length"), out var l) ? l : 0;
                 }
 
@@ -166,10 +166,10 @@ namespace ProjBobcat.Class.Helper
                 var readRanges = new List<DownloadRange>();
                 var partSize = (long)Math.Ceiling((double)responseLength / numberOfParts);
 
-                for (var i = 0; i < numberOfParts; i++)
+                for (var i = 1; i < numberOfParts; i++)
                 {
-                    var start = i * partSize + Math.Min(1, i);
-                    var end = Math.Min((i + 1) * partSize, responseLength);
+                    var start = (numberOfParts - 1) * partSize;
+                    var end = numberOfParts * partSize;
 
                     readRanges.Add(new DownloadRange
                     {
@@ -178,13 +178,21 @@ namespace ProjBobcat.Class.Helper
                     });
                 }
 
+                readRanges.Add(new DownloadRange
+                {
+                    End = responseLength,
+                    Start = (numberOfParts - 1) * partSize
+                });
+
                 #endregion
 
                 #region Parallel download
 
                 var index = 0;
-                Parallel.ForEach(readRanges, new ParallelOptions {MaxDegreeOfParallelism = numberOfParts},
-                    delegate(DownloadRange range)
+                var tasks = new Task[numberOfParts];
+                foreach(var range in readRanges)
+                {
+                    tasks[index] = Task.Run(() =>
                     {
                         var client = new WebClient
                         {
@@ -202,6 +210,9 @@ namespace ProjBobcat.Class.Helper
 
                         index++;
                     });
+                }
+
+                Task.WaitAll(tasks);
 
                 #endregion
 
@@ -327,17 +338,14 @@ namespace ProjBobcat.Class.Helper
                             df.DownloadPath.Substring(0, df.DownloadPath.LastIndexOf('\\')));
                         if (!di.Exists) di.Create();
 
-                        DownloadData(df);
-                        /*
                         if (df.FileSize >= 1048576 || df.FileSize == 0 || df.FileSize == default)
                         {
                             MultiPartDownload(df);
                         }
                         else
                         {
-                            
+                            DownloadData(df);
                         }
-                        */
                     }
                 }
 
