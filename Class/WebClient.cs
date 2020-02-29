@@ -24,7 +24,7 @@ namespace ProjBobcat.Class
 
             if (DownloadRange != null && !DownloadRange.Equals(default(DownloadRange)))
             {
-                webRequest.AddRange(DownloadRange.Start, DownloadRange.Start);
+                webRequest.AddRange(DownloadRange.Start, DownloadRange.End);
             }
 
             return lWebRequest;

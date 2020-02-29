@@ -1,19 +1,18 @@
-﻿using ProjBobcat.Class.Model;
+﻿using ProjBobcat.Authenticator;
+using ProjBobcat.Class;
+using ProjBobcat.Class.Helper;
+using ProjBobcat.Class.Model;
+using ProjBobcat.Class.Model.YggdrasilAuth;
 using ProjBobcat.Event;
 using ProjBobcat.Interface;
+using SharpCompress.Common;
+using SharpCompress.Readers;
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using ProjBobcat.Authenticator;
-using ProjBobcat.Class;
-using ProjBobcat.Class.Helper;
-using ProjBobcat.Class.Model.YggdrasilAuth;
-using SharpCompress.Common;
-using SharpCompress.Readers;
 
 namespace ProjBobcat.DefaultComponent.Launch
 {
@@ -29,7 +28,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                 if (string.IsNullOrEmpty(value))
                     return;
 
-                _rootPath = $"{Path.GetFullPath(value.TrimEnd('/'))}\\";
+                _rootPath = Path.GetFullPath(value.TrimEnd('/'));
             }
         }
         public IVersionLocator VersionLocator { get; set; }
@@ -124,6 +123,20 @@ namespace ProjBobcat.DefaultComponent.Launch
 
                 var sb = new StringBuilder();
 
+                if (arguments.Count != 6)
+                {
+                    return new LaunchResult
+                    {
+                        ErrorType = LaunchErrorType.IncompleteArguments,
+                        Error = new ErrorModel
+                        {
+                            Cause = "启动核心生成的参数不完整",
+                            Error = "重要参数缺失",
+                            ErrorMessage = "启动参数不完整，很有可能是缺少Java路径导致的"
+                        }
+                    };
+                }
+
                 //从参数数组中移出java路径并加以存储。
                 //Load the first element(java's path) into the excutable string and removes it from the generated arguments
                 var executable = arguments[0];
@@ -137,73 +150,36 @@ namespace ProjBobcat.DefaultComponent.Launch
 
                 #region 解压Natives Natives Decompresser
 
-                var nativesVerifyFilePath = $"{argumentParser.NativeRoot}\\.cmflVerified";
-
                 try
                 {
-                    if (!File.Exists(nativesVerifyFilePath))
+                    if (!Directory.Exists(argumentParser.NativeRoot))
+                        Directory.CreateDirectory(argumentParser.NativeRoot);
+
+                    //TODO
+                    DirectoryHelper.CleanDirectory(argumentParser.NativeRoot, false);
+                    version.Natives.ForEach(n =>
                     {
-                        if (!Directory.Exists(argumentParser.NativeRoot))
-                            Directory.CreateDirectory(argumentParser.NativeRoot);
-
-                        //TODO
-                        DirectoryHelper.CleanDirectory(argumentParser.NativeRoot, false);
-                        version.Natives.ForEach(n =>
+                        var path =
+                            $"{GamePathHelper.GetLibraryPath(RootPath.TrimEnd('\\'), string.Empty)}\\{n.FileInfo.Path.Replace('/', '\\')}";
+                        using var stream =
+                            File.OpenRead(path);
+                        using var reader = ReaderFactory.Open(stream);
+                        while (reader.MoveToNextEntry())
                         {
-                            var path =
-                                $"{GamePathHelper.GetLibraryPath(RootPath.TrimEnd('\\'), string.Empty)}\\{n.FileInfo.Path.Replace('/', '\\')}";
-                            using var stream =
-                                File.OpenRead(path);
-                            using var reader = ReaderFactory.Open(stream);
-                            while (reader.MoveToNextEntry())
+                            if (!(n.Extract?.Exclude?.Contains(reader.Entry.Key) ?? false))
                             {
-                                if (!(n.Extract?.Exclude?.Contains(reader.Entry.Key) ?? false))
-                                {
-                                    reader.WriteEntryToDirectory(argumentParser.NativeRoot,
-                                        new ExtractionOptions
-                                        {
-                                            ExtractFullPath = true,
-                                            Overwrite = true
-                                        });
-                                }
+                                reader.WriteEntryToDirectory(argumentParser.NativeRoot,
+                                    new ExtractionOptions
+                                    {
+                                        ExtractFullPath = true,
+                                        Overwrite = true
+                                    });
                             }
-                        });
-
-                        File.Create(nativesVerifyFilePath).Dispose();
-                    }
+                        }
+                    });
                 }
                 catch (Exception e)
                 {
-                    if (!File.Exists(nativesVerifyFilePath))
-                        return new LaunchResult
-                        {
-                            Error = new ErrorModel
-                            {
-                                Exception = e
-                            },
-                            ErrorType = LaunchErrorType.DecompressFailed,
-                            LaunchSettings = settings,
-                            RunTime = prevSpan
-                        };
-
-                    try
-                    {
-                        File.Delete(nativesVerifyFilePath);
-                    }
-                    catch
-                    {
-                        return new LaunchResult
-                        {
-                            Error = new ErrorModel
-                            {
-                                Exception = e
-                            },
-                            ErrorType = LaunchErrorType.OperationFailed,
-                            LaunchSettings = settings,
-                            RunTime = prevSpan
-                        };
-                    }
-
                     return new LaunchResult
                     {
                         Error = new ErrorModel

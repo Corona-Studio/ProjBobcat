@@ -7,6 +7,7 @@
         DecompressFailed,
         AuthFailed,
         OperationFailed,
+        IncompleteArguments,
         Unknown
     }
 }

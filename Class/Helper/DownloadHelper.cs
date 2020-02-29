@@ -121,7 +121,7 @@ namespace ProjBobcat.Class.Helper
 
         #region 分片下载
 
-        public static void MultiPartDownload(DownloadFile downloadFile, int numberOfParts = 8)
+        public static void MultiPartDownload(DownloadFile downloadFile, int numberOfParts = 16)
         {
             if (downloadFile == null) return;
 
@@ -166,10 +166,10 @@ namespace ProjBobcat.Class.Helper
                 var readRanges = new List<DownloadRange>();
                 var partSize = (long)Math.Ceiling((double)responseLength / numberOfParts);
 
-                for (var i = 1; i < numberOfParts; i++)
+                for (var i = 0; i < numberOfParts; i++)
                 {
-                    var start = (numberOfParts - 1) * partSize;
-                    var end = numberOfParts * partSize;
+                    var start = i * partSize + Math.Min(1, i);
+                    var end = Math.Min((i + 1) * partSize, responseLength);
 
                     readRanges.Add(new DownloadRange
                     {
@@ -178,47 +178,34 @@ namespace ProjBobcat.Class.Helper
                     });
                 }
 
-                readRanges.Add(new DownloadRange
-                {
-                    End = responseLength,
-                    Start = (numberOfParts - 1) * partSize
-                });
-
                 #endregion
 
                 #region Parallel download
 
                 var index = 0;
-                var tasks = new Task[numberOfParts];
-                foreach(var range in readRanges)
+
+                Task.WaitAll(readRanges.Select(range => Task.Run(() =>
                 {
-                    tasks[index] = Task.Run(() =>
-                    {
-                        var client = new WebClient
-                        {
-                            DownloadRange = range
-                        };
+                    using var client = new WebClient { DownloadRange = range };
+                    var data = client.DownloadData(new Uri(downloadFile.DownloadUri));
 
-                        var data = client.DownloadData(new Uri(downloadFile.DownloadUri));
-
-                        if (!tempFilesDictionary.TryAdd(index, data))
-                        {
-                            downloadFile.Completed?.Invoke(null,
-                                new DownloadFileCompletedEventArgs(false, null, downloadFile));
-                            return;
-                        }
-
-                        index++;
-                    });
-                }
-
-                Task.WaitAll(tasks);
+                    if (!tempFilesDictionary.TryAdd(index, data)) return;
+                    index++;
+                })).ToArray());
 
                 #endregion
 
                 #region Merge to single file
 
                 var bytes = new List<byte>();
+
+                if (tempFilesDictionary.Count != readRanges.Count)
+                {
+                    downloadFile.Completed?.Invoke(null,
+                        new DownloadFileCompletedEventArgs(false, null, downloadFile));
+                    return;
+                }
+
                 foreach (var downloadedBytes in tempFilesDictionary.OrderBy(b => b.Key))
                 {
                     bytes.AddRange(downloadedBytes.Value);
@@ -240,18 +227,30 @@ namespace ProjBobcat.Class.Helper
             }
         }
 
-        /*
-        public static async Task MultiPartDownload(DownloadFile downloadFile, int numberOfParts = 8)
+        public static async Task MultiPartDownloadTaskAsync(DownloadFile downloadFile, int numberOfParts = 16)
         {
             if (downloadFile == null) return;
 
+            //Handle number of parallel downloads  
+            if (numberOfParts <= 0)
+            {
+                numberOfParts = Environment.ProcessorCount;
+            }
+
             try
             {
-                using var httpClient = new HttpClient();
-                using var message = new HttpRequestMessage(HttpMethod.Head, new Uri(downloadFile.DownloadUri));
-                var response = await httpClient.SendAsync(message).ConfigureAwait(false);
-                var parallelDownloadSupported = response.Headers.AcceptRanges?.Contains("bytes") ?? false;
-                var contentLength = response.Content.Headers.ContentLength ?? 0;
+                #region Get file size
+
+                var webRequest = WebRequest.Create(new Uri(downloadFile.DownloadUri));
+                webRequest.Method = "HEAD";
+                long responseLength;
+                bool parallelDownloadSupported;
+
+                using (var webResponse = await webRequest.GetResponseAsync().ConfigureAwait(false))
+                {
+                    parallelDownloadSupported = webResponse.Headers.Get("Accept-Ranges")?.Contains("bytes") ?? false;
+                    responseLength = long.TryParse(webResponse.Headers.Get("Content-Length"), out var l) ? l : 0;
+                }
 
                 if (!parallelDownloadSupported)
                 {
@@ -259,23 +258,71 @@ namespace ProjBobcat.Class.Helper
                     return;
                 }
 
-                var tasks = new List<Task>();
-                var partSize = (long)Math.Ceiling((double)contentLength / numberOfParts);
+                #endregion
 
-                File.Create(downloadFile.DownloadPath).Dispose();
+                if (File.Exists(downloadFile.DownloadPath))
+                {
+                    File.Delete(downloadFile.DownloadPath);
+                }
+
+                var tempFilesDictionary = new ConcurrentDictionary<int, byte[]>();
+
+                #region Calculate ranges
+
+                var readRanges = new List<DownloadRange>();
+                var partSize = (long)Math.Ceiling((double)responseLength / numberOfParts);
 
                 for (var i = 0; i < numberOfParts; i++)
                 {
                     var start = i * partSize + Math.Min(1, i);
-                    var end = Math.Min((i + 1) * partSize, contentLength);
+                    var end = Math.Min((i + 1) * partSize, responseLength);
 
-                    tasks.Add(Task.Run(async () =>
+                    readRanges.Add(new DownloadRange
                     {
-                        await DownloadPart(downloadFile, start, end).ConfigureAwait(false);
-                    }));
+                        End = end,
+                        Start = start
+                    });
                 }
 
-                await Task.WhenAll(tasks).ConfigureAwait(false);
+                #endregion
+
+                #region Parallel download
+
+                var index = 0;
+
+                await Task.WhenAll(readRanges.Select(range => Task.Run(async () =>
+                {
+                    using var client = new WebClient { DownloadRange = range };
+                    var data = await client.DownloadDataTaskAsync(new Uri(downloadFile.DownloadUri))
+                        .ConfigureAwait(false);
+
+                    if (!tempFilesDictionary.TryAdd(index, data)) return;
+                    index++;
+                })).ToArray()).ConfigureAwait(false);
+
+                #endregion
+
+                #region Merge to single file
+
+                var bytes = new List<byte>();
+
+                if (tempFilesDictionary.Count != readRanges.Count)
+                {
+                    downloadFile.Completed?.Invoke(null,
+                        new DownloadFileCompletedEventArgs(false, null, downloadFile));
+                    return;
+                }
+
+                foreach (var downloadedBytes in tempFilesDictionary.OrderBy(b => b.Key))
+                {
+                    bytes.AddRange(downloadedBytes.Value);
+                }
+
+                using var s = new MemoryStream(bytes.ToArray());
+                FileHelper.SaveBinaryFile(s, downloadFile.DownloadPath);
+
+                #endregion
+
                 downloadFile.Completed?.Invoke(null,
                     new DownloadFileCompletedEventArgs(true, null, downloadFile));
                 downloadFile.Changed?.Invoke(null, null);
@@ -286,20 +333,6 @@ namespace ProjBobcat.Class.Helper
                     new DownloadFileCompletedEventArgs(false, ex, downloadFile));
             }
         }
-
-        private static async Task DownloadPart(DownloadFile downloadFile, long start, long end)
-        {
-            using var httpClient = new HttpClient();
-            using var fileStream = new FileStream(downloadFile.DownloadPath, FileMode.Open, FileAccess.Write, FileShare.Write);
-            {
-                using var message = new HttpRequestMessage(HttpMethod.Get, new Uri(downloadFile.DownloadUri));
-                message.Headers.Add("Range", $"bytes={start}-{end}");
-
-                fileStream.Position = start;
-                await httpClient.SendAsync(message).Result.Content.CopyToAsync(fileStream).ConfigureAwait(false);
-            }
-        }
-        */
 
         #endregion
 
@@ -338,6 +371,8 @@ namespace ProjBobcat.Class.Helper
                             df.DownloadPath.Substring(0, df.DownloadPath.LastIndexOf('\\')));
                         if (!di.Exists) di.Create();
 
+                        DownloadData(df);
+                        /*
                         if (df.FileSize >= 1048576 || df.FileSize == 0 || df.FileSize == default)
                         {
                             MultiPartDownload(df);
@@ -346,6 +381,7 @@ namespace ProjBobcat.Class.Helper
                         {
                             DownloadData(df);
                         }
+                        */
                     }
                 }
 

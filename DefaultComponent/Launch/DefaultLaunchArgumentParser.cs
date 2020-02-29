@@ -111,14 +111,15 @@ namespace ProjBobcat.DefaultComponent.Launch
                 };
 
                 sb.Append(gcArg).Append(" ");
-                sb.Append(
-                        "-XX:+UnlockExperimentalVMOptions -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=50 -XX:G1HeapRegionSize=32M")
-                    .Append(" ");
             }
             else
             {
                 sb.Append(GameProfile.JavaArgs).Append(" ");
             }
+
+            sb.Append(
+                    "-XX:+UnlockExperimentalVMOptions -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=50 -XX:G1HeapRegionSize=32M")
+                .Append(" ");
 
             return sb.ToString();
         }
@@ -207,7 +208,7 @@ namespace ProjBobcat.DefaultComponent.Launch
         {
             var arguments = new List<string>
             {
-                (string.IsNullOrEmpty(GameProfile?.JavaDir) ? LaunchSettings.FallBackGameArguments.JavaExecutable : GameProfile.JavaDir).Trim(),
+                (string.IsNullOrEmpty(GameProfile?.JavaDir) ? LaunchSettings.FallBackGameArguments?.JavaExecutable : GameProfile.JavaDir)?.Trim(),
                 ParseJvmHeadArguments().Trim(),
                 ParseJvmArguments().Trim(),
                 VersionInfo.MainClass,

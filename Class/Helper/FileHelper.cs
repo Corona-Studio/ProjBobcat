@@ -38,10 +38,9 @@ namespace ProjBobcat.Class.Helper
                 if (File.Exists(fileName))
                     File.Delete(fileName);
 
-                using var outStream = File.Create(fileName);
-
                 lock (Locker)
                 {
+                    using var outStream = File.Create(fileName);
                     int l;
                     do
                     {
@@ -49,9 +48,9 @@ namespace ProjBobcat.Class.Helper
                         if (l > 0)
                             outStream.Write(buffer, 0, l);
                     } while (l > 0);
+                    outStream.Close();
                 }
 
-                outStream.Close();
                 stream.Close();
             }
             catch (ArgumentException)
