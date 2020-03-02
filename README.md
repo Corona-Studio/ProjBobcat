@@ -20,23 +20,23 @@ For Chinese version of README.md, see README_zh_cn.md.
 
 ## Roadmap
 
-| Function                       | Status              |
-| -------------------------- | ----------------- |
-| Offline Auth Model               | ✅                 |
-| Online Auth Model (Yggdrasil)               | ✅                 |
-| Version Isolation                   | ✅                 |
-| launcher_profiles.json Analysis | ✅                 |
-| Nuget Distribution          | ✅ |
-| Old Forge Installation Model          | ✅ |
-| New Forge Installation Model          | ✅ |
-| Native Auto Completion               | ✅ |
+| Function | Status |
+| - | - |
+| Offline Auth Model | ✅ |
+| Online Auth Model (Yggdrasil) | ✅ |
+| Version Isolation | ✅ |
+| launcher_profiles.json Analysis | ✅ |
+| Nuget Distribution | ✅ |
+| Old Forge Installation Model | ✅ |
+| New Forge Installation Model | ✅ |
+| Resource Auto Completion (Multi-thread downloader) | ✅ |
 
 ## Instruction
 
 ProjBobcat provides 3 main components & a core to form the whole core framework.
 
 | Class                           | Parent Interface               | Parent Class                      | Function                               |
-| ---------------------------- | ---------------------- | ------------------------- | ---------------------------------- |
+| - | - | - | - |
 | DefaultGameCore              | IGameCore              | NG                        | All Implementations of the Default Launch Core           |
 | DefaultLaunchArgumentParser  | IArgumentParser        | LaunchArgumentParserBase  | The Default Argument Analysis Tool               |
 | DefaultLauncherProfileParser | ILauncherProfileParser | LauncherProfileParserBase | The Default launcher_profiles.json Analysis Module |
@@ -45,7 +45,7 @@ ProjBobcat provides 3 main components & a core to form the whole core framework.
 
 Selective components:
 | Class                           | Parent Interface               | Parent Class                      | Function                               |
-| ---------------------------- | ---------------------- | ------------------------- | ---------------------------------- |
+| - | - | - | - |
 | DefaultResourceCompleter              | IResourceCompleter          | NG                        | All Implementations of the Default Resource Completer  |
 
 
@@ -104,7 +104,7 @@ await drc.CheckAndDownloadTaskAsync().ConfigureAwait(false);
 Here are some events which you could bind to your program.
 
 | Name                   | Method Signature                              | Refers to             |
-| ---------------------- | ------------------------------------- | ---------------- |
+| - | - | - |
 | GameResourceInfoResolveStatus  | (object sender, GameResourceInfoResolveEventArgs e)  | Resolver status |
 | DownloadFileChangedEvent   | (object sender, DownloadFileChangedEventArgs e)   | All files download status changed |
 | DownloadFileCompletedEvent | (object sender, DownloadFileCompletedEventArgs e) | Single file download completed |
@@ -148,7 +148,7 @@ launchSettings.GameArguments = new GameArguments // (Optional) The arguments of 
 Here are some events which you could bind to your program.
 
 | Name                   | Method Signature                              | Refers to             |
-| ---------------------- | ------------------------------------- | ---------------- |
+| - | - | - |
 | GameExitEventDelegate  | (object sender, GameExitEventArgs e)  | Game Exit     |
 | GameLogEventDelegate   | (object sender, GameLogEventArgs e)   | Game Log |
 | LaunchLogEventDelegate | (object sender, LaunchLogEventArgs e) | Core Log |

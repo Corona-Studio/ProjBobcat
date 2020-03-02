@@ -32,32 +32,32 @@
 
 ## 功能列表
 
-| 功能                       | 状态              |
-| -------------------------- | ----------------- |
-| 离线验证模型               | ✅                 |
-| 正版验证模型               | ✅                 |
-| 版本隔离                   | ✅                 |
-| launcher_profiles.json解析 | ✅                 |
-| Nuget分发         | ✅ |
-| 旧版Forge安装模型          | ✅ |
-| 新版Forge安装模型          | ✅ |
-| 依赖自动补全               | ✅ |
+| 功能 | 状态 |
+| - | - |
+| 离线验证模型 | ✅ |
+| 正版验证模型 | ✅ |
+| 版本隔离 | ✅ |
+| launcher_profiles.json解析 | ✅ |
+| Nuget分发 | ✅ |
+| 旧版Forge安装模型 | ✅ |
+| 新版Forge安装模型 | ✅ |
+| 资源自动补全（多线程下载） | ✅ |
 
 ## 使用说明
 
 ProjBobcat提供了3大必要组件和一个核心总成来支撑起整个核心框架
 
-| 类                           | 父级接口               | 父类                      | 作用                               |
-| ---------------------------- | ---------------------- | ------------------------- | ---------------------------------- |
-| DefaultGameCore              | IGameCore              | NG                        | 提供默认启动核心所有实现           |
-| DefaultLaunchArgumentParser  | IArgumentParser        | LaunchArgumentParserBase  | 提供默认启动参数解析               |
+| 类 | 父级接口 | 父类 | 作用 |
+| - | - | - | - |
+| DefaultGameCore | IGameCore | NG | 提供默认启动核心所有实现 |
+| DefaultLaunchArgumentParser | IArgumentParser | LaunchArgumentParserBase | 提供默认启动参数解析 |
 | DefaultLauncherProfileParser | ILauncherProfileParser | LauncherProfileParserBase | 提供默认launcher_profiles.json解析 |
-| DefaultVersionLocator        | IVersionLocator        | VersionLocatorBase        | 定位游戏版本           |
+| DefaultVersionLocator | IVersionLocator        | VersionLocatorBase | 定位游戏版本 |
 
 选择性组件：
-| 类                           | 父级接口               | 父类                      | 作用                               |
-| ---------------------------- | ---------------------- | ------------------------- | ---------------------------------- |
-| DefaultResourceCompleter              | IResourceCompleter          | NG                        | 提供默认资源补全器所有实现  |
+| 类 | 父级接口| 父类 | 作用 |
+| - | - | - | - |
+| DefaultResourceCompleter | IResourceCompleter | NG | 提供默认资源补全器所有实现  |
 
 ### 基本使用
 
@@ -113,10 +113,10 @@ await drc.CheckAndDownloadTaskAsync().ConfigureAwait(false);
 
 这里是一些您可以绑定的事件：
 
-| 名称              | 签名                          | 作用           |
-| ---------------------- | ------------------------------------- | ---------------- |
-| GameResourceInfoResolveStatus  | (object sender, GameResourceInfoResolveEventArgs e)  | 获取解析器状态 |
-| DownloadFileChangedEvent   | (object sender, DownloadFileChangedEventArgs e)   | 总文件下载进度改变 |
+| 名称 | 签名 | 作用 |
+| - | - | - |
+| GameResourceInfoResolveStatus | (object sender, GameResourceInfoResolveEventArgs e) | 获取解析器状态 |
+| DownloadFileChangedEvent | (object sender, DownloadFileChangedEventArgs e) | 总文件下载进度改变 |
 | DownloadFileCompletedEvent | (object sender, DownloadFileCompletedEventArgs e) | 单文件下载完成 |
 
 
@@ -158,8 +158,8 @@ launchSettings.GameArguments = new GameArguments // （可选）具体游戏启�
 
 您可以在启动核心内注册以下事件来实现完整的日志记录
 
-| 名称                   | 方法签名                              | 作用             |
-| ---------------------- | ------------------------------------- | ---------------- |
+| 名称 | 方法签名 | 作用 |
+| - | - | - |
 | GameExitEventDelegate  | (object sender, GameExitEventArgs e)  | 游戏退出事件     |
 | GameLogEventDelegate   | (object sender, GameLogEventArgs e)   | 游戏日志输出事件 |
 | LaunchLogEventDelegate | (object sender, LaunchLogEventArgs e) | 启动日志输出事件 |
