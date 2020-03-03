@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>ProjBobcat</id>
-    <version>1.0.1.4</version>
+    <version>1.0.1.5</version>
     <title>ProjBobcat</title>
     <authors>Corona Studio</authors>
     <owners>Corona Studio</owners>
@@ -13,12 +13,13 @@
     <icon>Bobcat.png</icon>
     <description>The next-generation Minecraft launcher core written in C# providing the freest, fastest and the most complete experience.</description>
     <summary>The next-generation Minecraft launcher core written in C# providing the freest, fastest and the most complete experience.</summary>
-    <releaseNotes>Fix critical bugs.</releaseNotes>
+    <releaseNotes>Add MinecraftUWP support.</releaseNotes>
     <copyright>Copyright © 2020 Corona Studio</copyright>
     <tags>minecraft-launcher minecraft launcher csharp</tags>
     <dependencies>
       <dependency id="Newtonsoft.Json" version="12.0.3" />
       <dependency id="sharpcompress" version="0.24.0" />
+      <dependency id="Microsoft.PowerShell.5.ReferenceAssemblies" version="1.1.0" />
     </dependencies>
   </metadata>
   <files>
