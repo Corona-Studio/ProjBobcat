@@ -6,6 +6,7 @@
 [MCBBS教程](https://www.mcbbs.net/thread-956299-1-1.html)
 
 ![bobcatlong.png](https://i.loli.net/2020/02/07/Hx18lYLKR43WAb2.png)
+[![CodeFactor](https://www.codefactor.io/repository/github/corona-studio/projbobcat/badge/master)](https://www.codefactor.io/repository/github/corona-studio/projbobcat/overview/master)
 
 以C#写就的下一代Minecraft启动核心，提供最自由、快速和完整的开发和使用体验。
 
