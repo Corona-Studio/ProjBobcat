@@ -6,7 +6,11 @@
 [MCBBS教程](https://www.mcbbs.net/thread-956299-1-1.html)
 
 ![bobcatlong.png](https://i.loli.net/2020/02/07/Hx18lYLKR43WAb2.png)
-[![CodeFactor](https://www.codefactor.io/repository/github/corona-studio/projbobcat/badge/master)](https://www.codefactor.io/repository/github/corona-studio/projbobcat/overview/master)
+![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/corona-studio/projbobcat?label=CodeFactor评分&style=for-the-badge)
+![Nuget](https://img.shields.io/nuget/v/ProjBobcat?label=NUGET版本&style=for-the-badge)
+![Nuget](https://img.shields.io/nuget/dt/projbobcat?label=NUGET下载量&style=for-the-badge)
+![GitHub](https://img.shields.io/github/license/corona-studio/projbobcat?label=开源许可&style=for-the-badge)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/m/corona-studio/projbobcat?label=COMMIT统计&style=for-the-badge)
 
 以C#写就的下一代Minecraft启动核心，提供最自由、快速和完整的开发和使用体验。
 
