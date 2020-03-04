@@ -3,11 +3,14 @@
 # [简体中文](https://github.com/Corona-Studio/ProjBobcat/blob/master/README_zh_cn.md)
 
 ![bobcatlong.png](https://i.loli.net/2020/02/07/Hx18lYLKR43WAb2.png)
-![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/corona-studio/projbobcat?style=for-the-badge)
-![Nuget](https://img.shields.io/nuget/v/ProjBobcat?style=for-the-badge)
-![Nuget](https://img.shields.io/nuget/dt/projbobcat?style=for-the-badge)
-![GitHub](https://img.shields.io/github/license/corona-studio/projbobcat?style=for-the-badge)
-![GitHub commit activity](https://img.shields.io/github/commit-activity/m/corona-studio/projbobcat?style=for-the-badge)
+![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/corona-studio/projbobcat?logo=codefactor&style=for-the-badge)
+![Nuget](https://img.shields.io/nuget/v/ProjBobcat?logo=nuget&style=for-the-badge)
+![Nuget](https://img.shields.io/nuget/dt/projbobcat?logo=nuget&style=for-the-badge)
+![GitHub](https://img.shields.io/github/license/corona-studio/projbobcat?logo=github&style=for-the-badge)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/m/corona-studio/projbobcat?logo=github&style=for-the-badge)
+![GitHub closed pull requests](https://img.shields.io/github/issues-pr-closed/corona-studio/projbobcat?logo=github&style=for-the-badge)
+![GitHub repo size](https://img.shields.io/github/repo-size/corona-studio/projbobcat?logo=github&style=for-the-badge)
+![GitHub stars](https://img.shields.io/github/stars/corona-studio/projbobcat?logo=github&style=for-the-badge)
 
 The next-generation Minecraft launcher core written in C# providing the freest, fastest and the most complete experience.
 
