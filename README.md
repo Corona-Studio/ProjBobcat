@@ -3,7 +3,11 @@
 # [简体中文](https://github.com/Corona-Studio/ProjBobcat/blob/master/README_zh_cn.md)
 
 ![bobcatlong.png](https://i.loli.net/2020/02/07/Hx18lYLKR43WAb2.png)
-[![CodeFactor](https://www.codefactor.io/repository/github/corona-studio/projbobcat/badge/master)](https://www.codefactor.io/repository/github/corona-studio/projbobcat/overview/master)
+![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/corona-studio/projbobcat?style=for-the-badge)
+![Nuget](https://img.shields.io/nuget/v/ProjBobcat?style=for-the-badge)
+![Nuget](https://img.shields.io/nuget/dt/projbobcat?style=for-the-badge)
+![GitHub](https://img.shields.io/github/license/corona-studio/projbobcat?style=for-the-badge)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/m/corona-studio/projbobcat?style=for-the-badge)
 
 The next-generation Minecraft launcher core written in C# providing the freest, fastest and the most complete experience.
 
