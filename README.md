@@ -39,6 +39,7 @@ For Chinese version of README.md, see README_zh_cn.md.
 | Old Forge Installation Model | ✅ |
 | New Forge Installation Model | ✅ |
 | Resource Auto Completion (Multi-thread downloader) | ✅ |
+| Minecraft: Windows 10 Edition Support (Detector and launcher) | ✅ |
 
 ## Instruction
 

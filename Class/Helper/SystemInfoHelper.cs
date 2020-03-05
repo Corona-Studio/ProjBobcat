@@ -1,6 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
+using System.Management.Automation;
+using System.Management.Automation.Runspaces;
+using System.Text;
 using Microsoft.Win32;
 
 namespace ProjBobcat.Class.Helper
@@ -8,9 +12,10 @@ namespace ProjBobcat.Class.Helper
     public static class SystemInfoHelper
     {
         /// <summary>
+        /// Detect javaw.exe via reg.
         /// 从注册表中查找可能的javaw.exe位置
         /// </summary>
-        /// <returns>JAVA地址列表</returns>
+        /// <returns>A list, containing all possible path of javaw.exe. JAVA地址列表。</returns>
         public static IEnumerable<string> FindJava()
         {
             try
@@ -67,8 +72,25 @@ namespace ProjBobcat.Class.Helper
                 "6.0" => "2008",
                 "5.2" => "2003",
                 "5.1" => "XP",
-                _ => "unknow"
+                _ => "unknown"
             };
+        }
+
+        public static bool IsMinecraftUWPInstalled()
+        {
+            Runspace rs = RunspaceFactory.CreateRunspace();
+            rs.Open();
+            Pipeline pl = rs.CreatePipeline();
+            pl.Commands.AddScript("Get-AppxPackage -Name \"Microsoft.MinecraftUWP\"");
+            pl.Commands.Add("Out-String");
+            Collection<PSObject> result = pl.Invoke();
+            rs.Close();
+            rs.Dispose();
+            if (result == null || String.IsNullOrEmpty(result[0].ToString())) 
+            {
+                return false;
+            }
+            return true;
         }
     }
 }
