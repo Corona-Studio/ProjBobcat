@@ -38,6 +38,11 @@ namespace ProjBobcat.DefaultComponent.Launch
         public event EventHandler<GameLogEventArgs> GameLogEventDelegate;
         public event EventHandler<LaunchLogEventArgs> LaunchLogEventDelegate;
 
+        public LaunchResult Launch(LaunchSettings settings)
+        {
+            throw new NotImplementedException();
+        }
+
         /// <summary>
         /// 启动游戏。
         /// Launch the game.

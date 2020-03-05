@@ -13,6 +13,7 @@ namespace ProjBobcat.Interface
         string RootPath { get; set; }
         Guid ClientToken { get; set; }
         IVersionLocator VersionLocator { get; set; }
+        LaunchResult Launch(LaunchSettings settings);
         Task<LaunchResult> LaunchTaskAsync(LaunchSettings settings);
 
         /// <summary>
