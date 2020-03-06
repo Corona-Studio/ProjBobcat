@@ -135,8 +135,9 @@ namespace ProjBobcat.Class.Helper
             {
                 #region Get file size
 
-                var webRequest = WebRequest.Create(new Uri(downloadFile.DownloadUri));
+                var webRequest = (HttpWebRequest)WebRequest.Create(new Uri(downloadFile.DownloadUri));
                 webRequest.Method = "HEAD";
+                webRequest.UserAgent = Ua;
                 long responseLength;
                 bool parallelDownloadSupported;
 
@@ -144,6 +145,7 @@ namespace ProjBobcat.Class.Helper
                 {
                     parallelDownloadSupported = webResponse.Headers.Get("Accept-Ranges")?.Contains("bytes") ?? false;
                     responseLength = long.TryParse(webResponse.Headers.Get("Content-Length"), out var l) ? l : 0;
+                    parallelDownloadSupported = (parallelDownloadSupported && responseLength != 0);
                 }
 
                 if (!parallelDownloadSupported)
@@ -174,7 +176,8 @@ namespace ProjBobcat.Class.Helper
                     readRanges.Add(new DownloadRange
                     {
                         End = end,
-                        Start = start
+                        Start = start,
+                        Index = i
                     });
                 }
 
@@ -182,15 +185,19 @@ namespace ProjBobcat.Class.Helper
 
                 #region Parallel download
 
-                var index = 0;
+                var downloadParts = 0;
 
-                Task.WaitAll(readRanges.Select(range => Task.Run(() =>
+                Task.WhenAll(readRanges.Select(range => Task.Run(() =>
                 {
                     using var client = new WebClient { DownloadRange = range };
-                    var data = client.DownloadData(new Uri(downloadFile.DownloadUri));
+                    client.Headers.Add("user-agent", Ua);
 
-                    if (!tempFilesDictionary.TryAdd(index, data)) return;
-                    index++;
+                    var data = client.DownloadData(new Uri(downloadFile.DownloadUri));
+                    if (!tempFilesDictionary.TryAdd(range.Index, data)) return;
+                    downloadParts++;
+
+                    downloadFile.Changed?.Invoke(client,
+                        new DownloadFileChangedEventArgs { ProgressPercentage = (double)downloadParts / numberOfParts });
                 })).ToArray());
 
                 #endregion
@@ -211,6 +218,13 @@ namespace ProjBobcat.Class.Helper
                     bytes.AddRange(downloadedBytes.Value);
                 }
 
+                if (bytes.Count != responseLength)
+                {
+                    downloadFile.Completed?.Invoke(null,
+                        new DownloadFileCompletedEventArgs(false, null, downloadFile));
+                    return;
+                }
+
                 using var s = new MemoryStream(bytes.ToArray());
                 FileHelper.SaveBinaryFile(s, downloadFile.DownloadPath);
 
@@ -218,7 +232,6 @@ namespace ProjBobcat.Class.Helper
 
                 downloadFile.Completed?.Invoke(null,
                     new DownloadFileCompletedEventArgs(true, null, downloadFile));
-                downloadFile.Changed?.Invoke(null, null);
             }
             catch (Exception ex)
             {
@@ -227,7 +240,7 @@ namespace ProjBobcat.Class.Helper
             }
         }
 
-        public static async Task MultiPartDownloadTaskAsync(DownloadFile downloadFile, int numberOfParts = 16)
+        public static async Task MultiPartDownloadTaskAsync(DownloadFile downloadFile, int numberOfParts = 8)
         {
             if (downloadFile == null) return;
 
@@ -241,8 +254,9 @@ namespace ProjBobcat.Class.Helper
             {
                 #region Get file size
 
-                var webRequest = WebRequest.Create(new Uri(downloadFile.DownloadUri));
+                var webRequest = (HttpWebRequest) WebRequest.Create(new Uri(downloadFile.DownloadUri));
                 webRequest.Method = "HEAD";
+                webRequest.UserAgent = Ua;
                 long responseLength;
                 bool parallelDownloadSupported;
 
@@ -250,6 +264,7 @@ namespace ProjBobcat.Class.Helper
                 {
                     parallelDownloadSupported = webResponse.Headers.Get("Accept-Ranges")?.Contains("bytes") ?? false;
                     responseLength = long.TryParse(webResponse.Headers.Get("Content-Length"), out var l) ? l : 0;
+                    parallelDownloadSupported = (parallelDownloadSupported && responseLength != 0);
                 }
 
                 if (!parallelDownloadSupported)
@@ -280,7 +295,8 @@ namespace ProjBobcat.Class.Helper
                     readRanges.Add(new DownloadRange
                     {
                         End = end,
-                        Start = start
+                        Start = start,
+                        Index = i
                     });
                 }
 
@@ -288,16 +304,20 @@ namespace ProjBobcat.Class.Helper
 
                 #region Parallel download
 
-                var index = 0;
-
+                var downloadParts = 0;
                 await Task.WhenAll(readRanges.Select(range => Task.Run(async () =>
                 {
-                    using var client = new WebClient { DownloadRange = range };
+                    using var client = new WebClient {DownloadRange = range};
+                    client.Headers.Add("user-agent", Ua);
+
                     var data = await client.DownloadDataTaskAsync(new Uri(downloadFile.DownloadUri))
                         .ConfigureAwait(false);
 
-                    if (!tempFilesDictionary.TryAdd(index, data)) return;
-                    index++;
+                    if(!tempFilesDictionary.TryAdd(range.Index, data)) return;
+                    downloadParts++;
+
+                    downloadFile.Changed?.Invoke(client,
+                        new DownloadFileChangedEventArgs {ProgressPercentage = (double) downloadParts / numberOfParts});
                 })).ToArray()).ConfigureAwait(false);
 
                 #endregion
@@ -318,6 +338,13 @@ namespace ProjBobcat.Class.Helper
                     bytes.AddRange(downloadedBytes.Value);
                 }
 
+                if (bytes.Count != responseLength)
+                {
+                    downloadFile.Completed?.Invoke(null,
+                        new DownloadFileCompletedEventArgs(false, null, downloadFile));
+                    return;
+                }
+
                 using var s = new MemoryStream(bytes.ToArray());
                 FileHelper.SaveBinaryFile(s, downloadFile.DownloadPath);
 
@@ -325,7 +352,6 @@ namespace ProjBobcat.Class.Helper
 
                 downloadFile.Completed?.Invoke(null,
                     new DownloadFileCompletedEventArgs(true, null, downloadFile));
-                downloadFile.Changed?.Invoke(null, null);
             }
             catch (Exception ex)
             {
@@ -371,8 +397,7 @@ namespace ProjBobcat.Class.Helper
                             df.DownloadPath.Substring(0, df.DownloadPath.LastIndexOf('\\')));
                         if (!di.Exists) di.Create();
 
-                        DownloadData(df);
-                        /*
+                        // DownloadData(df);
                         if (df.FileSize >= 1048576 || df.FileSize == 0 || df.FileSize == default)
                         {
                             MultiPartDownload(df);
@@ -381,7 +406,6 @@ namespace ProjBobcat.Class.Helper
                         {
                             DownloadData(df);
                         }
-                        */
                     }
                 }
 
