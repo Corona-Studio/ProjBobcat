@@ -93,7 +93,7 @@ namespace ProjBobcat.DefaultComponent
             {
                 if (retryCount == 0)
                 {
-                    await DownloadHelper.AdvancedDownloadListFile(downloadList, null).ConfigureAwait(false);
+                    await DownloadHelper.AdvancedDownloadListFile(downloadList, DownloadThread, null).ConfigureAwait(false);
                 }
 
                 if (!needRetry) return new Tuple<TaskResultStatus, bool>(TaskResultStatus.Success, false);
@@ -107,7 +107,7 @@ namespace ProjBobcat.DefaultComponent
 
                     var tempList = retryFileList;
                     retryFileList.Clear();
-                    await DownloadHelper.AdvancedDownloadListFile(tempList, null).ConfigureAwait(false);
+                    await DownloadHelper.AdvancedDownloadListFile(tempList, DownloadThread, null).ConfigureAwait(false);
 
                     retryCount++;
                 }
