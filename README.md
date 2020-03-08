@@ -19,6 +19,11 @@ Developed and maintained by Corona Studio.
 
 For Chinese version of README.md, see README_zh_cn.md.
 
+## An Awesome Typescript Launcher Core
+[Repo Link](https://github.com/Voxelum/minecraft-launcher-core-node)
+
+All you need for minecraft launcher in typescript. https://voxelum.github.io/minecraft-launcher-core-node/
+
 ## Installation
 * Clone and copy ProjBobcat's source code to your solution folder, then add ProjBobcat's reference to your project.
 * Directly install ProjBobcat via Nuget Package Manager or simply execute 
@@ -68,7 +73,7 @@ Selective components:
 var core = new DefaultGameCore
 {
     ClientToken = clientToken, // Game's identifier, set it to any GUID you like, such as 88888888-8888-8888-8888-888888888888 or a randomly generated one.
-    RootPath = rootPath, // Path of .minecraft\
+    RootPath = rootPath, // Path of .minecraft\, you had better use absolute path.
     VersionLocator = new DefaultVersionLocator(rootPath, clientToken)
     {
         LauncherProfileParser = new DefaultLauncherProfileParser(rootPath, clientToken)
