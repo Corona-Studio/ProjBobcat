@@ -1,4 +1,10 @@
-﻿using ProjBobcat.Authenticator;
+﻿using System;
+using System.Diagnostics;
+using System.IO;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using ProjBobcat.Authenticator;
 using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
@@ -7,12 +13,6 @@ using ProjBobcat.Event;
 using ProjBobcat.Interface;
 using SharpCompress.Common;
 using SharpCompress.Readers;
-using System;
-using System.Diagnostics;
-using System.IO;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace ProjBobcat.DefaultComponent.Launch
 {
@@ -31,6 +31,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                 _rootPath = Path.GetFullPath(value.TrimEnd('/'));
             }
         }
+
         public IVersionLocator VersionLocator { get; set; }
         public Guid ClientToken { get; set; }
 
@@ -44,11 +45,14 @@ namespace ProjBobcat.DefaultComponent.Launch
         }
 
         /// <summary>
-        /// 启动游戏。
-        /// Launch the game.
+        ///     启动游戏。
+        ///     Launch the game.
         /// </summary>
         /// <param name="settings">启动设置。Launch Settings.</param>
-        /// <returns>启动结果。如果成功则包含消耗的时间，如果失败则包含异常信息。The result contains elapsed time(if successful) or elapsed time plus exception info(if failed).</returns>
+        /// <returns>
+        ///     启动结果。如果成功则包含消耗的时间，如果失败则包含异常信息。The result contains elapsed time(if successful) or elapsed time plus exception
+        ///     info(if failed).
+        /// </returns>
         public async Task<LaunchResult> LaunchTaskAsync(LaunchSettings settings)
         {
             try
@@ -60,6 +64,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                 stopwatch.Start();
 
                 #region 解析游戏 Game Info Resolver
+
                 var version = VersionLocator.GetGame(settings.Version);
 
                 //在以下方法中，我们存储前一个步骤的时间并且重置秒表，以此逐步测量启动时间。
@@ -69,7 +74,6 @@ namespace ProjBobcat.DefaultComponent.Launch
                 //错误处理
                 //Error processor
                 if (version == null)
-                {
                     return new LaunchResult
                     {
                         ErrorType = LaunchErrorType.OperationFailed,
@@ -80,7 +84,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                             Cause = "这有可能是因为您的游戏JSON文件损坏所导致的问题"
                         }
                     };
-                }
+
                 #endregion
 
                 #region 验证账户凭据 Legal Account Verifier
@@ -99,27 +103,30 @@ namespace ProjBobcat.DefaultComponent.Launch
                 //Error processor
                 if (authResult == null || authResult.AuthStatus == AuthStatus.Failed ||
                     authResult.AuthStatus == AuthStatus.Unknown)
-                {
                     return new LaunchResult
                     {
                         LaunchSettings = settings,
                         Error = new ErrorModel
                         {
                             Error = "验证失败",
-                            Cause = authResult == null ? "未知的验证器" : authResult.AuthStatus switch
-                            {
-                                AuthStatus.Failed => "可能是因为用户名或密码错误，或是验证服务器暂时未响应",
-                                AuthStatus.Unknown => "未知错误",
-                                _ => "未知错误"
-                            },
+                            Cause = authResult == null
+                                ? "未知的验证器"
+                                : authResult.AuthStatus switch
+                                {
+                                    AuthStatus.Failed => "可能是因为用户名或密码错误，或是验证服务器暂时未响应",
+                                    AuthStatus.Unknown => "未知错误",
+                                    _ => "未知错误"
+                                },
                             ErrorMessage = "无法验证凭据的有效性"
                         }
                     };
-                }
+
                 #endregion
 
                 #region 解析启动参数 Launch Parameters Resolver
-                var argumentParser = new DefaultLaunchArgumentParser(settings, VersionLocator.LauncherProfileParser, VersionLocator, authResult, RootPath, version.RootVersion);
+
+                var argumentParser = new DefaultLaunchArgumentParser(settings, VersionLocator.LauncherProfileParser,
+                    VersionLocator, authResult, RootPath, version.RootVersion);
 
                 //以字符串数组形式生成启动参数。
                 //Generates launch cmd arguments in string[].
@@ -129,7 +136,6 @@ namespace ProjBobcat.DefaultComponent.Launch
                 var sb = new StringBuilder();
 
                 if (arguments.Count != 6)
-                {
                     return new LaunchResult
                     {
                         ErrorType = LaunchErrorType.IncompleteArguments,
@@ -140,7 +146,6 @@ namespace ProjBobcat.DefaultComponent.Launch
                             ErrorMessage = "启动参数不完整，很有可能是缺少Java路径导致的"
                         }
                     };
-                }
 
                 //从参数数组中移出java路径并加以存储。
                 //Load the first element(java's path) into the excutable string and removes it from the generated arguments
@@ -151,6 +156,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                 //Format the arguments using string builder.(Convert to string)
                 arguments.ForEach(arg => sb.Append(arg.Trim()).Append(" "));
                 InvokeLaunchLogThenStart(sb.ToString(), ref prevSpan, ref stopwatch);
+
                 #endregion
 
                 #region 解压Natives Natives Decompresser
@@ -170,17 +176,13 @@ namespace ProjBobcat.DefaultComponent.Launch
                             File.OpenRead(path);
                         using var reader = ReaderFactory.Open(stream);
                         while (reader.MoveToNextEntry())
-                        {
                             if (!(n.Extract?.Exclude?.Contains(reader.Entry.Key) ?? false))
-                            {
                                 reader.WriteEntryToDirectory(argumentParser.NativeRoot,
                                     new ExtractionOptions
                                     {
                                         ExtractFullPath = true,
                                         Overwrite = true
                                     });
-                            }
-                        }
                     });
                 }
                 catch (Exception e)
@@ -196,10 +198,13 @@ namespace ProjBobcat.DefaultComponent.Launch
                         RunTime = prevSpan
                     };
                 }
+
                 InvokeLaunchLogThenStart("解压Natives", ref prevSpan, ref stopwatch);
+
                 #endregion
 
                 #region 启动游戏 Launch
+
                 var launchWrapper = new LaunchWrapper(authResult)
                 {
                     GameCore = this,
@@ -227,6 +232,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                             CancellationToken.None, TaskContinuationOptions.DenyChildAttach, TaskScheduler.Default)
                         .ConfigureAwait(false);
                 }).Start();
+
                 #endregion
 
                 //返回启动结果。
@@ -250,9 +256,10 @@ namespace ProjBobcat.DefaultComponent.Launch
         }
 
         #region 内部方法 Internal Methods
+
         /// <summary>
-        /// （内部方法）写入日志，记录时间。
-        /// Write the log and record the time.
+        ///     （内部方法）写入日志，记录时间。
+        ///     Write the log and record the time.
         /// </summary>
         /// <param name="item"></param>
         /// <param name="time"></param>
@@ -282,6 +289,7 @@ namespace ProjBobcat.DefaultComponent.Launch
         {
             LaunchLogEventDelegate?.Invoke(sender, e);
         }
+
         #endregion
 
         #region IDisposable Support
@@ -305,10 +313,7 @@ namespace ProjBobcat.DefaultComponent.Launch
         // The bulk of the clean-up code is implemented in Dispose(bool)
         protected virtual void Dispose(bool disposing)
         {
-            if (disposing)
-            {
-                VersionLocator = null;
-            }
+            if (disposing) VersionLocator = null;
         }
 
         #endregion

@@ -18,19 +18,11 @@ namespace ProjBobcat.Class.Helper
             var ruleFlag = false;
 
             foreach (var rule in jvmRules.Where(rule => rule.Action.Equals("allow", StringComparison.Ordinal)))
-            {
                 if (rule.OperatingSystem == null)
-                {
                     ruleFlag = rule.Action.Equals("allow", StringComparison.Ordinal);
-                }
                 else if (rule.OperatingSystem.ContainsKey("name"))
-                {
                     if (rule.OperatingSystem["name"].Equals("windows", StringComparison.Ordinal))
-                    {
                         ruleFlag = rule.Action.Equals("allow", StringComparison.Ordinal);
-                    }
-                }
-            }
 
             return ruleFlag;
         }

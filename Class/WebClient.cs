@@ -19,13 +19,11 @@ namespace ProjBobcat.Class
             var lWebRequest = base.GetWebRequest(uri);
             lWebRequest.Timeout = Timeout;
 
-             if (!(lWebRequest is HttpWebRequest webRequest)) return lWebRequest;
+            if (!(lWebRequest is HttpWebRequest webRequest)) return lWebRequest;
             webRequest.ReadWriteTimeout = Timeout;
 
             if (DownloadRange != null && !DownloadRange.Equals(default(DownloadRange)))
-            {
                 webRequest.AddRange(DownloadRange.Start, DownloadRange.End);
-            }
 
             return lWebRequest;
         }

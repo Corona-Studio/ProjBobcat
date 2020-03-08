@@ -97,5 +97,4 @@ namespace ProjBobcat.Class.Model.Forge
 
         [JsonProperty("optionals")] public List<Optional> OptionalList { get; set; }
     }
-
 }

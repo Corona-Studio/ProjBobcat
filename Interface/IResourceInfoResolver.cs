@@ -1,7 +1,7 @@
 ﻿using System;
-using ProjBobcat.Class.Model;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using ProjBobcat.Class.Model;
 using ProjBobcat.Event;
 
 namespace ProjBobcat.Interface

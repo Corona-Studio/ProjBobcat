@@ -1,11 +1,11 @@
-﻿using ProjBobcat.Class.Helper;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.YggdrasilAuth;
 using ProjBobcat.Interface;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace ProjBobcat.Authenticator
 {
@@ -66,7 +66,7 @@ namespace ProjBobcat.Authenticator
         }
 
         /// <summary>
-        /// 异步验证凭据（不可用）
+        ///     异步验证凭据（不可用）
         /// </summary>
         /// <param name="userField"></param>
         /// <returns></returns>
@@ -76,7 +76,7 @@ namespace ProjBobcat.Authenticator
         }
 
         /// <summary>
-        /// 验证凭据（同步）
+        ///     验证凭据（同步）
         /// </summary>
         /// <param name="userField"></param>
         /// <returns></returns>

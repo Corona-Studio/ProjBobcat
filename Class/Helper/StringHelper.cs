@@ -31,10 +31,7 @@ namespace ProjBobcat.Class.Helper
 
             var sb = new StringBuilder();
             sb.Append('{');
-            foreach(var item in properties)
-            {
-                sb.AppendFormat("\"{0}\":[\"{1}\"],", item.Name, item.Value);
-            }
+            foreach (var item in properties) sb.AppendFormat("\"{0}\":[\"{1}\"],", item.Name, item.Value);
 
             var totalSb = new StringBuilder();
             totalSb.Append(sb.ToString().TrimEnd(',').Trim()).Append('}');
