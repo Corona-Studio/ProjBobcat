@@ -368,15 +368,19 @@ namespace ProjBobcat.Class.Helper
         ///     下载文件方法（自动确定是否使用分片下载）
         /// </summary>
         /// <param name="fileEnumerable">文件列表</param>
+        /// <param name="downloadThread">下载线程</param>
         /// <param name="tokenSource"></param>
-        public static async Task AdvancedDownloadListFile(IEnumerable<DownloadFile> fileEnumerable,
+        public static async Task AdvancedDownloadListFile(IEnumerable<DownloadFile> fileEnumerable, int downloadThread,
         CancellationTokenSource tokenSource)
         {
             var downloadFiles = fileEnumerable.ToList();
             var token = tokenSource?.Token ?? CancellationToken.None;
             var processorCount = ProcessorHelper.GetPhysicalProcessorCount();
 
-            using var bc = new BlockingCollection<DownloadFile>(processorCount * 4);
+            if (downloadThread <= 0)
+                downloadThread = processorCount;
+
+            using var bc = new BlockingCollection<DownloadFile>(downloadThread * 4);
             using var downloadQueueTask = Task.Run(() =>
             {
                 foreach (var df in downloadFiles)
@@ -411,7 +415,7 @@ namespace ProjBobcat.Class.Helper
 
                 var threads = new List<Thread>();
 
-                for (var i = 0; i < processorCount * 2; i++)
+                for (var i = 0; i < downloadThread * 2; i++)
                 {
                     threads.Add(new Thread(DownloadAction));
                 }
