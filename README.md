@@ -19,7 +19,7 @@ Developed and maintained by Corona Studio.
 
 For Chinese version of README.md, see README_zh_cn.md.
 
-## An Awesome Typescript Launcher Core
+## [AD] An Awesome Typescript Launcher Core
 [Repo Link](https://github.com/Voxelum/minecraft-launcher-core-node)
 
 All you need for minecraft launcher in typescript. https://voxelum.github.io/minecraft-launcher-core-node/
