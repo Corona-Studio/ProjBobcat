@@ -16,14 +16,19 @@
 ![GitHub repo size](https://img.shields.io/github/repo-size/corona-studio/projbobcat?logo=github&label=仓库大小&style=for-the-badge)
 ![GitHub stars](https://img.shields.io/github/stars/corona-studio/projbobcat?logo=github&label=GITHUB星星！&style=for-the-badge)
 
-以C#写就的下一代Minecraft启动核心，提供最自由、快速和完整的开发和使用体验。
+以 C# 写就的下一代 Minecraft 启动核心，提供最自由、快速和完整的开发和使用体验。
 
 由日冕工作室开发和维护。
 
+## [广告] 一个超牛逼的Typescript启动核心
+[仓库链接](https://github.com/Voxelum/minecraft-launcher-core-node)
+
+All you need for minecraft launcher in typescript. https://voxelum.github.io/minecraft-launcher-core-node/
+
 ## 反馈BUG或和我们一起开发？
 
-如果您想加入我们并和我们一起将这只“大猫”变得更强壮。欢迎您加入我们的讨论组（见下方）。
-如果您有任何改进意见想和我们提出，请在帖子评论区留言或是加入我们的官方讨论组进行讨论~
+欢迎您提交 issue 、 PR 以修正 bug 并完善我们的代码。
+如果有更多疑难问题，欢迎您加入我们的讨论组（见下方）。如果您想直接参与开发核心工作，并接触团队内部的工具链，欢迎加入我们的审核群。
 
 ## 联系方式
 
@@ -46,12 +51,12 @@
 | 离线验证模型 | ✅ |
 | 正版验证模型 | ✅ |
 | 版本隔离 | ✅ |
-| launcher_profiles.json解析 | ✅ |
-| Nuget分发 | ✅ |
+| launcher_profiles.json 解析 | ✅ |
+| Nuget 分发 | ✅ |
 | 旧版Forge安装模型 | ✅ |
 | 新版Forge安装模型 | ✅ |
 | 资源自动补全（多线程下载） | ✅ |
-| Windows 10版Minecraft支持（检测和启动） | ✅ |
+| Windows 10 版 Minecraft 支持（检测和启动） | ✅ |
 
 ## 使用说明
 
