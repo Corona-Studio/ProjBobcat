@@ -5,7 +5,9 @@ using System.Runtime.InteropServices;
 // 控制。更改这些特性值可修改
 // 与程序集关联的信息。
 [assembly: AssemblyTitle("ProjBobcat")]
-[assembly: AssemblyDescription("The next generation Minecraft launcher core written in C# providing the freest, fastest and the most complete experience.")]
+[assembly:
+    AssemblyDescription(
+        "The next generation Minecraft launcher core written in C# providing the freest, fastest and the most complete experience.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Corona Studio")]
 [assembly: AssemblyProduct("ProjBobcat")]

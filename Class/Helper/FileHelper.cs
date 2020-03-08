@@ -6,6 +6,8 @@ namespace ProjBobcat.Class.Helper
 {
     public static class FileHelper
     {
+        private static readonly ReaderWriterLock Locker = new ReaderWriterLock();
+
         /// <summary>
         ///     写入文件
         /// </summary>
@@ -19,7 +21,6 @@ namespace ProjBobcat.Class.Helper
             sw.Close();
         }
 
-        private static readonly ReaderWriterLock Locker = new ReaderWriterLock();
         /// <summary>
         ///     将二进制文件保存到磁盘
         /// </summary>
@@ -48,6 +49,7 @@ namespace ProjBobcat.Class.Helper
                         if (l > 0)
                             outStream.Write(buffer, 0, l);
                     } while (l > 0);
+
                     outStream.Close();
                 }
 

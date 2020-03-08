@@ -1,23 +1,30 @@
 ﻿using System;
-using ProjBobcat.Class.Model;
-using ProjBobcat.Interface;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using ProjBobcat.Class.Helper;
+using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.GameResource;
 using ProjBobcat.Event;
+using ProjBobcat.Interface;
 
 namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
 {
     public class AssetInfoResolver : IResourceInfoResolver
     {
-        public string BasePath { get; set; }
-        public VersionInfo VersionInfo { get; set; }
         public string AssetIndexUriRoot { get; set; }
         public string AssetUriRoot { get; set; } = "https://resources.download.minecraft.net/";
+
+        private string _basePath;
+        public string BasePath
+        {
+            get => _basePath.TrimEnd('\\');
+            set => _basePath = value;
+        }
+
+        public VersionInfo VersionInfo { get; set; }
 
         public event EventHandler<GameResourceInfoResolveEventArgs> GameResourceInfoResolveEvent;
 
@@ -33,9 +40,9 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
             if (string.IsNullOrEmpty(VersionInfo?.AssetInfo.Id)) return default;
 
             var assetIndexesDi =
-                new DirectoryInfo($"{GamePathHelper.GetAssetsRoot(BasePath.TrimEnd('\\'))}\\indexes\\");
+                new DirectoryInfo($"{GamePathHelper.GetAssetsRoot(BasePath)}\\indexes\\");
             var assetObjectsDi =
-                new DirectoryInfo($"{GamePathHelper.GetAssetsRoot(BasePath.TrimEnd('\\'))}\\objects\\");
+                new DirectoryInfo($"{GamePathHelper.GetAssetsRoot(BasePath)}\\objects\\");
 
             if (!assetIndexesDi.Exists) assetIndexesDi.Create();
             if (!assetObjectsDi.Exists) assetObjectsDi.Create();
@@ -56,7 +63,8 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                     $"{VersionInfo.AssetInfo.Id}.json").ConfigureAwait(false);
                 if (indexDownloadResult.TaskStatus != TaskResultStatus.Success)
                 {
-                    LogGameResourceInfoResolveStatus($"Asset Indexes 文件下载失败！原因{indexDownloadResult.Message}", LogType.Error);
+                    LogGameResourceInfoResolveStatus($"Asset Indexes 文件下载失败！原因{indexDownloadResult.Message}",
+                        LogType.Error);
                     return default;
                 }
 
@@ -71,7 +79,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                 var content = File.ReadAllText($"{assetIndexesDi.FullName}\\{VersionInfo.AssetInfo.Id}.json");
                 assetObject = JsonConvert.DeserializeObject<AssetObjectModel>(content);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 LogGameResourceInfoResolveStatus($"解析Asset Indexes 文件失败！原因：{ex.Message}", LogType.Error);
                 return default;

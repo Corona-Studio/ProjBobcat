@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
-using System.Management.Automation;
 using System.Management.Automation.Runspaces;
-using System.Text;
 using Microsoft.Win32;
 
 namespace ProjBobcat.Class.Helper
@@ -12,8 +9,8 @@ namespace ProjBobcat.Class.Helper
     public static class SystemInfoHelper
     {
         /// <summary>
-        /// Detect javaw.exe via reg.
-        /// 从注册表中查找可能的javaw.exe位置
+        ///     Detect javaw.exe via reg.
+        ///     从注册表中查找可能的javaw.exe位置
         /// </summary>
         /// <returns>A list, containing all possible path of javaw.exe. JAVA地址列表。</returns>
         public static IEnumerable<string> FindJava()
@@ -36,8 +33,9 @@ namespace ProjBobcat.Class.Helper
             try
             {
                 var registryKey = registry.OpenSubKey("JavaSoft");
-                if (registryKey == null || (registry = registryKey.OpenSubKey("Java Runtime Environment")) == null) return new string[0];
-                return (from ver in registry.GetSubKeyNames()
+                if (registryKey == null || (registry = registryKey.OpenSubKey("Java Runtime Environment")) == null)
+                    return new string[0];
+                return from ver in registry.GetSubKeyNames()
                     select registry.OpenSubKey(ver)
                     into command
                     where command != null
@@ -47,7 +45,7 @@ namespace ProjBobcat.Class.Helper
                     select javaHomes.ToString()
                     into str
                     where !string.IsNullOrWhiteSpace(str)
-                    select str + @"\bin\javaw.exe");
+                    select str + @"\bin\javaw.exe";
             }
             catch
             {
@@ -78,18 +76,15 @@ namespace ProjBobcat.Class.Helper
 
         public static bool IsMinecraftUWPInstalled()
         {
-            Runspace rs = RunspaceFactory.CreateRunspace();
+            var rs = RunspaceFactory.CreateRunspace();
             rs.Open();
-            Pipeline pl = rs.CreatePipeline();
+            var pl = rs.CreatePipeline();
             pl.Commands.AddScript("Get-AppxPackage -Name \"Microsoft.MinecraftUWP\"");
             pl.Commands.Add("Out-String");
-            Collection<PSObject> result = pl.Invoke();
+            var result = pl.Invoke();
             rs.Close();
             rs.Dispose();
-            if (result == null || String.IsNullOrEmpty(result[0].ToString())) 
-            {
-                return false;
-            }
+            if (result == null || string.IsNullOrEmpty(result[0].ToString())) return false;
             return true;
         }
     }

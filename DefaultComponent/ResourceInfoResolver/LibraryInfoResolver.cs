@@ -1,22 +1,22 @@
-﻿using ProjBobcat.Class.Model;
-using ProjBobcat.Event;
-using ProjBobcat.Interface;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using ProjBobcat.Class.Helper;
+using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.GameResource;
+using ProjBobcat.Event;
+using ProjBobcat.Interface;
 
 namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
 {
     public class LibraryInfoResolver : IResourceInfoResolver
     {
-        public string BasePath { get; set; }
-        public VersionInfo VersionInfo { get; set; }
         public string LibraryUriRoot { get; set; } = "https://libraries.minecraft.net/";
         public string ForgeUriRoot { get; set; } = "https://files.minecraftforge.net/";
+        public string BasePath { get; set; }
+        public VersionInfo VersionInfo { get; set; }
 
         public event EventHandler<GameResourceInfoResolveEventArgs> GameResourceInfoResolveEvent;
 
@@ -51,13 +51,9 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                     string uri;
                     if (lL.Name.StartsWith("forge", StringComparison.Ordinal) ||
                         lL.Name.StartsWith("net.minecraftforge", StringComparison.Ordinal))
-                    {
                         uri = $"{ForgeUriRoot}{lL.Path.Replace('\\', '/')}";
-                    }
                     else
-                    {
                         uri = $"{LibraryUriRoot}{lL.Path.Replace('\\', '/')}";
-                    }
 
                     var path = GamePathHelper.GetLibraryPath(BasePath, lL.Path.Replace('/', '\\'));
                     result.Add(new LibraryDownloadInfo

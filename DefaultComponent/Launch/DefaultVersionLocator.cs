@@ -16,11 +16,9 @@ namespace ProjBobcat.DefaultComponent.Launch
 {
     public sealed class DefaultVersionLocator : VersionLocatorBase, IVersionLocator
     {
-        public ILauncherProfileParser LauncherProfileParser { get; set; }
-
         /// <summary>
-        /// 构造函数。
-        /// Constructor.
+        ///     构造函数。
+        ///     Constructor.
         /// </summary>
         /// <param name="rootPath">指.minecraft/ Refers to .minecraft/</param>
         /// <param name="clientToken"></param>
@@ -35,9 +33,11 @@ namespace ProjBobcat.DefaultComponent.Launch
                 Directory.CreateDirectory(GamePathHelper.GetVersionPath(RootPath));
         }
 
+        public ILauncherProfileParser LauncherProfileParser { get; set; }
+
         /// <summary>
-        /// 获取所有能够正常被解析的游戏信息。
-        /// Fetch all the game versions' information in the .minecraft/ folder.
+        ///     获取所有能够正常被解析的游戏信息。
+        ///     Fetch all the game versions' information in the .minecraft/ folder.
         /// </summary>
         /// <returns>一个表，包含.minecraft文件夹中所有版本的所有信息。A list, containing all information of all games in .minecraft/ .</returns>
         public IEnumerable<VersionInfo> GetAllGames()
@@ -49,8 +49,8 @@ namespace ProjBobcat.DefaultComponent.Launch
         }
 
         /// <summary>
-        /// 获取某个特定ID的游戏信息。
-        /// Get the game info with specific ID.
+        ///     获取某个特定ID的游戏信息。
+        ///     Get the game info with specific ID.
         /// </summary>
         /// <param name="id">装有游戏版本的文件夹名。The game version folder's name.</param>
         /// <returns></returns>
@@ -61,11 +61,74 @@ namespace ProjBobcat.DefaultComponent.Launch
         }
 
         /// <summary>
-        /// 解析游戏参数
+        ///     解析游戏JVM参数
         /// </summary>
         /// <param name="arguments"></param>
         /// <returns></returns>
-        private protected override Tuple<string, Dictionary<string, string>> ParseGameArguments(Tuple<string, List<object>> arguments)
+        public string ParseJvmArguments(List<object> arguments)
+        {
+            if (!(arguments?.Any() ?? false))
+                return string.Empty;
+
+            var sb = new StringBuilder();
+
+            foreach (var jvmRule in arguments)
+            {
+                if (!(jvmRule is JObject))
+                {
+                    sb.Append($" {jvmRule}");
+                    continue;
+                }
+
+                var jvmRuleObj = (JObject) jvmRule;
+                var flag = true;
+                if (jvmRuleObj.ContainsKey("rules"))
+                    foreach (var rule in jvmRuleObj["rules"].Select(r => r.ToObject<JvmRules>()))
+                    {
+                        if (rule.OperatingSystem.ContainsKey("arch"))
+                        {
+                            flag = rule.Action.Equals("allow", StringComparison.Ordinal) &&
+                                   rule.OperatingSystem["arch"].Equals($"x{SystemInfoHelper.GetSystemArch()}",
+                                       StringComparison.Ordinal);
+                            break;
+                        }
+
+                        if (!rule.OperatingSystem.ContainsKey("version"))
+                            flag = rule.Action.Equals("allow", StringComparison.Ordinal) &&
+                                   rule.OperatingSystem["name"].Equals("windows", StringComparison.Ordinal);
+                        else
+                            flag = rule.Action.Equals("allow", StringComparison.Ordinal) &&
+                                   rule.OperatingSystem["name"].Equals("windows", StringComparison.Ordinal) &&
+                                   rule.OperatingSystem["version"].Equals($"^{SystemInfoHelper.GetSystemVersion()}\\.",
+                                       StringComparison.Ordinal);
+                    }
+
+                if (!flag) continue;
+
+                if (!jvmRuleObj.ContainsKey("value")) continue;
+
+                if (jvmRuleObj["value"].Type == JTokenType.Array)
+                {
+                    sb.Append(" ");
+                    foreach (var arg in jvmRuleObj["value"])
+                        sb.Append(" ").Append(StringHelper.FixArgument(arg.ToString()));
+                }
+                else
+                {
+                    sb.Append($" {StringHelper.FixArgument(jvmRuleObj["value"].ToString())}");
+                }
+            }
+
+            return sb.ToString().Trim();
+        }
+
+        /// <summary>
+        ///     解析游戏参数
+        /// </summary>
+        /// <param name="arguments"></param>
+        /// <returns></returns>
+        private protected override Tuple<string, Dictionary<string, string>> ParseGameArguments(
+            Tuple<string, List<object>> arguments)
         {
             var sb = new StringBuilder();
             var availableArguments = new Dictionary<string, string>();
@@ -97,106 +160,35 @@ namespace ProjBobcat.DefaultComponent.Launch
                 foreach (var rule in gameRuleObj["rules"].Select(r => r.ToObject<GameRules>()))
                 {
                     if (!rule.Action.Equals("allow", StringComparison.Ordinal)) continue;
-                    if(!rule.Features.Any()) continue;
-                    if(!rule.Features.First().Value) continue;
+                    if (!rule.Features.Any()) continue;
+                    if (!rule.Features.First().Value) continue;
 
                     ruleKey = rule.Features.First().Key;
 
-                    if(!gameRuleObj.ContainsKey("value")) continue;
+                    if (!gameRuleObj.ContainsKey("value")) continue;
                     ruleValue = gameRuleObj["value"].Type == JTokenType.String
                         ? gameRuleObj["value"].ToString()
                         : string.Join(" ", gameRuleObj["value"]);
                 }
 
-                if (!string.IsNullOrEmpty(ruleValue))
-                {
-                    availableArguments.Add(ruleKey, ruleValue);
-                }
+                if (!string.IsNullOrEmpty(ruleValue)) availableArguments.Add(ruleKey, ruleValue);
             }
 
-            return new Tuple<string, Dictionary<string, string>>(sb.ToString().Trim(), availableArguments); ;
+            return new Tuple<string, Dictionary<string, string>>(sb.ToString().Trim(), availableArguments);
+            ;
         }
 
         /// <summary>
-        /// 解析游戏JVM参数
-        /// </summary>
-        /// <param name="arguments"></param>
-        /// <returns></returns>
-        public string ParseJvmArguments(List<object> arguments)
-        {
-            if (!(arguments?.Any() ?? false))
-                return string.Empty;
-
-            var sb = new StringBuilder();
-
-            foreach (var jvmRule in arguments)
-            {
-                if (!(jvmRule is JObject))
-                {
-                    sb.Append($" {jvmRule}");
-                    continue;
-                }
-
-                var jvmRuleObj = (JObject) jvmRule;
-                var flag = true;
-                if (jvmRuleObj.ContainsKey("rules"))
-                {
-                    foreach (var rule in jvmRuleObj["rules"].Select(r => r.ToObject<JvmRules>()))
-                    {
-                        
-                        if (rule.OperatingSystem.ContainsKey("arch"))
-                        {
-                            flag = rule.Action.Equals("allow", StringComparison.Ordinal) &&
-                                   rule.OperatingSystem["arch"].Equals($"x{SystemInfoHelper.GetSystemArch()}",
-                                       StringComparison.Ordinal);
-                            break;
-                        }
-
-                        if (!rule.OperatingSystem.ContainsKey("version"))
-                        {
-                            flag = rule.Action.Equals("allow", StringComparison.Ordinal) &&
-                                   rule.OperatingSystem["name"].Equals("windows", StringComparison.Ordinal);
-                        }
-                        else
-                        {
-                            flag = rule.Action.Equals("allow", StringComparison.Ordinal) &&
-                                   rule.OperatingSystem["name"].Equals("windows", StringComparison.Ordinal) &&
-                                   rule.OperatingSystem["version"].Equals($"^{SystemInfoHelper.GetSystemVersion()}\\.",
-                                       StringComparison.Ordinal);
-                        }
-                    }
-                }
-
-                if (!flag) continue;
-
-                if (!jvmRuleObj.ContainsKey("value")) continue;
-
-                if (jvmRuleObj["value"].Type == JTokenType.Array)
-                {
-                    sb.Append(" "); 
-                    foreach (var arg in jvmRuleObj["value"])
-                    {
-                        sb.Append(" ").Append(StringHelper.FixArgument(arg.ToString()));
-                    }
-                }
-                else
-                {
-                    sb.Append($" {StringHelper.FixArgument(jvmRuleObj["value"].ToString())}");
-                }
-            }
-
-            return sb.ToString().Trim();
-        }
-
-        /// <summary>
-        /// 获取Natives与Libraries（核心依赖）列表
-        /// Fetch list of Natives & Libraries.
+        ///     获取Natives与Libraries（核心依赖）列表
+        ///     Fetch list of Natives & Libraries.
         /// </summary>
         /// <param name="libraries">反序列化后的库数据。Deserialized library data.</param>
         /// <returns>二元组（包含一组list，T1是Natives列表，T2是Libraries列表）。A tuple.(T1 -> Natives, T2 -> Libraries)</returns>
-        private protected override Tuple<List<NativeFileInfo>, List<FileInfo>> GetNatives(IEnumerable<Library> libraries)
+        private protected override Tuple<List<NativeFileInfo>, List<FileInfo>> GetNatives(
+            IEnumerable<Library> libraries)
         {
-            var result = new Tuple<List<NativeFileInfo>, List<FileInfo>>(new List<NativeFileInfo>(), new List<FileInfo>());
+            var result =
+                new Tuple<List<NativeFileInfo>, List<FileInfo>>(new List<NativeFileInfo>(), new List<FileInfo>());
 
             // 扫描库数据。
             // Scan the library data.
@@ -255,10 +247,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                     ? lib.Natives["windows"].Replace("${arch}", SystemInfoHelper.GetSystemArch())
                     : "natives-windows";
 
-                if (lib.Downloads.Classifiers.ContainsKey(key))
-                {
-                    lib.Downloads.Classifiers[key].Name = lib.Name;
-                }
+                if (lib.Downloads.Classifiers.ContainsKey(key)) lib.Downloads.Classifiers[key].Name = lib.Name;
 
                 result.Item1.Add(new NativeFileInfo
                 {
@@ -271,8 +260,8 @@ namespace ProjBobcat.DefaultComponent.Launch
         }
 
         /// <summary>
-        /// 反序列化基础游戏JSON信息，以供解析器处理。
-        /// Deserialize basic JSON data of the game to make the data processable for the analyzer.
+        ///     反序列化基础游戏JSON信息，以供解析器处理。
+        ///     Deserialize basic JSON data of the game to make the data processable for the analyzer.
         /// </summary>
         /// <param name="id">游戏文件夹名。Name of the game's folder.</param>
         /// <returns></returns>
@@ -285,7 +274,9 @@ namespace ProjBobcat.DefaultComponent.Launch
             if (!File.Exists(GamePathHelper.GetGameJsonPath(RootPath, id)))
                 return null;
 
-            var versionJson = JsonConvert.DeserializeObject<RawVersionModel>(File.ReadAllText(GamePathHelper.GetGameJsonPath(RootPath, id)));
+            var versionJson =
+                JsonConvert.DeserializeObject<RawVersionModel>(
+                    File.ReadAllText(GamePathHelper.GetGameJsonPath(RootPath, id)));
 
             if (string.IsNullOrEmpty(versionJson.MainClass))
                 return null;
@@ -296,8 +287,8 @@ namespace ProjBobcat.DefaultComponent.Launch
         }
 
         /// <summary>
-        /// 游戏信息解析。
-        /// Game info analysis.
+        ///     游戏信息解析。
+        ///     Game info analysis.
         /// </summary>
         /// <param name="id">游戏文件夹名。Name of the game version's folder.</param>
         /// <returns>一个VersionInfo类。A VersionInfo class.</returns>
@@ -338,10 +329,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                     current = ParseRawVersion(current.InheritsFrom);
                 }
 
-                if (inherits.Contains(null))
-                {
-                    return null;
-                }
+                if (inherits.Contains(null)) return null;
             }
 
             // 生成一个随机的名字来防止重复。
@@ -382,7 +370,7 @@ namespace ProjBobcat.DefaultComponent.Launch
 
                     if (flag)
                     {
-                        var rootLibs= GetNatives(inherits[i].Libraries);
+                        var rootLibs = GetNatives(inherits[i].Libraries);
 
                         result.Libraries = rootLibs.Item2;
                         result.Natives = rootLibs.Item1;
@@ -390,7 +378,8 @@ namespace ProjBobcat.DefaultComponent.Launch
                         jvmSb.Append(ParseJvmArguments(inherits[i].Arguments?.Jvm));
 
                         var rootArgs = ParseGameArguments(
-                            new Tuple<string, List<object>>(inherits[i].MinecraftArguments, inherits[i].Arguments?.Game));
+                            new Tuple<string, List<object>>(inherits[i].MinecraftArguments,
+                                inherits[i].Arguments?.Game));
                         gameArgsSb.Append(rootArgs.Item1);
                         result.AvailableGameArguments = rootArgs.Item2;
 
@@ -404,7 +393,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                     {
                         var mLMaven = mL.Name.ResolveMavenString();
                         var mLFlag = false;
-                        for(var j = 0; j < result.Libraries.Count; j++)
+                        for (var j = 0; j < result.Libraries.Count; j++)
                         {
                             var lMaven = result.Libraries[j].Name.ResolveMavenString();
                             if (!lMaven.GetMavenFullName().Equals(mLMaven.GetMavenFullName(), StringComparison.Ordinal))
@@ -419,21 +408,18 @@ namespace ProjBobcat.DefaultComponent.Launch
                             mLFlag = true;
                         }
 
-                        if(mLFlag)
+                        if (mLFlag)
                             continue;
 
                         result.Libraries.Add(mL);
                     }
 
                     var currentNativesNames = new List<string>();
-                    result.Natives.ForEach(n =>
-                    {
-                        currentNativesNames.Add(n.FileInfo.Name);
-                    });
+                    result.Natives.ForEach(n => { currentNativesNames.Add(n.FileInfo.Name); });
                     var moreMiddleNatives =
                         middleLibs.Item1.Where(mL => !currentNativesNames.Contains(mL.FileInfo.Name)).ToList();
                     result.Natives.AddRange(moreMiddleNatives);
-                    
+
 
                     var jvmArgs = ParseJvmArguments(inherits[i].Arguments?.Jvm);
                     var middleGameArgs = ParseGameArguments(
@@ -486,13 +472,14 @@ namespace ProjBobcat.DefaultComponent.Launch
                 p.Value.LastVersionId?.Equals(id, StringComparison.Ordinal) ?? true);
             if (oldProfile.Equals(default(KeyValuePair<string, GameProfileModel>)))
             {
-                LauncherProfileParser.LauncherProfile.Profiles.Add(randomName.ToGuid().ToString("N"), new GameProfileModel
-                {
-                    GameDir = GamePathHelper.GetGamePath(RootPath, id),
-                    LastVersionId = id,
-                    Name = randomName,
-                    Created = DateTime.Now
-                });
+                LauncherProfileParser.LauncherProfile.Profiles.Add(randomName.ToGuid().ToString("N"),
+                    new GameProfileModel
+                    {
+                        GameDir = GamePathHelper.GetGamePath(RootPath, id),
+                        LastVersionId = id,
+                        Name = randomName,
+                        Created = DateTime.Now
+                    });
                 LauncherProfileParser.SaveProfile();
                 return result;
             }

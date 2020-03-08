@@ -1,25 +1,33 @@
-﻿using ProjBobcat.Class.Helper;
-using ProjBobcat.Class.Model;
-using ProjBobcat.Class.Model.YggdrasilAuth;
-using ProjBobcat.Event;
-using ProjBobcat.Interface;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
+using ProjBobcat.Class.Helper;
+using ProjBobcat.Class.Model;
+using ProjBobcat.Class.Model.YggdrasilAuth;
+using ProjBobcat.Event;
+using ProjBobcat.Interface;
 
 namespace ProjBobcat.DefaultComponent.ForgeInstaller
 {
     public class HighVersionForgeInstaller : IForgeInstaller
     {
-        private const string InstallArgumentPlaceHolder = "-cp {ClassPaths} me.xfl03.HeadlessInstaller -progress -installClient {InstallPath}";
+        private const string InstallArgumentPlaceHolder =
+            "-cp {ClassPaths} me.xfl03.HeadlessInstaller -progress -installClient {InstallPath}";
+
         private const string HeadlessInstallerDownloadUri =
             "https://csl.littleservice.cn/libraries/me/xfl03/forge-installer-headless/1.0.1/forge-installer-headless-1.0.1.jar";
 
+        private double _currentProgress;
+
+        private string _currentStage = "未知";
+
+        private bool _succeed;
+        public string JavaExecutablePath { get; set; }
+
         public string ForgeExecutablePath { get; set; }
         public string ForgeInstallPath { get; set; }
-        public string JavaExecutablePath { get; set; }
 
         public event EventHandler<ForgeInstallStageChangedEventArgs> StageChangedEventDelegate;
 
@@ -28,7 +36,6 @@ namespace ProjBobcat.DefaultComponent.ForgeInstaller
             throw new NotImplementedException();
         }
 
-        private bool _succeed;
         public async Task<ForgeInstallResult> InstallForgeTaskAsync()
         {
             if (string.IsNullOrEmpty(ForgeExecutablePath))
@@ -38,7 +45,7 @@ namespace ProjBobcat.DefaultComponent.ForgeInstaller
             if (string.IsNullOrEmpty(JavaExecutablePath))
                 throw new ArgumentNullException("未指定\"JavaExecutablePath\"参数");
 
-            if(!File.Exists(JavaExecutablePath))
+            if (!File.Exists(JavaExecutablePath))
                 return new ForgeInstallResult
                 {
                     Succeeded = false,
@@ -63,7 +70,7 @@ namespace ProjBobcat.DefaultComponent.ForgeInstaller
                 };
 
             var di = new DirectoryInfo(ForgeInstallPath);
-            if(!di.Exists)
+            if (!di.Exists)
                 di.Create();
 
             di.CreateSubdirectory("Temp");
@@ -71,7 +78,7 @@ namespace ProjBobcat.DefaultComponent.ForgeInstaller
             var taskResult = await DownloadHelper.DownloadSingleFileAsync(new Uri(HeadlessInstallerDownloadUri),
                 $"{di.FullName}Temp", "HeadlessInstaller.jar").ConfigureAwait(false);
 
-            if(taskResult.TaskStatus == TaskResultStatus.Error)
+            if (taskResult.TaskStatus == TaskResultStatus.Error)
                 return new ForgeInstallResult
                 {
                     Succeeded = false,
@@ -121,7 +128,7 @@ namespace ProjBobcat.DefaultComponent.ForgeInstaller
                     Succeeded = _succeed
                 };
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return new ForgeInstallResult
                 {
@@ -135,18 +142,16 @@ namespace ProjBobcat.DefaultComponent.ForgeInstaller
             }
         }
 
-        private string _currentStage = "未知";
-        private double _currentProgress;
         private void ProcessOutput(object sender, DataReceivedEventArgs args)
         {
-            if(double.TryParse(args.Data, out var progress))
+            if (double.TryParse(args.Data, out var progress))
             {
                 _currentProgress = progress / 100;
                 InvokeStatusChangedEvent(_currentStage, _currentProgress);
                 return;
             }
 
-            if(args.Data.StartsWith("START", StringComparison.Ordinal))
+            if (args.Data.StartsWith("START", StringComparison.Ordinal))
             {
                 _currentStage = args.Data.Substring(7);
                 InvokeStatusChangedEvent(_currentStage, _currentProgress);
@@ -157,13 +162,13 @@ namespace ProjBobcat.DefaultComponent.ForgeInstaller
 
             _currentStage = args.Data.Substring(7);
 
-            if(_currentStage.Equals("INSTALL SUCCESSFUL", StringComparison.Ordinal))
+            if (_currentStage.Equals("INSTALL SUCCESSFUL", StringComparison.Ordinal))
             {
                 _succeed = true;
                 return;
             }
 
-            if(_currentStage.Equals("INSTALL FAILED", StringComparison.Ordinal))
+            if (_currentStage.Equals("INSTALL FAILED", StringComparison.Ordinal))
             {
                 _succeed = false;
                 return;

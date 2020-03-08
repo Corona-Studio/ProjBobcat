@@ -26,6 +26,7 @@ namespace ProjBobcat.Class
             Process.ErrorDataReceived += ProcessOnErrorDataReceived;
             Process.Exited += ProcessOnExited;
         }
+
         private void ProcessOnExited(object sender, EventArgs e)
         {
             ExitCode = Process.ExitCode;
@@ -33,34 +34,26 @@ namespace ProjBobcat.Class
 
         private void ProcessOnErrorDataReceived(object sender, DataReceivedEventArgs e)
         {
-            if(e.Data == null)
-            {
+            if (e.Data == null)
                 Process.ErrorDataReceived -= ProcessOnErrorDataReceived;
-            }
             else
-            {
                 GameCore.LogGameData(sender, new GameLogEventArgs
                 {
                     LogType = "error",
                     Content = e.Data
                 });
-            }
         }
 
         private void ProcessOnOutputDataReceived(object sender, DataReceivedEventArgs e)
         {
             if (e.Data == null)
-            {
                 Process.OutputDataReceived -= ProcessOnOutputDataReceived;
-            }
             else
-            {
                 GameCore.LogGameData(sender, new GameLogEventArgs
                 {
                     LogType = "log",
                     Content = e.Data
                 });
-            }
         }
     }
 }

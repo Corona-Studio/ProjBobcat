@@ -1,6 +1,6 @@
-﻿using ProjBobcat.Class.Model;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using ProjBobcat.Class.Model;
 
 namespace ProjBobcat.Class
 {
@@ -18,7 +18,8 @@ namespace ProjBobcat.Class
             throw new NotImplementedException();
         }
 
-        private protected virtual Tuple<string, Dictionary<string, string>> ParseGameArguments(Tuple<string, List<object>> arguments)
+        private protected virtual Tuple<string, Dictionary<string, string>> ParseGameArguments(
+            Tuple<string, List<object>> arguments)
         {
             throw new NotImplementedException();
         }

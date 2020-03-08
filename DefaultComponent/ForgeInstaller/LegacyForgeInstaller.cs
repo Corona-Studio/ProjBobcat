@@ -1,13 +1,13 @@
-﻿using ProjBobcat.Class.Model;
-using ProjBobcat.Event;
-using ProjBobcat.Interface;
-using System;
+﻿using System;
 using System.IO;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Forge;
 using ProjBobcat.Class.Model.YggdrasilAuth;
+using ProjBobcat.Event;
+using ProjBobcat.Interface;
 using SharpCompress.Common;
 using SharpCompress.Readers;
 
@@ -55,6 +55,7 @@ namespace ProjBobcat.DefaultComponent.ForgeInstaller
                         });
                     break;
                 }
+
                 InvokeStatusChangedEvent("解压完成", 0.1);
 
                 InvokeStatusChangedEvent("解析安装文档", 0.35);
@@ -64,7 +65,7 @@ namespace ProjBobcat.DefaultComponent.ForgeInstaller
                 InvokeStatusChangedEvent("解析完成", 0.75);
 
                 var forgeDi = new DirectoryInfo($"{di.FullName}versions\\{fileName}");
-                if(!forgeDi.Exists)
+                if (!forgeDi.Exists)
                     forgeDi.Create();
 
                 var versionJsonString = JsonConvert.SerializeObject(profileModel.VersionInfo, new JsonSerializerSettings

@@ -7,7 +7,8 @@ namespace ProjBobcat.Class.Helper
 {
     public static class AuthPropertyHelper
     {
-        public static AuthPropertyModel ToAuthProperty(PropertyModel model, Dictionary<string, AuthProfileModel> profiles)
+        public static AuthPropertyModel ToAuthProperty(PropertyModel model,
+            Dictionary<string, AuthProfileModel> profiles)
         {
             if (model == null || model.Equals(default(PropertyModel)))
                 return null;
@@ -20,17 +21,15 @@ namespace ProjBobcat.Class.Helper
             };
         }
 
-        public static List<AuthPropertyModel> ToAuthProperties(List<PropertyModel> model, Dictionary<string, AuthProfileModel> profiles)
+        public static List<AuthPropertyModel> ToAuthProperties(List<PropertyModel> model,
+            Dictionary<string, AuthProfileModel> profiles)
         {
             var result = new List<AuthPropertyModel>();
 
             if (model == null || !model.Any())
                 return result;
 
-            model.ForEach(m =>
-            {
-                result.Add(ToAuthProperty(m, profiles));
-            });
+            model.ForEach(m => { result.Add(ToAuthProperty(m, profiles)); });
 
             return result;
         }

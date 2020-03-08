@@ -1,63 +1,74 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
-using ProjBobcat.Class.Helper;
-using ProjBobcat.Class.Model;
-using ProjBobcat.Class.Model.YggdrasilAuth;
-using ProjBobcat.Interface;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
+using ProjBobcat.Class.Helper;
+using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.LauncherProfile;
+using ProjBobcat.Class.Model.YggdrasilAuth;
+using ProjBobcat.Interface;
 
 namespace ProjBobcat.Authenticator
 {
     public class YggdrasilAuthenticator : IAuthenticator
     {
         /// <summary>
-        /// 邮箱
-        /// </summary>
-        public string Email { get; set; }
-        /// <summary>
-        /// 密码
-        /// </summary>
-        public string Password { get; set; }
-        /// <summary>
-        /// 验证服务器（可不填）
-        /// </summary>
-        public string AuthServer { get; set; }
-
-        public ILauncherProfileParser LauncherProfileParser { get; set; }
-
-        /// <summary>
-        /// Mojang官方验证服务器
+        ///     Mojang官方验证服务器
         /// </summary>
         private const string OfficialAuthServer = "https://authserver.mojang.com";
 
         /// <summary>
-        /// 登录api
-        /// </summary>  
-        private string LoginAddress => $"{AuthServer}{(string.IsNullOrEmpty(AuthServer) ? OfficialAuthServer : "/authserver")}/authenticate";
-        /// <summary>
-        /// 令牌刷新api
+        ///     邮箱
         /// </summary>
-        private string RefreshAddress => $"{AuthServer}{(string.IsNullOrEmpty(AuthServer) ? OfficialAuthServer : "/authserver")}/refresh";
-        /// <summary>
-        /// 令牌验证api
-        /// </summary>
-        private string ValidateAddress => $"{AuthServer}{(string.IsNullOrEmpty(AuthServer) ? OfficialAuthServer : "/authserver")}/validate";
-        /// <summary>
-        /// 令牌吊销api
-        /// </summary>
-        private string RevokeAddress => $"{AuthServer}{(string.IsNullOrEmpty(AuthServer) ? OfficialAuthServer : "/authserver")}/invalidate";
-        /// <summary>
-        /// 登出api
-        /// </summary>
-        private string SignOutAddress => $"{AuthServer}{(string.IsNullOrEmpty(AuthServer) ? OfficialAuthServer : "/authserver")}/signout";
+        public string Email { get; set; }
 
         /// <summary>
-        /// 验证凭据（同步，不可用）
+        ///     密码
+        /// </summary>
+        public string Password { get; set; }
+
+        /// <summary>
+        ///     验证服务器（可不填）
+        /// </summary>
+        public string AuthServer { get; set; }
+
+        /// <summary>
+        ///     登录api
+        /// </summary>
+        private string LoginAddress =>
+            $"{AuthServer}{(string.IsNullOrEmpty(AuthServer) ? OfficialAuthServer : "/authserver")}/authenticate";
+
+        /// <summary>
+        ///     令牌刷新api
+        /// </summary>
+        private string RefreshAddress =>
+            $"{AuthServer}{(string.IsNullOrEmpty(AuthServer) ? OfficialAuthServer : "/authserver")}/refresh";
+
+        /// <summary>
+        ///     令牌验证api
+        /// </summary>
+        private string ValidateAddress =>
+            $"{AuthServer}{(string.IsNullOrEmpty(AuthServer) ? OfficialAuthServer : "/authserver")}/validate";
+
+        /// <summary>
+        ///     令牌吊销api
+        /// </summary>
+        private string RevokeAddress =>
+            $"{AuthServer}{(string.IsNullOrEmpty(AuthServer) ? OfficialAuthServer : "/authserver")}/invalidate";
+
+        /// <summary>
+        ///     登出api
+        /// </summary>
+        private string SignOutAddress =>
+            $"{AuthServer}{(string.IsNullOrEmpty(AuthServer) ? OfficialAuthServer : "/authserver")}/signout";
+
+        public ILauncherProfileParser LauncherProfileParser { get; set; }
+
+        /// <summary>
+        ///     验证凭据（同步，不可用）
         /// </summary>
         /// <param name="userField"></param>
         /// <returns></returns>
@@ -67,7 +78,7 @@ namespace ProjBobcat.Authenticator
         }
 
         /// <summary>
-        /// 异步验证凭据
+        ///     异步验证凭据
         /// </summary>
         /// <param name="userField">是否获取user字段</param>
         /// <returns></returns>
@@ -107,7 +118,6 @@ namespace ProjBobcat.Authenticator
             }
 
             if (result.SelectedProfile == null)
-            {
                 return new AuthResult
                 {
                     AuthStatus = AuthStatus.Failed,
@@ -118,9 +128,9 @@ namespace ProjBobcat.Authenticator
                         Cause = "可能是因为您还没有购买正版游戏！"
                     }
                 };
-            }
 
-            var profiles = result.AvailableProfiles.ToDictionary(profile => profile.Id, profile => new AuthProfileModel { DisplayName = profile.Name });
+            var profiles = result.AvailableProfiles.ToDictionary(profile => profile.Id,
+                profile => new AuthProfileModel {DisplayName = profile.Name});
 
             if (LauncherProfileParser.IsAuthInfoExist(profiles.First().Key, profiles.First().Value.DisplayName))
                 LauncherProfileParser.RemoveAuthInfo(profiles.First().Key);
@@ -140,6 +150,52 @@ namespace ProjBobcat.Authenticator
                 Profiles = result.AvailableProfiles,
                 SelectedProfile = result.SelectedProfile,
                 User = result.User
+            };
+        }
+
+        /// <summary>
+        ///     获取最后一次的验证状态
+        /// </summary>
+        /// <returns></returns>
+        public AuthResult GetLastAuthResult()
+        {
+            var profile =
+                LauncherProfileParser.LauncherProfile.AuthenticationDatabase.Values.FirstOrDefault(a =>
+                    a.UserName.Equals(Email, StringComparison.OrdinalIgnoreCase));
+
+            if (profile == null || profile.Equals(default))
+                return new AuthResult
+                {
+                    AuthStatus = AuthStatus.Failed,
+                    Error = new ErrorModel
+                    {
+                        Error = "没有找到该账户对应的验证信息！",
+                        ErrorMessage = "没有找到该账户",
+                        Cause = "可能是因为该账户还没有进行过验证，凭据已被吊销或失效"
+                    }
+                };
+
+            if (!string.IsNullOrEmpty(profile.AccessToken))
+                return new AuthResult
+                {
+                    AuthStatus = AuthStatus.Succeeded,
+                    AccessToken = profile.AccessToken,
+                    Profiles = profile.Profiles
+                        .Select(p => new ProfileInfoModel {Name = p.Value.DisplayName, Id = p.Key}).ToList(),
+                    SelectedProfile = new ProfileInfoModel
+                    {
+                        Name = profile.Profiles.First().Value.DisplayName,
+                        Id = profile.Profiles.First().Key
+                    }
+                };
+
+            return new AuthResult
+            {
+                AuthStatus = AuthStatus.Unknown,
+                Error = new ErrorModel
+                {
+                    Error = "未知错误"
+                }
             };
         }
 
@@ -171,7 +227,6 @@ namespace ProjBobcat.Authenticator
                     };
                 case AuthResponseModel authResponse:
                     if (authResponse.SelectedProfile == null)
-                    {
                         return new AuthResult
                         {
                             AuthStatus = AuthStatus.Failed,
@@ -182,9 +237,9 @@ namespace ProjBobcat.Authenticator
                                 Cause = "可能是因为您还没有购买正版游戏！"
                             }
                         };
-                    }
 
-                    var profiles = authResponse.AvailableProfiles.ToDictionary(profile => profile.Id, profile => new AuthProfileModel { DisplayName = profile.Name });
+                    var profiles = authResponse.AvailableProfiles.ToDictionary(profile => profile.Id,
+                        profile => new AuthProfileModel {DisplayName = profile.Name});
 
                     if (LauncherProfileParser.IsAuthInfoExist(authResponse.User.Id, authResponse.User.UserName))
                         LauncherProfileParser.RemoveAuthInfo(authResponse.User.Id);
@@ -267,51 +322,6 @@ namespace ProjBobcat.Authenticator
 
             var result = await HttpHelper.Post(SignOutAddress, requestJson).ConfigureAwait(true);
             return result.StatusCode.Equals(HttpStatusCode.NoContent);
-        }
-
-        /// <summary>
-        /// 获取最后一次的验证状态
-        /// </summary>
-        /// <returns></returns>
-        public AuthResult GetLastAuthResult()
-        {
-            var profile =
-                LauncherProfileParser.LauncherProfile.AuthenticationDatabase.Values.FirstOrDefault(a =>
-                    a.UserName.Equals(Email, StringComparison.OrdinalIgnoreCase));
-
-            if (profile == null || profile.Equals(default))
-                return new AuthResult
-                {
-                    AuthStatus = AuthStatus.Failed,
-                    Error = new ErrorModel
-                    {
-                        Error = "没有找到该账户对应的验证信息！",
-                        ErrorMessage = "没有找到该账户",
-                        Cause = "可能是因为该账户还没有进行过验证，凭据已被吊销或失效"
-                    }
-                };
-
-            if(!string.IsNullOrEmpty(profile.AccessToken))
-                return new AuthResult
-                {
-                    AuthStatus = AuthStatus.Succeeded,
-                    AccessToken = profile.AccessToken,
-                    Profiles = profile.Profiles.Select(p => new ProfileInfoModel { Name = p.Value.DisplayName, Id = p.Key }).ToList(),
-                    SelectedProfile = new ProfileInfoModel
-                    {
-                        Name = profile.Profiles.First().Value.DisplayName,
-                        Id = profile.Profiles.First().Key
-                    }
-                };
-
-            return new AuthResult
-            {
-                AuthStatus = AuthStatus.Unknown,
-                Error = new ErrorModel
-                {
-                    Error = "未知错误"
-                }
-            };
         }
     }
 }

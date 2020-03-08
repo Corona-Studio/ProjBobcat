@@ -22,7 +22,8 @@ namespace ProjBobcat.Class.Helper
             return await client.GetStringAsync(new Uri(address)).ConfigureAwait(true);
         }
 
-        public static async Task<HttpResponseMessage> Post(string address, string data, string contentType = "application/json")
+        public static async Task<HttpResponseMessage> Post(string address, string data,
+            string contentType = "application/json")
         {
             using var client = new HttpClient();
             using var content = new StringContent(data);
@@ -31,7 +32,8 @@ namespace ProjBobcat.Class.Helper
             return response;
         }
 
-        public static async Task<HttpResponseMessage> PostWithParams(string address, IEnumerable<KeyValuePair<string, string>> param, string contentType = "application/json")
+        public static async Task<HttpResponseMessage> PostWithParams(string address,
+            IEnumerable<KeyValuePair<string, string>> param, string contentType = "application/json")
         {
             using var client = new HttpClient();
             using var content = new FormUrlEncodedContent(param);
