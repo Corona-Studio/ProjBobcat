@@ -36,7 +36,7 @@
     <LangVersion>8.0</LangVersion>
     <GenerateSerializationAssemblies>On</GenerateSerializationAssemblies>
     <DocumentationFile>bin\Debug\ProjBobcat.xml</DocumentationFile>
-    <NoWarn>CA1716</NoWarn>
+    <NoWarn>CA1716;CA2227</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
