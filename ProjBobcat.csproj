@@ -35,6 +35,7 @@
     <WarningLevel>4</WarningLevel>
     <LangVersion>8.0</LangVersion>
     <GenerateSerializationAssemblies>On</GenerateSerializationAssemblies>
+    <DocumentationFile>bin\Debug\ProjBobcat.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
