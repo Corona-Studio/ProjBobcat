@@ -35,8 +35,7 @@
     <WarningLevel>4</WarningLevel>
     <LangVersion>8.0</LangVersion>
     <GenerateSerializationAssemblies>On</GenerateSerializationAssemblies>
-    <DocumentationFile>
-    </DocumentationFile>
+    <DocumentationFile>bin\Debug\ProjBobcat.xml</DocumentationFile>
     <NoWarn>CA1716;CA2227;CA2208;CA1031;CA5351;CA1065;CA1305;CS0067;CA1720;CA1055;CA1054;CA1056;CA1062</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
