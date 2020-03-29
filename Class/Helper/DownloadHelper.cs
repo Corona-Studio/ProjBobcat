@@ -155,11 +155,11 @@ namespace ProjBobcat.Class.Helper
                             df.DownloadPath.Substring(0, df.DownloadPath.LastIndexOf('\\')));
                         if (!di.Exists) di.Create();
 
-                        // DownloadData(df);
-                        if (df.FileSize >= 1048576 || df.FileSize == 0 || df.FileSize == default)
-                            MultiPartDownload(df);
-                        else
-                            DownloadData(df);
+                         // DownloadData(df);
+                         if (df.FileSize >= 1048576 || df.FileSize == 0 || df.FileSize == default)
+                             MultiPartDownload(df);
+                         else
+                             DownloadData(df);
                     }
                 }
 
@@ -235,18 +235,29 @@ namespace ProjBobcat.Class.Helper
 
                 var downloadParts = 0;
 
-                Task.WhenAll(readRanges.Select(range => Task.Run(() =>
+                Parallel.ForEach(readRanges, (range, state) =>
                 {
-                    using var client = new WebClient {DownloadRange = range};
-                    client.Headers.Add("user-agent", Ua);
+                    try
+                    {
+                        using var client = new WebClient
+                        {
+                            DownloadRange = range,
+                            Timeout = 10000
+                        };
+                        client.Headers.Add("user-agent", Ua);
 
-                    var data = client.DownloadData(new Uri(downloadFile.DownloadUri));
-                    if (!tempFilesDictionary.TryAdd(range.Index, data)) return;
-                    downloadParts++;
-
-                    downloadFile.Changed?.Invoke(client,
-                        new DownloadFileChangedEventArgs {ProgressPercentage = (double) downloadParts / numberOfParts});
-                })).ToArray());
+                        var data = client.DownloadData(new Uri(downloadFile.DownloadUri));
+                        if (!tempFilesDictionary.TryAdd(range.Index, data)) return;
+                        downloadParts++;
+                        downloadFile.Changed?.Invoke(client,
+                            new DownloadFileChangedEventArgs {ProgressPercentage = (double) downloadParts / numberOfParts});
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
+                        state.Stop();
+                    }
+                });
 
                 #endregion
 
@@ -345,20 +356,29 @@ namespace ProjBobcat.Class.Helper
                 #region Parallel download
 
                 var downloadParts = 0;
-                await Task.WhenAll(readRanges.Select(range => Task.Run(async () =>
+                Parallel.ForEach(readRanges, (range, state) =>
                 {
-                    using var client = new WebClient {DownloadRange = range};
-                    client.Headers.Add("user-agent", Ua);
+                    try
+                    {
+                        using var client = new WebClient
+                        {
+                            DownloadRange = range,
+                            Timeout = 10000
+                        };
+                        client.Headers.Add("user-agent", Ua);
 
-                    var data = await client.DownloadDataTaskAsync(new Uri(downloadFile.DownloadUri))
-                        .ConfigureAwait(false);
-
-                    if (!tempFilesDictionary.TryAdd(range.Index, data)) return;
-                    downloadParts++;
-
-                    downloadFile.Changed?.Invoke(client,
-                        new DownloadFileChangedEventArgs {ProgressPercentage = (double) downloadParts / numberOfParts});
-                })).ToArray()).ConfigureAwait(false);
+                        var data = client.DownloadData(new Uri(downloadFile.DownloadUri));
+                        if (!tempFilesDictionary.TryAdd(range.Index, data)) return;
+                        downloadParts++;
+                        downloadFile.Changed?.Invoke(client,
+                            new DownloadFileChangedEventArgs { ProgressPercentage = (double)downloadParts / numberOfParts });
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
+                        state.Stop();
+                    }
+                });
 
                 #endregion
 
