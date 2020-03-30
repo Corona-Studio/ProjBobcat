@@ -43,8 +43,11 @@ All you need for minecraft launcher in typescript. https://voxelum.github.io/min
 | New Forge Installation Model | ✅ |
 | Resource Auto Completion (Multi-thread downloader) | ✅ |
 | Minecraft: Windows 10 Edition Support (Detector and launcher) | ✅ |
+| Game crashing detector | ❌ |
 
 ## Instruction
+
+Please note: ProjBobcat requires non-32-bit preferred compilation in your main project.
 
 ProjBobcat provides 3 main components & a core to form the whole core framework.
 
@@ -63,6 +66,12 @@ Selective components:
 
 
 ### Quick Startup
+
+#### Java Detection
+
+```csharp
+var javaList = ProjBobcat.Class.Helper.SystemInfoHelper.FindJava(); // Returns a list of all java installations found in registry.
+```
 
 #### Core Initialization
 
@@ -168,6 +177,8 @@ Here are some events which you could bind to your program.
 
 #### Define Auth Model
 
+Offline:
+
 ```csharp
 
 launchSettings.Authenticator = new OfflineAuthenticator
@@ -176,6 +187,17 @@ launchSettings.Authenticator = new OfflineAuthenticator
     LauncherProfileParser = Core.VersionLocator.LauncherProfileParser // launcher_profiles.json parser
 },
 
+```
+
+Online:
+
+```csharp
+launchSettings.Authenticator = new YggdrasilAuthenticator
+{
+    LauncherProfileParser = core.VersionLocator.LauncherProfileParser,
+    Email = "example@example.com", // Registered E-mail address on Mojang authentication server.
+    Password = "password"
+};
 ```
 
 #### Launch!

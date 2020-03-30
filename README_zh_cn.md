@@ -1,6 +1,6 @@
 # ProjBobcat 中文文档
 
-# [English](https://github.com/Corona-Studio/ProjBobcat/blob/master/README.md)
+# [English](https://github.com/Corona-Studio/ProjBobcat/)
 
 ## 查看我们在MCBBS的教程贴
 [MCBBS教程](https://www.mcbbs.net/thread-956299-1-1.html)
@@ -57,8 +57,11 @@ All you need for minecraft launcher in typescript. https://voxelum.github.io/min
 | 新版Forge安装模型 | ✅ |
 | 资源自动补全（多线程下载） | ✅ |
 | Windows 10 版 Minecraft 支持（检测和启动） | ✅ |
+| 游戏崩溃探测器 | ❌ |
 
 ## 使用说明
+
+请注意：ProjBobcat要求您取消项目属性中的优先32位生成 ( Prefer 32-bit ) 勾选。
 
 ProjBobcat提供了3大必要组件和一个核心总成来支撑起整个核心框架
 
@@ -75,6 +78,12 @@ ProjBobcat提供了3大必要组件和一个核心总成来支撑起整个核心
 | DefaultResourceCompleter | IResourceCompleter | NG | 提供默认资源补全器所有实现  |
 
 ### 基本使用
+
+#### 扫描 Java
+
+```csharp
+var javaList = ProjBobcat.Class.Helper.SystemInfoHelper.FindJava(); // 返回一个表，包含了从注册表中检索到的系统中 Java 安装的全部信息
+```
 
 #### 初始化核心
 
@@ -181,14 +190,27 @@ launchSettings.GameArguments = new GameArguments // （可选）具体游戏启�
 
 #### 确定验证模型
 
+离线验证模型：
+
 ```csharp
 
 launchSettings.Authenticator = new OfflineAuthenticator
 {
     Username = "您的游戏名"
     LauncherProfileParser = Core.VersionLocator.LauncherProfileParser // launcher_profiles.json解析组件
-},
+};
 
+```
+
+在线验证模型：
+
+```csharp
+launchSettings.Authenticator = new YggdrasilAuthenticator
+{
+    LauncherProfileParser = core.VersionLocator.LauncherProfileParser,
+    Email = "example@example.com", // 在膜江验证服务器上注册的正版账号邮箱地址。
+    Password = "password" // 填写明文密码。
+};
 ```
 
 #### 启动游戏
