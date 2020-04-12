@@ -337,7 +337,7 @@ namespace ProjBobcat.DefaultComponent.Launch
         /// </summary>
         public void Dispose()
         {
-            Dispose(true);
+            VersionLocator = null;
             GC.SuppressFinalize(this);
         }
 
@@ -346,18 +346,8 @@ namespace ProjBobcat.DefaultComponent.Launch
         /// </summary>
         ~DefaultGameCore()
         {
-            // Finalizer calls Dispose(false)
-            Dispose(false);
+            VersionLocator = null;
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="disposing"></param>
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposing) VersionLocator = null;
-        }
-
         #endregion
     }
 }
