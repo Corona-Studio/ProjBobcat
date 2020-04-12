@@ -9,10 +9,10 @@ namespace ProjBobcat.Class.Helper
         private static readonly ReaderWriterLock Locker = new ReaderWriterLock();
 
         /// <summary>
-        ///     写入文件
+        /// 写入文件。
         /// </summary>
-        /// <param name="path">路径</param>
-        /// <param name="content">内容</param>
+        /// <param name="path">路径。</param>
+        /// <param name="content">内容。</param>
         public static void Write(string path, string content)
         {
             File.WriteAllText(path, content);
@@ -25,11 +25,12 @@ namespace ProjBobcat.Class.Helper
         }
 
         /// <summary>
-        ///     将二进制文件保存到磁盘
+        /// 将二进制流写入到文件。
         /// </summary>
-        /// <param name="stream"></param>
-        /// <param name="fileName"></param>
+        /// <param name="stream">流。</param>
+        /// <param name="fileName">路径。</param>
         /// <exception cref="ArgumentNullException"></exception>
+        /// <returns>表示成功与否。</returns>
         public static bool SaveBinaryFile(Stream stream, string fileName)
         {
             if (stream == null) throw new ArgumentNullException();
