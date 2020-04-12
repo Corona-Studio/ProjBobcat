@@ -16,51 +16,52 @@ namespace ProjBobcat.Authenticator
     public class YggdrasilAuthenticator : IAuthenticator
     {
         /// <summary>
-        ///     Mojang官方验证服务器
+        /// Mojang官方验证服务器地址。
         /// </summary>
         private const string OfficialAuthServer = "https://authserver.mojang.com";
 
         /// <summary>
-        ///     邮箱
+        /// 获取或设置邮箱。
         /// </summary>
         public string Email { get; set; }
 
         /// <summary>
-        ///     密码
+        /// 获取或设置密码。
         /// </summary>
         public string Password { get; set; }
 
         /// <summary>
-        ///     验证服务器（可不填）
+        /// 获取或设置验证服务器。
+        /// 这个属性允许为 null 。
         /// </summary>
         public string AuthServer { get; set; }
 
         /// <summary>
-        ///     登录api
+        /// 获取登录Api地址。
         /// </summary>
         private string LoginAddress =>
             $"{AuthServer}{(string.IsNullOrEmpty(AuthServer) ? OfficialAuthServer : "/authserver")}/authenticate";
 
         /// <summary>
-        ///     令牌刷新api
+        /// 获取令牌刷新Api地址。
         /// </summary>
         private string RefreshAddress =>
             $"{AuthServer}{(string.IsNullOrEmpty(AuthServer) ? OfficialAuthServer : "/authserver")}/refresh";
 
         /// <summary>
-        ///     令牌验证api
+        /// 获取令牌验证Api地址。
         /// </summary>
         private string ValidateAddress =>
             $"{AuthServer}{(string.IsNullOrEmpty(AuthServer) ? OfficialAuthServer : "/authserver")}/validate";
 
         /// <summary>
-        ///     令牌吊销api
+        /// 获取令牌吊销Api地址。
         /// </summary>
         private string RevokeAddress =>
             $"{AuthServer}{(string.IsNullOrEmpty(AuthServer) ? OfficialAuthServer : "/authserver")}/invalidate";
 
         /// <summary>
-        ///     登出api
+        /// 获取登出Api地址。
         /// </summary>
         private string SignOutAddress =>
             $"{AuthServer}{(string.IsNullOrEmpty(AuthServer) ? OfficialAuthServer : "/authserver")}/signout";
@@ -68,20 +69,21 @@ namespace ProjBobcat.Authenticator
         public ILauncherProfileParser LauncherProfileParser { get; set; }
 
         /// <summary>
-        ///     验证凭据（同步，不可用）
+        /// 验证凭据。
         /// </summary>
-        /// <param name="userField"></param>
+        /// <param name="userField">指示是否获取user字段。</param>
         /// <returns></returns>
-        public AuthResult Auth(bool userField)
+        [Obsolete("此方法已过时，请使用其对应的异步方法 AuthTaskAsync(bool)", true)]
+        public AuthResult Auth(bool userField = false)
         {
             throw new NotImplementedException();
         }
 
         /// <summary>
-        ///     异步验证凭据
+        /// 异步验证凭据。
         /// </summary>
         /// <param name="userField">是否获取user字段</param>
-        /// <returns></returns>
+        /// <returns>验证状态。</returns>
         public async Task<AuthResult> AuthTaskAsync(bool userField = false)
         {
             var requestModel = new AuthRequestModel
@@ -154,9 +156,9 @@ namespace ProjBobcat.Authenticator
         }
 
         /// <summary>
-        ///     获取最后一次的验证状态
+        /// 获取最后一次的验证状态。
         /// </summary>
-        /// <returns></returns>
+        /// <returns>验证状态。</returns>
         public AuthResult GetLastAuthResult()
         {
             var profile =
@@ -307,7 +309,11 @@ namespace ProjBobcat.Authenticator
 
             _ = await HttpHelper.Post(RevokeAddress, requestJson).ConfigureAwait(true);
         }
-
+        /// <summary>
+        /// 登出。
+        /// 返回值表示成功与否。
+        /// </summary>
+        /// <returns>表示成功与否。</returns>
         public async Task<bool> SignOutTaskAsync()
         {
             var requestModel = new SignOutRequestModel
