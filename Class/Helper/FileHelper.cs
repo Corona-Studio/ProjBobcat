@@ -15,10 +15,13 @@ namespace ProjBobcat.Class.Helper
         /// <param name="content">内容</param>
         public static void Write(string path, string content)
         {
+            File.WriteAllText(path, content);
+            /*
             using var fs = new FileStream(path, FileMode.Create);
             var sw = new StreamWriter(fs);
             sw.Write(content);
             sw.Close();
+            */
         }
 
         /// <summary>
