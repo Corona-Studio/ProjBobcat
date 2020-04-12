@@ -15,6 +15,7 @@ namespace ProjBobcat.Class.Helper
         /// <param name="content">内容。</param>
         public static void Write(string path, string content)
         {
+#warning 怀疑这边需要加Locker。
             File.WriteAllText(path, content);
             /*
             using var fs = new FileStream(path, FileMode.Create);
@@ -36,16 +37,21 @@ namespace ProjBobcat.Class.Helper
             if (stream == null) throw new ArgumentNullException();
 
             var value = true;
-            var buffer = new byte[1024];
+            // var buffer = new byte[1024];
 
             try
             {
+                /*
                 if (File.Exists(fileName))
                     File.Delete(fileName);
-
+                */
+                // File.Create本身就会覆盖。
                 lock (Locker)
                 {
                     using var outStream = File.Create(fileName);
+
+                    stream.CopyTo(outStream, 1024);
+                    /*
                     int l;
                     do
                     {
@@ -55,6 +61,7 @@ namespace ProjBobcat.Class.Helper
                     } while (l > 0);
 
                     outStream.Close();
+                    */
                 }
 
                 stream.Close();
