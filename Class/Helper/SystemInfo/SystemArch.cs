@@ -14,11 +14,11 @@ namespace ProjBobcat.Class.Helper.SystemInfo
         private bool is64BitOperatingSystem;
         private SystemArch() { }
         /// <summary>
-        /// 获取一个X64的系统架构。
+        /// X64 。
         /// </summary>
         public static SystemArch X64 { get; } = new SystemArch() { is64BitOperatingSystem = true };
         /// <summary>
-        /// 获取一个X86的系统架构。
+        /// X86 。
         /// </summary>
         public static SystemArch X86 { get; } = new SystemArch() { is64BitOperatingSystem = false };
         /// <summary>
@@ -85,7 +85,7 @@ namespace ProjBobcat.Class.Helper.SystemInfo
         public static bool operator !=(SystemArch left, SystemArch right)
             => left?.is64BitOperatingSystem != right?.is64BitOperatingSystem;
         /// <summary>
-        /// 获取当前运行所在的系统架构。
+        /// 获取当前程序运行所在的系统架构。
         /// </summary>
         public static SystemArch CurrentArch
             => Environment.Is64BitOperatingSystem ? X64 : X86;
