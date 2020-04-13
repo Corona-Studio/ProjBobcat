@@ -88,6 +88,7 @@
     <Compile Include="Class\Helper\RandomHelper.cs" />
     <Compile Include="Class\Helper\RandomStringHelper.cs" />
     <Compile Include="Class\Helper\RulesHelper.cs" />
+    <Compile Include="Class\Helper\SystemInfo\SystemArch.cs" />
     <Compile Include="Class\LaunchWrapper.cs" />
     <Compile Include="Class\Model\AssetObjectModel.cs" />
     <Compile Include="Class\Model\DownloadCheckResult.cs" />
