@@ -7,13 +7,15 @@ using ProjBobcat.Class.Helper.SystemInfo;
 
 namespace ProjBobcat.Class.Helper
 {
+    /// <summary>
+    /// 系统信息帮助器。
+    /// </summary>
     public static class SystemInfoHelper
     {
         /// <summary>
-        ///     Detect javaw.exe via reg.
-        ///     从注册表中查找可能的javaw.exe位置
+        /// 从注册表中查找可能的 javaw.exe 的路径。
         /// </summary>
-        /// <returns>A list, containing all possible path of javaw.exe. JAVA地址列表。</returns>
+        /// <returns>可能的 Java 路径构成的列表。</returns>
         public static IEnumerable<string> FindJava()
         {
             try
@@ -54,14 +56,18 @@ namespace ProjBobcat.Class.Helper
             }
         }
 
-        [Obsolete("可以直接使用 ProjBobcat.Class.Helper.SystemInfo.SystemArch.CurrentArch 属性替代。")]
+        [Obsolete("已过时，使用 ProjBobcat.Class.Helper.SystemInfo.SystemArch.CurrentArch 属性替代。")]
         public static SystemArch GetSystemArch()
             => SystemArch.CurrentArch;
 
-        [Obsolete("可以直接使用 ProjBobcat.Class.Helper.SystemInfo.WindowsSystemVersion.CurrentVersion 属性替代。")]
+        [Obsolete("已过时，使用 ProjBobcat.Class.Helper.SystemInfo.WindowsSystemVersion.CurrentVersion 属性替代。")]
         public static WindowsSystemVersion GetSystemVersion()
             => WindowsSystemVersion.CurrentVersion;
 
+        /// <summary>
+        /// 判断是否安装了 UWP 版本的 Minecraft 。
+        /// </summary>
+        /// <returns>判断结果。</returns>
         public static bool IsMinecraftUWPInstalled()
         {
             var rs = RunspaceFactory.CreateRunspace();
