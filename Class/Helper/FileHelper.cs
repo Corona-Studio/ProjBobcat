@@ -36,8 +36,8 @@ namespace ProjBobcat.Class.Helper
         {
             if (stream == null) throw new ArgumentNullException();
 
-            var value = true;
-            // var buffer = new byte[1024];
+            const int bufferSize = 1024;
+            var result = true;
 
             try
             {
@@ -50,7 +50,7 @@ namespace ProjBobcat.Class.Helper
                 {
                     using var outStream = File.Create(fileName);
 
-                    stream.CopyTo(outStream, 1024);
+                    stream.CopyTo(outStream, bufferSize);
                     /*
                     int l;
                     do
@@ -64,22 +64,22 @@ namespace ProjBobcat.Class.Helper
                     */
                 }
 
-                stream.Close();
+                // stream.Close();
             }
             catch (ArgumentException)
             {
-                value = false;
+                result = false;
             }
             catch (IOException)
             {
-                value = false;
+                result = false;
             }
             catch (UnauthorizedAccessException)
             {
-                value = false;
+                result = false;
             }
 
-            return value;
+            return result;
         }
     }
 }
