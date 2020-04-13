@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
+using ProjBobcat.Class.Helper.SystemInfo;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Interface;
@@ -88,7 +89,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                         if (rule.OperatingSystem.ContainsKey("arch"))
                         {
                             flag = rule.Action.Equals("allow", StringComparison.Ordinal) &&
-                                   rule.OperatingSystem["arch"].Equals(SystemInfoHelper.GetSystemArch().ToString(),
+                                   rule.OperatingSystem["arch"].Equals(SystemArch.CurrentArch.ToString(),
                                        StringComparison.Ordinal);
                             break;
                         }
@@ -99,7 +100,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                         else
                             flag = rule.Action.Equals("allow", StringComparison.Ordinal) &&
                                    rule.OperatingSystem["name"].Equals("windows", StringComparison.Ordinal) &&
-                                   rule.OperatingSystem["version"].Equals($"^{SystemInfoHelper.GetSystemVersion()}\\.",
+                                   rule.OperatingSystem["version"].Equals($"^{WindowsSystemVersion.CurrentVersion}\\.",
                                        StringComparison.Ordinal);
                     }
 
@@ -244,7 +245,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                 if (lib.Downloads.Classifiers == null) continue;
 
                 var key = lib.Natives.ContainsKey("windows")
-                    ? lib.Natives["windows"].Replace("${arch}", SystemInfoHelper.GetSystemArch().ToString("{0}"))
+                    ? lib.Natives["windows"].Replace("${arch}", SystemArch.CurrentArch.ToString("{0}"))
                     : "natives-windows";
 
                 if (lib.Downloads.Classifiers.ContainsKey(key)) lib.Downloads.Classifiers[key].Name = lib.Name;

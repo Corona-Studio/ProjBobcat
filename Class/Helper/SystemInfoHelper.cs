@@ -54,26 +54,13 @@ namespace ProjBobcat.Class.Helper
             }
         }
 
-        
+        [Obsolete("可以直接使用 ProjBobcat.Class.Helper.SystemInfo.SystemArch.CurrentArch 属性替代。")]
         public static SystemArch GetSystemArch()
-        {
-            return Environment.Is64BitOperatingSystem ? SystemArch.X64 : SystemArch.X86;
-        }
+            => SystemArch.CurrentArch;
 
-        public static string GetSystemVersion()
-        {
-            return (Environment.OSVersion.Version.Major + "." + Environment.OSVersion.Version.Minor) switch
-            {
-                "10.0" => "10",
-                "6.3" => "8.1",
-                "6.2" => "8",
-                "6.1" => "7",
-                "6.0" => "2008",
-                "5.2" => "2003",
-                "5.1" => "XP",
-                _ => "unknown"
-            };
-        }
+        [Obsolete("可以直接使用 ProjBobcat.Class.Helper.SystemInfo.WindowsSystemVersion.CurrentVersion 属性替代。")]
+        public static WindowsSystemVersion GetSystemVersion()
+            => WindowsSystemVersion.CurrentVersion;
 
         public static bool IsMinecraftUWPInstalled()
         {

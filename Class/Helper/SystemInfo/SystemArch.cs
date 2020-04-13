@@ -9,6 +9,7 @@ namespace ProjBobcat.Class.Helper.SystemInfo
     public class SystemArch : IFormattable, IEquatable<SystemArch>
     {
         private bool is64BitOperatingSystem;
+        private SystemArch() { }
         public static SystemArch X64 { get; } = new SystemArch() { is64BitOperatingSystem = true };
         public static SystemArch X86 { get; } = new SystemArch() { is64BitOperatingSystem = false };
 
@@ -48,5 +49,7 @@ namespace ProjBobcat.Class.Helper.SystemInfo
         public static bool operator !=(SystemArch left, SystemArch right)
             => left?.is64BitOperatingSystem != right?.is64BitOperatingSystem;
 
+        public static SystemArch CurrentArch
+            => Environment.Is64BitOperatingSystem ? X64 : X86;
     }
 }
