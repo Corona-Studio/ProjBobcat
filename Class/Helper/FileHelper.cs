@@ -6,7 +6,7 @@ namespace ProjBobcat.Class.Helper
 {
     public static class FileHelper
     {
-        private static readonly ReaderWriterLock Locker = new ReaderWriterLock();
+        private static readonly object Locker = new object();
 
         /// <summary>
         /// 写入文件。
@@ -15,8 +15,8 @@ namespace ProjBobcat.Class.Helper
         /// <param name="content">内容。</param>
         public static void Write(string path, string content)
         {
-#warning 怀疑这边需要加Locker。
-            File.WriteAllText(path, content);
+            lock(Locker)
+                File.WriteAllText(path, content);
             /*
             using var fs = new FileStream(path, FileMode.Create);
             var sw = new StreamWriter(fs);

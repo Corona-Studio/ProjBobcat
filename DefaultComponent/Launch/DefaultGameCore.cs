@@ -340,14 +340,6 @@ namespace ProjBobcat.DefaultComponent.Launch
             VersionLocator = null;
             GC.SuppressFinalize(this);
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        ~DefaultGameCore()
-        {
-            VersionLocator = null;
-        }
         #endregion
     }
 }
