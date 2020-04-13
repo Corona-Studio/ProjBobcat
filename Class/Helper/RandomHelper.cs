@@ -8,11 +8,12 @@ namespace ProjBobcat.Class.Helper
     {
         private static readonly Random Random = new Random();
 
-        public static T RandomSample<T>(this IEnumerable<T> collection)
+        public static T RandomSample<T>(this IEnumerable<T> enumerable)
         {
-            var enumerable = collection.ToList();
-            if (!enumerable.Any()) return default;
-            return enumerable.Count == 1 ? enumerable[0] : enumerable[Random.Next(0, enumerable.Count - 1)];
+            var arr = enumerable.ToArray();
+            if (arr.Length == 0)
+                return default;
+            return arr[Random.Next(0, arr.Length - 1)];
         }
     }
 }
