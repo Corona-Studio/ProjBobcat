@@ -88,7 +88,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                         if (rule.OperatingSystem.ContainsKey("arch"))
                         {
                             flag = rule.Action.Equals("allow", StringComparison.Ordinal) &&
-                                   rule.OperatingSystem["arch"].Equals($"x{SystemInfoHelper.GetSystemArch()}",
+                                   rule.OperatingSystem["arch"].Equals(SystemInfoHelper.GetSystemArch().ToString(),
                                        StringComparison.Ordinal);
                             break;
                         }
@@ -244,7 +244,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                 if (lib.Downloads.Classifiers == null) continue;
 
                 var key = lib.Natives.ContainsKey("windows")
-                    ? lib.Natives["windows"].Replace("${arch}", SystemInfoHelper.GetSystemArch())
+                    ? lib.Natives["windows"].Replace("${arch}", SystemInfoHelper.GetSystemArch().ToString("{0}"))
                     : "natives-windows";
 
                 if (lib.Downloads.Classifiers.ContainsKey(key)) lib.Downloads.Classifiers[key].Name = lib.Name;
