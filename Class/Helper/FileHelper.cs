@@ -4,6 +4,9 @@ using System.Threading;
 
 namespace ProjBobcat.Class.Helper
 {
+    /// <summary>
+    /// 文件操作帮助器。
+    /// </summary>
     public static class FileHelper
     {
         private static readonly object Locker = new object();

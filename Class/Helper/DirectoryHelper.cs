@@ -3,7 +3,7 @@
 namespace ProjBobcat.Class.Helper
 {
     /// <summary>
-    /// 目录帮助器。
+    /// 目录操作帮助器。
     /// </summary>
     public static class DirectoryHelper
     {
