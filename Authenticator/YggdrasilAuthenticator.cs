@@ -73,7 +73,7 @@ namespace ProjBobcat.Authenticator
         /// </summary>
         /// <param name="userField">指示是否获取user字段。</param>
         /// <returns></returns>
-        [Obsolete("此方法已过时，请使用其对应的异步方法 AuthTaskAsync(bool)", true)]
+        [Obsolete("此方法已过时，请使用其异步版本 AuthTaskAsync(bool) 。", true)]
         public AuthResult Auth(bool userField = false)
         {
             throw new NotImplementedException();

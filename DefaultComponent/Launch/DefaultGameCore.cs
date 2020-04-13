@@ -62,7 +62,7 @@ namespace ProjBobcat.DefaultComponent.Launch
         /// </summary>
         /// <param name="settings">启动设置。</param>
         /// <returns>启动结果。若启动成功，会包含消耗的时间；失败则包含异常信息。</returns>
-        [Obsolete("此方法已过时，请使用其对应的异步方法 AuthTaskAsync(bool)", true)]
+        [Obsolete("此方法已过时，请使用其异步版本 LaunchTaskAsync(LaunchSettings) 。", true)]
         public LaunchResult Launch(LaunchSettings settings)
         {
             throw new NotImplementedException();
