@@ -8,25 +8,14 @@ namespace ProjBobcat.Class
     {
         private protected string RootPath { get; set; }
 
-        private protected virtual VersionInfo ToVersion(string id)
-        {
-            throw new NotImplementedException();
-        }
+        private protected abstract VersionInfo ToVersion(string id);
 
-        private protected virtual Tuple<List<NativeFileInfo>, List<FileInfo>> GetNatives(IEnumerable<Library> libraries)
-        {
-            throw new NotImplementedException();
-        }
+        private protected abstract Tuple<List<NativeFileInfo>, List<FileInfo>> GetNatives(
+            IEnumerable<Library> libraries);
 
-        private protected virtual Tuple<string, Dictionary<string, string>> ParseGameArguments(
-            Tuple<string, List<object>> arguments)
-        {
-            throw new NotImplementedException();
-        }
+        private protected abstract Tuple<string, Dictionary<string, string>> ParseGameArguments(
+            Tuple<string, List<object>> arguments);
 
-        private protected virtual RawVersionModel ParseRawVersion(string id)
-        {
-            throw new NotImplementedException();
-        }
+        private protected abstract RawVersionModel ParseRawVersion(string id);
     }
 }

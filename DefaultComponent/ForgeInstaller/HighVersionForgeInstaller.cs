@@ -31,6 +31,7 @@ namespace ProjBobcat.DefaultComponent.ForgeInstaller
 
         public event EventHandler<ForgeInstallStageChangedEventArgs> StageChangedEventDelegate;
 
+        [Obsolete("此方法已过时，请使用其异步版本 InstallForgeTaskAsync() 。", true)]
         public ForgeInstallResult InstallForge()
         {
             throw new NotImplementedException();

@@ -28,6 +28,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
 
         public event EventHandler<GameResourceInfoResolveEventArgs> GameResourceInfoResolveEvent;
 
+        [Obsolete("此方法已过时，请使用其异步版本 ResolveResourceTaskAsync() 。", true)]
         public IEnumerable<IGameResource> ResolveResource()
         {
             throw new NotImplementedException();
@@ -40,9 +41,9 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
             if (string.IsNullOrEmpty(VersionInfo?.AssetInfo.Id)) return default;
 
             var assetIndexesDi =
-                new DirectoryInfo($"{GamePathHelper.GetAssetsRoot(BasePath)}\\indexes\\");
+                new DirectoryInfo(Path.Combine(GamePathHelper.GetAssetsRoot(BasePath), "indexes"));
             var assetObjectsDi =
-                new DirectoryInfo($"{GamePathHelper.GetAssetsRoot(BasePath)}\\objects\\");
+                new DirectoryInfo(Path.Combine(GamePathHelper.GetAssetsRoot(BasePath), "objects"));
 
             if (!assetIndexesDi.Exists) assetIndexesDi.Create();
             if (!assetObjectsDi.Exists) assetObjectsDi.Create();

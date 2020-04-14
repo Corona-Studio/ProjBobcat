@@ -20,6 +20,7 @@ namespace ProjBobcat.DefaultComponent
         public event EventHandler<DownloadFileChangedEventArgs> DownloadFileChangedEvent;
         public event EventHandler<DownloadFileCompletedEventArgs> DownloadFileCompletedEvent;
 
+        [Obsolete("此方法已过时，请使用其异步版本 CheckAndDownloadTaskAsync() 。", true)]
         public bool CheckAndDownload()
         {
             throw new NotImplementedException();

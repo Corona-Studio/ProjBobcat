@@ -1,4 +1,6 @@
-﻿namespace ProjBobcat.Class.Helper
+﻿using System.IO;
+
+namespace ProjBobcat.Class.Helper
 {
     /// <summary>
     ///     包含一些和游戏文件位置有关的方法。
@@ -9,9 +11,10 @@
         /// <summary>
         ///     .minecraft/versions/
         /// </summary>
-        /// <param name="rootPath">指.minecraft/ Refers to .minecraft/</param>
+        /// <param name="rootPath">指 ".minecraft/" </param>
         /// <returns></returns>
-        public static string GetVersionPath(string rootPath) => $"{rootPath}\\versions\\";
+        public static string GetVersionPath(string rootPath) =>
+            Path.Combine(rootPath, "versions");
 
         /// <summary>
         ///     .minecraft/versions/{id}
@@ -19,7 +22,8 @@
         /// <param name="rootPath">指.minecraft/ Refers to .minecraft/</param>
         /// <param name="id"></param>
         /// <returns></returns>
-        public static string GetGamePath(string rootPath, string id) => $"{rootPath}\\versions\\{id}";
+        public static string GetGamePath(string rootPath, string id) =>
+            Path.Combine(rootPath, "versions", id);
 
         /// <summary>
         ///     .minecraft/versions/{id}/{id}.json
@@ -28,7 +32,7 @@
         /// <param name="id"></param>
         /// <returns></returns>
         public static string GetGameJsonPath(string rootPath, string id) =>
-            string.Format("{0}\\versions\\{1}\\{1}.json", rootPath, id);
+            Path.Combine(rootPath, "versions", id, $"{id}.json");
 
         /// <summary>
         ///     .minecraft/versions/{id}/{id}.jar
@@ -37,7 +41,7 @@
         /// <param name="id"></param>
         /// <returns></returns>
         public static string GetGameExecutablePath(string rootPath, string id) =>
-            string.Format("{0}\\versions\\{1}\\{1}.jar", rootPath, id);
+            Path.Combine(rootPath, "versions", id, $"{id}.jar");
 
         /// <summary>
         ///     .minecraft/libraries/{libraryPath}/
@@ -46,14 +50,15 @@
         /// <param name="libraryPath"></param>
         /// <returns></returns>
         public static string GetLibraryPath(string rootPath, string libraryPath) =>
-            $"{rootPath}\\libraries\\{libraryPath}";
+            Path.Combine(rootPath, "libraries", libraryPath);
 
         /// <summary>
         ///     .minecraft/libraries/{libraryPath}/
         /// </summary>
         /// <param name="rootPath">指.minecraft/ Refers to .minecraft/</param>
         /// <returns></returns>
-        public static string GetLibraryRootPath(string rootPath) => $"{rootPath}\\libraries";
+        public static string GetLibraryRootPath(string rootPath) =>
+            Path.Combine(rootPath, "libraries");
 
         /// <summary>
         ///     .minecraft/versions/natives/
@@ -62,7 +67,7 @@
         /// <param name="versionId"></param>
         /// <returns></returns>
         public static string GetNativeRoot(string rootPath, string versionId) =>
-            $"{rootPath}\\versions\\{versionId}\\natives";
+            Path.Combine(rootPath, "versions", versionId, "natives");
 
         /// <summary>
         ///     .minecraft/versions/{versionId}/{versionId}.jar
@@ -71,20 +76,22 @@
         /// <param name="versionId"></param>
         /// <returns></returns>
         public static string GetVersionJar(string rootPath, string versionId) =>
-            string.Format("{0}\\versions\\{1}\\{1}.jar", rootPath, versionId);
+            Path.Combine(rootPath, "versions", versionId, $"{versionId}.jar");
 
         /// <summary>
         ///     .minecraft/assets/
         /// </summary>
         /// <param name="rootPath">指.minecraft/ Refers to .minecraft/</param>
         /// <returns></returns>
-        public static string GetAssetsRoot(string rootPath) => $"{rootPath}\\assets";
+        public static string GetAssetsRoot(string rootPath) =>
+            Path.Combine(rootPath, "assets");
 
         /// <summary>
         ///     .minecraft/launcher_profiles.json
         /// </summary>
         /// <param name="rootPath">指.minecraft/ Refers to .minecraft/</param>
         /// <returns></returns>
-        public static string GetLauncherProfilePath(string rootPath) => $"{rootPath}\\launcher_profiles.json";
+        public static string GetLauncherProfilePath(string rootPath) =>
+            Path.Combine(rootPath, "launcher_profiles.json");
     }
 }

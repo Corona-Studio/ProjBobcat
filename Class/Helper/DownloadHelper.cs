@@ -12,84 +12,83 @@ using ProjBobcat.Event;
 
 namespace ProjBobcat.Class.Helper
 {
+    /// <summary>
+    /// 下载帮助器。
+    /// </summary>
     public static class DownloadHelper
     {
-        private static string Ua { get; set; } = "ProjBobcat";
-
+        /// <summary>
+        /// 获取或设置用户代理信息。
+        /// </summary>
+        public static string Ua { get; set; } = "ProjBobcat";
+        /// <summary>
+        /// 设置用户代理信息。
+        /// </summary>
+        /// <param name="ua">要设置的用户代理信息。</param>
+        [Obsolete("已过时，请使用属性 Ua 代替。")]
         public static void SetUa(string ua)
         {
             Ua = ua;
         }
 
-        #region 下载方法（异步，单个文件）
-
         /// <summary>
-        ///     下载单个文件
+        /// 异步下载单个文件。
         /// </summary>
         /// <param name="downloadUri"></param>
-        /// <param name="downloadPath"></param>
+        /// <param name="downloadToDir"></param>
         /// <param name="filename"></param>
         /// <param name="complete"></param>
         /// <param name="changedEvent"></param>
-        public static async Task DownloadSingleFileAsyncWithEvent(Uri downloadUri, string downloadPath,
-            string filename,
-            AsyncCompletedEventHandler complete = null, DownloadProgressChangedEventHandler changedEvent = null)
+        public static async Task DownloadSingleFileAsyncWithEvent(
+            Uri downloadUri, string downloadToDir, string filename,
+            AsyncCompletedEventHandler complete,
+            DownloadProgressChangedEventHandler changedEvent)
         {
-            var di = new DirectoryInfo(downloadPath);
+            var di = new DirectoryInfo(downloadToDir);
             if (!di.Exists) di.Create();
 
-            #region 下载代码
-
-            using var client = new WebClient
-            {
+            using var client = new WebClient {
                 Timeout = 10000
             };
             client.Headers.Add("user-agent", Ua);
             client.DownloadFileCompleted += complete;
             client.DownloadProgressChanged += changedEvent;
-            await client.DownloadFileTaskAsync(downloadUri, $"{downloadPath}{filename}")
+            await client.DownloadFileTaskAsync(downloadUri, $"{downloadToDir}{filename}")
                 .ConfigureAwait(false);
-
-            #endregion
         }
 
-        #endregion
 
-        #region 下载单一文件（异步且没有完成事件）
-
-        public static async Task<TaskResult<string>> DownloadSingleFileAsync(Uri downloadUri, string downloadPath,
-            string filename)
+        /// <summary>
+        /// 异步下载单个文件。
+        /// </summary>
+        /// <param name="downloadUri"></param>
+        /// <param name="downloadToDir"></param>
+        /// <param name="filename"></param>
+        /// <returns></returns>
+        public static async Task<TaskResult<string>> DownloadSingleFileAsync(
+            Uri downloadUri, string downloadToDir, string filename)
         {
-            var di = new DirectoryInfo(downloadPath);
+            var di = new DirectoryInfo(downloadToDir);
             if (!di.Exists) di.Create();
 
-            #region 下载代码
-
-            using var client = new WebClient
-            {
+            using var client = new WebClient {
                 Timeout = 10000
             };
             client.Headers.Add("user-agent", Ua);
-            //client.DownloadFileCompleted += FileDownloadCompleted;
-            await client.DownloadFileTaskAsync(downloadUri, $"{downloadPath}{filename}")
+            await client.DownloadFileTaskAsync(downloadUri, $"{downloadToDir}{filename}")
                 .ConfigureAwait(false);
             return new TaskResult<string>(TaskResultStatus.Success);
-
-            #endregion
         }
 
-        #endregion
 
         #region 下载数据
 
         /// <summary>
-        ///     下载文件（通过线程池）
+        /// 下载文件（通过线程池）
         /// </summary>
         /// <param name="downloadProperty"></param>
         private static void DownloadData(DownloadFile downloadProperty)
         {
-            #region 下载代码
-
             using var client = new WebClient
             {
                 Timeout = 10000
@@ -98,10 +97,13 @@ namespace ProjBobcat.Class.Helper
             {
                 client.Headers.Add("user-agent", Ua);
                 var result = client.DownloadData(new Uri(downloadProperty.DownloadUri));
+
+                FileHelper.Write(downloadProperty.DownloadPath, result);
+                /*
                 using var stream = new MemoryStream(result);
 
                 FileHelper.SaveBinaryFile(stream, downloadProperty.DownloadPath);
-
+                */
                 downloadProperty.Completed?.Invoke(client,
                     new DownloadFileCompletedEventArgs(true, null, downloadProperty));
                 downloadProperty.Changed?.Invoke(client, null);
@@ -113,8 +115,6 @@ namespace ProjBobcat.Class.Helper
                 downloadProperty.Completed?.Invoke(client,
                     new DownloadFileCompletedEventArgs(false, ex, downloadProperty));
             }
-
-            #endregion
         }
 
         #endregion
@@ -155,11 +155,11 @@ namespace ProjBobcat.Class.Helper
                             df.DownloadPath.Substring(0, df.DownloadPath.LastIndexOf('\\')));
                         if (!di.Exists) di.Create();
 
-                        // DownloadData(df);
-                        if (df.FileSize >= 1048576 || df.FileSize == 0 || df.FileSize == default)
-                            MultiPartDownload(df);
-                        else
-                            DownloadData(df);
+                         // DownloadData(df);
+                         if (df.FileSize >= 1048576 || df.FileSize == 0 || df.FileSize == default)
+                             MultiPartDownload(df);
+                         else
+                             DownloadData(df);
                     }
                 }
 
@@ -235,18 +235,29 @@ namespace ProjBobcat.Class.Helper
 
                 var downloadParts = 0;
 
-                Task.WhenAll(readRanges.Select(range => Task.Run(() =>
+                Parallel.ForEach(readRanges, (range, state) =>
                 {
-                    using var client = new WebClient {DownloadRange = range};
-                    client.Headers.Add("user-agent", Ua);
+                    try
+                    {
+                        using var client = new WebClient
+                        {
+                            DownloadRange = range,
+                            Timeout = 10000
+                        };
+                        client.Headers.Add("user-agent", Ua);
 
-                    var data = client.DownloadData(new Uri(downloadFile.DownloadUri));
-                    if (!tempFilesDictionary.TryAdd(range.Index, data)) return;
-                    downloadParts++;
-
-                    downloadFile.Changed?.Invoke(client,
-                        new DownloadFileChangedEventArgs {ProgressPercentage = (double) downloadParts / numberOfParts});
-                })).ToArray());
+                        var data = client.DownloadData(new Uri(downloadFile.DownloadUri));
+                        if (!tempFilesDictionary.TryAdd(range.Index, data)) return;
+                        downloadParts++;
+                        downloadFile.Changed?.Invoke(client,
+                            new DownloadFileChangedEventArgs {ProgressPercentage = (double) downloadParts / numberOfParts});
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
+                        state.Stop();
+                    }
+                });
 
                 #endregion
 
@@ -345,20 +356,29 @@ namespace ProjBobcat.Class.Helper
                 #region Parallel download
 
                 var downloadParts = 0;
-                await Task.WhenAll(readRanges.Select(range => Task.Run(async () =>
+                Parallel.ForEach(readRanges, (range, state) =>
                 {
-                    using var client = new WebClient {DownloadRange = range};
-                    client.Headers.Add("user-agent", Ua);
+                    try
+                    {
+                        using var client = new WebClient
+                        {
+                            DownloadRange = range,
+                            Timeout = 10000
+                        };
+                        client.Headers.Add("user-agent", Ua);
 
-                    var data = await client.DownloadDataTaskAsync(new Uri(downloadFile.DownloadUri))
-                        .ConfigureAwait(false);
-
-                    if (!tempFilesDictionary.TryAdd(range.Index, data)) return;
-                    downloadParts++;
-
-                    downloadFile.Changed?.Invoke(client,
-                        new DownloadFileChangedEventArgs {ProgressPercentage = (double) downloadParts / numberOfParts});
-                })).ToArray()).ConfigureAwait(false);
+                        var data = client.DownloadData(new Uri(downloadFile.DownloadUri));
+                        if (!tempFilesDictionary.TryAdd(range.Index, data)) return;
+                        downloadParts++;
+                        downloadFile.Changed?.Invoke(client,
+                            new DownloadFileChangedEventArgs { ProgressPercentage = (double)downloadParts / numberOfParts });
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
+                        state.Stop();
+                    }
+                });
 
                 #endregion
 
