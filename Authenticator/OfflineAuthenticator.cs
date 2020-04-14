@@ -10,7 +10,7 @@ using ProjBobcat.Interface;
 namespace ProjBobcat.Authenticator
 {
     /// <summary>
-    /// 离线身份验证器。
+    /// 离线凭据验证器。
     /// </summary>
     public class OfflineAuthenticator : IAuthenticator
     {
@@ -23,11 +23,11 @@ namespace ProjBobcat.Authenticator
         /// </summary>
         public ILauncherProfileParser LauncherProfileParser { get; set; }
         /// <summary>
-        /// 进行身份验证。
+        /// 验证凭据。
         /// </summary>
-        /// <param name="userField">指示是否需要</param>
-        /// <returns></returns>
-        public AuthResult Auth(bool userField)
+        /// <param name="userField">该参数将被忽略。</param>
+        /// <returns>身份验证结果。</returns>
+        public AuthResult Auth(bool userField = false)
         {
             var authProperty = new AuthPropertyModel
             {
@@ -79,9 +79,9 @@ namespace ProjBobcat.Authenticator
         }
 
         /// <summary>
-        ///     异步验证凭据（不可用）
+        /// 异步验证凭据。
         /// </summary>
-        /// <param name="userField"></param>
+        /// <param name="userField">改参数将被忽略。</param>
         /// <returns></returns>
         [Obsolete("此方法已过时，请使用其同步版本 Auth(bool) 。", true)]
         public Task<AuthResult> AuthTaskAsync(bool userField)
@@ -90,10 +90,10 @@ namespace ProjBobcat.Authenticator
         }
 
         /// <summary>
-        ///     验证凭据（同步）
+        /// 验证凭据。
         /// </summary>
-        /// <param name="userField"></param>
-        /// <returns></returns>
+        /// <returns>验证结果。</returns>
+        [Obsolete("此方法已过时，请使用 Auth(bool) 代替。")]
         public AuthResult GetLastAuthResult()
         {
             return Auth(false);
