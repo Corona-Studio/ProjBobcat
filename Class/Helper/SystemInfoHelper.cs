@@ -55,11 +55,17 @@ namespace ProjBobcat.Class.Helper
                 return new string[0];
             }
         }
-
+        /// <summary>
+        /// 获取当前程序运行所在的系统架构。
+        /// </summary>
+        /// <returns>当前程序运行所在的系统架构。</returns>
         [Obsolete("已过时，使用 ProjBobcat.Class.Helper.SystemInfo.SystemArch.CurrentArch 属性替代。")]
         public static SystemArch GetSystemArch()
             => SystemArch.CurrentArch;
-
+        /// <summary>
+        /// 获取当前程序运行所在的系统版本。
+        /// </summary>
+        /// <returns>当前程序运行所在的系统版本。</returns>
         [Obsolete("已过时，使用 ProjBobcat.Class.Helper.SystemInfo.WindowsSystemVersion.CurrentVersion 属性替代。")]
         public static WindowsSystemVersion GetSystemVersion()
             => WindowsSystemVersion.CurrentVersion;
