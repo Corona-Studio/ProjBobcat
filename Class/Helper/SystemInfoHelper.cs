@@ -76,16 +76,19 @@ namespace ProjBobcat.Class.Helper
         /// <returns>判断结果。</returns>
         public static bool IsMinecraftUWPInstalled()
         {
-            var rs = RunspaceFactory.CreateRunspace();
+            using var rs = RunspaceFactory.CreateRunspace();
             rs.Open();
             var pl = rs.CreatePipeline();
             pl.Commands.AddScript("Get-AppxPackage -Name \"Microsoft.MinecraftUWP\"");
             pl.Commands.Add("Out-String");
             var result = pl.Invoke();
             rs.Close();
-            rs.Dispose();
+
+            return (result != null) && (!string.IsNullOrEmpty(result[0].ToString()));
+            /*
             if (result == null || string.IsNullOrEmpty(result[0].ToString())) return false;
             return true;
+            */
         }
     }
 }
