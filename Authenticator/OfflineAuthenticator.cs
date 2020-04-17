@@ -37,7 +37,7 @@ namespace ProjBobcat.Authenticator
                 Value = "zh-cn"
             };
 
-            var calcGuid = GuidHelper.ToGuidHashAsName(Username).ToString("N");
+            var calcGuid = Username.ToGuidHashAsName().ToString("N");
             var result = new AuthResult
             {
                 AccessToken = GuidHelper.NewGuidString(),

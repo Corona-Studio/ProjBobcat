@@ -27,7 +27,7 @@ namespace ProjBobcat.Class.Helper
         /// </summary>
         /// <param name="username">玩家名。</param>
         /// <returns>生成结果。</returns>
-        public static Guid ToGuidHashAsName(string username)
+        public static Guid ToGuidHashAsName(this string username)
         {
             using var md5 = MD5.Create();
             var data = md5.ComputeHash(Encoding.UTF8.GetBytes($"OfflinePlayer:{username}"));
