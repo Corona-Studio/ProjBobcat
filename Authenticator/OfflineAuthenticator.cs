@@ -33,14 +33,14 @@ namespace ProjBobcat.Authenticator
             {
                 Name = "preferredLanguage",
                 ProfileId = "",
-                UserId = Guid.NewGuid().ToString("N"),
+                UserId = GuidHelper.NewGuidString(),
                 Value = "zh-cn"
             };
 
             var calcGuid = GuidHelper.GetGuidByName(Username).ToString("N");
             var result = new AuthResult
             {
-                AccessToken = Guid.NewGuid().ToString("N"),
+                AccessToken = GuidHelper.NewGuidString(),
                 AuthStatus = AuthStatus.Succeeded,
                 SelectedProfile = new ProfileInfoModel
                 {
