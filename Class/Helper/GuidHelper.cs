@@ -33,7 +33,15 @@ namespace ProjBobcat.Class.Helper
             var data = md5.ComputeHash(Encoding.UTF8.GetBytes($"OfflinePlayer:{username}"));
             return new Guid(data);
         }
-
+        /// <summary>
+        /// 得到一个指定格式的新的 Guid 字符串。
+        /// 这将产生一个新的 Guid 。
+        /// </summary>
+        /// <param name="format">
+        /// 格式。
+        /// 与 <see cref="Guid.ToString(string)"/> 中的参数要求相同，默认为 "N" 。
+        /// </param>
+        /// <returns>新的 Guid 字符串。</returns>
         public static string NewGuidString(string format = "N")
         {
             return Guid.NewGuid().ToString(format);
