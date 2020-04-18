@@ -66,7 +66,8 @@ namespace ProjBobcat.Class.Helper.SystemInfo
         /// <returns>对应的字符串。</returns>
         public string ToString(string format, IFormatProvider formatProvider = null)
         {
-            return string.Format(format, is64BitOperatingSystem ? "64" : "86");
+            return format == null ? is64BitOperatingSystem ? "64" : "86" :
+                string.Format(format, is64BitOperatingSystem ? "64" : "86");
         }
         /// <summary>
         /// 
