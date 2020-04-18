@@ -8,6 +8,7 @@ using Newtonsoft.Json.Serialization;
 using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model.LauncherProfile;
+using ProjBobcat.Exceptions;
 using ProjBobcat.Interface;
 
 namespace ProjBobcat.DefaultComponent.Launch
@@ -123,8 +124,9 @@ namespace ProjBobcat.DefaultComponent.Launch
         /// <returns></returns>
         public GameProfileModel GetGameProfile(string name)
         {
-            return LauncherProfile.Profiles.FirstOrDefault(p => p.Value.Name.Equals(name, StringComparison.Ordinal))
-                .Value;
+            return LauncherProfile.Profiles.FirstOrDefault(
+                p => p.Value.Name.Equals(name, StringComparison.Ordinal)).Value ??
+                throw new UnknownGameNameException(name);
         }
 
         /// <summary>
