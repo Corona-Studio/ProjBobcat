@@ -40,7 +40,7 @@ namespace ProjBobcat.Exceptions
         /// <param name="gameName">导致当前异常的未知游戏名称。</param>
         /// <param name="innerException">导致当前异常的异常。</param>
         public UnknownGameNameException(string gameName, Exception innerException)
-            : this($"游戏名 @\"{gameName}\" 是未知的。", gameName, innerException) { }
+            : this($"游戏名 {gameName} 是未知的。", gameName, innerException) { }
         /// <summary>
         /// 创建一个 <see cref="UnknownGameNameException"/> 的新实例。
         /// </summary>
