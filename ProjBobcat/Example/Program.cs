@@ -1,14 +1,14 @@
-﻿using ProjBobcat.Authenticator;
-using ProjBobcat.Class.Model;
-using ProjBobcat.Class.Model.LauncherProfile;
-using ProjBobcat.DefaultComponent.Launch;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ProjBobcat.Authenticator;
+using ProjBobcat.Class.Model;
+using ProjBobcat.Class.Model.LauncherProfile;
+using ProjBobcat.DefaultComponent.Launch;
 
-namespace Test
+namespace Example
 {
     class Program
     {
