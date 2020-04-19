@@ -10,11 +10,7 @@ namespace ProjBobcat.Class.Helper
         public static AuthPropertyModel ToAuthProperty(PropertyModel model,
             Dictionary<string, AuthProfileModel> profiles)
         {
-            if (model == null || model.Equals(default(PropertyModel)))
-                return null;
-
-            return new AuthPropertyModel
-            {
+            return model is null ? null : new AuthPropertyModel {
                 Name = model.Name,
                 UserId = profiles.First().Key,
                 Value = model.Value

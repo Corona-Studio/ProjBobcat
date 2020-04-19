@@ -105,11 +105,11 @@ namespace ProjBobcat.Authenticator
             var content = await resultJson.Content.ReadAsStringAsync().ConfigureAwait(true);
             var result = JsonConvert.DeserializeObject<AuthResponseModel>(content);
 
-            if (result.Equals(default(AuthResponseModel)))
+            if (result is null)
             {
                 var error = JsonConvert.DeserializeObject<ErrorModel>(content);
 
-                if (error.Equals(default(ErrorModel)))
+                if (error is null)
                     return new AuthResult
                     {
                         AuthStatus = AuthStatus.Unknown
@@ -168,7 +168,7 @@ namespace ProjBobcat.Authenticator
                 LauncherProfileParser.LauncherProfile.AuthenticationDatabase.Values.FirstOrDefault(a =>
                     a.UserName.Equals(Email, StringComparison.OrdinalIgnoreCase));
 
-            if (profile == null || profile.Equals(default))
+            if (profile is null)
                 return new AuthResult
                 {
                     AuthStatus = AuthStatus.Failed,

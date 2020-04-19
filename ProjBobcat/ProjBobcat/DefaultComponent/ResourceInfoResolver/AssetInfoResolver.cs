@@ -86,7 +86,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                 return default;
             }
 
-            if (assetObject?.Equals(default(AssetObjectModel)) ?? true)
+            if (assetObject == null)//?.Equals(default(AssetObjectModel)) ?? true)
             {
                 LogGameResourceInfoResolveStatus("解析Asset Indexes 文件失败！原因：未知错误", LogType.Error);
                 return default;
