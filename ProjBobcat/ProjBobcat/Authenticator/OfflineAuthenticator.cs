@@ -10,7 +10,7 @@ using ProjBobcat.Interface;
 namespace ProjBobcat.Authenticator
 {
     /// <summary>
-    /// 离线凭据验证器。
+    /// 表示一个离线凭据验证器。
     /// </summary>
     public class OfflineAuthenticator : IAuthenticator
     {

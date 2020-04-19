@@ -13,6 +13,9 @@ using ProjBobcat.Interface;
 
 namespace ProjBobcat.Authenticator
 {
+    /// <summary>
+    /// 表示一个正版联机凭据验证器。
+    /// </summary>
     public class YggdrasilAuthenticator : IAuthenticator
     {
         /// <summary>
