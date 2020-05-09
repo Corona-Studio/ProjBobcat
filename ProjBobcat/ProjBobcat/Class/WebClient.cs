@@ -22,7 +22,7 @@ namespace ProjBobcat.Class
             if (!(lWebRequest is HttpWebRequest webRequest)) return lWebRequest;
             webRequest.ReadWriteTimeout = Timeout;
 
-            if (DownloadRange != null && !DownloadRange.Equals(default(DownloadRange)))
+            if (DownloadRange != null)// && !DownloadRange.Equals(default(DownloadRange)))
                 webRequest.AddRange(DownloadRange.Start, DownloadRange.End);
 
             return lWebRequest;
