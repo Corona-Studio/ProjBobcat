@@ -99,7 +99,7 @@ namespace ProjBobcat.Authenticator
             });
 
             var resultJson = await HttpHelper.Post(LoginAddress, requestJson).ConfigureAwait(true);
-            var content = await resultJson.Content.ReadAsStringAsync().ConfigureAwait(true);
+            var content =  resultJson.Content;
             var result = JsonConvert.DeserializeObject<AuthResponseModel>(content);
 
             if (result.Equals(default(AuthResponseModel)))
@@ -216,7 +216,7 @@ namespace ProjBobcat.Authenticator
             });
 
             var resultJson = await HttpHelper.Post(RefreshAddress, requestJson).ConfigureAwait(true);
-            var content = await resultJson.Content.ReadAsStringAsync().ConfigureAwait(true);
+            var content = resultJson.Content;
             var result = JsonConvert.DeserializeObject<object>(content);
 
             switch (result)

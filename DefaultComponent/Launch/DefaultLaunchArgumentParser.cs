@@ -166,8 +166,9 @@ namespace ProjBobcat.DefaultComponent.Launch
                 {"${auth_player_name}", authResult?.SelectedProfile?.Name},
                 {"${auth_uuid}", authResult?.SelectedProfile?.Id},
                 {"${auth_access_token}", authResult?.AccessToken},
+                {"${auth_session}", authResult?.AccessToken},
                 {"${user_properties}", authResult?.User?.Properties.ResolveUserProperties()},
-                {"${user_type}", "Mojang"} // use default value as placeholder
+                {"${user_type}", "mojang"} // use default value as placeholder
             };
 
             return StringHelper.ReplaceByDic(VersionInfo.GameArguments, mcArgumentsDic);

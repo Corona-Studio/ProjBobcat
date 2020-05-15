@@ -6,3 +6,5 @@ obj/
 # generted by nuget
 *.nupkg
 nuget.exe
+.idea/
+packages/

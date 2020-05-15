@@ -61,6 +61,9 @@ namespace ProjBobcat.DefaultComponent.Launch
             return version;
         }
 
+
+       
+
         /// <summary>
         ///     解析游戏JVM参数
         /// </summary>

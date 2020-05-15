@@ -112,6 +112,10 @@ namespace ProjBobcat.Class.Helper.SystemInfo
         /// <returns>对应的字符串。</returns>
         public string ToString(string format, IFormatProvider formatProvider = null)
         {
+            /*if(string.IsNullOrEmpty(format))
+                return this.ToString();
+                */
+            
             return string.Format(format, this.ToString());
         }
         /// <summary>
@@ -136,6 +140,7 @@ namespace ProjBobcat.Class.Helper.SystemInfo
         public static WindowsSystemVersion CurrentVersion
             => (Environment.OSVersion.Version.Major + "." + Environment.OSVersion.Version.Minor) switch
             {
+                
                 "10.0" => Windows10,
                 "6.3" => Windows8Dot1,
                 "6.2" => Windows8,
