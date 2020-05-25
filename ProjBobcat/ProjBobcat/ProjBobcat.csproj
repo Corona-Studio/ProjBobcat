@@ -162,6 +162,7 @@
     <Compile Include="Event\GameLogEventArgs.cs" />
     <Compile Include="Event\GameResourceInfoResolveEventArgs.cs" />
     <Compile Include="Event\LaunchLogEventArgs.cs" />
+    <Compile Include="Exceptions\UnknownGameNameException.cs" />
     <Compile Include="Interface\IArgumentParser.cs" />
     <Compile Include="Interface\IAuthenticator.cs" />
     <Compile Include="Interface\IForgeInstaller.cs" />

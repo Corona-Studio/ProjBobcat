@@ -156,7 +156,7 @@ namespace ProjBobcat.Class.Helper
                         if (!di.Exists) di.Create();
 
                          // DownloadData(df);
-                         if (df.FileSize >= 1048576 || df.FileSize == 0 || df.FileSize == default)
+                         if (df.FileSize >= 1048576 || df.FileSize == 0)// || df.FileSize == default)
                              MultiPartDownload(df);
                          else
                              DownloadData(df);

@@ -473,7 +473,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                 p.Value.LastVersionId?.Equals(id, StringComparison.Ordinal) ?? true);
             if (oldProfile.Equals(default(KeyValuePair<string, GameProfileModel>)))
             {
-                LauncherProfileParser.LauncherProfile.Profiles.Add(randomName.ToGuid().ToString("N"),
+                LauncherProfileParser.LauncherProfile.Profiles.Add(randomName.ToGuidHash().ToString("N"),
                     new GameProfileModel
                     {
                         GameDir = GamePathHelper.GetGamePath(RootPath, id),

@@ -44,8 +44,7 @@ namespace ProjBobcat.Class.Helper
             if (!string.IsNullOrEmpty(classifier)) basePath += $"-{classifier}";
 
             var fullPath = $"{basePath}.{type}";
-            return new MavenInfo
-            {
+            return new MavenInfo {
                 ArtifactId = artifactId,
                 Classifier = classifier,
                 IsSnapshot = isSnapshot,
@@ -64,10 +63,8 @@ namespace ProjBobcat.Class.Helper
 
         public static string GetMavenFullName(this MavenInfo mavenInfo)
         {
-            if (mavenInfo == null || mavenInfo.Equals(default(MavenInfo)))
-                return string.Empty;
-
-            return $"{mavenInfo.OrganizationName}.{mavenInfo.ArtifactId}";
+            return mavenInfo is null ? string.Empty :
+                $"{mavenInfo.OrganizationName}.{mavenInfo.ArtifactId}";
         }
     }
 }

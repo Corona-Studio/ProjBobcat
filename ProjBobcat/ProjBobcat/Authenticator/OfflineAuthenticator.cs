@@ -9,25 +9,38 @@ using ProjBobcat.Interface;
 
 namespace ProjBobcat.Authenticator
 {
+    /// <summary>
+    /// 表示一个离线凭据验证器。
+    /// </summary>
     public class OfflineAuthenticator : IAuthenticator
     {
+        /// <summary>
+        /// 获取或设置用户名。
+        /// </summary>
         public string Username { get; set; }
+        /// <summary>
+        /// 获取或设置启动程序配置文件分析器。
+        /// </summary>
         public ILauncherProfileParser LauncherProfileParser { get; set; }
-
-        public AuthResult Auth(bool userField)
+        /// <summary>
+        /// 验证凭据。
+        /// </summary>
+        /// <param name="userField">该参数将被忽略。</param>
+        /// <returns>身份验证结果。</returns>
+        public AuthResult Auth(bool userField = false)
         {
             var authProperty = new AuthPropertyModel
             {
                 Name = "preferredLanguage",
                 ProfileId = "",
-                UserId = Guid.NewGuid().ToString("N"),
+                UserId = GuidHelper.NewGuidString(),
                 Value = "zh-cn"
             };
 
-            var calcGuid = GuidHelper.GetGuidByName(Username).ToString("N");
+            var calcGuid = Username.ToGuidHashAsName().ToString("N");
             var result = new AuthResult
             {
-                AccessToken = Guid.NewGuid().ToString("N"),
+                AccessToken = GuidHelper.NewGuidString(),
                 AuthStatus = AuthStatus.Succeeded,
                 SelectedProfile = new ProfileInfoModel
                 {
@@ -66,20 +79,21 @@ namespace ProjBobcat.Authenticator
         }
 
         /// <summary>
-        ///     异步验证凭据（不可用）
+        /// 异步验证凭据。
         /// </summary>
-        /// <param name="userField"></param>
+        /// <param name="userField">改参数将被忽略。</param>
         /// <returns></returns>
+        [Obsolete("此方法已过时，请使用其同步版本 Auth(bool) 。", true)]
         public Task<AuthResult> AuthTaskAsync(bool userField)
         {
             throw new NotImplementedException();
         }
 
         /// <summary>
-        ///     验证凭据（同步）
+        /// 验证凭据。
         /// </summary>
-        /// <param name="userField"></param>
-        /// <returns></returns>
+        /// <returns>验证结果。</returns>
+        [Obsolete("此方法已过时，请使用 Auth(bool) 代替。")]
         public AuthResult GetLastAuthResult()
         {
             return Auth(false);

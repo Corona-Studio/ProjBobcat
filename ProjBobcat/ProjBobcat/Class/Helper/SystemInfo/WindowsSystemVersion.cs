@@ -112,7 +112,8 @@ namespace ProjBobcat.Class.Helper.SystemInfo
         /// <returns>对应的字符串。</returns>
         public string ToString(string format, IFormatProvider formatProvider = null)
         {
-            return string.Format(format, this.ToString());
+            return format == null ? this.ToString() :
+                string.Format(format, this.ToString());
         }
         /// <summary>
         /// 
