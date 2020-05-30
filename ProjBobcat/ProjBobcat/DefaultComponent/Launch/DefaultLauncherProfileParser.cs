@@ -13,6 +13,9 @@ using ProjBobcat.Interface;
 
 namespace ProjBobcat.DefaultComponent.Launch
 {
+    /// <summary>
+    /// 默认的官方launcher_profile.json适配器
+    /// </summary>
     public sealed class DefaultLauncherProfileParser : LauncherProfileParserBase, ILauncherProfileParser
     {
         /// <summary>
@@ -60,11 +63,6 @@ namespace ProjBobcat.DefaultComponent.Launch
 
         public LauncherProfileModel LauncherProfile { get; set; }
 
-        /// <summary>
-        ///     添加新的验证信息
-        /// </summary>
-        /// <param name="authInfo"></param>
-        /// <param name="guid"></param>
         public void AddNewAuthInfo(AuthInfoModel authInfo, string guid)
         {
             if (IsAuthInfoExist(guid, authInfo.UserName)) return;
@@ -77,10 +75,6 @@ namespace ProjBobcat.DefaultComponent.Launch
             SaveProfile();
         }
 
-        /// <summary>
-        ///     添加新的游戏信息
-        /// </summary>
-        /// <param name="gameProfile"></param>
         public void AddNewGameProfile(GameProfileModel gameProfile)
         {
             if (IsGameProfileExist(gameProfile.Name)) return;
@@ -89,39 +83,23 @@ namespace ProjBobcat.DefaultComponent.Launch
             SaveProfile();
         }
 
-        /// <summary>
-        ///     清空验证信息
-        /// </summary>
         public void EmptyAuthInfo()
         {
-            LauncherProfile.AuthenticationDatabase = new Dictionary<string, AuthInfoModel>();
+            LauncherProfile.AuthenticationDatabase?.Clear();
             SaveProfile();
         }
 
-        /// <summary>
-        ///     清空游戏信息
-        /// </summary>
         public void EmptyGameProfiles()
         {
-            LauncherProfile.Profiles = new Dictionary<string, GameProfileModel>();
+            LauncherProfile.Profiles?.Clear();
             SaveProfile();
         }
 
-        /// <summary>
-        ///     获取验证信息
-        /// </summary>
-        /// <param name="uuid"></param>
-        /// <returns></returns>
         public AuthInfoModel GetAuthInfo(string uuid)
         {
             return LauncherProfile.AuthenticationDatabase.TryGetValue(uuid, out var authInfo) ? authInfo : null;
         }
 
-        /// <summary>
-        ///     获取游戏信息
-        /// </summary>
-        /// <param name="name"></param>
-        /// <returns></returns>
         public GameProfileModel GetGameProfile(string name)
         {
             return LauncherProfile.Profiles.FirstOrDefault(
@@ -129,12 +107,6 @@ namespace ProjBobcat.DefaultComponent.Launch
                 throw new UnknownGameNameException(name);
         }
 
-        /// <summary>
-        ///     确认验证信息是否存在
-        /// </summary>
-        /// <param name="uuid"></param>
-        /// <param name="userName"></param>
-        /// <returns></returns>
         public bool IsAuthInfoExist(string uuid, string userName)
         {
             if (!(LauncherProfile.AuthenticationDatabase?.Any() ?? false)) return false;
@@ -145,37 +117,22 @@ namespace ProjBobcat.DefaultComponent.Launch
                        a.Value.Profiles?.First().Value.DisplayName.Equals(userName, StringComparison.Ordinal) ?? false);
         }
 
-        /// <summary>
-        ///     确定游戏信息是否存在
-        /// </summary>
-        /// <param name="name"></param>
-        /// <returns></returns>
         public bool IsGameProfileExist(string name)
         {
             return LauncherProfile.Profiles.Any(p => p.Value.Name.Equals(name, StringComparison.Ordinal));
         }
 
-        /// <summary>
-        ///     删除一个验证信息
-        /// </summary>
-        /// <param name="uuid"></param>
+        
         public void RemoveAuthInfo(string uuid)
         {
             LauncherProfile.AuthenticationDatabase.Remove(uuid);
         }
 
-        /// <summary>
-        ///     删除一个游戏信息
-        /// </summary>
-        /// <param name="name"></param>
         public void RemoveGameProfile(string name)
         {
             LauncherProfile.Profiles.Remove(name);
         }
 
-        /// <summary>
-        ///     保存整个launcher_profiles
-        /// </summary>
         public void SaveProfile()
         {
             if (File.Exists(GamePathHelper.GetLauncherProfilePath(RootPath)))
@@ -189,10 +146,6 @@ namespace ProjBobcat.DefaultComponent.Launch
             FileHelper.Write(GamePathHelper.GetLauncherProfilePath(RootPath), launcherProfileJson);
         }
 
-        /// <summary>
-        ///     选择某个游戏信息作为默认游戏
-        /// </summary>
-        /// <param name="name"></param>
         public void SelectGameProfile(string name)
         {
             if (!IsGameProfileExist(name)) throw new KeyNotFoundException();
@@ -201,10 +154,6 @@ namespace ProjBobcat.DefaultComponent.Launch
             SaveProfile();
         }
 
-        /// <summary>
-        ///     选择一个用户信息作为默认用户
-        /// </summary>
-        /// <param name="uuid"></param>
         public void SelectUser(string uuid)
         {
             LauncherProfile.SelectedUser.Account = uuid;

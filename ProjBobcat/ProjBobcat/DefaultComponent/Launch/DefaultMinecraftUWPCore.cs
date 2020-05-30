@@ -8,7 +8,7 @@ using ProjBobcat.Interface;
 
 namespace ProjBobcat.DefaultComponent.Launch
 {
-    public class DefaultMinecraftUWPCore : IGameCore, IDisposable
+    public class DefaultMinecraftUWPCore : IGameCore
     {
         [Obsolete("UWP 版本的Minecraft不需要该字段。")]
         public string RootPath
@@ -76,28 +76,11 @@ namespace ProjBobcat.DefaultComponent.Launch
 
         #region IDisposable Support
 
-        // Dispose() calls Dispose(true)
+        /// <summary>
+        /// IDisposable保留字段
+        /// </summary>
         public void Dispose()
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        // NOTE: Leave out the finalizer altogether if this class doesn't
-        // own unmanaged resources, but leave the other methods
-        // exactly as they are.
-        ~DefaultMinecraftUWPCore()
-        {
-            // Finalizer calls Dispose(false)
-            Dispose(false);
-        }
-
-        // The bulk of the clean-up code is implemented in Dispose(bool)
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-            }
         }
 
         #endregion

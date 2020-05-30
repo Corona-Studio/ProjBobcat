@@ -44,10 +44,6 @@ namespace ProjBobcat.DefaultComponent.Launch
             LastAuthResult = LaunchSettings.Authenticator.GetLastAuthResult();
         }
 
-        /// <summary>
-        ///     解析JVM核心启动参数（内存大小、Agent等）
-        /// </summary>
-        /// <returns></returns>
         public string ParseJvmHeadArguments()
         {
             var sb = new StringBuilder();
@@ -123,10 +119,6 @@ namespace ProjBobcat.DefaultComponent.Launch
             return sb.ToString();
         }
 
-        /// <summary>
-        ///     解析游戏JVM参数
-        /// </summary>
-        /// <returns></returns>
         public string ParseJvmArguments()
         {
             var jvmArgumentsDic = new Dictionary<string, string>
@@ -146,11 +138,6 @@ namespace ProjBobcat.DefaultComponent.Launch
             return StringHelper.ReplaceByDic(preJvmArguments, jvmArgumentsDic);
         }
 
-        /// <summary>
-        ///     解析游戏参数
-        /// </summary>
-        /// <param name="authResult"></param>
-        /// <returns></returns>
         public string ParseGameArguments(AuthResult authResult)
         {
             var mcArgumentsDic = new Dictionary<string, string>
@@ -173,10 +160,6 @@ namespace ProjBobcat.DefaultComponent.Launch
             return StringHelper.ReplaceByDic(VersionInfo.GameArguments, mcArgumentsDic);
         }
 
-        /// <summary>
-        ///     解析部分总成
-        /// </summary>
-        /// <returns></returns>
         public List<string> GenerateLaunchArguments()
         {
             var arguments = new List<string>
