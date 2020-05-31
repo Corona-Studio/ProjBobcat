@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ProjBobcat.Class.Helper.SystemInfo
 {
@@ -18,42 +14,42 @@ namespace ProjBobcat.Class.Helper.SystemInfo
         /// 未知。
         /// </summary>
         public static WindowsSystemVersion Unknown { get; }
-            = new WindowsSystemVersion() { version = 0 };
+            = new WindowsSystemVersion { version = 0 };
         /// <summary>
         /// XP 。
         /// </summary>
         public static WindowsSystemVersion WindowsXP { get; }
-            = new WindowsSystemVersion() { version = 1 };
+            = new WindowsSystemVersion { version = 1 };
         /// <summary>
         /// 2003 。
         /// </summary>
         public static WindowsSystemVersion Windows2003 { get; }
-            = new WindowsSystemVersion() { version = 2 };
+            = new WindowsSystemVersion { version = 2 };
         /// <summary>
         /// 2008 。
         /// </summary>
         public static WindowsSystemVersion Windows2008 { get; }
-            = new WindowsSystemVersion() { version = 3 };
+            = new WindowsSystemVersion { version = 3 };
         /// <summary>
         /// 7 。
         /// </summary>
         public static WindowsSystemVersion Windows7 { get; }
-            = new WindowsSystemVersion() { version = 4 };
+            = new WindowsSystemVersion { version = 4 };
         /// <summary>
         /// 8 。
         /// </summary>
         public static WindowsSystemVersion Windows8 { get; }
-            = new WindowsSystemVersion() { version = 5 };
+            = new WindowsSystemVersion { version = 5 };
         /// <summary>
         /// 8.1 。
         /// </summary>
         public static WindowsSystemVersion Windows8Dot1 { get; }
-            = new WindowsSystemVersion() { version = 6 };
+            = new WindowsSystemVersion { version = 6 };
         /// <summary>
         /// 10 。
         /// </summary>
         public static WindowsSystemVersion Windows10 { get; }
-            = new WindowsSystemVersion() { version = 7 };
+            = new WindowsSystemVersion { version = 7 };
 
         /// <summary>
         /// 判断一个对象是否与当前实例相同。
@@ -91,7 +87,7 @@ namespace ProjBobcat.Class.Helper.SystemInfo
         /// <returns>对应的字符串。</returns>
         public override string ToString()
         {
-            return (version) switch
+            return version switch
             {
                 7 => "10",
                 6 => "8.1",

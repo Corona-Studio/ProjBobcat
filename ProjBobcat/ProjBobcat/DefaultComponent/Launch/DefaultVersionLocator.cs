@@ -15,6 +15,9 @@ using FileInfo = ProjBobcat.Class.Model.FileInfo;
 
 namespace ProjBobcat.DefaultComponent.Launch
 {
+    /// <summary>
+    /// 默认的版本定位器
+    /// </summary>
     public sealed class DefaultVersionLocator : VersionLocatorBase, IVersionLocator
     {
         /// <summary>
@@ -36,11 +39,6 @@ namespace ProjBobcat.DefaultComponent.Launch
 
         public ILauncherProfileParser LauncherProfileParser { get; set; }
 
-        /// <summary>
-        ///     获取所有能够正常被解析的游戏信息。
-        ///     Fetch all the game versions' information in the .minecraft/ folder.
-        /// </summary>
-        /// <returns>一个表，包含.minecraft文件夹中所有版本的所有信息。A list, containing all information of all games in .minecraft/ .</returns>
         public IEnumerable<VersionInfo> GetAllGames()
         {
             // 把每个DirectoryInfo类映射到VersionInfo类。
@@ -49,23 +47,12 @@ namespace ProjBobcat.DefaultComponent.Launch
                 .Select(dir => ToVersion(dir.Name)).Where(ver => ver != null);
         }
 
-        /// <summary>
-        ///     获取某个特定ID的游戏信息。
-        ///     Get the game info with specific ID.
-        /// </summary>
-        /// <param name="id">装有游戏版本的文件夹名。The game version folder's name.</param>
-        /// <returns></returns>
         public VersionInfo GetGame(string id)
         {
             var version = ToVersion(id);
             return version;
         }
 
-        /// <summary>
-        ///     解析游戏JVM参数
-        /// </summary>
-        /// <param name="arguments"></param>
-        /// <returns></returns>
         public string ParseJvmArguments(List<object> arguments)
         {
             if (!(arguments?.Any() ?? false))

@@ -3,12 +3,24 @@
 # [简体中文](https://github.com/Corona-Studio/ProjBobcat/blob/master/README_zh_cn.md)
 
 ![bobcatlong.png](https://i.loli.net/2020/02/07/Hx18lYLKR43WAb2.png)
+![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/corona-studio/projbobcat?logo=codefactor&style=for-the-badge)
+![Nuget](https://img.shields.io/nuget/v/ProjBobcat?logo=nuget&style=for-the-badge)
+![Nuget](https://img.shields.io/nuget/dt/projbobcat?logo=nuget&style=for-the-badge)
+![GitHub](https://img.shields.io/github/license/corona-studio/projbobcat?logo=github&style=for-the-badge)
+![Maintenance](https://img.shields.io/maintenance/yes/2020?logo=diaspora&style=for-the-badge)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/m/corona-studio/projbobcat?logo=github&style=for-the-badge)
+![GitHub closed pull requests](https://img.shields.io/github/issues-pr-closed/corona-studio/projbobcat?logo=github&style=for-the-badge)
+![GitHub repo size](https://img.shields.io/github/repo-size/corona-studio/projbobcat?logo=github&style=for-the-badge)
+![GitHub stars](https://img.shields.io/github/stars/corona-studio/projbobcat?logo=github&style=for-the-badge)
 
 The next-generation Minecraft launcher core written in C# providing the freest, fastest and the most complete experience.
 
 Developed and maintained by Corona Studio.
 
-For Chinese version of README.md, see README_zh_cn.md.
+## [Ad] An Awesome Typescript Launcher Core
+[Repo Link](https://github.com/Voxelum/minecraft-launcher-core-node)
+
+All you need for minecraft launcher in typescript. https://voxelum.github.io/minecraft-launcher-core-node/
 
 ## Installation
 * Clone and copy ProjBobcat's source code to your solution folder, then add ProjBobcat's reference to your project.
@@ -31,8 +43,11 @@ For Chinese version of README.md, see README_zh_cn.md.
 | New Forge Installation Model | ✅ |
 | Resource Auto Completion (Multi-thread downloader) | ✅ |
 | Minecraft: Windows 10 Edition Support (Detector and launcher) | ✅ |
+| Game crashing detector | ❌ |
 
 ## Instruction
+
+Please note: ProjBobcat requires non-32-bit preferred compilation in your main project.
 
 ProjBobcat provides 3 main components & a core to form the whole core framework.
 
@@ -52,6 +67,12 @@ Selective components:
 
 ### Quick Startup
 
+#### Java Detection
+
+```csharp
+var javaList = ProjBobcat.Class.Helper.SystemInfoHelper.FindJava(); // Returns a list of all java installations found in registry.
+```
+
 #### Core Initialization
 
 ```csharp
@@ -59,7 +80,7 @@ Selective components:
 var core = new DefaultGameCore
 {
     ClientToken = clientToken, // Game's identifier, set it to any GUID you like, such as 88888888-8888-8888-8888-888888888888 or a randomly generated one.
-    RootPath = rootPath, // Path of .minecraft\
+    RootPath = rootPath, // Path of .minecraft\, you had better use absolute path.
     VersionLocator = new DefaultVersionLocator(rootPath, clientToken)
     {
         LauncherProfileParser = new DefaultLauncherProfileParser(rootPath, clientToken)
@@ -156,6 +177,8 @@ Here are some events which you could bind to your program.
 
 #### Define Auth Model
 
+Offline:
+
 ```csharp
 
 launchSettings.Authenticator = new OfflineAuthenticator
@@ -164,6 +187,17 @@ launchSettings.Authenticator = new OfflineAuthenticator
     LauncherProfileParser = Core.VersionLocator.LauncherProfileParser // launcher_profiles.json parser
 },
 
+```
+
+Online:
+
+```csharp
+launchSettings.Authenticator = new YggdrasilAuthenticator
+{
+    LauncherProfileParser = core.VersionLocator.LauncherProfileParser,
+    Email = "example@example.com", // Registered E-mail address on Mojang authentication server.
+    Password = "password"
+};
 ```
 
 #### Launch!

@@ -1,0 +1,4 @@
+﻿[*.cs]
+
+# CA1063: 正确实现 IDisposable
+dotnet_diagnostic.CA1063.severity = silent

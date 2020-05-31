@@ -1,20 +1,34 @@
 # ProjBobcat 中文文档
 
-# [English](https://github.com/Corona-Studio/ProjBobcat/blob/master/README.md)
+# [English](https://github.com/Corona-Studio/ProjBobcat/)
 
 ## 查看我们在MCBBS的教程贴
 [MCBBS教程](https://www.mcbbs.net/thread-956299-1-1.html)
 
 ![bobcatlong.png](https://i.loli.net/2020/02/07/Hx18lYLKR43WAb2.png)
+![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/corona-studio/projbobcat?logo=codefactor&label=CODEFACTOR评分&style=for-the-badge)
+![Nuget](https://img.shields.io/nuget/v/ProjBobcat?logo=nuget&label=NUGET版本&style=for-the-badge)
+![Nuget](https://img.shields.io/nuget/dt/projbobcat?logo=nuget&label=NUGET下载量&style=for-the-badge)
+![GitHub](https://img.shields.io/github/license/corona-studio/projbobcat?logo=github&label=开源协议&style=for-the-badge)
+![Maintenance](https://img.shields.io/maintenance/yes/2020?logo=diaspora&label=已维护&style=for-the-badge)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/m/corona-studio/projbobcat?label=COMMIT统计&logo=github&style=for-the-badge)
+![GitHub closed pull requests](https://img.shields.io/github/issues-pr-closed/corona-studio/projbobcat?logo=github&label=已关闭PR&style=for-the-badge)
+![GitHub repo size](https://img.shields.io/github/repo-size/corona-studio/projbobcat?logo=github&label=仓库大小&style=for-the-badge)
+![GitHub stars](https://img.shields.io/github/stars/corona-studio/projbobcat?logo=github&label=GITHUB星星！&style=for-the-badge)
 
-以C#写就的下一代Minecraft启动核心，提供最自由、快速和完整的开发和使用体验。
+以 C# 写就的下一代 Minecraft 启动核心，提供最自由、快速和完整的开发和使用体验。
 
 由日冕工作室开发和维护。
 
+## [广告] 一个超牛逼的Typescript启动核心
+[仓库链接](https://github.com/Voxelum/minecraft-launcher-core-node)
+
+All you need for minecraft launcher in typescript. https://voxelum.github.io/minecraft-launcher-core-node/
+
 ## 反馈BUG或和我们一起开发？
 
-如果您想加入我们并和我们一起将这只“大猫”变得更强壮。欢迎您加入我们的讨论组（见下方）。
-如果您有任何改进意见想和我们提出，请在帖子评论区留言或是加入我们的官方讨论组进行讨论~
+欢迎您提交 issue 、 PR 以修正 bug 并完善我们的代码。
+如果有更多疑难问题，欢迎您加入我们的讨论组（见下方）。如果您想直接参与开发核心工作，并接触团队内部的工具链，欢迎加入我们的审核群。
 
 ## 联系方式
 
@@ -37,14 +51,17 @@
 | 离线验证模型 | ✅ |
 | 正版验证模型 | ✅ |
 | 版本隔离 | ✅ |
-| launcher_profiles.json解析 | ✅ |
-| Nuget分发 | ✅ |
+| launcher_profiles.json 解析 | ✅ |
+| Nuget 分发 | ✅ |
 | 旧版Forge安装模型 | ✅ |
 | 新版Forge安装模型 | ✅ |
 | 资源自动补全（多线程下载） | ✅ |
-| Windows 10版Minecraft支持（检测和启动） | ✅ |
+| Windows 10 版 Minecraft 支持（检测和启动） | ✅ |
+| 游戏崩溃探测器 | ❌ |
 
 ## 使用说明
+
+请注意：ProjBobcat要求您取消项目属性中的优先32位生成 ( Prefer 32-bit ) 勾选。
 
 ProjBobcat提供了3大必要组件和一个核心总成来支撑起整个核心框架
 
@@ -61,6 +78,12 @@ ProjBobcat提供了3大必要组件和一个核心总成来支撑起整个核心
 | DefaultResourceCompleter | IResourceCompleter | NG | 提供默认资源补全器所有实现  |
 
 ### 基本使用
+
+#### 扫描 Java
+
+```csharp
+var javaList = ProjBobcat.Class.Helper.SystemInfoHelper.FindJava(); // 返回一个表，包含了从注册表中检索到的系统中 Java 安装的全部信息
+```
 
 #### 初始化核心
 
@@ -167,14 +190,27 @@ launchSettings.GameArguments = new GameArguments // （可选）具体游戏启�
 
 #### 确定验证模型
 
+离线验证模型：
+
 ```csharp
 
 launchSettings.Authenticator = new OfflineAuthenticator
 {
     Username = "您的游戏名"
     LauncherProfileParser = Core.VersionLocator.LauncherProfileParser // launcher_profiles.json解析组件
-},
+};
 
+```
+
+在线验证模型：
+
+```csharp
+launchSettings.Authenticator = new YggdrasilAuthenticator
+{
+    LauncherProfileParser = core.VersionLocator.LauncherProfileParser,
+    Email = "example@example.com", // 在膜江验证服务器上注册的正版账号邮箱地址。
+    Password = "password" // 填写明文密码。
+};
 ```
 
 #### 启动游戏

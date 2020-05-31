@@ -19,12 +19,10 @@ namespace ProjBobcat.DefaultComponent.Launch
     /// <summary>
     /// 表示一个默认的游戏核心。
     /// </summary>
-    public class DefaultGameCore : IGameCore, IDisposable
+    public class DefaultGameCore : IGameCore
     {
         private string _rootPath;
-        /// <summary>
-        /// 获取或设置根目录。
-        /// </summary>
+        
         public string RootPath
         {
             get => _rootPath;
@@ -36,44 +34,22 @@ namespace ProjBobcat.DefaultComponent.Launch
                 _rootPath = Path.GetFullPath(value.TrimEnd('/'));
             }
         }
-        /// <summary>
-        /// 获取或设置版本定位器。
-        /// </summary>
+        
         public IVersionLocator VersionLocator { get; set; }
-        /// <summary>
-        /// 获取或设置客户端令牌。
-        /// </summary>
+        
         public Guid ClientToken { get; set; }
-        /// <summary>
-        /// 在游戏退出时触发。
-        /// </summary>
+        
         public event EventHandler<GameExitEventArgs> GameExitEventDelegate;
-        /// <summary>
-        /// 在需要记录游戏日志时触发。
-        /// </summary>
         public event EventHandler<GameLogEventArgs> GameLogEventDelegate;
-        /// <summary>
-        /// 在需要记录启动日志时触发。
-        /// </summary>
         public event EventHandler<LaunchLogEventArgs> LaunchLogEventDelegate;
-        /// <summary>
-        /// 启动游戏。
-        /// 若启动成功，其返回值会包含消耗的时间；失败则包含异常信息。
-        /// </summary>
-        /// <param name="settings">启动设置。</param>
-        /// <returns>启动结果。若启动成功，会包含消耗的时间；失败则包含异常信息。</returns>
-        [Obsolete("此方法已过时，请使用其异步版本 LaunchTaskAsync(LaunchSettings) 。", true)]
+        
         public LaunchResult Launch(LaunchSettings settings)
         {
-            throw new NotImplementedException();
+            var task = LaunchTaskAsync(settings);
+            task.Wait();
+            return task.Result;
         }
 
-        /// <summary>
-        /// 启动游戏。
-        /// 若启动成功，其返回值会包含消耗的时间；失败则包含异常信息。
-        /// </summary>
-        /// <param name="settings">启动设置。</param>
-        /// <returns>启动结果。若启动成功，会包含消耗的时间；失败则包含异常信息。</returns>
         public async Task<LaunchResult> LaunchTaskAsync(LaunchSettings settings)
         {
             try
@@ -335,11 +311,7 @@ namespace ProjBobcat.DefaultComponent.Launch
         /// <summary>
         /// 释放资源。
         /// </summary>
-        public void Dispose()
-        {
-            VersionLocator = null;
-            GC.SuppressFinalize(this);
-        }
+        public void Dispose() { }
         #endregion
     }
 }

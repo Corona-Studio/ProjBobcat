@@ -9,21 +9,27 @@ using ProjBobcat.Interface;
 
 namespace ProjBobcat.DefaultComponent
 {
+    /// <summary>
+    /// 默认的资源补全器
+    /// </summary>
     public class DefaultResourceCompleter : IResourceCompleter
     {
         private int _totalDownloaded, _needToDownload;
+
         public int DownloadThread { get; set; }
         public int TotalRetry { get; set; }
         public IEnumerable<IResourceInfoResolver> ResourceInfoResolvers { get; set; }
 
+        
         public event EventHandler<GameResourceInfoResolveEventArgs> GameResourceInfoResolveStatus;
         public event EventHandler<DownloadFileChangedEventArgs> DownloadFileChangedEvent;
         public event EventHandler<DownloadFileCompletedEventArgs> DownloadFileCompletedEvent;
 
-        [Obsolete("此方法已过时，请使用其异步版本 CheckAndDownloadTaskAsync() 。", true)]
         public bool CheckAndDownload()
         {
-            throw new NotImplementedException();
+            var task = CheckAndDownloadTaskAsync();
+            task.Wait();
+            return task.Result.Value;
         }
 
         public async Task<TaskResult<bool>> CheckAndDownloadTaskAsync()
@@ -117,5 +123,10 @@ namespace ProjBobcat.DefaultComponent
                 ProgressPercentage = progress
             });
         }
+
+        /// <summary>
+        /// IDisposable接口保留字段
+        /// </summary>
+        public void Dispose(){}
     }
 }
