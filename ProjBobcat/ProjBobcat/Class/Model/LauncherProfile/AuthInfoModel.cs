@@ -3,14 +3,33 @@ using Newtonsoft.Json;
 
 namespace ProjBobcat.Class.Model.LauncherProfile
 {
+    /// <summary>
+    /// 验证信息模型
+    /// </summary>
     public class AuthInfoModel
     {
-        [JsonProperty("accessToken")] public string AccessToken { get; set; }
+        /// <summary>
+        /// AccessToken
+        /// </summary>
+        [JsonProperty("accessToken")]
+        public string AccessToken { get; set; }
 
-        [JsonProperty("profiles")] public Dictionary<string, AuthProfileModel> Profiles { get; set; }
+        /// <summary>
+        /// Auth Profile集合
+        /// </summary>
+        [JsonProperty("profiles")]
+        public Dictionary<string, AuthProfileModel> Profiles { get; set; }
 
-        [JsonProperty("properties")] public List<AuthPropertyModel> Properties { get; set; }
+        /// <summary>
+        /// User Properties集合
+        /// </summary>
+        [JsonProperty("properties")]
+        public List<AuthPropertyModel> Properties { get; set; }
 
-        [JsonProperty("username")] public string UserName { get; set; }
+        /// <summary>
+        /// 游戏名称
+        /// </summary>
+        [JsonProperty("username")]
+        public string UserName { get; set; }
     }
 }

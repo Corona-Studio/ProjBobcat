@@ -8,8 +8,14 @@ using ProjBobcat.Interface;
 
 namespace ProjBobcat.DefaultComponent.Launch
 {
-    public class DefaultMinecraftUWPCore : IGameCore
+    /// <summary>
+    /// 提供了UWP版本MineCraft的启动核心
+    /// </summary>
+    public class DefaultMineCraftUWPCore : IGameCore
     {
+        /// <summary>
+        /// 无用字段
+        /// </summary>
         [Obsolete("UWP 版本的Minecraft不需要该字段。")]
         public string RootPath
         {
@@ -17,6 +23,9 @@ namespace ProjBobcat.DefaultComponent.Launch
             set => throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// 无用字段
+        /// </summary>
         [Obsolete("UWP 版本的Minecraft不需要该字段。")]
         public Guid ClientToken
         {
@@ -24,6 +33,9 @@ namespace ProjBobcat.DefaultComponent.Launch
             set => throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// 无用字段
+        /// </summary>
         [Obsolete("UWP 版本的Minecraft不需要该字段。")]
         public IVersionLocator VersionLocator
         {
@@ -31,15 +43,27 @@ namespace ProjBobcat.DefaultComponent.Launch
             set => throw new NotImplementedException();
         }
 
-        [Obsolete("UWP 版本的Minecraft不需要该字段。")] public event EventHandler<GameExitEventArgs> GameExitEventDelegate;
+        /// <summary>
+        /// 无用字段
+        /// </summary>
+        [Obsolete("UWP 版本的Minecraft不需要该字段。")]
+        public event EventHandler<GameExitEventArgs> GameExitEventDelegate;
 
-        [Obsolete("UWP 版本的Minecraft不需要该字段。")] public event EventHandler<GameLogEventArgs> GameLogEventDelegate;
+        /// <summary>
+        /// 无用字段
+        /// </summary>
+        [Obsolete("UWP 版本的Minecraft不需要该字段。")]
+        public event EventHandler<GameLogEventArgs> GameLogEventDelegate;
 
-        [Obsolete("UWP 版本的Minecraft不需要该字段。")] public event EventHandler<LaunchLogEventArgs> LaunchLogEventDelegate;
+        /// <summary>
+        /// 无用字段
+        /// </summary>
+        [Obsolete("UWP 版本的Minecraft不需要该字段。")]
+        public event EventHandler<LaunchLogEventArgs> LaunchLogEventDelegate;
 
         public LaunchResult Launch(LaunchSettings launchSettings)
         {
-            if (SystemInfoHelper.IsMinecraftUWPInstalled() == false) throw new InvalidOperationException();
+            if (!SystemInfoHelper.IsMinecraftUWPInstalled()) throw new InvalidOperationException();
 
             using var process = new Process
                 {StartInfo = new ProcessStartInfo {UseShellExecute = true, FileName = "minecraft:"}};
@@ -54,16 +78,25 @@ namespace ProjBobcat.DefaultComponent.Launch
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// 无用字段
+        /// </summary>
         public void LogGameData(object sender, GameLogEventArgs e)
         {
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// 无用字段
+        /// </summary>
         public void LogLaunchData(object sender, LaunchLogEventArgs e)
         {
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// 无用字段
+        /// </summary>
         public void GameExit(object sender, GameExitEventArgs e)
         {
             throw new NotImplementedException();
@@ -79,9 +112,7 @@ namespace ProjBobcat.DefaultComponent.Launch
         /// <summary>
         /// IDisposable保留字段
         /// </summary>
-        public void Dispose()
-        {
-        }
+        public void Dispose() { }
 
         #endregion
     }
