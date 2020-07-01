@@ -7,8 +7,16 @@ using System.Threading.Tasks;
 
 namespace ProjBobcat.Class.Helper
 {
+    /// <summary>
+    /// Http工具方法类
+    /// </summary>
     public static class HttpHelper
     {
+        /// <summary>
+        /// 正则匹配Uri
+        /// </summary>
+        /// <param name="uri">待处理Uri</param>
+        /// <returns>匹配的Uri</returns>
         public static string RegexMatchUri(string uri)
         {
             var r = new Regex(
@@ -16,12 +24,24 @@ namespace ProjBobcat.Class.Helper
             return r.Match(uri).Value;
         }
 
+        /// <summary>
+        /// Http Get方法
+        /// </summary>
+        /// <param name="address">Get地址</param>
+        /// <returns>获取到的字符串</returns>
         public static async Task<string> Get(string address)
         {
             using var client = new HttpClient();
             return await client.GetStringAsync(new Uri(address)).ConfigureAwait(true);
         }
 
+        /// <summary>
+        /// Http Post方法
+        /// </summary>
+        /// <param name="address">Post地址</param>
+        /// <param name="data">数据</param>
+        /// <param name="contentType">ContentType</param>
+        /// <returns></returns>
         public static async Task<HttpResponseMessage> Post(string address, string data,
             string contentType = "application/json")
         {
@@ -32,6 +52,13 @@ namespace ProjBobcat.Class.Helper
             return response;
         }
 
+        /// <summary>
+        /// Http Post方法（带参数）
+        /// </summary>
+        /// <param name="address">Post地址</param>
+        /// <param name="param">参数</param>
+        /// <param name="contentType">ContentType</param>
+        /// <returns></returns>
         public static async Task<HttpResponseMessage> PostWithParams(string address,
             IEnumerable<KeyValuePair<string, string>> param, string contentType = "application/json")
         {

@@ -34,7 +34,8 @@ namespace ProjBobcat.DefaultComponent.Launch
                 _rootPath = Path.GetFullPath(value.TrimEnd('/'));
             }
         }
-        
+
+        public IArgumentParser LaunchArgumentParser { get; set; }
         public IVersionLocator VersionLocator { get; set; }
         
         public Guid ClientToken { get; set; }

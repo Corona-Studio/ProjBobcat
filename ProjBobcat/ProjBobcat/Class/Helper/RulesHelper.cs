@@ -5,8 +5,16 @@ using ProjBobcat.Class.Model;
 
 namespace ProjBobcat.Class.Helper
 {
+    /// <summary>
+    /// MineCraft Lib Json Rule工具类
+    /// </summary>
     public static class RulesHelper
     {
+        /// <summary>
+        /// 检查该Rule是否被允许
+        /// </summary>
+        /// <param name="rules"></param>
+        /// <returns></returns>
         public static bool CheckAllow(this IEnumerable<JvmRules> rules)
         {
             if (rules == null) return true;

@@ -22,12 +22,12 @@ namespace ProjBobcat.Class.Helper
             {
                 var rootReg = Registry.LocalMachine.OpenSubKey("SOFTWARE");
                 return rootReg == null
-                    ? new string[0]
+                    ? Array.Empty<string>()
                     : FindJavaInternal(rootReg).Union(FindJavaInternal(rootReg.OpenSubKey("Wow6432Node")));
             }
             catch
             {
-                return new string[0];
+                return Array.Empty<string>();
             }
         }
 
@@ -37,7 +37,7 @@ namespace ProjBobcat.Class.Helper
             {
                 var registryKey = registry.OpenSubKey("JavaSoft");
                 if (registryKey == null || (registry = registryKey.OpenSubKey("Java Runtime Environment")) == null)
-                    return new string[0];
+                    return Array.Empty<string>();
                 return from ver in registry.GetSubKeyNames()
                     select registry.OpenSubKey(ver)
                     into command
@@ -52,7 +52,7 @@ namespace ProjBobcat.Class.Helper
             }
             catch
             {
-                return new string[0];
+                return Array.Empty<string>();
             }
         }
         /// <summary>

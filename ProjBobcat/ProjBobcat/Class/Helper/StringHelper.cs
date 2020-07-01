@@ -5,8 +5,16 @@ using ProjBobcat.Class.Model.YggdrasilAuth;
 
 namespace ProjBobcat.Class.Helper
 {
+    /// <summary>
+    /// 字符串工具类
+    /// </summary>
     public static class StringHelper
     {
+        /// <summary>
+        /// 修复+转义参数字符串
+        /// </summary>
+        /// <param name="arg"></param>
+        /// <returns></returns>
         public static string FixArgument(string arg)
         {
             if (string.IsNullOrWhiteSpace(arg) || !arg.Contains('='))
@@ -19,23 +27,15 @@ namespace ProjBobcat.Class.Helper
             return string.Join("=", para);
         }
 
+        /// <summary>
+        /// 根据字典来替换字符串内容
+        /// </summary>
+        /// <param name="str">原字符串</param>
+        /// <param name="dic">替换字典</param>
+        /// <returns>替换好的字符串</returns>
         public static string ReplaceByDic(string str, Dictionary<string, string> dic)
         {
-            return str == null ? null : dic.Aggregate(str, (a, b) => a.Replace(b.Key, b.Value));
-        }
-
-        public static string ResolveUserProperties(this List<PropertyModel> properties)
-        {
-            if (!(properties?.Any() ?? false))
-                return "{}";
-
-            var sb = new StringBuilder();
-            sb.Append('{');
-            foreach (var item in properties) sb.AppendFormat("\"{0}\":[\"{1}\"],", item.Name, item.Value);
-
-            var totalSb = new StringBuilder();
-            totalSb.Append(sb.ToString().TrimEnd(',').Trim()).Append('}');
-            return totalSb.ToString();
+            return string.IsNullOrEmpty(str) ? string.Empty : dic.Aggregate(str, (a, b) => a.Replace(b.Key, b.Value));
         }
     }
 }

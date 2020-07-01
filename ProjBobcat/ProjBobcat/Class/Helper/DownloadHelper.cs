@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using ProjBobcat.Class.Model;
@@ -179,6 +180,11 @@ namespace ProjBobcat.Class.Helper
 
         #region 分片下载
 
+        /// <summary>
+        /// 分片下载方法
+        /// </summary>
+        /// <param name="downloadFile">下载文件信息</param>
+        /// <param name="numberOfParts">分段数量</param>
         public static void MultiPartDownload(DownloadFile downloadFile, int numberOfParts = 16)
         {
             if (downloadFile == null) return;
@@ -233,9 +239,9 @@ namespace ProjBobcat.Class.Helper
 
                 #region Parallel download
 
-                var downloadParts = 0;
+                var totalProgress = 0d;
 
-                Parallel.ForEach(readRanges, (range, state) =>
+                Parallel.ForEach(readRanges, async (range, state) =>
                 {
                     try
                     {
@@ -245,12 +251,17 @@ namespace ProjBobcat.Class.Helper
                             Timeout = 10000
                         };
                         client.Headers.Add("user-agent", Ua);
+                        client.DownloadProgressChanged += (sender, args) =>
+                        {
+                            totalProgress += (double)args.BytesReceived / args.TotalBytesToReceive;
+                            downloadFile.Changed?.Invoke(sender,
+                                new DownloadFileChangedEventArgs
+                                    {ProgressPercentage = totalProgress / numberOfParts});
+                        };
 
-                        var data = client.DownloadData(new Uri(downloadFile.DownloadUri));
-                        if (!tempFilesDictionary.TryAdd(range.Index, data)) return;
-                        downloadParts++;
-                        downloadFile.Changed?.Invoke(client,
-                            new DownloadFileChangedEventArgs {ProgressPercentage = (double) downloadParts / numberOfParts});
+                        var data = await client.DownloadDataTaskAsync(new Uri(downloadFile.DownloadUri))
+                            .ConfigureAwait(false);
+                        tempFilesDictionary.TryAdd(range.Index, data);
                     }
                     catch (Exception e)
                     {
@@ -268,7 +279,7 @@ namespace ProjBobcat.Class.Helper
                 if (tempFilesDictionary.Count != readRanges.Count)
                 {
                     downloadFile.Completed?.Invoke(null,
-                        new DownloadFileCompletedEventArgs(false, null, downloadFile));
+                        new DownloadFileCompletedEventArgs(false, new HttpRequestException(), downloadFile));
                     return;
                 }
 
@@ -297,7 +308,12 @@ namespace ProjBobcat.Class.Helper
             }
         }
 
-        public static async Task MultiPartDownloadTaskAsync(DownloadFile downloadFile, int numberOfParts = 8)
+        /// <summary>
+        /// 分片下载方法（异步）
+        /// </summary>
+        /// <param name="downloadFile">下载文件信息</param>
+        /// <param name="numberOfParts">分段数量</param>
+        public static async Task MultiPartDownloadTaskAsync(DownloadFile downloadFile, int numberOfParts = 16)
         {
             if (downloadFile == null) return;
 
@@ -355,8 +371,9 @@ namespace ProjBobcat.Class.Helper
 
                 #region Parallel download
 
-                var downloadParts = 0;
-                Parallel.ForEach(readRanges, (range, state) =>
+                var totalProgress = 0d;
+
+                Parallel.ForEach(readRanges, async (range, state) =>
                 {
                     try
                     {
@@ -366,12 +383,17 @@ namespace ProjBobcat.Class.Helper
                             Timeout = 10000
                         };
                         client.Headers.Add("user-agent", Ua);
+                        client.DownloadProgressChanged += (sender, args) =>
+                        {
+                            totalProgress += (double)args.BytesReceived / args.TotalBytesToReceive;
+                            downloadFile.Changed?.Invoke(sender,
+                                new DownloadFileChangedEventArgs
+                                    { ProgressPercentage = totalProgress / numberOfParts });
+                        };
 
-                        var data = client.DownloadData(new Uri(downloadFile.DownloadUri));
-                        if (!tempFilesDictionary.TryAdd(range.Index, data)) return;
-                        downloadParts++;
-                        downloadFile.Changed?.Invoke(client,
-                            new DownloadFileChangedEventArgs { ProgressPercentage = (double)downloadParts / numberOfParts });
+                        var data = await client.DownloadDataTaskAsync(new Uri(downloadFile.DownloadUri))
+                            .ConfigureAwait(false);
+                        tempFilesDictionary.TryAdd(range.Index, data);
                     }
                     catch (Exception e)
                     {
