@@ -43,6 +43,14 @@ All you need for minecraft launcher in typescript. https://voxelum.github.io/min
   ```
   Install-Package ProjBobcat
   ```
+  
+## 安装前提醒
+* 由于.NET的默认连接数限制，您需要手动覆盖掉默认的连接数才能保证 <DownloadHelper> 中的部分方法正常执行，您可以在App.xaml.cs或程序入口点添加下面的代码来完成修改（最大值不宜超过1024）
+  ```c#
+  using System.Net;
+  
+  ServicePointManager.DefaultConnectionLimit = 512;
+  ```
 
 ## 功能列表
 
