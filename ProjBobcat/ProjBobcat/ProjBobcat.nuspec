@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>ProjBobcat</id>
-    <version>1.0.3.3</version>
+    <version>1.0.3.5</version>
     <title>ProjBobcat</title>
     <authors>Corona Studio</authors>
     <owners>Corona Studio</owners>
@@ -13,7 +13,7 @@
     <icon>Bobcat.png</icon>
     <description>The next-generation Minecraft launcher core written in C# providing the freest, fastest and the most complete experience.</description>
     <summary>The next-generation Minecraft launcher core written in C# providing the freest, fastest and the most complete experience.</summary>
-    <releaseNotes>Bug fixes in multipart downloader.</releaseNotes>
+    <releaseNotes>Fix the bugs in the download methods</releaseNotes>
     <copyright>Copyright © 2020 Corona Studio</copyright>
     <tags>minecraft-launcher minecraft launcher csharp</tags>
     <dependencies>
