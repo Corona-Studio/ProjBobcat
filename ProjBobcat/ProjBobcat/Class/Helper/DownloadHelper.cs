@@ -215,7 +215,7 @@ namespace ProjBobcat.Class.Helper
 
                 if (File.Exists(downloadFile.DownloadPath)) File.Delete(downloadFile.DownloadPath);
 
-                var tempFilesDictionary = new ConcurrentDictionary<int, byte[]>();
+                var tempFilesDictionary = new ConcurrentDictionary<int, string>();
 
                 #region Calculate ranges
 
@@ -239,42 +239,35 @@ namespace ProjBobcat.Class.Helper
 
                 #region Parallel download
 
-                var totalProgress = 0d;
+                var totalProgress = Enumerable.Repeat(0d, numberOfParts).ToList();
 
-                Parallel.ForEach(readRanges, async (range, state) =>
+                Parallel.ForEach(readRanges, (range, state) =>
                 {
-                    try
+                    using var client = new WebClient
                     {
-                        using var client = new WebClient
+                        DownloadRange = range,
+                        Timeout = Timeout.Infinite
+                    };
+                    client.DownloadProgressChanged += (sender, args) =>
+                    {
+                        lock (totalProgress)
                         {
-                            DownloadRange = range,
-                            Timeout = 10000
-                        };
-                        client.Headers.Add("user-agent", Ua);
-                        client.DownloadProgressChanged += (sender, args) =>
-                        {
-                            totalProgress += (double)args.BytesReceived / args.TotalBytesToReceive;
+                            totalProgress[range.Index] = (double)args.BytesReceived / args.TotalBytesToReceive;
                             downloadFile.Changed?.Invoke(sender,
                                 new DownloadFileChangedEventArgs
-                                    {ProgressPercentage = totalProgress / numberOfParts});
-                        };
+                                    { ProgressPercentage = totalProgress.Sum() / numberOfParts });
+                        }
+                    };
 
-                        var data = await client.DownloadDataTaskAsync(new Uri(downloadFile.DownloadUri))
-                            .ConfigureAwait(false);
-                        tempFilesDictionary.TryAdd(range.Index, data);
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine(e);
-                        state.Stop();
-                    }
+                    var path = Path.GetTempFileName();
+                    var t = client.DownloadFileTaskAsync(new Uri(downloadFile.DownloadUri), path);
+                    t.GetAwaiter().GetResult();
+                    tempFilesDictionary.TryAdd(range.Index, path);
                 });
 
                 #endregion
 
                 #region Merge to single file
-
-                var bytes = new List<byte>();
 
                 if (tempFilesDictionary.Count != readRanges.Count)
                 {
@@ -283,18 +276,23 @@ namespace ProjBobcat.Class.Helper
                     return;
                 }
 
+                using var fs = new FileStream(downloadFile.DownloadPath, FileMode.Append);
                 foreach (var downloadedBytes in tempFilesDictionary.OrderBy(b => b.Key))
-                    bytes.AddRange(downloadedBytes.Value);
+                {
+                    var wb = File.ReadAllBytes(downloadedBytes.Value);
+                    fs.Write(wb, 0, wb.Length);
+                    File.Delete(downloadedBytes.Value);
+                }
 
-                if (bytes.Count != responseLength)
+                var totalLength = fs.Length;
+                fs.Close();
+
+                if (totalLength != responseLength)
                 {
                     downloadFile.Completed?.Invoke(null,
                         new DownloadFileCompletedEventArgs(false, null, downloadFile));
                     return;
                 }
-
-                using var s = new MemoryStream(bytes.ToArray());
-                FileHelper.SaveBinaryFile(s, downloadFile.DownloadPath);
 
                 #endregion
 
@@ -347,7 +345,7 @@ namespace ProjBobcat.Class.Helper
 
                 if (File.Exists(downloadFile.DownloadPath)) File.Delete(downloadFile.DownloadPath);
 
-                var tempFilesDictionary = new ConcurrentDictionary<int, byte[]>();
+                var tempFilesDictionary = new ConcurrentDictionary<int,string>();
 
                 #region Calculate ranges
 
@@ -371,62 +369,60 @@ namespace ProjBobcat.Class.Helper
 
                 #region Parallel download
 
-                var totalProgress = 0d;
+                var totalProgress = Enumerable.Repeat(0d, numberOfParts).ToList();
 
-                Parallel.ForEach(readRanges, async (range, state) =>
+                Parallel.ForEach(readRanges, (range, state) =>
                 {
-                    try
+                    using var client = new WebClient
                     {
-                        using var client = new WebClient
+                        DownloadRange = range,
+                        Timeout = Timeout.Infinite
+                    };
+                    client.DownloadProgressChanged += (sender, args) =>
+                    {
+                        lock (totalProgress)
                         {
-                            DownloadRange = range,
-                            Timeout = 10000
-                        };
-                        client.Headers.Add("user-agent", Ua);
-                        client.DownloadProgressChanged += (sender, args) =>
-                        {
-                            totalProgress += (double)args.BytesReceived / args.TotalBytesToReceive;
+                            totalProgress[range.Index] = (double)args.BytesReceived / args.TotalBytesToReceive;
                             downloadFile.Changed?.Invoke(sender,
                                 new DownloadFileChangedEventArgs
-                                    { ProgressPercentage = totalProgress / numberOfParts });
-                        };
+                                    { ProgressPercentage = totalProgress.Sum() / numberOfParts });
+                        }
+                    };
 
-                        var data = await client.DownloadDataTaskAsync(new Uri(downloadFile.DownloadUri))
-                            .ConfigureAwait(false);
-                        tempFilesDictionary.TryAdd(range.Index, data);
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine(e);
-                        state.Stop();
-                    }
+                    var path = Path.GetTempFileName();
+                    var t = client.DownloadFileTaskAsync(new Uri(downloadFile.DownloadUri), path);
+                    t.GetAwaiter().GetResult();
+                    tempFilesDictionary.TryAdd(range.Index, path);
                 });
 
                 #endregion
 
                 #region Merge to single file
 
-                var bytes = new List<byte>();
-
                 if (tempFilesDictionary.Count != readRanges.Count)
                 {
                     downloadFile.Completed?.Invoke(null,
-                        new DownloadFileCompletedEventArgs(false, null, downloadFile));
+                        new DownloadFileCompletedEventArgs(false, new HttpRequestException(), downloadFile));
                     return;
                 }
 
+                using var fs = new FileStream(downloadFile.DownloadPath, FileMode.Append);
                 foreach (var downloadedBytes in tempFilesDictionary.OrderBy(b => b.Key))
-                    bytes.AddRange(downloadedBytes.Value);
+                {
+                    var wb = File.ReadAllBytes(downloadedBytes.Value);
+                    fs.Write(wb, 0, wb.Length);
+                    File.Delete(downloadedBytes.Value);
+                }
 
-                if (bytes.Count != responseLength)
+                var totalLength = fs.Length;
+                fs.Close();
+
+                if (totalLength != responseLength)
                 {
                     downloadFile.Completed?.Invoke(null,
                         new DownloadFileCompletedEventArgs(false, null, downloadFile));
                     return;
                 }
-
-                using var s = new MemoryStream(bytes.ToArray());
-                FileHelper.SaveBinaryFile(s, downloadFile.DownloadPath);
 
                 #endregion
 
