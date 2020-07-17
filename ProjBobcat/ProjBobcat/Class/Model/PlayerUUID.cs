@@ -10,9 +10,17 @@ namespace ProjBobcat.Class.Model
     public struct PlayerUUID : IFormattable, IComparable<PlayerUUID>, IEquatable<PlayerUUID>
     {
         Guid guid;
+        public PlayerUUID(byte[] guidBytes)
+        {
+            this.guid = new Guid(guidBytes);
+        }
         public PlayerUUID(Guid guid)
         {
             this.guid = guid;
+        }
+        public PlayerUUID(string guidString)
+        {
+            this.guid = new Guid(guidString);
         }
         public int CompareTo(PlayerUUID other)
         {
@@ -55,12 +63,17 @@ namespace ProjBobcat.Class.Model
         {
             using var md5 = MD5.Create();
             var data = md5.ComputeHash(Encoding.UTF8.GetBytes($"{prefix}{playerName}"));
-            return new PlayerUUID(new Guid(data));
+            return new PlayerUUID(data);
         }
 
-        public string ToString(string format)
+        public string ToString(string format = "N")
         {
             return guid.ToString(format);
+        }
+
+        public override string ToString()
+        {
+            return guid.ToString("N");
         }
     }
 }

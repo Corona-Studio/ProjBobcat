@@ -37,7 +37,8 @@ namespace ProjBobcat.Authenticator
                 Value = "zh-cn"
             };
 
-            var calcUuid = PlayerUUID.FromOfflinePlayerName(Username).ToString("N");
+            var uuid = PlayerUUID.FromOfflinePlayerName(Username);
+            var calcUuid = uuid.ToString("N");
             var result = new AuthResult
             {
                 AccessToken = GuidHelper.NewGuidString(),
@@ -73,7 +74,7 @@ namespace ProjBobcat.Authenticator
                     authProperty
                 }
             };
-            LauncherProfileParser.AddNewAuthInfo(authInfo, calcGuid);
+            LauncherProfileParser.AddNewAuthInfo(authInfo, uuid);
 
             return result;
         }

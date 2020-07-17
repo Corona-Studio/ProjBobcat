@@ -7,6 +7,9 @@ namespace ProjBobcat.Class.Model.YggdrasilAuth
     {
         [JsonProperty("id")] public string Id { get; set; }
 
+        [JsonIgnore]
+        public PlayerUUID UUID => new PlayerUUID(Id);
+
         [JsonProperty("username")] public string UserName { get; set; }
 
         [JsonProperty("properties")] public List<PropertyModel> Properties { get; set; }

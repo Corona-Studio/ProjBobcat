@@ -137,8 +137,9 @@ namespace ProjBobcat.Authenticator
             var profiles = result.AvailableProfiles.ToDictionary(profile => profile.Id,
                 profile => new AuthProfileModel {DisplayName = profile.Name});
 
-            if (LauncherProfileParser.IsAuthInfoExist(profiles.First().Key, profiles.First().Value.DisplayName))
-                LauncherProfileParser.RemoveAuthInfo(profiles.First().Key);
+            var uuid = new PlayerUUID(profiles.First().Key);
+            if (LauncherProfileParser.IsAuthInfoExist(uuid, profiles.First().Value.DisplayName))
+                LauncherProfileParser.RemoveAuthInfo(uuid);
 
             LauncherProfileParser.AddNewAuthInfo(new AuthInfoModel
             {
@@ -146,7 +147,7 @@ namespace ProjBobcat.Authenticator
                 Profiles = profiles,
                 Properties = AuthPropertyHelper.ToAuthProperties(result.User?.Properties, profiles).ToList(),
                 UserName = profiles.First().Value.DisplayName
-            }, profiles.First().Key);
+            }, uuid);
 
             return new AuthResult
             {
@@ -246,11 +247,11 @@ namespace ProjBobcat.Authenticator
                     var profiles = authResponse.AvailableProfiles.ToDictionary(profile => profile.Id,
                         profile => new AuthProfileModel {DisplayName = profile.Name});
 
-                    if (LauncherProfileParser.IsAuthInfoExist(authResponse.User.Id, authResponse.User.UserName))
-                        LauncherProfileParser.RemoveAuthInfo(authResponse.User.Id);
+                    var uuid = authResponse.User.UUID;
+                    if (LauncherProfileParser.IsAuthInfoExist(uuid, authResponse.User.UserName))
+                        LauncherProfileParser.RemoveAuthInfo(uuid);
 
-                    LauncherProfileParser.AddNewAuthInfo(new AuthInfoModel
-                    {
+                    LauncherProfileParser.AddNewAuthInfo(new AuthInfoModel {
                         AccessToken = authResponse.AccessToken,
                         Profiles = profiles,
                         Properties = new List<AuthPropertyModel>
@@ -263,7 +264,7 @@ namespace ProjBobcat.Authenticator
                             }
                         },
                         UserName = authResponse.User.UserName
-                    }, authResponse.User.Id);
+                    }, uuid);
 
 
                     return new AuthResult

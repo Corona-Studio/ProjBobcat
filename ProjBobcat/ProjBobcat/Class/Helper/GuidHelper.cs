@@ -15,7 +15,6 @@ namespace ProjBobcat.Class.Helper
         /// </summary>
         /// <param name="str">字符串。</param>
         /// <returns>生成结果。</returns>
-        [Obsolete("你不应该调用此方法！请使用 PlayerUUID 代替。", true)]
         public static Guid ToGuidHash(this string str)
         {
             using var md5 = MD5.Create();

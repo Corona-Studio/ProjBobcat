@@ -1,4 +1,5 @@
-﻿using ProjBobcat.Class.Model.LauncherProfile;
+﻿using ProjBobcat.Class.Model;
+using ProjBobcat.Class.Model.LauncherProfile;
 
 namespace ProjBobcat.Interface
 {
@@ -16,7 +17,7 @@ namespace ProjBobcat.Interface
         /// </summary>
         /// <param name="authInfo">验证信息</param>
         /// <param name="guid">标识符</param>
-        void AddNewAuthInfo(AuthInfoModel authInfo, string guid);
+        void AddNewAuthInfo(AuthInfoModel authInfo, PlayerUUID uuid);
         /// <summary>
         ///     添加新的游戏信息
         /// </summary>
@@ -27,7 +28,7 @@ namespace ProjBobcat.Interface
         /// </summary>
         /// <param name="uuid">标识符</param>
         /// <returns>找到的验证信息</returns>
-        AuthInfoModel GetAuthInfo(string uuid);
+        AuthInfoModel GetAuthInfo(PlayerUUID uuid);
         /// <summary>
         ///     获取游戏信息
         /// </summary>
@@ -38,7 +39,7 @@ namespace ProjBobcat.Interface
         ///     选择一个用户信息作为默认用户
         /// </summary>
         /// <param name="uuid"></param>
-        void SelectUser(string uuid);
+        void SelectUser(PlayerUUID uuid);
         /// <summary>
         ///     选择某个游戏信息作为默认游戏
         /// </summary>
@@ -56,7 +57,7 @@ namespace ProjBobcat.Interface
         /// <param name="uuid"></param>
         /// <param name="userName"></param>
         /// <returns></returns>
-        bool IsAuthInfoExist(string uuid, string userName);
+        bool IsAuthInfoExist(PlayerUUID uuid, string userName);
         /// <summary>
         ///     清空游戏信息
         /// </summary>
@@ -74,7 +75,7 @@ namespace ProjBobcat.Interface
         ///     删除一个验证信息
         /// </summary>
         /// <param name="uuid"></param>
-        void RemoveAuthInfo(string uuid);
+        void RemoveAuthInfo(PlayerUUID uuid);
         /// <summary>
         ///     保存整个launcher_profiles
         /// </summary>
