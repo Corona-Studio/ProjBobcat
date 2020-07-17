@@ -18,17 +18,14 @@ namespace ProjBobcat.Class.Helper
         /// <returns>解析好的User Property</returns>
         public static string ResolveUserProperties(this IEnumerable<PropertyModel> properties)
         {
-            if (!(properties?.Any() ?? false))
+            if (properties == null)
                 return "{}";
 
             var sb = new StringBuilder();
             sb.Append('{');
             foreach (var item in properties)
                 sb.AppendFormat("\"{0}\":[\"{1}\"],", item.Name, item.Value);
-
-            var totalSb = new StringBuilder();
-            totalSb.Append(sb.ToString().TrimEnd(',').Trim()).Append('}');
-            return totalSb.ToString();
+            return sb.ToString().TrimEnd(',').Trim() + "}";
         }
 
         /// <summary>
