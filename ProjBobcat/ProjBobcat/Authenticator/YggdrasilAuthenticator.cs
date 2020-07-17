@@ -144,7 +144,7 @@ namespace ProjBobcat.Authenticator
             {
                 AccessToken = result.AccessToken,
                 Profiles = profiles,
-                Properties = AuthPropertyHelper.ToAuthProperties(result.User?.Properties, profiles),
+                Properties = AuthPropertyHelper.ToAuthProperties(result.User?.Properties, profiles).ToList(),
                 UserName = profiles.First().Value.DisplayName
             }, profiles.First().Key);
 

@@ -122,6 +122,7 @@
     <Compile Include="Class\LauncherProfileParserBase.cs" />
     <Compile Include="Class\Model\LogType.cs" />
     <Compile Include="Class\Model\MavenInfo.cs" />
+    <Compile Include="Class\Model\PlayerUUID.cs" />
     <Compile Include="Class\Model\TaskResult.cs" />
     <Compile Include="Class\Model\TaskResultStatus.cs" />
     <Compile Include="Class\VersionLocatorBase.cs" />

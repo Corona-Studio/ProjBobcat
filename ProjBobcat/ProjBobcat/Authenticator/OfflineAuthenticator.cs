@@ -37,7 +37,7 @@ namespace ProjBobcat.Authenticator
                 Value = "zh-cn"
             };
 
-            var calcGuid = Username.ToGuidHashAsName().ToString("N");
+            var calcUuid = PlayerUUID.FromOfflinePlayerName(Username).ToString("N");
             var result = new AuthResult
             {
                 AccessToken = GuidHelper.NewGuidString(),
@@ -45,11 +45,11 @@ namespace ProjBobcat.Authenticator
                 SelectedProfile = new ProfileInfoModel
                 {
                     Name = Username,
-                    Id = calcGuid
+                    Id = calcUuid
                 },
                 User = new UserInfoModel
                 {
-                    Id = calcGuid,
+                    Id = calcUuid,
                     Properties = new List<PropertyModel>
                     {
                         new PropertyModel
