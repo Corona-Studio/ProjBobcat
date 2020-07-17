@@ -55,9 +55,7 @@ namespace ProjBobcat.Class.Helper
         public static List<AuthPropertyModel> ToAuthProperties(List<PropertyModel> model,
             Dictionary<string, AuthProfileModel> profiles)
         {
-            if (!(model?.Any() ?? false)) return default;
-
-            return model.Select(x => ToAuthProperty(x, profiles)).ToList();
+            return model == null ? new List<AuthPropertyModel>() : model.Select(x => ToAuthProperty(x, profiles)).ToList();
         }
     }
 }
