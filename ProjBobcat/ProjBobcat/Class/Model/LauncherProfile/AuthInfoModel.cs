@@ -18,7 +18,7 @@ namespace ProjBobcat.Class.Model.LauncherProfile
         /// Auth Profile集合
         /// </summary>
         [JsonProperty("profiles")]
-        public Dictionary<string, AuthProfileModel> Profiles { get; set; }
+        public Dictionary<PlayerUUID, AuthProfileModel> Profiles { get; set; }
 
         /// <summary>
         /// User Properties集合

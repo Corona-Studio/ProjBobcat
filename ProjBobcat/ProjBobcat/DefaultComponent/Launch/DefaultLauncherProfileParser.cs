@@ -32,7 +32,7 @@ namespace ProjBobcat.DefaultComponent.Launch
             {
                 var launcherProfile = new LauncherProfileModel
                 {
-                    AuthenticationDatabase = new Dictionary<string, AuthInfoModel>(),
+                    AuthenticationDatabase = new Dictionary<PlayerUUID, AuthInfoModel>(),
                     ClientToken = clientToken.ToString("D"),
                     LauncherVersion = new LauncherVersionModel
                     {
@@ -68,7 +68,7 @@ namespace ProjBobcat.DefaultComponent.Launch
         {
             if (IsAuthInfoExist(uuid, authInfo.UserName)) return;
             if (!(LauncherProfile.AuthenticationDatabase?.Any() ?? false))
-                LauncherProfile.AuthenticationDatabase = new Dictionary<string, AuthInfoModel>();
+                LauncherProfile.AuthenticationDatabase = new Dictionary<PlayerUUID, AuthInfoModel>();
 
             LauncherProfile.AuthenticationDatabase.Add(
                 authInfo.Properties.Any() ? authInfo.Properties.First().UserId : authInfo.Profiles.First().Key,
@@ -98,7 +98,7 @@ namespace ProjBobcat.DefaultComponent.Launch
 
         public AuthInfoModel GetAuthInfo(PlayerUUID uuid)
         {
-            return LauncherProfile.AuthenticationDatabase.TryGetValue(uuid.ToString(), out var authInfo) ? authInfo : null;
+            return LauncherProfile.AuthenticationDatabase.TryGetValue(uuid, out var authInfo) ? authInfo : null;
         }
 
         public GameProfileModel GetGameProfile(string name)
@@ -113,7 +113,7 @@ namespace ProjBobcat.DefaultComponent.Launch
             if (!(LauncherProfile.AuthenticationDatabase?.Any() ?? false)) return false;
 
             return LauncherProfile.AuthenticationDatabase.Any(a =>
-                       a.Value.Profiles?.First().Key.Equals(uuid.ToString(), StringComparison.Ordinal) ?? false) &&
+                       a.Value.Profiles?.First().Key.ToString().Equals(uuid.ToString(), StringComparison.Ordinal) ?? false) &&
                    LauncherProfile.AuthenticationDatabase.Any(a =>
                        a.Value.Profiles?.First().Value.DisplayName.Equals(userName, StringComparison.Ordinal) ?? false);
         }
@@ -126,7 +126,7 @@ namespace ProjBobcat.DefaultComponent.Launch
         
         public void RemoveAuthInfo(PlayerUUID uuid)
         {
-            LauncherProfile.AuthenticationDatabase.Remove(uuid.ToString());
+            LauncherProfile.AuthenticationDatabase.Remove(uuid);
         }
 
         public void RemoveGameProfile(string name)

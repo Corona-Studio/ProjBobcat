@@ -20,7 +20,7 @@ namespace ProjBobcat.Class.Model.LauncherProfile
         /// <summary>
         /// 用户Id
         /// </summary>
-        [JsonProperty("userId")] public string UserId { get; set; }
+        [JsonProperty("userId")] public PlayerUUID UserId { get; set; }
 
         /// <summary>
         /// 值

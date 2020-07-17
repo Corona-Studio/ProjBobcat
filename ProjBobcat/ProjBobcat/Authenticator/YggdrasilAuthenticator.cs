@@ -134,10 +134,10 @@ namespace ProjBobcat.Authenticator
                     }
                 };
 
-            var profiles = result.AvailableProfiles.ToDictionary(profile => profile.Id,
+            var profiles = result.AvailableProfiles.ToDictionary(profile => profile.UUID,
                 profile => new AuthProfileModel {DisplayName = profile.Name});
 
-            var uuid = new PlayerUUID(profiles.First().Key);
+            var uuid = profiles.First().Key;
             if (LauncherProfileParser.IsAuthInfoExist(uuid, profiles.First().Value.DisplayName))
                 LauncherProfileParser.RemoveAuthInfo(uuid);
 
@@ -187,11 +187,11 @@ namespace ProjBobcat.Authenticator
                     AuthStatus = AuthStatus.Succeeded,
                     AccessToken = profile.AccessToken,
                     Profiles = profile.Profiles
-                        .Select(p => new ProfileInfoModel {Name = p.Value.DisplayName, Id = p.Key}).ToList(),
+                        .Select(p => new ProfileInfoModel {Name = p.Value.DisplayName, UUID = p.Key}).ToList(),
                     SelectedProfile = new ProfileInfoModel
                     {
                         Name = profile.Profiles.First().Value.DisplayName,
-                        Id = profile.Profiles.First().Key
+                        UUID = profile.Profiles.First().Key
                     }
                 };
 
@@ -244,7 +244,7 @@ namespace ProjBobcat.Authenticator
                             }
                         };
 
-                    var profiles = authResponse.AvailableProfiles.ToDictionary(profile => profile.Id,
+                    var profiles = authResponse.AvailableProfiles.ToDictionary(profile => profile.UUID,
                         profile => new AuthProfileModel {DisplayName = profile.Name});
 
                     var uuid = authResponse.User.UUID;
@@ -259,7 +259,7 @@ namespace ProjBobcat.Authenticator
                             new AuthPropertyModel
                             {
                                 Name = authResponse.User.Properties.First().Name,
-                                UserId = authResponse.User.Id,
+                                UserId = authResponse.User.UUID,
                                 Value = authResponse.User.Properties.First().Value
                             }
                         },

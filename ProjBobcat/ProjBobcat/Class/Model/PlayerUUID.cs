@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
@@ -7,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace ProjBobcat.Class.Model
 {
+    [JsonConverter(typeof(Converter))]
     public struct PlayerUUID : IFormattable, IComparable<PlayerUUID>, IEquatable<PlayerUUID>
     {
         Guid guid;
@@ -74,6 +76,23 @@ namespace ProjBobcat.Class.Model
         public override string ToString()
         {
             return guid.ToString("N");
+        }
+        public class Converter : JsonConverter<PlayerUUID>
+        {
+            public override PlayerUUID ReadJson(JsonReader reader, Type objectType, 
+                PlayerUUID existingValue, bool hasExistingValue, JsonSerializer serializer)
+            {
+                var s = serializer.Deserialize<string>(reader);
+                return new PlayerUUID(s);
+            }
+            public override void WriteJson(JsonWriter writer, PlayerUUID value, JsonSerializer serializer)
+            {
+                serializer.Serialize(writer, value.ToString());
+            }
+        }
+        public static PlayerUUID Random()
+        {
+            return new PlayerUUID(Guid.NewGuid());
         }
     }
 }
