@@ -16,7 +16,7 @@ namespace ProjBobcat.Interface
         ///     添加新的验证信息
         /// </summary>
         /// <param name="authInfo">验证信息</param>
-        /// <param name="guid">标识符</param>
+        /// <param name="uuid">标识符</param>
         void AddNewAuthInfo(AuthInfoModel authInfo, PlayerUUID uuid);
         /// <summary>
         ///     添加新的游戏信息
