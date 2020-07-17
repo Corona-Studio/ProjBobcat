@@ -38,7 +38,7 @@ namespace ProjBobcat.Authenticator
             };
 
             var uuid = PlayerUUID.FromOfflinePlayerName(Username);
-            var calcUuid = uuid.ToString("N");
+            var stringUuid = uuid.ToString();
             var result = new AuthResult
             {
                 AccessToken = GuidHelper.NewGuidString(),
@@ -46,11 +46,11 @@ namespace ProjBobcat.Authenticator
                 SelectedProfile = new ProfileInfoModel
                 {
                     Name = Username,
-                    Id = calcUuid
+                    Id = stringUuid
                 },
                 User = new UserInfoModel
                 {
-                    Id = calcUuid,
+                    Id = stringUuid,
                     Properties = new List<PropertyModel>
                     {
                         new PropertyModel
