@@ -16,14 +16,15 @@ namespace ProjBobcat.Class.Helper
         /// </summary>
         /// <param name="properties">Property 集合</param>
         /// <returns>解析好的User Property</returns>
-        public static string ResolveUserProperties(this List<PropertyModel> properties)
+        public static string ResolveUserProperties(this IEnumerable<PropertyModel> properties)
         {
             if (!(properties?.Any() ?? false))
                 return "{}";
 
             var sb = new StringBuilder();
             sb.Append('{');
-            foreach (var item in properties) sb.AppendFormat("\"{0}\":[\"{1}\"],", item.Name, item.Value);
+            foreach (var item in properties)
+                sb.AppendFormat("\"{0}\":[\"{1}\"],", item.Name, item.Value);
 
             var totalSb = new StringBuilder();
             totalSb.Append(sb.ToString().TrimEnd(',').Trim()).Append('}');
@@ -36,26 +37,29 @@ namespace ProjBobcat.Class.Helper
         /// <param name="model">PropertyModel</param>
         /// <param name="profiles">Profile集合</param>
         /// <returns>转换好的UserProperty</returns>
-        public static AuthPropertyModel ToAuthProperty(PropertyModel model,
-            Dictionary<string, AuthProfileModel> profiles)
+        public static AuthPropertyModel ToAuthProperty(this PropertyModel model,
+            IReadOnlyDictionary<string, AuthProfileModel> profiles)
         {
-            return model is null ? null : new AuthPropertyModel {
-                Name = model.Name,
-                UserId = profiles.First().Key,
-                Value = model.Value
-            };
+            return model is null ? null :
+                new AuthPropertyModel {
+                    Name = model.Name,
+                    UserId = profiles.First().Key,
+                    Value = model.Value
+                };
         }
 
         /// <summary>
         /// PropertyModels转UserProperties
         /// </summary>
-        /// <param name="model">PropertyModel集合</param>
+        /// <param name="models">PropertyModel集合</param>
         /// <param name="profiles">Profile集合</param>
         /// <returns>转换好的UserProperty</returns>
-        public static List<AuthPropertyModel> ToAuthProperties(List<PropertyModel> model,
-            Dictionary<string, AuthProfileModel> profiles)
+        public static IEnumerable<AuthPropertyModel> ToAuthProperties(this IEnumerable<PropertyModel> models,
+            IReadOnlyDictionary<string, AuthProfileModel> profiles)
         {
-            return model == null ? new List<AuthPropertyModel>() : model.Select(x => ToAuthProperty(x, profiles)).ToList();
+            return models is null ?
+                  new List<AuthPropertyModel>() :
+                  models.Select(model => model.ToAuthProperty(profiles));
         }
     }
 }
