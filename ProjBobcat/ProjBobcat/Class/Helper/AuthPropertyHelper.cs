@@ -19,6 +19,12 @@ namespace ProjBobcat.Class.Helper
         /// <returns>解析好的User Property</returns>
         public static string ResolveUserProperties(this IEnumerable<PropertyModel> properties)
         {
+            Dictionary<string, string> keyValues = new Dictionary<string, string>();
+            if (properties != null)
+                foreach (var item in properties)
+                    keyValues.Add(item.Name, item.Value);
+            return Newtonsoft.Json.JsonConvert.SerializeObject(keyValues);
+            /*
             if (properties == null)
                 return "{}";
 
@@ -27,7 +33,9 @@ namespace ProjBobcat.Class.Helper
             foreach (var item in properties)
                 sb.AppendFormat("\"{0}\":[\"{1}\"],", item.Name, item.Value);
             return sb.ToString().TrimEnd(',').Trim() + "}";
+            */
         }
+
 
         /// <summary>
         /// PropertyModel转UserProperty
