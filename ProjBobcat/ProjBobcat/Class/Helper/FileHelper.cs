@@ -9,7 +9,7 @@ namespace ProjBobcat.Class.Helper
     /// </summary>
     public static class FileHelper
     {
-        private static readonly object Locker = new object();
+        private static readonly object locker = new object();
 
         /// <summary>
         /// 写入文件。
@@ -18,14 +18,8 @@ namespace ProjBobcat.Class.Helper
         /// <param name="content">内容。</param>
         public static void Write(string path, string content)
         {
-            lock(Locker)
+            lock(locker)
                 File.WriteAllText(path, content);
-            /*
-            using var fs = new FileStream(path, FileMode.Create);
-            var sw = new StreamWriter(fs);
-            sw.Write(content);
-            sw.Close();
-            */
         }
 
         /// <summary>
@@ -35,7 +29,7 @@ namespace ProjBobcat.Class.Helper
         /// <param name="content">内容。</param>
         public static void Write(string path, byte[] content)
         {
-            lock (Locker)
+            lock (locker)
                 File.WriteAllBytes(path, content);
         }
 
@@ -44,56 +38,37 @@ namespace ProjBobcat.Class.Helper
         /// </summary>
         /// <param name="stream">流。</param>
         /// <param name="fileName">路径。</param>
+        /// <param name="bufferSize">缓存区大小。</param>
         /// <exception cref="ArgumentNullException"></exception>
         /// <returns>表示成功与否。</returns>
-        public static bool SaveBinaryFile(Stream stream, string fileName)
+        public static bool SaveBinaryFile(Stream stream, string fileName, int bufferSize = 1024)
         {
-            if (stream == null) throw new ArgumentNullException();
-
-            const int bufferSize = 1024;
-            var result = true;
-
             try
             {
-                /*
-                if (File.Exists(fileName))
-                    File.Delete(fileName);
-                */
-                // File.Create本身就会覆盖。
-                lock (Locker)
+                lock (locker)
                 {
                     using var outStream = File.Create(fileName);
-
                     stream.CopyTo(outStream, bufferSize);
-                    /*
-                    int l;
-                    do
-                    {
-                        l = stream.Read(buffer, 0, buffer.Length);
-                        if (l > 0)
-                            outStream.Write(buffer, 0, l);
-                    } while (l > 0);
-
-                    outStream.Close();
-                    */
                 }
-
-                // stream.Close();
+            }
+            catch(NullReferenceException)
+            {
+                return false;
             }
             catch (ArgumentException)
             {
-                result = false;
+                return false;
             }
             catch (IOException)
             {
-                result = false;
+                return false;
             }
             catch (UnauthorizedAccessException)
             {
-                result = false;
+                return false;
             }
 
-            return result;
+            return true;
         }
     }
 }

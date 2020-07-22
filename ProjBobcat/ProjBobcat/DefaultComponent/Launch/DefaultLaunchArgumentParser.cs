@@ -151,7 +151,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                     $"\"{(string.IsNullOrWhiteSpace(LaunchSettings.GamePath) ? "/" : LaunchSettings.GamePath)}\""
                 },
                 {"${auth_player_name}", authResult?.SelectedProfile?.Name},
-                {"${auth_uuid}", authResult?.SelectedProfile?.Id},
+                {"${auth_uuid}", authResult?.SelectedProfile?.UUID.ToString()},
                 {"${auth_access_token}", authResult?.AccessToken},
                 {"${user_properties}", authResult?.User?.Properties.ResolveUserProperties()},
                 {"${user_type}", "Mojang"} // use default value as placeholder

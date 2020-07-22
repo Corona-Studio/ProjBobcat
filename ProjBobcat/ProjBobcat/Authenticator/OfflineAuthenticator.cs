@@ -33,11 +33,11 @@ namespace ProjBobcat.Authenticator
             {
                 Name = "preferredLanguage",
                 ProfileId = "",
-                UserId = GuidHelper.NewGuidString(),
+                UserId = PlayerUUID.Random(),
                 Value = "zh-cn"
             };
 
-            var calcGuid = Username.ToGuidHashAsName().ToString("N");
+            var uuid = PlayerUUID.FromOfflinePlayerName(Username);
             var result = new AuthResult
             {
                 AccessToken = GuidHelper.NewGuidString(),
@@ -45,11 +45,11 @@ namespace ProjBobcat.Authenticator
                 SelectedProfile = new ProfileInfoModel
                 {
                     Name = Username,
-                    Id = calcGuid
+                    UUID = uuid
                 },
                 User = new UserInfoModel
                 {
-                    Id = calcGuid,
+                    UUID = uuid,
                     Properties = new List<PropertyModel>
                     {
                         new PropertyModel
@@ -64,16 +64,16 @@ namespace ProjBobcat.Authenticator
             var authInfo = new AuthInfoModel
             {
                 UserName = Username,
-                Profiles = new Dictionary<string, AuthProfileModel>
+                Profiles = new Dictionary<PlayerUUID, AuthProfileModel>
                 {
-                    {result.SelectedProfile.Id, new AuthProfileModel {DisplayName = Username}}
+                    {result.SelectedProfile.UUID, new AuthProfileModel {DisplayName = Username}}
                 },
                 Properties = new List<AuthPropertyModel>
                 {
                     authProperty
                 }
             };
-            LauncherProfileParser.AddNewAuthInfo(authInfo, calcGuid);
+            LauncherProfileParser.AddNewAuthInfo(authInfo, uuid);
 
             return result;
         }

@@ -134,19 +134,20 @@ namespace ProjBobcat.Authenticator
                     }
                 };
 
-            var profiles = result.AvailableProfiles.ToDictionary(profile => profile.Id,
+            var profiles = result.AvailableProfiles.ToDictionary(profile => profile.UUID,
                 profile => new AuthProfileModel {DisplayName = profile.Name});
 
-            if (LauncherProfileParser.IsAuthInfoExist(profiles.First().Key, profiles.First().Value.DisplayName))
-                LauncherProfileParser.RemoveAuthInfo(profiles.First().Key);
+            var uuid = profiles.First().Key;
+            if (LauncherProfileParser.IsAuthInfoExist(uuid, profiles.First().Value.DisplayName))
+                LauncherProfileParser.RemoveAuthInfo(uuid);
 
             LauncherProfileParser.AddNewAuthInfo(new AuthInfoModel
             {
                 AccessToken = result.AccessToken,
                 Profiles = profiles,
-                Properties = AuthPropertyHelper.ToAuthProperties(result.User?.Properties, profiles),
+                Properties = AuthPropertyHelper.ToAuthProperties(result.User?.Properties, profiles).ToList(),
                 UserName = profiles.First().Value.DisplayName
-            }, profiles.First().Key);
+            }, uuid);
 
             return new AuthResult
             {
@@ -186,11 +187,11 @@ namespace ProjBobcat.Authenticator
                     AuthStatus = AuthStatus.Succeeded,
                     AccessToken = profile.AccessToken,
                     Profiles = profile.Profiles
-                        .Select(p => new ProfileInfoModel {Name = p.Value.DisplayName, Id = p.Key}).ToList(),
+                        .Select(p => new ProfileInfoModel {Name = p.Value.DisplayName, UUID = p.Key}).ToList(),
                     SelectedProfile = new ProfileInfoModel
                     {
                         Name = profile.Profiles.First().Value.DisplayName,
-                        Id = profile.Profiles.First().Key
+                        UUID = profile.Profiles.First().Key
                     }
                 };
 
@@ -243,14 +244,14 @@ namespace ProjBobcat.Authenticator
                             }
                         };
 
-                    var profiles = authResponse.AvailableProfiles.ToDictionary(profile => profile.Id,
+                    var profiles = authResponse.AvailableProfiles.ToDictionary(profile => profile.UUID,
                         profile => new AuthProfileModel {DisplayName = profile.Name});
 
-                    if (LauncherProfileParser.IsAuthInfoExist(authResponse.User.Id, authResponse.User.UserName))
-                        LauncherProfileParser.RemoveAuthInfo(authResponse.User.Id);
+                    var uuid = authResponse.User.UUID;
+                    if (LauncherProfileParser.IsAuthInfoExist(uuid, authResponse.User.UserName))
+                        LauncherProfileParser.RemoveAuthInfo(uuid);
 
-                    LauncherProfileParser.AddNewAuthInfo(new AuthInfoModel
-                    {
+                    LauncherProfileParser.AddNewAuthInfo(new AuthInfoModel {
                         AccessToken = authResponse.AccessToken,
                         Profiles = profiles,
                         Properties = new List<AuthPropertyModel>
@@ -258,12 +259,12 @@ namespace ProjBobcat.Authenticator
                             new AuthPropertyModel
                             {
                                 Name = authResponse.User.Properties.First().Name,
-                                UserId = authResponse.User.Id,
+                                UserId = authResponse.User.UUID,
                                 Value = authResponse.User.Properties.First().Value
                             }
                         },
                         UserName = authResponse.User.UserName
-                    }, authResponse.User.Id);
+                    }, uuid);
 
 
                     return new AuthResult

@@ -1,11 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Newtonsoft.Json;
 
 namespace ProjBobcat.Class.Model.YggdrasilAuth
 {
     public class UserInfoModel
     {
-        [JsonProperty("id")] public string Id { get; set; }
+        [JsonProperty("id")] public PlayerUUID UUID { get; set; }
 
         [JsonProperty("username")] public string UserName { get; set; }
 

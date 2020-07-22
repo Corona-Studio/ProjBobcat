@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
+using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Exceptions;
 using ProjBobcat.Interface;
@@ -31,7 +32,7 @@ namespace ProjBobcat.DefaultComponent.Launch
             {
                 var launcherProfile = new LauncherProfileModel
                 {
-                    AuthenticationDatabase = new Dictionary<string, AuthInfoModel>(),
+                    AuthenticationDatabase = new Dictionary<PlayerUUID, AuthInfoModel>(),
                     ClientToken = clientToken.ToString("D"),
                     LauncherVersion = new LauncherVersionModel
                     {
@@ -63,11 +64,11 @@ namespace ProjBobcat.DefaultComponent.Launch
 
         public LauncherProfileModel LauncherProfile { get; set; }
 
-        public void AddNewAuthInfo(AuthInfoModel authInfo, string guid)
+        public void AddNewAuthInfo(AuthInfoModel authInfo, PlayerUUID uuid)
         {
-            if (IsAuthInfoExist(guid, authInfo.UserName)) return;
+            if (IsAuthInfoExist(uuid, authInfo.UserName)) return;
             if (!(LauncherProfile.AuthenticationDatabase?.Any() ?? false))
-                LauncherProfile.AuthenticationDatabase = new Dictionary<string, AuthInfoModel>();
+                LauncherProfile.AuthenticationDatabase = new Dictionary<PlayerUUID, AuthInfoModel>();
 
             LauncherProfile.AuthenticationDatabase.Add(
                 authInfo.Properties.Any() ? authInfo.Properties.First().UserId : authInfo.Profiles.First().Key,
@@ -95,7 +96,7 @@ namespace ProjBobcat.DefaultComponent.Launch
             SaveProfile();
         }
 
-        public AuthInfoModel GetAuthInfo(string uuid)
+        public AuthInfoModel GetAuthInfo(PlayerUUID uuid)
         {
             return LauncherProfile.AuthenticationDatabase.TryGetValue(uuid, out var authInfo) ? authInfo : null;
         }
@@ -107,12 +108,12 @@ namespace ProjBobcat.DefaultComponent.Launch
                 throw new UnknownGameNameException(name);
         }
 
-        public bool IsAuthInfoExist(string uuid, string userName)
+        public bool IsAuthInfoExist(PlayerUUID uuid, string userName)
         {
             if (!(LauncherProfile.AuthenticationDatabase?.Any() ?? false)) return false;
 
             return LauncherProfile.AuthenticationDatabase.Any(a =>
-                       a.Value.Profiles?.First().Key.Equals(uuid, StringComparison.Ordinal) ?? false) &&
+                       a.Value.Profiles?.First().Key.ToString().Equals(uuid.ToString(), StringComparison.Ordinal) ?? false) &&
                    LauncherProfile.AuthenticationDatabase.Any(a =>
                        a.Value.Profiles?.First().Value.DisplayName.Equals(userName, StringComparison.Ordinal) ?? false);
         }
@@ -123,7 +124,7 @@ namespace ProjBobcat.DefaultComponent.Launch
         }
 
         
-        public void RemoveAuthInfo(string uuid)
+        public void RemoveAuthInfo(PlayerUUID uuid)
         {
             LauncherProfile.AuthenticationDatabase.Remove(uuid);
         }
@@ -154,9 +155,9 @@ namespace ProjBobcat.DefaultComponent.Launch
             SaveProfile();
         }
 
-        public void SelectUser(string uuid)
+        public void SelectUser(PlayerUUID uuid)
         {
-            LauncherProfile.SelectedUser.Account = uuid;
+            LauncherProfile.SelectedUser.Account = uuid.ToString();
             SaveProfile();
         }
     }
