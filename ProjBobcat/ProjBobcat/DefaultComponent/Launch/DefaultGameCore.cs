@@ -46,9 +46,7 @@ namespace ProjBobcat.DefaultComponent.Launch
         
         public LaunchResult Launch(LaunchSettings settings)
         {
-            var task = LaunchTaskAsync(settings);
-            task.Wait();
-            return task.Result;
+            return LaunchTaskAsync(settings).GetAwaiter().GetResult();
         }
 
         public async Task<LaunchResult> LaunchTaskAsync(LaunchSettings settings)

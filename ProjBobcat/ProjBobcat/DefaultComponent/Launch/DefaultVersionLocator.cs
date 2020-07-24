@@ -405,7 +405,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                     var currentNativesNames = new List<string>();
                     result.Natives.ForEach(n => { currentNativesNames.Add(n.FileInfo.Name); });
                     var moreMiddleNatives =
-                        middleLibs.Item1.Where(mL => !currentNativesNames.Contains(mL.FileInfo.Name)).ToList();
+                        middleLibs.Item1.AsParallel().Where(mL => !currentNativesNames.Contains(mL.FileInfo.Name)).ToList();
                     result.Natives.AddRange(moreMiddleNatives);
 
 

@@ -1,9 +1,9 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using ProjBobcat.Class.Model;
+﻿using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.YggdrasilAuth;
+using System.Collections.Generic;
+using System.Linq;
+using Newtonsoft.Json;
 
 namespace ProjBobcat.Class.Helper
 {
@@ -19,21 +19,14 @@ namespace ProjBobcat.Class.Helper
         /// <returns>解析好的User Property</returns>
         public static string ResolveUserProperties(this IEnumerable<PropertyModel> properties)
         {
-            Dictionary<string, string> keyValues = new Dictionary<string, string>();
-            if (properties != null)
-                foreach (var item in properties)
-                    keyValues.Add(item.Name, item.Value);
-            return Newtonsoft.Json.JsonConvert.SerializeObject(keyValues);
-            /*
-            if (properties == null)
-                return "{}";
+            if (properties == null) return "{}";
 
-            var sb = new StringBuilder();
-            sb.Append('{');
-            foreach (var item in properties)
-                sb.AppendFormat("\"{0}\":[\"{1}\"],", item.Name, item.Value);
-            return sb.ToString().TrimEnd(',').Trim() + "}";
-            */
+            var keyValues = properties
+                .ToDictionary(
+                    item => item.Name, 
+                    item => new[] {item.Value});
+
+            return JsonConvert.SerializeObject(keyValues);
         }
 
 
@@ -63,7 +56,7 @@ namespace ProjBobcat.Class.Helper
         public static IEnumerable<AuthPropertyModel> ToAuthProperties(this IEnumerable<PropertyModel> models,
             IReadOnlyDictionary<PlayerUUID, AuthProfileModel> profiles)
         {
-            return models is null ?
+            return models == null ?
                   new List<AuthPropertyModel>() :
                   models.Select(model => model.ToAuthProperty(profiles));
         }

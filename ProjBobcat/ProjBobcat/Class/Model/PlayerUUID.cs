@@ -1,64 +1,66 @@
 ﻿using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace ProjBobcat.Class.Model
 {
     [JsonConverter(typeof(Converter))]
     public struct PlayerUUID : IFormattable, IComparable<PlayerUUID>, IEquatable<PlayerUUID>
     {
-        Guid guid;
+        private readonly Guid _guid;
+
         public PlayerUUID(byte[] guidBytes)
         {
-            this.guid = new Guid(guidBytes);
+            _guid = new Guid(guidBytes);
         }
+
         public PlayerUUID(Guid guid)
         {
-            this.guid = guid;
+            _guid = guid;
         }
+
         public PlayerUUID(string guidString)
         {
-            this.guid = new Guid(guidString);
+            _guid = new Guid(guidString);
         }
+
         public int CompareTo(PlayerUUID other)
         {
-            return this.guid.CompareTo(other.guid);
+            return _guid.CompareTo(other._guid);
         }
 
         public override bool Equals(object obj)
         {
-            if (obj is PlayerUUID playerUUID)
-                return guid.Equals(playerUUID.guid);
+            if (obj is PlayerUUID playerUuid)
+                return _guid.Equals(playerUuid._guid);
             return false;
         }
 
         public bool Equals(PlayerUUID other)
         {
-            return this.guid.Equals(other.guid);
+            return _guid.Equals(other._guid);
         }
+
         public override int GetHashCode()
-            => guid.GetHashCode();
+            => _guid.GetHashCode();
 
         public string ToString(string format, IFormatProvider formatProvider) =>
-            this.guid.ToString(format, formatProvider);
+            _guid.ToString(format, formatProvider);
 
         public static bool operator ==(PlayerUUID left, PlayerUUID right)
         {
-            return left.guid == right.guid;
+            return left._guid == right._guid;
         }
 
         public static bool operator !=(PlayerUUID left, PlayerUUID right)
         {
-            return left.guid != right.guid;
+            return left._guid != right._guid;
         }
 
         public Guid ToGuid()
         {
-            return guid;
+            return _guid;
         }
 
         public static PlayerUUID FromOfflinePlayerName(string playerName, string prefix = "OfflinePlayer:")
@@ -70,13 +72,14 @@ namespace ProjBobcat.Class.Model
 
         public string ToString(string format = "N")
         {
-            return guid.ToString(format);
+            return _guid.ToString(format);
         }
 
         public override string ToString()
         {
-            return guid.ToString("N");
+            return _guid.ToString("N");
         }
+
         public class Converter : JsonConverter<PlayerUUID>
         {
             public override PlayerUUID ReadJson(JsonReader reader, Type objectType, 
@@ -85,11 +88,13 @@ namespace ProjBobcat.Class.Model
                 var s = serializer.Deserialize<string>(reader);
                 return new PlayerUUID(s);
             }
+
             public override void WriteJson(JsonWriter writer, PlayerUUID value, JsonSerializer serializer)
             {
                 serializer.Serialize(writer, value.ToString());
             }
         }
+
         public static PlayerUUID Random()
         {
             return new PlayerUUID(Guid.NewGuid());
