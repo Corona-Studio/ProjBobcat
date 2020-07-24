@@ -27,9 +27,7 @@ namespace ProjBobcat.DefaultComponent
 
         public bool CheckAndDownload()
         {
-            var task = CheckAndDownloadTaskAsync();
-            task.Wait();
-            return task.Result.Value;
+            return CheckAndDownloadTaskAsync().GetAwaiter().GetResult().Value;
         }
 
         public async Task<TaskResult<bool>> CheckAndDownloadTaskAsync()

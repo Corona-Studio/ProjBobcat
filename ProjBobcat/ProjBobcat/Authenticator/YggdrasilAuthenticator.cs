@@ -76,10 +76,9 @@ namespace ProjBobcat.Authenticator
         /// </summary>
         /// <param name="userField">指示是否获取user字段。</param>
         /// <returns></returns>
-        [Obsolete("此方法已过时，请使用其异步版本 AuthTaskAsync(bool) 。", true)]
         public AuthResult Auth(bool userField = false)
         {
-            throw new NotImplementedException();
+            return AuthTaskAsync().GetAwaiter().GetResult();
         }
 
         /// <summary>
@@ -137,18 +136,20 @@ namespace ProjBobcat.Authenticator
             var profiles = result.AvailableProfiles.ToDictionary(profile => profile.UUID,
                 profile => new AuthProfileModel {DisplayName = profile.Name});
 
-            var uuid = profiles.First().Key;
-            if (LauncherProfileParser.IsAuthInfoExist(uuid, profiles.First().Value.DisplayName))
-                LauncherProfileParser.RemoveAuthInfo(uuid);
+            foreach (var kv in profiles.Where(kv =>
+                LauncherProfileParser.IsAuthInfoExist(kv.Key, kv.Value.DisplayName)))
+            {
+                LauncherProfileParser.RemoveAuthInfo(kv.Key);
+            }
 
             LauncherProfileParser.AddNewAuthInfo(new AuthInfoModel
             {
                 AccessToken = result.AccessToken,
                 Profiles = profiles,
-                Properties = AuthPropertyHelper.ToAuthProperties(result.User?.Properties, profiles).ToList(),
+                Properties = (result.User?.Properties).ToAuthProperties(profiles).ToList(),
                 UserName = profiles.First().Value.DisplayName
-            }, uuid);
-
+            }, result.User!.UUID);
+            
             return new AuthResult
             {
                 AccessToken = result.AccessToken,

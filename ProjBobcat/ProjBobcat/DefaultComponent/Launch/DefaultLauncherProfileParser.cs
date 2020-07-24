@@ -112,10 +112,20 @@ namespace ProjBobcat.DefaultComponent.Launch
         {
             if (!(LauncherProfile.AuthenticationDatabase?.Any() ?? false)) return false;
 
-            return LauncherProfile.AuthenticationDatabase.Any(a =>
-                       a.Value.Profiles?.First().Key.ToString().Equals(uuid.ToString(), StringComparison.Ordinal) ?? false) &&
-                   LauncherProfile.AuthenticationDatabase.Any(a =>
-                       a.Value.Profiles?.First().Value.DisplayName.Equals(userName, StringComparison.Ordinal) ?? false);
+            var isMatched =
+                LauncherProfile.AuthenticationDatabase
+                    .AsParallel()
+                    .Any(a =>
+                        a.Value.Profiles?
+                            .AsParallel()
+                            .Any(aa =>
+                                aa.Key
+                                    .ToString()
+                                    .Equals(uuid.ToString(), StringComparison.OrdinalIgnoreCase)
+                                && aa.Value.DisplayName.Equals(userName, StringComparison.Ordinal)
+                            ) ?? false);
+
+            return isMatched;
         }
 
         public bool IsGameProfileExist(string name)

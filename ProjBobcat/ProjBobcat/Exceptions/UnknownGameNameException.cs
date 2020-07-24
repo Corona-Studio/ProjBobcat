@@ -29,7 +29,7 @@ namespace ProjBobcat.Exceptions
         public UnknownGameNameException(string message, string gameName, Exception innerException)
             : base(message, innerException)
         {
-            this.GameName = gameName;
+            GameName = gameName;
         }
         /// <summary>
         /// 创建一个 <see cref="UnknownGameNameException"/> 的新实例。

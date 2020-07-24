@@ -95,6 +95,7 @@ namespace ProjBobcat.DefaultComponent.ForgeInstaller
                 };
             }
         }
+
         [Obsolete("此方法已过时，请使用其同步版本 InstallForge() 。", true)]
         public Task<ForgeInstallResult> InstallForgeTaskAsync()
         {

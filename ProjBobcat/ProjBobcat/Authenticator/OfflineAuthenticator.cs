@@ -32,7 +32,7 @@ namespace ProjBobcat.Authenticator
             var authProperty = new AuthPropertyModel
             {
                 Name = "preferredLanguage",
-                ProfileId = "",
+                ProfileId = string.Empty,
                 UserId = PlayerUUID.Random(),
                 Value = "zh-cn"
             };

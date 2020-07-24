@@ -20,10 +20,9 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
 
         public event EventHandler<GameResourceInfoResolveEventArgs> GameResourceInfoResolveEvent;
 
-        [Obsolete("此方法已过时，请使用其异步版本 ResolveResourceTaskAsync() 。", true)]
         public IEnumerable<IGameResource> ResolveResource()
         {
-            throw new NotImplementedException();
+            return ResolveResourceTaskAsync().GetAwaiter().GetResult();
         }
 
         public Task<IEnumerable<IGameResource>> ResolveResourceTaskAsync()
