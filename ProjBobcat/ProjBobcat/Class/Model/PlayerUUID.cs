@@ -1,11 +1,14 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.ComponentModel;
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 
 namespace ProjBobcat.Class.Model
 {
-    [JsonConverter(typeof(Converter))]
+    [JsonConverter(typeof(JsonConverter))]
+    [TypeConverter(typeof(TypeConverter))]
     public struct PlayerUUID : IFormattable, IComparable<PlayerUUID>, IEquatable<PlayerUUID>
     {
         private readonly Guid _guid;
@@ -80,7 +83,26 @@ namespace ProjBobcat.Class.Model
             return _guid.ToString("N");
         }
 
-        public class Converter : JsonConverter<PlayerUUID>
+         class TypeConverter : System.ComponentModel.TypeConverter
+        {
+            public override bool CanConvertFrom(ITypeDescriptorContext context, System.Type sourceType)
+            {
+                if (sourceType == typeof(string))
+                {
+                    return true;
+                }
+                return base.CanConvertFrom(context, sourceType);
+            }
+            public override object ConvertFrom(ITypeDescriptorContext context, System.Globalization.CultureInfo culture, object value)
+            {
+                if (value is string str)
+                {
+                    return new PlayerUUID(str);
+                }
+                return base.ConvertFrom(context, culture, value);
+            }
+        }
+        class JsonConverter : JsonConverter<PlayerUUID>
         {
             public override PlayerUUID ReadJson(JsonReader reader, Type objectType, 
                 PlayerUUID existingValue, bool hasExistingValue, JsonSerializer serializer)
