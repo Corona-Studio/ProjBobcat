@@ -59,7 +59,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                 }
 
                 var indexDownloadResult = await DownloadHelper.DownloadSingleFileAsync(new Uri(assetIndexDownloadUri),
-                    assetIndexesDi.FullName,
+                    $"{assetIndexesDi.FullName}\\",
                     $"{VersionInfo.AssetInfo.Id}.json").ConfigureAwait(false);
                 if (indexDownloadResult.TaskStatus != TaskResultStatus.Success)
                 {
@@ -95,7 +95,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                     let twoDigitsHash = asset.Value.Hash.Substring(0, 2)
                     let eightDigitsHash = asset.Value.Hash.Substring(0, 8)
                     let relativeAssetPath = $"{twoDigitsHash}\\{asset.Value.Hash}"
-                    let path = $"{assetObjectsDi.FullName}{relativeAssetPath}"
+                    let path = $"{assetObjectsDi.FullName}\\{relativeAssetPath}"
                     where !File.Exists(path)
                     select new AssetDownloadInfo
                     {
@@ -103,7 +103,8 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                         Path = path,
                         Type = "Asset",
                         Uri = $"{AssetUriRoot}{relativeAssetPath.Replace('\\', '/')}",
-                        FileSize = asset.Value.Size
+                        FileSize = asset.Value.Size,
+                        CheckSum = asset.Value.Hash
                     })
                 .Cast<IGameResource>().ToList();
 

@@ -129,7 +129,7 @@ namespace ProjBobcat.Class.Helper
         /// <param name="downloadThread">下载线程</param>
         /// <param name="tokenSource"></param>
         public static async Task AdvancedDownloadListFile(IEnumerable<DownloadFile> fileEnumerable, int downloadThread,
-            CancellationTokenSource tokenSource)
+            CancellationTokenSource tokenSource, int downloadParts = 16)
         {
             var downloadFiles = fileEnumerable.ToList();
             var token = tokenSource?.Token ?? CancellationToken.None;
@@ -158,7 +158,7 @@ namespace ProjBobcat.Class.Helper
 
                          // DownloadData(df);
                          if (df.FileSize >= 1048576 || df.FileSize == 0)// || df.FileSize == default)
-                             MultiPartDownload(df);
+                             MultiPartDownload(df, downloadParts);
                          else
                              DownloadData(df);
                     }

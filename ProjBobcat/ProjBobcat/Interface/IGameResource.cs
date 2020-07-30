@@ -23,5 +23,7 @@
         string Uri { get; set; }
 
         long FileSize { get; set; }
+
+        string CheckSum { get; set; }
     }
 }

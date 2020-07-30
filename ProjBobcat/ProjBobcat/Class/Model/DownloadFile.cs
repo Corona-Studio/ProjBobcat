@@ -33,6 +33,10 @@ namespace ProjBobcat.Class.Model
         /// </summary>
         public long FileSize { get; set; }
         /// <summary>
+        /// 文件检验码
+        /// </summary>
+        public string CheckSum { get; set; }
+        /// <summary>
         /// 下载完成事件
         /// </summary>
         public EventHandler<DownloadFileCompletedEventArgs> Completed { get; set; }

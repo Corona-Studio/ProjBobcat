@@ -93,6 +93,7 @@
     <Compile Include="Authenticator\OfflineAuthenticator.cs" />
     <Compile Include="Authenticator\YggdrasilAuthenticator.cs" />
     <Compile Include="Class\Helper\AuthPropertyHelper.cs" />
+    <Compile Include="Class\Helper\CryptoHelper.cs" />
     <Compile Include="Class\Helper\DirectoryHelper.cs" />
     <Compile Include="Class\Helper\DownloadHelper.cs" />
     <Compile Include="Class\Helper\FileHelper.cs" />

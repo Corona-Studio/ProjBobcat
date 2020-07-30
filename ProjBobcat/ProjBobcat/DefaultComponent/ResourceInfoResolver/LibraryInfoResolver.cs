@@ -62,7 +62,8 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                         Title = lL.Name.Split(':')[1],
                         Type = "Library/Native",
                         Uri = uri,
-                        FileSize = lL.Size
+                        FileSize = lL.Size,
+                        CheckSum = lL.Sha1
                     });
                 }
 
