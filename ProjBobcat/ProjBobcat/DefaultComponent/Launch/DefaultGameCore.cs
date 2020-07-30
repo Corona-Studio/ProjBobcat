@@ -235,7 +235,8 @@ namespace ProjBobcat.DefaultComponent.Launch
                 //Return the launch result.
                 return new LaunchResult
                 {
-                    RunTime = stopwatch.Elapsed
+                    RunTime = stopwatch.Elapsed,
+                    GameProcess = launchWrapper.Process
                 };
             }
             catch (Exception ex)
