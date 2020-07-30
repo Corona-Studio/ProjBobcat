@@ -3,7 +3,7 @@ using ProjBobcat.Class.Model;
 
 namespace ProjBobcat.Event
 {
-    public class DownloadFileCompletedEventArgs
+    public class DownloadFileCompletedEventArgs : EventArgs
     {
         public DownloadFileCompletedEventArgs(bool success, Exception ex, DownloadFile file)
         {
