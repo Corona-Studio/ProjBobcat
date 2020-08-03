@@ -9,5 +9,6 @@ namespace ProjBobcat.Class.Model.GameResource
         public string Type { get; set; }
         public string Uri { get; set; }
         public long FileSize { get; set; }
+        public string CheckSum { get; set; }
     }
 }

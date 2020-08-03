@@ -121,15 +121,15 @@ namespace ProjBobcat.Authenticator
                 };
             }
 
-            if (result.SelectedProfile == null)
+            if (result.SelectedProfile == null && !(result.AvailableProfiles?.Any() ?? false))
                 return new AuthResult
                 {
                     AuthStatus = AuthStatus.Failed,
                     Error = new ErrorModel
                     {
-                        Error = "没有发现已选择的档案",
-                        ErrorMessage = "没有在返回消息中发现SelectedProfile字段",
-                        Cause = "可能是因为您还没有购买正版游戏！"
+                        Error = "没有发现档案",
+                        ErrorMessage = "没有在返回消息中发现任何可用的档案",
+                        Cause = "可能是因为您还没有购买正版游戏或是账户服务器出现了问题！"
                     }
                 };
 

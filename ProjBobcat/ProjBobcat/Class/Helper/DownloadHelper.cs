@@ -99,12 +99,11 @@ namespace ProjBobcat.Class.Helper
                 client.Headers.Add("user-agent", Ua);
                 var result = client.DownloadData(new Uri(downloadProperty.DownloadUri));
 
-                FileHelper.Write(downloadProperty.DownloadPath, result);
-                /*
-                using var stream = new MemoryStream(result);
 
-                FileHelper.SaveBinaryFile(stream, downloadProperty.DownloadPath);
-                */
+                using var fs = new FileStream(downloadProperty.DownloadPath, FileMode.Create);
+                fs.Write(result, 0, result.Length);
+                fs.Close();
+
                 downloadProperty.Completed?.Invoke(client,
                     new DownloadFileCompletedEventArgs(true, null, downloadProperty));
                 downloadProperty.Changed?.Invoke(client, null);
@@ -129,7 +128,7 @@ namespace ProjBobcat.Class.Helper
         /// <param name="downloadThread">下载线程</param>
         /// <param name="tokenSource"></param>
         public static async Task AdvancedDownloadListFile(IEnumerable<DownloadFile> fileEnumerable, int downloadThread,
-            CancellationTokenSource tokenSource)
+            CancellationTokenSource tokenSource, int downloadParts = 16)
         {
             var downloadFiles = fileEnumerable.ToList();
             var token = tokenSource?.Token ?? CancellationToken.None;
@@ -158,7 +157,7 @@ namespace ProjBobcat.Class.Helper
 
                          // DownloadData(df);
                          if (df.FileSize >= 1048576 || df.FileSize == 0)// || df.FileSize == default)
-                             MultiPartDownload(df);
+                             MultiPartDownload(df, downloadParts);
                          else
                              DownloadData(df);
                     }

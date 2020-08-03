@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
@@ -14,10 +16,14 @@ namespace ProjBobcat.DefaultComponent
     /// </summary>
     public class DefaultResourceCompleter : IResourceCompleter
     {
+        private List<DownloadFile> _retryFileList = new List<DownloadFile>();
         private int _totalDownloaded, _needToDownload;
+        private bool _needRetry;
 
+        public int DownloadParts { get; set; } = 16;
         public int DownloadThread { get; set; }
         public int TotalRetry { get; set; }
+        public bool CheckFile { get; set; }
         public IEnumerable<IResourceInfoResolver> ResourceInfoResolvers { get; set; }
 
         
@@ -56,6 +62,41 @@ namespace ProjBobcat.DefaultComponent
                 InvokeDownloadProgressChangedEvent((double) _totalDownloaded / _needToDownload);
             };
 
+            DownloadFileCompletedEvent += (sender, args) =>
+            {
+                if (CheckFile)
+                {
+                    if (!File.Exists(args.File.DownloadPath)) return;
+
+#pragma warning disable CA5350 // 不要使用弱加密算法
+                    using var hA = SHA1.Create();
+#pragma warning restore CA5350 // 不要使用弱加密算法
+
+                    try
+                    {
+                        var hash = CryptoHelper.ComputeFileHash(args.File.DownloadPath, hA);
+
+                        if (string.IsNullOrEmpty(args.File.CheckSum)) return;
+                        if (hash.Equals(args.File.CheckSum, StringComparison.OrdinalIgnoreCase)) return;
+
+                        File.Delete(args.File.DownloadPath);
+
+                        if (TotalRetry == 0) return;
+                        _retryFileList.Add(args.File);
+                        _needRetry = true;
+                        return;
+                    }
+                    catch (Exception)
+                    {
+                    }
+                }
+
+                if (args.Success) return;
+                if (TotalRetry == 0) return;
+                _retryFileList.Add(args.File);
+                _needRetry = true;
+            };
+
             var downloadList = (from f in totalLostFiles
                     select new DownloadFile
                     {
@@ -63,7 +104,9 @@ namespace ProjBobcat.DefaultComponent
                         DownloadPath = f.Path,
                         DownloadUri = f.Uri,
                         FileName = f.Title,
-                        FileSize = f.FileSize
+                        FileSize = f.FileSize,
+                        CheckSum = f.CheckSum,
+                        FileType = f.Type
                     }
                 ).ToList();
             _needToDownload = downloadList.Count;
@@ -75,40 +118,29 @@ namespace ProjBobcat.DefaultComponent
 
         private async Task<Tuple<TaskResultStatus, bool>> DownloadFiles(IEnumerable<DownloadFile> downloadList)
         {
-            var retryFileList = new List<DownloadFile>();
-            var retryCount = 0;
-            var needRetry = false;
-
-            if (TotalRetry != 0)
-                DownloadFileCompletedEvent += (sender, args) =>
-                {
-                    if (args.Success) return;
-
-                    retryFileList.Add(args.File);
-                    needRetry = true;
-                };
-
             return await Task.Run(async () =>
             {
-                if (retryCount == 0)
-                    await DownloadHelper.AdvancedDownloadListFile(downloadList, DownloadThread, null)
+                var retryCount = 0;
+
+                await DownloadHelper.AdvancedDownloadListFile(downloadList, DownloadThread, null)
                         .ConfigureAwait(false);
 
-                if (!needRetry) return new Tuple<TaskResultStatus, bool>(TaskResultStatus.Success, false);
+                if (!_needRetry) return new Tuple<TaskResultStatus, bool>(TaskResultStatus.Success, false);
 
-                while (retryFileList.Any() && retryCount <= TotalRetry)
+                while (_retryFileList.Any() && retryCount <= TotalRetry)
                 {
-                    foreach (var rF in retryFileList) rF.RetryCount++;
+                    foreach (var rF in _retryFileList) rF.RetryCount++;
 
-                    var tempList = retryFileList;
-                    await DownloadHelper.AdvancedDownloadListFile(tempList, DownloadThread, null).ConfigureAwait(false);
+                    var tempList = _retryFileList;
+                    await DownloadHelper.AdvancedDownloadListFile(tempList, DownloadThread, null, DownloadParts)
+                        .ConfigureAwait(false);
 
                     retryCount++;
                 }
 
 
-                var flag = retryFileList.Any(rF => rF.FileType.Equals("Library", StringComparison.Ordinal));
-                var resultType = retryFileList.Any() ? TaskResultStatus.PartialSuccess : TaskResultStatus.Success;
+                var flag = _retryFileList.Any(rF => rF.FileType.Equals("Library", StringComparison.Ordinal));
+                var resultType = _retryFileList.Any() ? TaskResultStatus.PartialSuccess : TaskResultStatus.Success;
 
                 return new Tuple<TaskResultStatus, bool>(resultType, flag);
             }).ConfigureAwait(false);

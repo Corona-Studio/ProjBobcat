@@ -1,4 +1,5 @@
 ﻿using ProjBobcat.Class.Model.LauncherProfile;
+using ProjBobcat.Class.Model.YggdrasilAuth;
 using ProjBobcat.Interface;
 
 namespace ProjBobcat.Class.Model
@@ -39,8 +40,16 @@ namespace ProjBobcat.Class.Model
         /// </summary>
         public string Version { get; set; }
 
+        /// <summary>
+        /// 游戏窗口标题
+        /// </summary>
+        public string WindowTitle { get; set; }
+
         public IVersionLocator VersionLocator { get; set; }
+
         public IAuthenticator Authenticator { get; set; }
+        public ProfileInfoModel SelectedProfile { get; set; }
+
         public bool VersionInsulation { get; set; }
         public string LauncherName { get; set; }
         public GameArguments FallBackGameArguments { get; set; }

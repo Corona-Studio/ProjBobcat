@@ -93,6 +93,7 @@
     <Compile Include="Authenticator\OfflineAuthenticator.cs" />
     <Compile Include="Authenticator\YggdrasilAuthenticator.cs" />
     <Compile Include="Class\Helper\AuthPropertyHelper.cs" />
+    <Compile Include="Class\Helper\CryptoHelper.cs" />
     <Compile Include="Class\Helper\DirectoryHelper.cs" />
     <Compile Include="Class\Helper\DownloadHelper.cs" />
     <Compile Include="Class\Helper\FileHelper.cs" />
@@ -187,6 +188,7 @@
     <Compile Include="Interface\IResourceInfoResolver.cs" />
     <Compile Include="Interface\IVersionLocator.cs" />
     <Compile Include="Class\Model\RawVersionModel.cs" />
+    <Compile Include="NativeMethods.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

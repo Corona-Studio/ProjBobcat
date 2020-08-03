@@ -17,6 +17,14 @@ namespace ProjBobcat.Interface
         /// </summary>
         int TotalRetry { get; set; }
         /// <summary>
+        /// 下载分片数量
+        /// </summary>
+        int DownloadParts { get; set; }
+        /// <summary>
+        /// 验证下载文件
+        /// </summary>
+        bool CheckFile { get; set; }
+        /// <summary>
         /// 游戏资源解析器集合
         /// </summary>
         IEnumerable<IResourceInfoResolver> ResourceInfoResolvers { get; set; }
