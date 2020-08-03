@@ -188,6 +188,7 @@
     <Compile Include="Interface\IResourceInfoResolver.cs" />
     <Compile Include="Interface\IVersionLocator.cs" />
     <Compile Include="Class\Model\RawVersionModel.cs" />
+    <Compile Include="NativeMethods.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

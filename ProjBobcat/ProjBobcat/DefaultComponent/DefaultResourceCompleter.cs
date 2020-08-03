@@ -62,32 +62,40 @@ namespace ProjBobcat.DefaultComponent
                 InvokeDownloadProgressChangedEvent((double) _totalDownloaded / _needToDownload);
             };
 
-            if (CheckFile)
-                DownloadFileCompletedEvent += (sender, args) =>
+            DownloadFileCompletedEvent += (sender, args) =>
+            {
+                if (CheckFile)
                 {
                     if (!File.Exists(args.File.DownloadPath)) return;
 
 #pragma warning disable CA5350 // 不要使用弱加密算法
                     using var hA = SHA1.Create();
 #pragma warning restore CA5350 // 不要使用弱加密算法
-                    var hash = CryptoHelper.ComputeFileHash(args.File.DownloadPath, hA);
 
-                    if (hash.Equals(args.File.CheckSum, StringComparison.OrdinalIgnoreCase)) return;
-                    File.Delete(args.File.DownloadPath);
+                    try
+                    {
+                        var hash = CryptoHelper.ComputeFileHash(args.File.DownloadPath, hA);
 
-                    if (TotalRetry == 0) return;
-                    _retryFileList.Add(args.File);
-                    _needRetry = true;
-                };
+                        if (string.IsNullOrEmpty(args.File.CheckSum)) return;
+                        if (hash.Equals(args.File.CheckSum, StringComparison.OrdinalIgnoreCase)) return;
 
-            if (TotalRetry != 0)
-                DownloadFileCompletedEvent += (sender, args) =>
-                {
-                    if (args.Success) return;
+                        File.Delete(args.File.DownloadPath);
 
-                    _retryFileList.Add(args.File);
-                    _needRetry = true;
-                };
+                        if (TotalRetry == 0) return;
+                        _retryFileList.Add(args.File);
+                        _needRetry = true;
+                        return;
+                    }
+                    catch (Exception)
+                    {
+                    }
+                }
+
+                if (args.Success) return;
+                if (TotalRetry == 0) return;
+                _retryFileList.Add(args.File);
+                _needRetry = true;
+            };
 
             var downloadList = (from f in totalLostFiles
                     select new DownloadFile
@@ -97,7 +105,8 @@ namespace ProjBobcat.DefaultComponent
                         DownloadUri = f.Uri,
                         FileName = f.Title,
                         FileSize = f.FileSize,
-                        CheckSum = f.CheckSum
+                        CheckSum = f.CheckSum,
+                        FileType = f.Type
                     }
                 ).ToList();
             _needToDownload = downloadList.Count;

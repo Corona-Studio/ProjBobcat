@@ -99,12 +99,11 @@ namespace ProjBobcat.Class.Helper
                 client.Headers.Add("user-agent", Ua);
                 var result = client.DownloadData(new Uri(downloadProperty.DownloadUri));
 
-                FileHelper.Write(downloadProperty.DownloadPath, result);
-                /*
-                using var stream = new MemoryStream(result);
 
-                FileHelper.SaveBinaryFile(stream, downloadProperty.DownloadPath);
-                */
+                using var fs = new FileStream(downloadProperty.DownloadPath, FileMode.Create);
+                fs.Write(result, 0, result.Length);
+                fs.Close();
+
                 downloadProperty.Completed?.Invoke(client,
                     new DownloadFileCompletedEventArgs(true, null, downloadProperty));
                 downloadProperty.Changed?.Invoke(client, null);

@@ -84,12 +84,12 @@ namespace ProjBobcat.DefaultComponent.Launch
                 #endregion
 
                 #region 验证账户凭据 Legal Account Verifier
-
+                
                 //以下代码实现了账户模式从离线到在线的切换。
                 //The following code switches account mode between offline and yggdrasil.
                 var authResult = settings.Authenticator switch
                 {
-                    OfflineAuthenticator off => off.Auth(false),
+                    OfflineAuthenticator off => off.Auth(),
                     YggdrasilAuthenticator ygg => await ygg.AuthTaskAsync(true).ConfigureAwait(true),
                     _ => null
                 };
@@ -116,6 +116,21 @@ namespace ProjBobcat.DefaultComponent.Launch
                             ErrorMessage = "无法验证凭据的有效性"
                         }
                     };
+
+                if (authResult.SelectedProfile == default && settings.SelectedProfile == default)
+                    return new LaunchResult
+                    {
+                        LaunchSettings = settings,
+                        Error = new ErrorModel
+                        {
+                            Error = "验证失败",
+                            Cause = "没有选择用于启动游戏的Profile",
+                            ErrorMessage = "没有选择任何Profile"
+                        }
+                    };
+
+                if (settings.SelectedProfile != default)
+                    authResult.SelectedProfile = settings.SelectedProfile;
 
                 #endregion
 
@@ -229,13 +244,27 @@ namespace ProjBobcat.DefaultComponent.Launch
                         .ConfigureAwait(false);
                 }).Start();
 
-                #endregion
+                if (!string.IsNullOrEmpty(settings.WindowTitle))
+#pragma warning disable CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
+                    Task.Run(() =>
+                    {
+                        while (string.IsNullOrEmpty(launchWrapper.Process.MainWindowTitle))
+                        {
+                            _ = NativeMethods.SetWindowText(launchWrapper.Process.MainWindowHandle,
+                                settings.WindowTitle);
+                        }
+                    });
+#pragma warning restore CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
 
-                //返回启动结果。
-                //Return the launch result.
+                    #endregion
+
+                    //返回启动结果。
+                    //Return the launch result.
                 return new LaunchResult
                 {
-                    RunTime = stopwatch.Elapsed
+                    RunTime = stopwatch.Elapsed,
+                    GameProcess = launchWrapper.Process,
+                    LaunchSettings = settings
                 };
             }
             catch (Exception ex)
