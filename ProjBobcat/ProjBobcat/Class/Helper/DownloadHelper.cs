@@ -88,30 +88,38 @@ namespace ProjBobcat.Class.Helper
         /// 下载文件（通过线程池）
         /// </summary>
         /// <param name="downloadProperty"></param>
-        private static void DownloadData(DownloadFile downloadProperty)
+        private static async Task DownloadData(DownloadFile downloadProperty)
         {
             using var client = new WebClient
             {
                 Timeout = 10000
             };
+
             try
             {
                 client.Headers.Add("user-agent", Ua);
-                var result = client.DownloadData(new Uri(downloadProperty.DownloadUri));
 
+                client.DownloadProgressChanged += (sender, args) =>
+                {
+                    downloadProperty.Changed?.Invoke(client, new DownloadFileChangedEventArgs
+                    {
+                        ProgressPercentage = (double) args.BytesReceived / args.TotalBytesToReceive
+                    });
+                };
 
-                using var fs = new FileStream(downloadProperty.DownloadPath, FileMode.Create);
-                fs.Write(result, 0, result.Length);
-                fs.Close();
+                var resultTask = client.DownloadDataTaskAsync(new Uri(downloadProperty.DownloadUri));
+                var result = resultTask.GetAwaiter().GetResult();
+                using var ms = new MemoryStream(result);
+
+                FileHelper.SaveBinaryFile(ms, downloadProperty.DownloadPath);
 
                 downloadProperty.Completed?.Invoke(client,
                     new DownloadFileCompletedEventArgs(true, null, downloadProperty));
-                downloadProperty.Changed?.Invoke(client, null);
             }
             catch (WebException ex)
             {
-                if (File.Exists($"{downloadProperty.DownloadPath}{downloadProperty.FileName}"))
-                    File.Delete($"{downloadProperty.DownloadPath}{downloadProperty.FileName}");
+                if (File.Exists(downloadProperty.DownloadPath))
+                    File.Delete(downloadProperty.DownloadPath);
                 downloadProperty.Completed?.Invoke(client,
                     new DownloadFileCompletedEventArgs(false, ex, downloadProperty));
             }
@@ -127,6 +135,7 @@ namespace ProjBobcat.Class.Helper
         /// <param name="fileEnumerable">文件列表</param>
         /// <param name="downloadThread">下载线程</param>
         /// <param name="tokenSource"></param>
+        /// <param name="downloadParts"></param>
         public static async Task AdvancedDownloadListFile(IEnumerable<DownloadFile> fileEnumerable, int downloadThread,
             CancellationTokenSource tokenSource, int downloadParts = 16)
         {
@@ -140,12 +149,12 @@ namespace ProjBobcat.Class.Helper
             using var bc = new BlockingCollection<DownloadFile>(downloadThread * 4);
             using var downloadQueueTask = Task.Run(() =>
             {
-                foreach (var df in downloadFiles) bc.Add(df, token);
+                downloadFiles.AsParallel().ForAll(d => bc.Add(d, token));
 
                 bc.CompleteAdding();
             }, token);
 
-            using var downloadTask = Task.Run(() =>
+            using var downloadTask = Task.Run(async () =>
             {
                 void DownloadAction()
                 {
@@ -155,21 +164,22 @@ namespace ProjBobcat.Class.Helper
                             df.DownloadPath.Substring(0, df.DownloadPath.LastIndexOf('\\')));
                         if (!di.Exists) di.Create();
 
-                         // DownloadData(df);
-                         if (df.FileSize >= 1048576 || df.FileSize == 0)// || df.FileSize == default)
+                         if (df.FileSize >= 1048576 || df.FileSize == 0)
                              MultiPartDownload(df, downloadParts);
                          else
-                             DownloadData(df);
+                             DownloadData(df).GetAwaiter().GetResult();
                     }
                 }
 
-                var threads = new List<Thread>();
+                var tasks = new Task[downloadThread * 2];
 
-                for (var i = 0; i < downloadThread * 2; i++) threads.Add(new Thread(DownloadAction));
+                for (var i = 0; i < downloadThread * 2; i++)
+                {
+                    tasks[i] = new Task(DownloadAction);
+                    tasks[i].Start();
+                }
 
-                foreach (var t in threads) t.Start();
-
-                foreach (var t in threads) t.Join();
+                await Task.WhenAll(tasks).ConfigureAwait(false);
             }, token);
 
             await Task.WhenAll(downloadQueueTask, downloadTask).ConfigureAwait(false);
@@ -186,123 +196,7 @@ namespace ProjBobcat.Class.Helper
         /// <param name="numberOfParts">分段数量</param>
         public static void MultiPartDownload(DownloadFile downloadFile, int numberOfParts = 16)
         {
-            if (downloadFile == null) return;
-
-            //Handle number of parallel downloads  
-            if (numberOfParts <= 0) numberOfParts = Environment.ProcessorCount;
-
-            try
-            {
-                #region Get file size
-
-                var webRequest = (HttpWebRequest) WebRequest.Create(new Uri(downloadFile.DownloadUri));
-                webRequest.Method = "HEAD";
-                webRequest.UserAgent = Ua;
-
-                using var webResponse = webRequest.GetResponse();
-                var parallelDownloadSupported = webResponse.Headers.Get("Accept-Ranges")?.Contains("bytes") ?? false;
-                var responseLength = long.TryParse(webResponse.Headers.Get("Content-Length"), out var l) ? l : 0;
-                parallelDownloadSupported = parallelDownloadSupported && responseLength != 0;
-
-                if (!parallelDownloadSupported)
-                {
-                    DownloadData(downloadFile);
-                    return;
-                }
-
-                #endregion
-
-                if (File.Exists(downloadFile.DownloadPath)) File.Delete(downloadFile.DownloadPath);
-
-                var tempFilesDictionary = new ConcurrentDictionary<int, string>();
-
-                #region Calculate ranges
-
-                var readRanges = new List<DownloadRange>();
-                var partSize = (long) Math.Ceiling((double) responseLength / numberOfParts);
-
-                for (var i = 0; i < numberOfParts; i++)
-                {
-                    var start = i * partSize + Math.Min(1, i);
-                    var end = Math.Min((i + 1) * partSize, responseLength);
-
-                    readRanges.Add(new DownloadRange
-                    {
-                        End = end,
-                        Start = start,
-                        Index = i
-                    });
-                }
-
-                #endregion
-
-                #region Parallel download
-
-                var totalProgress = Enumerable.Repeat(0d, numberOfParts).ToList();
-
-                Parallel.ForEach(readRanges, (range, state) =>
-                {
-                    using var client = new WebClient
-                    {
-                        DownloadRange = range,
-                        Timeout = Timeout.Infinite
-                    };
-                    client.DownloadProgressChanged += (sender, args) =>
-                    {
-                        lock (totalProgress)
-                        {
-                            totalProgress[range.Index] = (double)args.BytesReceived / args.TotalBytesToReceive;
-                            downloadFile.Changed?.Invoke(sender,
-                                new DownloadFileChangedEventArgs
-                                    { ProgressPercentage = totalProgress.Sum() / numberOfParts });
-                        }
-                    };
-
-                    var path = Path.GetTempFileName();
-                    var t = client.DownloadFileTaskAsync(new Uri(downloadFile.DownloadUri), path);
-                    t.GetAwaiter().GetResult();
-                    tempFilesDictionary.TryAdd(range.Index, path);
-                });
-
-                #endregion
-
-                #region Merge to single file
-
-                if (tempFilesDictionary.Count != readRanges.Count)
-                {
-                    downloadFile.Completed?.Invoke(null,
-                        new DownloadFileCompletedEventArgs(false, new HttpRequestException(), downloadFile));
-                    return;
-                }
-
-                using var fs = new FileStream(downloadFile.DownloadPath, FileMode.Append);
-                foreach (var downloadedBytes in tempFilesDictionary.OrderBy(b => b.Key))
-                {
-                    var wb = File.ReadAllBytes(downloadedBytes.Value);
-                    fs.Write(wb, 0, wb.Length);
-                    File.Delete(downloadedBytes.Value);
-                }
-
-                var totalLength = fs.Length;
-                fs.Close();
-
-                if (totalLength != responseLength)
-                {
-                    downloadFile.Completed?.Invoke(null,
-                        new DownloadFileCompletedEventArgs(false, null, downloadFile));
-                    return;
-                }
-
-                #endregion
-
-                downloadFile.Completed?.Invoke(null,
-                    new DownloadFileCompletedEventArgs(true, null, downloadFile));
-            }
-            catch (Exception ex)
-            {
-                downloadFile.Completed?.Invoke(null,
-                    new DownloadFileCompletedEventArgs(false, ex, downloadFile));
-            }
+            MultiPartDownloadTaskAsync(downloadFile, numberOfParts).GetAwaiter().GetResult();
         }
 
         /// <summary>
@@ -336,7 +230,7 @@ namespace ProjBobcat.Class.Helper
 
                 if (!parallelDownloadSupported)
                 {
-                    DownloadData(downloadFile);
+                    DownloadData(downloadFile).GetAwaiter().GetResult();
                     return;
                 }
 
@@ -344,61 +238,89 @@ namespace ProjBobcat.Class.Helper
 
                 if (File.Exists(downloadFile.DownloadPath)) File.Delete(downloadFile.DownloadPath);
 
-                var tempFilesDictionary = new ConcurrentDictionary<int,string>();
+                var tempFilesBag = new ConcurrentBag<Tuple<int, string>>();
 
                 #region Calculate ranges
 
                 var readRanges = new List<DownloadRange>();
                 var partSize = (long) Math.Ceiling((double) responseLength / numberOfParts);
 
-                for (var i = 0; i < numberOfParts; i++)
-                {
-                    var start = i * partSize + Math.Min(1, i);
-                    var end = Math.Min((i + 1) * partSize, responseLength);
+                if(partSize != 0)
+                    for (var i = 0; i < numberOfParts; i++)
+                    {
+                        var start = i * partSize + Math.Min(1, i);
+                        var end = Math.Min((i + 1) * partSize, responseLength);
 
+                        readRanges.Add(new DownloadRange
+                        {
+                            End = end,
+                            Start = start,
+                            Index = i
+                        });
+                    }
+                else
                     readRanges.Add(new DownloadRange
                     {
-                        End = end,
-                        Start = start,
-                        Index = i
+                        End = responseLength,
+                        Start = 0,
+                        Index = 0
                     });
-                }
 
                 #endregion
 
                 #region Parallel download
 
-                var totalProgress = Enumerable.Repeat(0d, numberOfParts).ToList();
+                var downloadedBytesCount = 0L;
 
-                Parallel.ForEach(readRanges, (range, state) =>
+                var tasks = new Task[readRanges.Count];
+
+                for (var i = 0; i < readRanges.Count; i++)
                 {
-                    using var client = new WebClient
+                    var range = readRanges[i];
+
+                    void DownloadMethod()
                     {
-                        DownloadRange = range,
-                        Timeout = Timeout.Infinite
-                    };
-                    client.DownloadProgressChanged += (sender, args) =>
-                    {
-                        lock (totalProgress)
+                        var lastReceivedBytes = 0L;
+                        using var client = new WebClient
                         {
-                            totalProgress[range.Index] = (double)args.BytesReceived / args.TotalBytesToReceive;
+                            DownloadRange = range,
+                            Timeout = Timeout.Infinite
+                        };
+
+                        client.DownloadProgressChanged += (sender, args) =>
+                        {
+                            downloadedBytesCount += args.BytesReceived - lastReceivedBytes;
+                            lastReceivedBytes = args.BytesReceived;
+
                             downloadFile.Changed?.Invoke(sender,
                                 new DownloadFileChangedEventArgs
-                                    { ProgressPercentage = totalProgress.Sum() / numberOfParts });
-                        }
-                    };
+                                    { ProgressPercentage = (double)downloadedBytesCount / responseLength });
+                        };
 
-                    var path = Path.GetTempFileName();
-                    var t = client.DownloadFileTaskAsync(new Uri(downloadFile.DownloadUri), path);
-                    t.GetAwaiter().GetResult();
-                    tempFilesDictionary.TryAdd(range.Index, path);
-                });
+                        var path = Path.GetTempFileName();
+                        var ta = client.DownloadFileTaskAsync(new Uri(downloadFile.DownloadUri), path);
+                        ta.GetAwaiter().GetResult();
+
+                        tempFilesBag.Add(new Tuple<int, string>(range.Index, path));
+
+                    }
+
+                    var t = new Task(DownloadMethod);
+                    tasks[i] = t;
+                }
+
+                foreach (var t in tasks)
+                {
+                    t.Start();
+                }
+
+                await Task.WhenAll(tasks).ConfigureAwait(false);
 
                 #endregion
 
                 #region Merge to single file
 
-                if (tempFilesDictionary.Count != readRanges.Count)
+                if (tempFilesBag.Count != readRanges.Count)
                 {
                     downloadFile.Completed?.Invoke(null,
                         new DownloadFileCompletedEventArgs(false, new HttpRequestException(), downloadFile));
@@ -406,11 +328,11 @@ namespace ProjBobcat.Class.Helper
                 }
 
                 using var fs = new FileStream(downloadFile.DownloadPath, FileMode.Append);
-                foreach (var downloadedBytes in tempFilesDictionary.OrderBy(b => b.Key))
+                foreach (var element in tempFilesBag.ToArray().OrderBy(b => b.Item1).ToArray())
                 {
-                    var wb = File.ReadAllBytes(downloadedBytes.Value);
+                    var wb = File.ReadAllBytes(element.Item2);
                     fs.Write(wb, 0, wb.Length);
-                    File.Delete(downloadedBytes.Value);
+                    File.Delete(element.Item2);
                 }
 
                 var totalLength = fs.Length;

@@ -127,7 +127,7 @@ namespace ProjBobcat.DefaultComponent
 
                 if (!_needRetry) return new Tuple<TaskResultStatus, bool>(TaskResultStatus.Success, false);
 
-                while (_retryFileList.Any() && retryCount <= TotalRetry)
+                while (_retryFileList.Any() && retryCount < TotalRetry)
                 {
                     foreach (var rF in _retryFileList) rF.RetryCount++;
 
@@ -139,7 +139,7 @@ namespace ProjBobcat.DefaultComponent
                 }
 
 
-                var flag = _retryFileList.Any(rF => rF.FileType.Equals("Library", StringComparison.Ordinal));
+                var flag = _retryFileList.Any(rF => rF.FileType.Equals("Library/Native", StringComparison.Ordinal));
                 var resultType = _retryFileList.Any() ? TaskResultStatus.PartialSuccess : TaskResultStatus.Success;
 
                 return new Tuple<TaskResultStatus, bool>(resultType, flag);
