@@ -59,8 +59,8 @@
     <Otherwise />
   </Choose>
   <ItemGroup>
+    <Compile Include="Class\Model\PlayerUUIDTests.cs" />
     <Compile Include="DefaultComponent\Launch\DefaultGameCoreTests.cs" />
-    <Compile Include="PlayerUuidTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

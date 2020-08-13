@@ -1,6 +1,8 @@
-﻿namespace ProjBobcat.Event
+﻿using System;
+
+namespace ProjBobcat.Event
 {
-    public class DownloadFileChangedEventArgs
+    public class DownloadFileChangedEventArgs : EventArgs
     {
         public double ProgressPercentage { get; set; }
     }
