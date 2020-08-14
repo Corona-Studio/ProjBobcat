@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>ProjBobcat.Tests</RootNamespace>
     <AssemblyName>ProjBobcat.Tests</AssemblyName>
-    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
@@ -70,7 +70,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ProjBobcat\ProjBobcat.csproj">
-      <Project>{9777E280-8601-4A6C-BD75-0D29FD4F5D6F}</Project>
+      <Project>{9777e280-8601-4a6c-bd75-0d29fd4f5d6f}</Project>
       <Name>ProjBobcat</Name>
     </ProjectReference>
   </ItemGroup>
