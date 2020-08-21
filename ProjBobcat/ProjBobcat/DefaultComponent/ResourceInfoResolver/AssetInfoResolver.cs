@@ -58,7 +58,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                         $"{AssetIndexUriRoot.TrimEnd('/')}{assetIndexDownloadUri.Substring(assetIndexUriRoot.Length)}";
                 }
 
-                var indexDownloadResult = await DownloadHelper.DownloadSingleFileAsync(new Uri(assetIndexDownloadUri),
+                var indexDownloadResult = await DownloadHelper.Instance.DownloadSingleFileAsync(new Uri(assetIndexDownloadUri),
                     $"{assetIndexesDi.FullName}\\",
                     $"{VersionInfo.AssetInfo.Id}.json").ConfigureAwait(false);
                 if (indexDownloadResult.TaskStatus != TaskResultStatus.Success)
@@ -94,11 +94,12 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
             var lostAssets = (from asset in assetObject.Objects
                     let twoDigitsHash = asset.Value.Hash.Substring(0, 2)
                     let eightDigitsHash = asset.Value.Hash.Substring(0, 8)
-                    let relativeAssetPath = $"{twoDigitsHash}\\{asset.Value.Hash}"
-                    let path = $"{assetObjectsDi.FullName}\\{relativeAssetPath}"
-                    where !File.Exists(path)
+                    let relativeAssetPath = $"\\{asset.Value.Hash}"
+                    let path = Path.Combine(assetObjectsDi.FullName, relativeAssetPath)
+                    where !File.Exists(Path.Combine(path, asset.Value.Hash))
                     select new AssetDownloadInfo
                     {
+                        FileName = asset.Value.Hash,
                         Title = eightDigitsHash,
                         Path = path,
                         Type = "Asset",

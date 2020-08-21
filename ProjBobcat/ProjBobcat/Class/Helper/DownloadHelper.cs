@@ -1,61 +1,106 @@
-﻿using System;
+﻿using ProjBobcat.Class.Model;
+using ProjBobcat.Event;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
+using System.Net.Http.Handlers;
 using System.Threading;
 using System.Threading.Tasks;
-using ProjBobcat.Class.Model;
-using ProjBobcat.Event;
 
 namespace ProjBobcat.Class.Helper
 {
     /// <summary>
     /// 下载帮助器。
     /// </summary>
-    public static class DownloadHelper
+    public class DownloadHelper : IDisposable
     {
+        private static DownloadHelper _instance;
+        public static DownloadHelper Instance
+        {
+            get
+            {
+                if(_instance == null)
+                    Init();
+                return _instance;
+            }
+            private set => _instance = value;
+        }
+
+        public static void Init()
+        {
+            var hCh = new HttpClientHandler();
+            var pMh = new ProgressMessageHandler(hCh);
+
+            Instance = new DownloadHelper
+            {
+                _httpClientHandler = hCh,
+                _progressMessageHandler = pMh,
+                _httpClient = new HttpClient(pMh),
+                Ua = "ProjBobcat"
+            };
+        }
+
+        private HttpClientHandler _httpClientHandler;
+        private ProgressMessageHandler _progressMessageHandler;
+        private HttpClient _httpClient;
+
         /// <summary>
         /// 获取或设置用户代理信息。
         /// </summary>
-        public static string Ua { get; set; } = "ProjBobcat";
-        /// <summary>
-        /// 设置用户代理信息。
-        /// </summary>
-        /// <param name="ua">要设置的用户代理信息。</param>
-        [Obsolete("已过时，请使用属性 Ua 代替。")]
-        public static void SetUa(string ua)
+        private string _ua;
+        public string Ua
         {
-            Ua = ua;
+            get => _ua;
+            set
+            {
+                _ua = value;
+                _httpClient.DefaultRequestHeaders.UserAgent.Clear();
+                _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(_ua);
+            }
         }
 
         /// <summary>
         /// 异步下载单个文件。
         /// </summary>
         /// <param name="downloadUri"></param>
-        /// <param name="downloadToDir"></param>
+        /// <param name="downloadDir"></param>
         /// <param name="filename"></param>
         /// <param name="complete"></param>
         /// <param name="changedEvent"></param>
-        public static async Task DownloadSingleFileAsyncWithEvent(
-            Uri downloadUri, string downloadToDir, string filename,
+        public async Task DownloadSingleFileAsyncWithEvent(
+            Uri downloadUri, string downloadDir, string filename,
             AsyncCompletedEventHandler complete,
-            DownloadProgressChangedEventHandler changedEvent)
+            EventHandler<HttpProgressEventArgs> changedEvent)
         {
-            var di = new DirectoryInfo(downloadToDir);
+            var di = new DirectoryInfo(downloadDir);
             if (!di.Exists) di.Create();
 
-            using var client = new WebClient {
-                Timeout = 10000
-            };
-            client.Headers.Add("user-agent", Ua);
-            client.DownloadFileCompleted += complete;
-            client.DownloadProgressChanged += changedEvent;
-            await client.DownloadFileTaskAsync(downloadUri, $"{downloadToDir}{filename}")
-                .ConfigureAwait(false);
+            try
+            {
+                _progressMessageHandler.HttpReceiveProgress += changedEvent;
+                var bytes = await _httpClient.GetByteArrayAsync(downloadUri).ConfigureAwait(false);
+                using var fs = new FileStream(Path.Combine(downloadDir, filename), FileMode.Create);
+                using var bw = new BinaryWriter(fs);
+
+                bw.Write(bytes);
+
+                bw.Close();
+                fs.Close();
+
+                complete?.Invoke(this, new AsyncCompletedEventArgs(null, false, null));
+            }
+            catch(Exception ex)
+            {
+                complete?.Invoke(this, new AsyncCompletedEventArgs(ex, false, null));
+            }
+            finally
+            {
+                _progressMessageHandler.HttpReceiveProgress -= changedEvent;
+            }
         }
 
 
@@ -63,22 +108,32 @@ namespace ProjBobcat.Class.Helper
         /// 异步下载单个文件。
         /// </summary>
         /// <param name="downloadUri"></param>
-        /// <param name="downloadToDir"></param>
+        /// <param name="downloadDir"></param>
         /// <param name="filename"></param>
         /// <returns></returns>
-        public static async Task<TaskResult<string>> DownloadSingleFileAsync(
-            Uri downloadUri, string downloadToDir, string filename)
+        public async Task<TaskResult<string>> DownloadSingleFileAsync(
+            Uri downloadUri, string downloadDir, string filename)
         {
-            var di = new DirectoryInfo(downloadToDir);
+            var di = new DirectoryInfo(downloadDir);
             if (!di.Exists) di.Create();
 
-            using var client = new WebClient {
-                Timeout = 10000
-            };
-            client.Headers.Add("user-agent", Ua);
-            await client.DownloadFileTaskAsync(downloadUri, $"{downloadToDir}{filename}")
-                .ConfigureAwait(false);
-            return new TaskResult<string>(TaskResultStatus.Success);
+            try
+            {
+                var bytes = await _httpClient.GetByteArrayAsync(downloadUri).ConfigureAwait(false);
+                using var fs = new FileStream(Path.Combine(downloadDir, filename), FileMode.Create);
+                using var bw = new BinaryWriter(fs);
+
+                bw.Write(bytes);
+
+                bw.Close();
+                fs.Close();
+
+                return new TaskResult<string>(TaskResultStatus.Success);
+            }
+            catch (Exception ex)
+            {
+                return new TaskResult<string>(TaskResultStatus.Error, ex.GetBaseException().Message);
+            }
         }
 
 
@@ -88,40 +143,47 @@ namespace ProjBobcat.Class.Helper
         /// 下载文件（通过线程池）
         /// </summary>
         /// <param name="downloadProperty"></param>
-        private static async Task DownloadData(DownloadFile downloadProperty)
+        private async Task DownloadData(DownloadFile downloadProperty)
         {
-            using var client = new WebClient
+            void ReceivedProcessor(object sender, HttpProgressEventArgs args)
             {
-                Timeout = 10000
-            };
+                downloadProperty.Changed?.Invoke(this, new DownloadFileChangedEventArgs
+                {
+                    ProgressPercentage = (double)args.BytesTransferred / args.TotalBytes * 100 ?? 0,
+                    BytesReceived = args.BytesTransferred,
+                    TotalBytes = args.TotalBytes
+                });
+            }
+
+            _progressMessageHandler.HttpReceiveProgress += ReceivedProcessor;
 
             try
             {
-                client.Headers.Add("user-agent", Ua);
+                var bytes = await _httpClient.GetByteArrayAsync(new Uri(downloadProperty.DownloadUri))
+                    .ConfigureAwait(false);
+                using var fs = new FileStream(
+                    Path.Combine(downloadProperty.DownloadPath, downloadProperty.FileName),
+                    FileMode.Create);
+                using var bw = new BinaryWriter(fs);
 
-                client.DownloadProgressChanged += (sender, args) =>
-                {
-                    downloadProperty.Changed?.Invoke(client, new DownloadFileChangedEventArgs
-                    {
-                        ProgressPercentage = (double) args.BytesReceived / args.TotalBytesToReceive
-                    });
-                };
+                bw.Write(bytes);
 
-                var resultTask = client.DownloadDataTaskAsync(new Uri(downloadProperty.DownloadUri));
-                var result = resultTask.GetAwaiter().GetResult();
-                using var ms = new MemoryStream(result);
+                bw.Close();
+                fs.Close();
 
-                FileHelper.SaveBinaryFile(ms, downloadProperty.DownloadPath);
-
-                downloadProperty.Completed?.Invoke(client,
+                downloadProperty.Completed?.Invoke(this,
                     new DownloadFileCompletedEventArgs(true, null, downloadProperty));
             }
-            catch (WebException ex)
+            catch (Exception e)
             {
+                downloadProperty.Completed?.Invoke(this,
+                    new DownloadFileCompletedEventArgs(false, e, downloadProperty));
+            }
+            finally
+            {
+                _progressMessageHandler.HttpReceiveProgress -= ReceivedProcessor;
                 if (File.Exists(downloadProperty.DownloadPath))
                     File.Delete(downloadProperty.DownloadPath);
-                downloadProperty.Completed?.Invoke(client,
-                    new DownloadFileCompletedEventArgs(false, ex, downloadProperty));
             }
         }
 
@@ -136,7 +198,7 @@ namespace ProjBobcat.Class.Helper
         /// <param name="downloadThread">下载线程</param>
         /// <param name="tokenSource"></param>
         /// <param name="downloadParts"></param>
-        public static async Task AdvancedDownloadListFile(IEnumerable<DownloadFile> fileEnumerable, int downloadThread,
+        public async Task AdvancedDownloadListFile(IEnumerable<DownloadFile> fileEnumerable, int downloadThread,
             CancellationTokenSource tokenSource, int downloadParts = 16)
         {
             var downloadFiles = fileEnumerable.ToList();
@@ -194,7 +256,7 @@ namespace ProjBobcat.Class.Helper
         /// </summary>
         /// <param name="downloadFile">下载文件信息</param>
         /// <param name="numberOfParts">分段数量</param>
-        public static void MultiPartDownload(DownloadFile downloadFile, int numberOfParts = 16)
+        public void MultiPartDownload(DownloadFile downloadFile, int numberOfParts = 16)
         {
             MultiPartDownloadTaskAsync(downloadFile, numberOfParts).GetAwaiter().GetResult();
         }
@@ -204,7 +266,7 @@ namespace ProjBobcat.Class.Helper
         /// </summary>
         /// <param name="downloadFile">下载文件信息</param>
         /// <param name="numberOfParts">分段数量</param>
-        public static async Task MultiPartDownloadTaskAsync(DownloadFile downloadFile, int numberOfParts = 16)
+        public async Task MultiPartDownloadTaskAsync(DownloadFile downloadFile, int numberOfParts = 16)
         {
             if (downloadFile == null) return;
 
@@ -215,18 +277,14 @@ namespace ProjBobcat.Class.Helper
             {
                 #region Get file size
 
-                var webRequest = (HttpWebRequest) WebRequest.Create(new Uri(downloadFile.DownloadUri));
-                webRequest.Method = "HEAD";
-                webRequest.UserAgent = Ua;
-                long responseLength;
-                bool parallelDownloadSupported;
+                using var hRm = new HttpRequestMessage(HttpMethod.Head,
+                    new Uri(downloadFile.DownloadUri));
+                var response = await _httpClient.SendAsync(hRm).ConfigureAwait(false);
+                response.EnsureSuccessStatusCode();
 
-                using (var webResponse = await webRequest.GetResponseAsync().ConfigureAwait(false))
-                {
-                    parallelDownloadSupported = webResponse.Headers.Get("Accept-Ranges")?.Contains("bytes") ?? false;
-                    responseLength = long.TryParse(webResponse.Headers.Get("Content-Length"), out var l) ? l : 0;
-                    parallelDownloadSupported = parallelDownloadSupported && responseLength != 0;
-                }
+                var parallelDownloadSupported = response.Headers.AcceptRanges.Any(ar => ar.Contains("bytes"));
+                var responseLength = response.Content.Headers.ContentLength ?? 0;
+                parallelDownloadSupported = parallelDownloadSupported && responseLength != 0;
 
                 if (!parallelDownloadSupported)
                 {
@@ -281,28 +339,38 @@ namespace ProjBobcat.Class.Helper
                     void DownloadMethod()
                     {
                         var lastReceivedBytes = 0L;
-                        using var client = new WebClient
+                        
+                        void ReceivedProcessor(object sender, HttpProgressEventArgs args)
                         {
-                            DownloadRange = range,
-                            Timeout = Timeout.Infinite
-                        };
-
-                        client.DownloadProgressChanged += (sender, args) =>
-                        {
-                            downloadedBytesCount += args.BytesReceived - lastReceivedBytes;
-                            lastReceivedBytes = args.BytesReceived;
+                            downloadedBytesCount += args.BytesTransferred - lastReceivedBytes;
+                            lastReceivedBytes = args.BytesTransferred;
 
                             downloadFile.Changed?.Invoke(sender,
                                 new DownloadFileChangedEventArgs
-                                    { ProgressPercentage = (double)downloadedBytesCount / responseLength });
-                        };
+                                    {ProgressPercentage = (double) downloadedBytesCount / responseLength});
+                        }
 
+                        _progressMessageHandler.HttpReceiveProgress += ReceivedProcessor;
                         var path = Path.GetTempFileName();
-                        var ta = client.DownloadFileTaskAsync(new Uri(downloadFile.DownloadUri), path);
-                        ta.GetAwaiter().GetResult();
+
+                        try
+                        {
+                            var bytes = _httpClient.GetByteArrayAsync(new Uri(downloadFile.DownloadUri)).GetAwaiter()
+                                .GetResult();
+                            using var fss = new FileStream(path, FileMode.Create);
+                            using var bw = new BinaryWriter(fss);
+
+                            bw.Write(bytes);
+
+                            bw.Close();
+                            fss.Close();
+                        }
+                        finally
+                        {
+                            _progressMessageHandler.HttpReceiveProgress -= ReceivedProcessor;
+                        }
 
                         tempFilesBag.Add(new Tuple<int, string>(range.Index, path));
-
                     }
 
                     var t = new Task(DownloadMethod);
@@ -327,7 +395,8 @@ namespace ProjBobcat.Class.Helper
                     return;
                 }
 
-                using var fs = new FileStream(downloadFile.DownloadPath, FileMode.Append);
+                using var fs = new FileStream(Path.Combine(downloadFile.DownloadPath, downloadFile.FileName),
+                    FileMode.Append);
                 foreach (var element in tempFilesBag.ToArray().OrderBy(b => b.Item1).ToArray())
                 {
                     var wb = File.ReadAllBytes(element.Item2);
@@ -358,5 +427,7 @@ namespace ProjBobcat.Class.Helper
         }
 
         #endregion
+
+        public void Dispose() { }
     }
 }

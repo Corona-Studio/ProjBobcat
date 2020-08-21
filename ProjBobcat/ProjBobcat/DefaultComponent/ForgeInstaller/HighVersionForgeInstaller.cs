@@ -75,7 +75,7 @@ namespace ProjBobcat.DefaultComponent.ForgeInstaller
 
             di.CreateSubdirectory("Temp");
 
-            var taskResult = await DownloadHelper.DownloadSingleFileAsync(new Uri(HeadlessInstallerDownloadUri),
+            var taskResult = await DownloadHelper.Instance.DownloadSingleFileAsync(new Uri(HeadlessInstallerDownloadUri),
                 $"{di.FullName}Temp", "HeadlessInstaller.jar").ConfigureAwait(false);
 
             if (taskResult.TaskStatus == TaskResultStatus.Error)

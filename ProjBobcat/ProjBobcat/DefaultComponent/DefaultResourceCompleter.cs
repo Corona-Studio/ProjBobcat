@@ -103,7 +103,7 @@ namespace ProjBobcat.DefaultComponent
                         Completed = DownloadFileCompletedEvent,
                         DownloadPath = f.Path,
                         DownloadUri = f.Uri,
-                        FileName = f.Title,
+                        FileName = f.FileName,
                         FileSize = f.FileSize,
                         CheckSum = f.CheckSum,
                         FileType = f.Type
@@ -122,8 +122,8 @@ namespace ProjBobcat.DefaultComponent
             {
                 var retryCount = 0;
 
-                await DownloadHelper.AdvancedDownloadListFile(downloadList, DownloadThread, null)
-                        .ConfigureAwait(false);
+                await DownloadHelper.Instance.AdvancedDownloadListFile(downloadList, DownloadThread, null)
+                    .ConfigureAwait(false);
 
                 if (!_needRetry) return new Tuple<TaskResultStatus, bool>(TaskResultStatus.Success, false);
 
@@ -132,7 +132,7 @@ namespace ProjBobcat.DefaultComponent
                     foreach (var rF in _retryFileList) rF.RetryCount++;
 
                     var tempList = _retryFileList;
-                    await DownloadHelper.AdvancedDownloadListFile(tempList, DownloadThread, null, DownloadParts)
+                    await DownloadHelper.Instance.AdvancedDownloadListFile(tempList, DownloadThread, null, DownloadParts)
                         .ConfigureAwait(false);
 
                     retryCount++;
