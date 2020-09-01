@@ -44,10 +44,8 @@ namespace ProjBobcat.DefaultComponent.Launch
 
                 LauncherProfile = launcherProfile;
 
-                var launcherProfileJson = JsonConvert.SerializeObject(launcherProfile, new JsonSerializerSettings
-                {
-                    ContractResolver = new CamelCasePropertyNamesContractResolver()
-                });
+                var launcherProfileJson =
+                    JsonConvert.SerializeObject(launcherProfile, JsonHelper.CamelCasePropertyNamesSettings);
 
                 if (!Directory.Exists(RootPath))
                     Directory.CreateDirectory(RootPath);
@@ -149,10 +147,8 @@ namespace ProjBobcat.DefaultComponent.Launch
             if (File.Exists(GamePathHelper.GetLauncherProfilePath(RootPath)))
                 File.Delete(GamePathHelper.GetLauncherProfilePath(RootPath));
 
-            var launcherProfileJson = JsonConvert.SerializeObject(LauncherProfile, new JsonSerializerSettings
-            {
-                ContractResolver = new CamelCasePropertyNamesContractResolver()
-            });
+            var launcherProfileJson =
+                JsonConvert.SerializeObject(LauncherProfile, JsonHelper.CamelCasePropertyNamesSettings);
 
             FileHelper.Write(GamePathHelper.GetLauncherProfilePath(RootPath), launcherProfileJson);
         }

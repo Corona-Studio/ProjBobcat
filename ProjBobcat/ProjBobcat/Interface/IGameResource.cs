@@ -2,7 +2,6 @@
 {
     public interface IGameResource
     {
-        string FileName { get; set; }
         /// <summary>
         ///     下载目录
         /// </summary>

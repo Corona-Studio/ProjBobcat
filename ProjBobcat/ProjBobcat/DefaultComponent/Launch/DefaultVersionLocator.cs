@@ -253,7 +253,7 @@ namespace ProjBobcat.DefaultComponent.Launch
         /// </summary>
         /// <param name="id">游戏文件夹名。Name of the game's folder.</param>
         /// <returns></returns>
-        private protected override RawVersionModel ParseRawVersion(string id)
+        public override RawVersionModel ParseRawVersion(string id)
         {
             // 预防I/O的错误。
             // Prevents errors related to I/O.

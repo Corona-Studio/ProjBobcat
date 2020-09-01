@@ -55,11 +55,9 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                     else
                         uri = $"{LibraryUriRoot}{lL.Path.Replace('\\', '/')}";
 
-                    var index = lL.Path.LastIndexOf('/');
-                    var path = GamePathHelper.GetLibraryPath(BasePath, lL.Path.Substring(0, index).Replace('/', '\\'));
+                    var path = GamePathHelper.GetLibraryPath(BasePath, lL.Path.Replace('/', '\\'));
                     result.Add(new LibraryDownloadInfo
                     {
-                        FileName = lL.Path.Substring(index + 1),
                         Path = path,
                         Title = lL.Name.Split(':')[1],
                         Type = "Library/Native",

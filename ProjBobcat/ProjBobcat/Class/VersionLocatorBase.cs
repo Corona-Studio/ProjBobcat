@@ -16,6 +16,6 @@ namespace ProjBobcat.Class
         private protected abstract Tuple<string, Dictionary<string, string>> ParseGameArguments(
             Tuple<string, List<object>> arguments);
 
-        private protected abstract RawVersionModel ParseRawVersion(string id);
+        public abstract RawVersionModel ParseRawVersion(string id);
     }
 }

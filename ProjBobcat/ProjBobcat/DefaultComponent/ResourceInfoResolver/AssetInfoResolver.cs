@@ -58,7 +58,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                         $"{AssetIndexUriRoot.TrimEnd('/')}{assetIndexDownloadUri.Substring(assetIndexUriRoot.Length)}";
                 }
 
-                var indexDownloadResult = await DownloadHelper.Instance.DownloadSingleFileAsync(new Uri(assetIndexDownloadUri),
+                var indexDownloadResult = await DownloadHelper.DownloadSingleFileAsync(new Uri(assetIndexDownloadUri),
                     $"{assetIndexesDi.FullName}\\",
                     $"{VersionInfo.AssetInfo.Id}.json").ConfigureAwait(false);
                 if (indexDownloadResult.TaskStatus != TaskResultStatus.Success)
@@ -85,7 +85,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                 return default;
             }
 
-            if (assetObject == null)//?.Equals(default(AssetObjectModel)) ?? true)
+            if (assetObject == null)
             {
                 LogGameResourceInfoResolveStatus("解析Asset Indexes 文件失败！原因：未知错误", LogType.Error);
                 return default;
@@ -94,16 +94,14 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
             var lostAssets = (from asset in assetObject.Objects
                     let twoDigitsHash = asset.Value.Hash.Substring(0, 2)
                     let eightDigitsHash = asset.Value.Hash.Substring(0, 8)
-                    let relativeAssetPath = $"\\{asset.Value.Hash}"
-                    let path = Path.Combine(assetObjectsDi.FullName, relativeAssetPath)
+                    let path = Path.Combine(assetObjectsDi.FullName, twoDigitsHash)
                     where !File.Exists(Path.Combine(path, asset.Value.Hash))
                     select new AssetDownloadInfo
                     {
-                        FileName = asset.Value.Hash,
                         Title = eightDigitsHash,
                         Path = path,
                         Type = "Asset",
-                        Uri = $"{AssetUriRoot}{relativeAssetPath.Replace('\\', '/')}",
+                        Uri = $"{AssetUriRoot}{twoDigitsHash}/{asset.Value.Hash}",
                         FileSize = asset.Value.Size,
                         CheckSum = asset.Value.Hash
                     })
