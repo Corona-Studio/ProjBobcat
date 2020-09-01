@@ -1,18 +1,13 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
-using ProjBobcat.Class.Model;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ProjBobcat.Class.Model.Tests
 {
-    [TestClass()]
+    [TestClass]
     public class PlayerUUIDTests
     {
-        [TestMethod()]
+        [TestMethod]
         public void SerializeTest()
         {
             var o = PlayerUUID.Random();
@@ -24,7 +19,7 @@ namespace ProjBobcat.Class.Model.Tests
             Assert.AreEqual(o, d2);
         }
 
-        [TestMethod()]
+        [TestMethod]
         public void SerializeAsDictionaryKeyTest()
         {
             var pairs = new Dictionary<PlayerUUID, string>

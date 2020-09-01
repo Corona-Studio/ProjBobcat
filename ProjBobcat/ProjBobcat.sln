@@ -12,7 +12,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProjBobcat.Tests", "ProjBobcat.Tests\ProjBobcat.Tests.csproj", "{CEFD13D9-D7EF-4683-BEE1-C536634E1A9D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProjBobcat.Tests", "ProjBobcat.Tests\ProjBobcat.Tests.csproj", "{021FA301-75E1-401D-A1F6-B175E8EA654C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -28,10 +28,10 @@ Global
 		{9A7447FB-C120-4E4C-8AE9-CE09154C890F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9A7447FB-C120-4E4C-8AE9-CE09154C890F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9A7447FB-C120-4E4C-8AE9-CE09154C890F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{CEFD13D9-D7EF-4683-BEE1-C536634E1A9D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CEFD13D9-D7EF-4683-BEE1-C536634E1A9D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CEFD13D9-D7EF-4683-BEE1-C536634E1A9D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CEFD13D9-D7EF-4683-BEE1-C536634E1A9D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{021FA301-75E1-401D-A1F6-B175E8EA654C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{021FA301-75E1-401D-A1F6-B175E8EA654C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{021FA301-75E1-401D-A1F6-B175E8EA654C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{021FA301-75E1-401D-A1F6-B175E8EA654C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

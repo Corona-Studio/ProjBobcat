@@ -141,7 +141,9 @@
     <Compile Include="Class\Helper\GamePathHelper.cs" />
     <Compile Include="Class\Helper\GuidHelper.cs" />
     <Compile Include="Class\Helper\HttpHelper.cs" />
-    <Compile Include="Class\WebClient.cs" />
+    <Compile Include="Class\WebClient.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="DefaultComponent\DefaultResourceCompleter.cs" />
     <Compile Include="DefaultComponent\Installer\FabricInstaller.cs" />
     <Compile Include="DefaultComponent\Installer\ForgeInstaller\HighVersionForgeInstaller.cs" />
