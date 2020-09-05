@@ -8,12 +8,12 @@ using ProjBobcat.Class.Helper.SystemInfo;
 namespace ProjBobcat.Class.Helper
 {
     /// <summary>
-    /// 系统信息帮助器。
+    ///     系统信息帮助器。
     /// </summary>
     public static class SystemInfoHelper
     {
         /// <summary>
-        /// 从注册表中查找可能的 javaw.exe 的路径。
+        ///     从注册表中查找可能的 javaw.exe 的路径。
         /// </summary>
         /// <returns>可能的 Java 路径构成的列表。</returns>
         public static IEnumerable<string> FindJava()
@@ -55,23 +55,29 @@ namespace ProjBobcat.Class.Helper
                 return Array.Empty<string>();
             }
         }
+
         /// <summary>
-        /// 获取当前程序运行所在的系统架构。
+        ///     获取当前程序运行所在的系统架构。
         /// </summary>
         /// <returns>当前程序运行所在的系统架构。</returns>
         [Obsolete("已过时，使用 ProjBobcat.Class.Helper.SystemInfo.SystemArch.CurrentArch 属性替代。")]
         public static SystemArch GetSystemArch()
-            => SystemArch.CurrentArch;
+        {
+            return SystemArch.CurrentArch;
+        }
+
         /// <summary>
-        /// 获取当前程序运行所在的系统版本。
+        ///     获取当前程序运行所在的系统版本。
         /// </summary>
         /// <returns>当前程序运行所在的系统版本。</returns>
         [Obsolete("已过时，使用 ProjBobcat.Class.Helper.SystemInfo.WindowsSystemVersion.CurrentVersion 属性替代。")]
         public static WindowsSystemVersion GetSystemVersion()
-            => WindowsSystemVersion.CurrentVersion;
+        {
+            return WindowsSystemVersion.CurrentVersion;
+        }
 
         /// <summary>
-        /// 判断是否安装了 UWP 版本的 Minecraft 。
+        ///     判断是否安装了 UWP 版本的 Minecraft 。
         /// </summary>
         /// <returns>判断结果。</returns>
         public static bool IsMinecraftUWPInstalled()
@@ -84,7 +90,7 @@ namespace ProjBobcat.Class.Helper
             var result = pl.Invoke();
             rs.Close();
 
-            return (result != null) && (!string.IsNullOrEmpty(result[0].ToString()));
+            return result != null && !string.IsNullOrEmpty(result[0].ToString());
             /*
             if (result == null || string.IsNullOrEmpty(result[0].ToString())) return false;
             return true;

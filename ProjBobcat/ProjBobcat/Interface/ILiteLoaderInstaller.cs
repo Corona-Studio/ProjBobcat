@@ -1,5 +1,5 @@
-﻿using ProjBobcat.Class.Model.LiteLoader;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using ProjBobcat.Class.Model.LiteLoader;
 
 namespace ProjBobcat.Interface
 {

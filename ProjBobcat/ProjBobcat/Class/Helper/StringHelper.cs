@@ -1,17 +1,15 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using ProjBobcat.Class.Model.YggdrasilAuth;
 
 namespace ProjBobcat.Class.Helper
 {
     /// <summary>
-    /// 字符串工具类
+    ///     字符串工具类
     /// </summary>
     public static class StringHelper
     {
         /// <summary>
-        /// 修复+转义参数字符串
+        ///     修复+转义参数字符串
         /// </summary>
         /// <param name="arg"></param>
         /// <returns></returns>
@@ -28,7 +26,7 @@ namespace ProjBobcat.Class.Helper
         }
 
         /// <summary>
-        /// 根据字典来替换字符串内容
+        ///     根据字典来替换字符串内容
         /// </summary>
         /// <param name="str">原字符串</param>
         /// <param name="dic">替换字典</param>

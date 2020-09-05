@@ -3,28 +3,32 @@
 namespace ProjBobcat.Class.Model.LauncherProfile
 {
     /// <summary>
-    /// Auth Property类
+    ///     Auth Property类
     /// </summary>
     public class AuthPropertyModel
     {
         /// <summary>
-        /// 名称
+        ///     名称
         /// </summary>
-        [JsonProperty("name")] public string Name { get; set; }
+        [JsonProperty("name")]
+        public string Name { get; set; }
 
         /// <summary>
-        /// Profile Id
+        ///     Profile Id
         /// </summary>
-        [JsonProperty("profileId")] public string ProfileId { get; set; }
+        [JsonProperty("profileId")]
+        public string ProfileId { get; set; }
 
         /// <summary>
-        /// 用户Id
+        ///     用户Id
         /// </summary>
-        [JsonProperty("userId")] public PlayerUUID UserId { get; set; }
+        [JsonProperty("userId")]
+        public PlayerUUID UserId { get; set; }
 
         /// <summary>
-        /// 值
+        ///     值
         /// </summary>
-        [JsonProperty("value")] public string Value { get; set; }
+        [JsonProperty("value")]
+        public string Value { get; set; }
     }
 }

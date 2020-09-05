@@ -1,16 +1,15 @@
-﻿using ProjBobcat.Class.Model.Fabric;
-using ProjBobcat.Event;
-using ProjBobcat.Interface;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
+using ProjBobcat.Class.Model.Fabric;
 using ProjBobcat.DefaultComponent.Launch;
+using ProjBobcat.Event;
 using ProjBobcat.Exceptions;
+using ProjBobcat.Interface;
 
 namespace ProjBobcat.DefaultComponent.Installer
 {
@@ -19,15 +18,6 @@ namespace ProjBobcat.DefaultComponent.Installer
         public string RootPath { get; set; }
 
         public event EventHandler<InstallerStageChangedEventArgs> StageChangedEventDelegate;
-
-        private void InvokeStageChangedEvent(string stage, double progress)
-        {
-            StageChangedEventDelegate?.Invoke(this, new InstallerStageChangedEventArgs
-            {
-                CurrentStage = stage,
-                Progress = progress
-            });
-        }
 
         public string Install(FabricLoaderArtifactModel loaderArtifact)
         {
@@ -99,6 +89,15 @@ namespace ProjBobcat.DefaultComponent.Installer
         public Task<string> InstallTaskAsync(FabricLoaderArtifactModel loaderArtifact)
         {
             return Task.Run(() => Install(loaderArtifact));
+        }
+
+        private void InvokeStageChangedEvent(string stage, double progress)
+        {
+            StageChangedEventDelegate?.Invoke(this, new InstallerStageChangedEventArgs
+            {
+                CurrentStage = stage,
+                Progress = progress
+            });
         }
     }
 }

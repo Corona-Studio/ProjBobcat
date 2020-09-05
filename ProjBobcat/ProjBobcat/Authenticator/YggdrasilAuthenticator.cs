@@ -14,57 +14,57 @@ using ProjBobcat.Interface;
 namespace ProjBobcat.Authenticator
 {
     /// <summary>
-    /// 表示一个正版联机凭据验证器。
+    ///     表示一个正版联机凭据验证器。
     /// </summary>
     public class YggdrasilAuthenticator : IAuthenticator
     {
         /// <summary>
-        /// Mojang官方验证服务器地址。
+        ///     Mojang官方验证服务器地址。
         /// </summary>
         private const string OfficialAuthServer = "https://authserver.mojang.com";
 
         /// <summary>
-        /// 获取或设置邮箱。
+        ///     获取或设置邮箱。
         /// </summary>
         public string Email { get; set; }
 
         /// <summary>
-        /// 获取或设置密码。
+        ///     获取或设置密码。
         /// </summary>
         public string Password { get; set; }
 
         /// <summary>
-        /// 获取或设置验证服务器。
-        /// 这个属性允许为 null 。
+        ///     获取或设置验证服务器。
+        ///     这个属性允许为 null 。
         /// </summary>
         public string AuthServer { get; set; }
 
         /// <summary>
-        /// 获取登录Api地址。
+        ///     获取登录Api地址。
         /// </summary>
         private string LoginAddress =>
             $"{AuthServer}{(string.IsNullOrEmpty(AuthServer) ? OfficialAuthServer : "/authserver")}/authenticate";
 
         /// <summary>
-        /// 获取令牌刷新Api地址。
+        ///     获取令牌刷新Api地址。
         /// </summary>
         private string RefreshAddress =>
             $"{AuthServer}{(string.IsNullOrEmpty(AuthServer) ? OfficialAuthServer : "/authserver")}/refresh";
 
         /// <summary>
-        /// 获取令牌验证Api地址。
+        ///     获取令牌验证Api地址。
         /// </summary>
         private string ValidateAddress =>
             $"{AuthServer}{(string.IsNullOrEmpty(AuthServer) ? OfficialAuthServer : "/authserver")}/validate";
 
         /// <summary>
-        /// 获取令牌吊销Api地址。
+        ///     获取令牌吊销Api地址。
         /// </summary>
         private string RevokeAddress =>
             $"{AuthServer}{(string.IsNullOrEmpty(AuthServer) ? OfficialAuthServer : "/authserver")}/invalidate";
 
         /// <summary>
-        /// 获取登出Api地址。
+        ///     获取登出Api地址。
         /// </summary>
         private string SignOutAddress =>
             $"{AuthServer}{(string.IsNullOrEmpty(AuthServer) ? OfficialAuthServer : "/authserver")}/signout";
@@ -72,7 +72,7 @@ namespace ProjBobcat.Authenticator
         public ILauncherProfileParser LauncherProfileParser { get; set; }
 
         /// <summary>
-        /// 验证凭据。
+        ///     验证凭据。
         /// </summary>
         /// <param name="userField">指示是否获取user字段。</param>
         /// <returns></returns>
@@ -82,7 +82,7 @@ namespace ProjBobcat.Authenticator
         }
 
         /// <summary>
-        /// 异步验证凭据。
+        ///     异步验证凭据。
         /// </summary>
         /// <param name="userField">是否获取user字段</param>
         /// <returns>验证状态。</returns>
@@ -138,9 +138,7 @@ namespace ProjBobcat.Authenticator
 
             foreach (var kv in profiles.Where(kv =>
                 LauncherProfileParser.IsAuthInfoExist(kv.Key, kv.Value.DisplayName)))
-            {
                 LauncherProfileParser.RemoveAuthInfo(kv.Key);
-            }
 
             LauncherProfileParser.AddNewAuthInfo(new AuthInfoModel
             {
@@ -149,7 +147,7 @@ namespace ProjBobcat.Authenticator
                 Properties = (result.User?.Properties).ToAuthProperties(profiles).ToList(),
                 UserName = profiles.First().Value.DisplayName
             }, result.User!.UUID);
-            
+
             return new AuthResult
             {
                 AccessToken = result.AccessToken,
@@ -161,7 +159,7 @@ namespace ProjBobcat.Authenticator
         }
 
         /// <summary>
-        /// 获取最后一次的验证状态。
+        ///     获取最后一次的验证状态。
         /// </summary>
         /// <returns>验证状态。</returns>
         public AuthResult GetLastAuthResult()
@@ -252,7 +250,8 @@ namespace ProjBobcat.Authenticator
                     if (LauncherProfileParser.IsAuthInfoExist(uuid, authResponse.User.UserName))
                         LauncherProfileParser.RemoveAuthInfo(uuid);
 
-                    LauncherProfileParser.AddNewAuthInfo(new AuthInfoModel {
+                    LauncherProfileParser.AddNewAuthInfo(new AuthInfoModel
+                    {
                         AccessToken = authResponse.AccessToken,
                         Profiles = profiles,
                         Properties = new List<AuthPropertyModel>
@@ -314,9 +313,10 @@ namespace ProjBobcat.Authenticator
 
             _ = await HttpHelper.Post(RevokeAddress, requestJson).ConfigureAwait(true);
         }
+
         /// <summary>
-        /// 登出。
-        /// 返回值表示成功与否。
+        ///     登出。
+        ///     返回值表示成功与否。
         /// </summary>
         /// <returns>表示成功与否。</returns>
         public async Task<bool> SignOutTaskAsync()

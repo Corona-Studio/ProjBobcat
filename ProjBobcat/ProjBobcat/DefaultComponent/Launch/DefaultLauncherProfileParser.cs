@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
@@ -15,7 +14,7 @@ using ProjBobcat.Interface;
 namespace ProjBobcat.DefaultComponent.Launch
 {
     /// <summary>
-    /// 默认的官方launcher_profile.json适配器
+    ///     默认的官方launcher_profile.json适配器
     /// </summary>
     public sealed class DefaultLauncherProfileParser : LauncherProfileParserBase, ILauncherProfileParser
     {
@@ -102,8 +101,8 @@ namespace ProjBobcat.DefaultComponent.Launch
         public GameProfileModel GetGameProfile(string name)
         {
             return LauncherProfile.Profiles.FirstOrDefault(
-                p => p.Value.Name.Equals(name, StringComparison.Ordinal)).Value ??
-                throw new UnknownGameNameException(name);
+                       p => p.Value.Name.Equals(name, StringComparison.Ordinal)).Value ??
+                   throw new UnknownGameNameException(name);
         }
 
         public bool IsAuthInfoExist(PlayerUUID uuid, string userName)
@@ -131,7 +130,7 @@ namespace ProjBobcat.DefaultComponent.Launch
             return LauncherProfile.Profiles.Any(p => p.Value.Name.Equals(name, StringComparison.Ordinal));
         }
 
-        
+
         public void RemoveAuthInfo(PlayerUUID uuid)
         {
             LauncherProfile.AuthenticationDatabase.Remove(uuid);

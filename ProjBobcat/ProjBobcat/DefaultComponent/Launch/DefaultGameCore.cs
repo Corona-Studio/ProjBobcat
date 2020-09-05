@@ -17,12 +17,14 @@ using SharpCompress.Readers;
 namespace ProjBobcat.DefaultComponent.Launch
 {
     /// <summary>
-    /// 表示一个默认的游戏核心。
+    ///     表示一个默认的游戏核心。
     /// </summary>
     public class DefaultGameCore : IGameCore
     {
         private string _rootPath;
-        
+
+        public IArgumentParser LaunchArgumentParser { get; set; }
+
         public string RootPath
         {
             get => _rootPath;
@@ -35,15 +37,14 @@ namespace ProjBobcat.DefaultComponent.Launch
             }
         }
 
-        public IArgumentParser LaunchArgumentParser { get; set; }
         public IVersionLocator VersionLocator { get; set; }
-        
+
         public Guid ClientToken { get; set; }
-        
+
         public event EventHandler<GameExitEventArgs> GameExitEventDelegate;
         public event EventHandler<GameLogEventArgs> GameLogEventDelegate;
         public event EventHandler<LaunchLogEventArgs> LaunchLogEventDelegate;
-        
+
         public LaunchResult Launch(LaunchSettings settings)
         {
             return LaunchTaskAsync(settings).GetAwaiter().GetResult();
@@ -84,7 +85,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                 #endregion
 
                 #region 验证账户凭据 Legal Account Verifier
-                
+
                 //以下代码实现了账户模式从离线到在线的切换。
                 //The following code switches account mode between offline and yggdrasil.
                 var authResult = settings.Authenticator switch
@@ -136,6 +137,29 @@ namespace ProjBobcat.DefaultComponent.Launch
 
                 #region 解析启动参数 Launch Parameters Resolver
 
+                var javasArr = new[]
+                {
+                    settings.GameArguments?.JavaExecutable,
+                    settings.FallBackGameArguments?.JavaExecutable
+                };
+                var isJavaExists = false;
+
+                foreach (var java in javasArr)
+                    if (!string.IsNullOrEmpty(java) && File.Exists(java))
+                        isJavaExists = true;
+
+                if (!isJavaExists)
+                    return new LaunchResult
+                    {
+                        ErrorType = LaunchErrorType.NoJava,
+                        Error = new ErrorModel
+                        {
+                            Cause = "未找到JRE运行时，可能是输入的路劲为空或出错，亦或是指定的文件并不存在。",
+                            Error = "未找到JRE运行时",
+                            ErrorMessage = "输入的路劲为空或出错，亦或是指定的文件并不存在"
+                        }
+                    };
+
                 var argumentParser = new DefaultLaunchArgumentParser(settings, VersionLocator.LauncherProfileParser,
                     VersionLocator, authResult, RootPath, version.RootVersion);
 
@@ -178,7 +202,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                         Directory.CreateDirectory(argumentParser.NativeRoot);
 
                     //TODO
-                    DirectoryHelper.CleanDirectory(argumentParser.NativeRoot, false);
+                    DirectoryHelper.CleanDirectory(argumentParser.NativeRoot);
                     version.Natives.ForEach(n =>
                     {
                         var path =
@@ -249,17 +273,15 @@ namespace ProjBobcat.DefaultComponent.Launch
                     Task.Run(() =>
                     {
                         while (string.IsNullOrEmpty(launchWrapper.Process.MainWindowTitle))
-                        {
                             _ = NativeMethods.SetWindowText(launchWrapper.Process.MainWindowHandle,
                                 settings.WindowTitle);
-                        }
                     });
 #pragma warning restore CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
 
-                    #endregion
+                #endregion
 
-                    //返回启动结果。
-                    //Return the launch result.
+                //返回启动结果。
+                //Return the launch result.
                 return new LaunchResult
                 {
                     RunTime = stopwatch.Elapsed,
@@ -280,6 +302,17 @@ namespace ProjBobcat.DefaultComponent.Launch
             }
         }
 
+        #region IDisposable Support
+
+        /// <summary>
+        ///     释放资源。
+        /// </summary>
+        public void Dispose()
+        {
+        }
+
+        #endregion
+
         #region 内部方法 Internal Methods
 
         /// <summary>
@@ -299,9 +332,10 @@ namespace ProjBobcat.DefaultComponent.Launch
             time = sw.Elapsed;
             sw.Start();
         }
+
         /// <summary>
-        /// 指示需要记录游戏日志。
-        /// 此方法将引发事件 <seealso cref="GameLogEventDelegate"/> 。
+        ///     指示需要记录游戏日志。
+        ///     此方法将引发事件 <seealso cref="GameLogEventDelegate" /> 。
         /// </summary>
         /// <param name="sender">sender</param>
         /// <param name="e">e</param>
@@ -311,8 +345,8 @@ namespace ProjBobcat.DefaultComponent.Launch
         }
 
         /// <summary>
-        /// 指示游戏已经结束。
-        /// 此方法将引发事件 <seealso cref="GameLogEventDelegate"/> 。
+        ///     指示游戏已经结束。
+        ///     此方法将引发事件 <seealso cref="GameLogEventDelegate" /> 。
         /// </summary>
         /// <param name="sender">sender</param>
         /// <param name="e">e</param>
@@ -322,8 +356,8 @@ namespace ProjBobcat.DefaultComponent.Launch
         }
 
         /// <summary>
-        /// 指示需要记录启动日志。
-        /// 此方法将引发事件 <seealso cref="GameLogEventDelegate"/> 。
+        ///     指示需要记录启动日志。
+        ///     此方法将引发事件 <seealso cref="GameLogEventDelegate" /> 。
         /// </summary>
         /// <param name="sender">sender</param>
         /// <param name="e">e</param>
@@ -332,14 +366,6 @@ namespace ProjBobcat.DefaultComponent.Launch
             LaunchLogEventDelegate?.Invoke(sender, e);
         }
 
-        #endregion
-
-        #region IDisposable Support
-
-        /// <summary>
-        /// 释放资源。
-        /// </summary>
-        public void Dispose() { }
         #endregion
     }
 }

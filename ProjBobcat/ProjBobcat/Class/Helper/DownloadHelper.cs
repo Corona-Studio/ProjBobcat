@@ -14,17 +14,17 @@ using ProjBobcat.Event;
 namespace ProjBobcat.Class.Helper
 {
     /// <summary>
-    /// 下载帮助器。
+    ///     下载帮助器。
     /// </summary>
     public static class DownloadHelper
     {
         /// <summary>
-        /// 获取或设置用户代理信息。
+        ///     获取或设置用户代理信息。
         /// </summary>
         public static string Ua { get; set; } = "ProjBobcat";
 
         /// <summary>
-        /// 异步下载单个文件。
+        ///     异步下载单个文件。
         /// </summary>
         /// <param name="downloadUri"></param>
         /// <param name="downloadToDir"></param>
@@ -48,7 +48,7 @@ namespace ProjBobcat.Class.Helper
 
 
         /// <summary>
-        /// 异步下载单个文件。
+        ///     异步下载单个文件。
         /// </summary>
         /// <param name="downloadUri"></param>
         /// <param name="downloadToDir"></param>
@@ -78,13 +78,13 @@ namespace ProjBobcat.Class.Helper
         #region 下载数据
 
         /// <summary>
-        /// 下载文件（通过线程池）
+        ///     下载文件（通过线程池）
         /// </summary>
         /// <param name="downloadProperty"></param>
         private static async Task DownloadData(DownloadFile downloadProperty)
         {
             var filePath = Path.Combine(downloadProperty.DownloadPath, downloadProperty.FileName);
-            
+
             try
             {
                 using var wc = new WebClient();
@@ -150,10 +150,10 @@ namespace ProjBobcat.Class.Helper
                     {
                         if (!Directory.Exists(df.DownloadPath)) Directory.CreateDirectory(df.DownloadPath);
 
-                         if (df.FileSize >= 1048576 || df.FileSize == 0)
-                             MultiPartDownload(df, downloadParts);
-                         else
-                             DownloadData(df).GetAwaiter().GetResult();
+                        if (df.FileSize >= 1048576 || df.FileSize == 0)
+                            MultiPartDownload(df, downloadParts);
+                        else
+                            DownloadData(df).GetAwaiter().GetResult();
                     }
                 }
 
@@ -176,7 +176,7 @@ namespace ProjBobcat.Class.Helper
         #region 分片下载
 
         /// <summary>
-        /// 分片下载方法
+        ///     分片下载方法
         /// </summary>
         /// <param name="downloadFile">下载文件信息</param>
         /// <param name="numberOfParts">分段数量</param>
@@ -186,7 +186,7 @@ namespace ProjBobcat.Class.Helper
         }
 
         /// <summary>
-        /// 分片下载方法（异步）
+        ///     分片下载方法（异步）
         /// </summary>
         /// <param name="downloadFile">下载文件信息</param>
         /// <param name="numberOfParts">分段数量</param>
@@ -208,7 +208,7 @@ namespace ProjBobcat.Class.Helper
                 webRequest.UserAgent = Ua;
                 long responseLength;
                 bool parallelDownloadSupported;
-                
+
                 using (var webResponse = await webRequest.GetResponseAsync().ConfigureAwait(false))
                 {
                     parallelDownloadSupported = webResponse.Headers.Get("Accept-Ranges")?.Contains("bytes") ?? false;
@@ -297,7 +297,6 @@ namespace ProjBobcat.Class.Helper
                         wc.DownloadFileTaskAsync(new Uri(downloadFile.DownloadUri), path).GetAwaiter().GetResult();
 
                         tempFilesBag.Add(new Tuple<int, string>(range.Index, path));
-
                     }
 
                     var t = new Task(DownloadMethod, i);
@@ -325,6 +324,7 @@ namespace ProjBobcat.Class.Helper
                     fs.Write(wb, 0, wb.Length);
                     File.Delete(element.Item2);
                 }
+
                 #endregion
 
                 downloadFile.Completed?.Invoke(null,

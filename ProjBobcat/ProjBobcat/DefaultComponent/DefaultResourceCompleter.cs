@@ -12,13 +12,13 @@ using ProjBobcat.Interface;
 namespace ProjBobcat.DefaultComponent
 {
     /// <summary>
-    /// 默认的资源补全器
+    ///     默认的资源补全器
     /// </summary>
     public class DefaultResourceCompleter : IResourceCompleter
     {
-        private List<DownloadFile> _retryFileList = new List<DownloadFile>();
-        private int _totalDownloaded, _needToDownload;
         private bool _needRetry;
+        private readonly List<DownloadFile> _retryFileList = new List<DownloadFile>();
+        private int _totalDownloaded, _needToDownload;
 
         public int DownloadParts { get; set; } = 16;
         public int DownloadThread { get; set; }
@@ -26,7 +26,7 @@ namespace ProjBobcat.DefaultComponent
         public bool CheckFile { get; set; }
         public IEnumerable<IResourceInfoResolver> ResourceInfoResolvers { get; set; }
 
-        
+
         public event EventHandler<GameResourceInfoResolveEventArgs> GameResourceInfoResolveStatus;
         public event EventHandler<DownloadFileChangedEventArgs> DownloadFileChangedEvent;
         public event EventHandler<DownloadFileCompletedEventArgs> DownloadFileCompletedEvent;
@@ -116,6 +116,13 @@ namespace ProjBobcat.DefaultComponent
             return new TaskResult<bool>(result.Item1, value: result.Item2);
         }
 
+        /// <summary>
+        ///     IDisposable接口保留字段
+        /// </summary>
+        public void Dispose()
+        {
+        }
+
         private async Task<Tuple<TaskResultStatus, bool>> DownloadFiles(IEnumerable<DownloadFile> downloadList)
         {
             return await Task.Run(async () =>
@@ -123,7 +130,7 @@ namespace ProjBobcat.DefaultComponent
                 var retryCount = 0;
 
                 await DownloadHelper.AdvancedDownloadListFile(downloadList, DownloadThread, null)
-                        .ConfigureAwait(false);
+                    .ConfigureAwait(false);
 
                 if (!_needRetry) return new Tuple<TaskResultStatus, bool>(TaskResultStatus.Success, false);
 
@@ -153,10 +160,5 @@ namespace ProjBobcat.DefaultComponent
                 ProgressPercentage = progress
             });
         }
-
-        /// <summary>
-        /// IDisposable接口保留字段
-        /// </summary>
-        public void Dispose(){}
     }
 }

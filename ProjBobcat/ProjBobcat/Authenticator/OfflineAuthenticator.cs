@@ -10,20 +10,22 @@ using ProjBobcat.Interface;
 namespace ProjBobcat.Authenticator
 {
     /// <summary>
-    /// 表示一个离线凭据验证器。
+    ///     表示一个离线凭据验证器。
     /// </summary>
     public class OfflineAuthenticator : IAuthenticator
     {
         /// <summary>
-        /// 获取或设置用户名。
+        ///     获取或设置用户名。
         /// </summary>
         public string Username { get; set; }
+
         /// <summary>
-        /// 获取或设置启动程序配置文件分析器。
+        ///     获取或设置启动程序配置文件分析器。
         /// </summary>
         public ILauncherProfileParser LauncherProfileParser { get; set; }
+
         /// <summary>
-        /// 验证凭据。
+        ///     验证凭据。
         /// </summary>
         /// <param name="userField">该参数将被忽略。</param>
         /// <returns>身份验证结果。</returns>
@@ -79,7 +81,7 @@ namespace ProjBobcat.Authenticator
         }
 
         /// <summary>
-        /// 异步验证凭据。
+        ///     异步验证凭据。
         /// </summary>
         /// <param name="userField">改参数将被忽略。</param>
         /// <returns></returns>
@@ -90,13 +92,13 @@ namespace ProjBobcat.Authenticator
         }
 
         /// <summary>
-        /// 验证凭据。
+        ///     验证凭据。
         /// </summary>
         /// <returns>验证结果。</returns>
         [Obsolete("此方法已过时，请使用 Auth(bool) 代替。")]
         public AuthResult GetLastAuthResult()
         {
-            return Auth(false);
+            return Auth();
         }
     }
 }

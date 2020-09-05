@@ -9,12 +9,12 @@ using System.Threading.Tasks;
 namespace ProjBobcat.Class.Helper
 {
     /// <summary>
-    /// Http工具方法类
+    ///     Http工具方法类
     /// </summary>
     public static class HttpHelper
     {
         /// <summary>
-        /// 正则匹配Uri
+        ///     正则匹配Uri
         /// </summary>
         /// <param name="uri">待处理Uri</param>
         /// <returns>匹配的Uri</returns>
@@ -26,7 +26,7 @@ namespace ProjBobcat.Class.Helper
         }
 
         /// <summary>
-        /// Http Get方法
+        ///     Http Get方法
         /// </summary>
         /// <param name="address">Get地址</param>
         /// <returns>获取到的字符串</returns>
@@ -39,7 +39,7 @@ namespace ProjBobcat.Class.Helper
         }
 
         /// <summary>
-        /// Http Post方法
+        ///     Http Post方法
         /// </summary>
         /// <param name="address">Post地址</param>
         /// <param name="data">数据</param>
@@ -58,7 +58,7 @@ namespace ProjBobcat.Class.Helper
         }
 
         /// <summary>
-        /// Http Post方法（带参数）
+        ///     Http Post方法（带参数）
         /// </summary>
         /// <param name="address">Post地址</param>
         /// <param name="param">参数</param>

@@ -3,12 +3,12 @@
 namespace ProjBobcat.Class.Helper
 {
     /// <summary>
-    /// 目录操作帮助器。
+    ///     目录操作帮助器。
     /// </summary>
     public static class DirectoryHelper
     {
         /// <summary>
-        /// 清空目录。
+        ///     清空目录。
         /// </summary>
         /// <param name="path">目录路径。</param>
         /// <param name="deleteDirectory">指示是否要删除目录本身。</param>
@@ -16,7 +16,9 @@ namespace ProjBobcat.Class.Helper
         {
             var directory = new DirectoryInfo(path);
             if (deleteDirectory)
+            {
                 directory.Delete(true);
+            }
             else
             {
                 foreach (var file in directory.GetFiles()) file.Delete();

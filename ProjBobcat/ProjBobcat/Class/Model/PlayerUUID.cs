@@ -1,8 +1,9 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.ComponentModel;
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
+using Newtonsoft.Json;
 
 namespace ProjBobcat.Class.Model
 {
@@ -45,10 +46,14 @@ namespace ProjBobcat.Class.Model
         }
 
         public override int GetHashCode()
-            => _guid.GetHashCode();
+        {
+            return _guid.GetHashCode();
+        }
 
-        public string ToString(string format, IFormatProvider formatProvider) =>
-            _guid.ToString(format, formatProvider);
+        public string ToString(string format, IFormatProvider formatProvider)
+        {
+            return _guid.ToString(format, formatProvider);
+        }
 
         public static bool operator ==(PlayerUUID left, PlayerUUID right)
         {
@@ -82,28 +87,23 @@ namespace ProjBobcat.Class.Model
             return _guid.ToString("N");
         }
 
-         class TypeConverter : System.ComponentModel.TypeConverter
+        private class TypeConverter : System.ComponentModel.TypeConverter
         {
-            public override bool CanConvertFrom(ITypeDescriptorContext context, System.Type sourceType)
+            public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
             {
-                if (sourceType == typeof(string))
-                {
-                    return true;
-                }
-                return base.CanConvertFrom(context, sourceType);
+                return sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
             }
-            public override object ConvertFrom(ITypeDescriptorContext context, System.Globalization.CultureInfo culture, object value)
+
+            public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
             {
-                if (value is string str)
-                {
-                    return new PlayerUUID(str);
-                }
+                if (value is string str) return new PlayerUUID(str);
                 return base.ConvertFrom(context, culture, value);
             }
         }
-        class JsonConverter : JsonConverter<PlayerUUID>
+
+        private class JsonConverter : JsonConverter<PlayerUUID>
         {
-            public override PlayerUUID ReadJson(JsonReader reader, Type objectType, 
+            public override PlayerUUID ReadJson(JsonReader reader, Type objectType,
                 PlayerUUID existingValue, bool hasExistingValue, JsonSerializer serializer)
             {
                 var s = serializer.Deserialize<string>(reader);

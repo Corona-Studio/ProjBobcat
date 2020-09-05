@@ -1,16 +1,16 @@
-﻿using ProjBobcat.Class.Model;
-using ProjBobcat.Class.Model.LiteLoader;
-using ProjBobcat.Event;
-using ProjBobcat.Interface;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using ProjBobcat.Class.Helper;
+using ProjBobcat.Class.Model;
+using ProjBobcat.Class.Model.LiteLoader;
 using ProjBobcat.DefaultComponent.Launch;
+using ProjBobcat.Event;
 using ProjBobcat.Exceptions;
+using ProjBobcat.Interface;
 
 namespace ProjBobcat.DefaultComponent.Installer
 {
@@ -22,15 +22,6 @@ namespace ProjBobcat.DefaultComponent.Installer
         public string RootPath { get; set; }
 
         public event EventHandler<InstallerStageChangedEventArgs> StageChangedEventDelegate;
-
-        private void InvokeStageChangedEvent(string stage, double progress)
-        {
-            StageChangedEventDelegate?.Invoke(this, new InstallerStageChangedEventArgs
-            {
-                CurrentStage = stage,
-                Progress = progress
-            });
-        }
 
         public string Install(LiteLoaderDownloadVersionModel versionModel)
         {
@@ -62,9 +53,7 @@ namespace ProjBobcat.DefaultComponent.Installer
             foreach (var lib in versionModel.Build.Libraries
                 .Where(lib => !string.IsNullOrEmpty(lib.Name) && string.IsNullOrEmpty(lib.Url)).Where(lib =>
                     lib.Name.StartsWith("org.ow2.asm", StringComparison.OrdinalIgnoreCase)))
-            {
                 lib.Url = "https://files.minecraftforge.net/maven/";
-            }
 
             libraries.AddRange(versionModel.Build.Libraries);
 
@@ -99,6 +88,15 @@ namespace ProjBobcat.DefaultComponent.Installer
         public Task<string> InstallTaskAsync(LiteLoaderDownloadVersionModel versionModel)
         {
             return Task.Run(() => Install(versionModel));
+        }
+
+        private void InvokeStageChangedEvent(string stage, double progress)
+        {
+            StageChangedEventDelegate?.Invoke(this, new InstallerStageChangedEventArgs
+            {
+                CurrentStage = stage,
+                Progress = progress
+            });
         }
     }
 }

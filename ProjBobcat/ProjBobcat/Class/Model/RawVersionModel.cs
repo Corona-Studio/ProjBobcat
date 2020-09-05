@@ -5,8 +5,9 @@ using Newtonsoft.Json;
 namespace ProjBobcat.Class.Model
 {
     #region 文件信息（校检、下载）
+
     /// <summary>
-    /// 表示一个文件信息。
+    ///     表示一个文件信息。
     /// </summary>
     public class FileInfo
     {

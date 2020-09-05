@@ -4,12 +4,12 @@ using System.Management;
 namespace ProjBobcat.Class.Helper
 {
     /// <summary>
-    /// 处理器工具类
+    ///     处理器工具类
     /// </summary>
     public static class ProcessorHelper
     {
         /// <summary>
-        /// 获取物理处理器核心数量
+        ///     获取物理处理器核心数量
         /// </summary>
         /// <returns></returns>
         public static int GetPhysicalProcessorCount()

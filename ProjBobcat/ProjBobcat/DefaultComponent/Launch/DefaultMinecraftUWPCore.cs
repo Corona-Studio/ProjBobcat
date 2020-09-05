@@ -9,12 +9,12 @@ using ProjBobcat.Interface;
 namespace ProjBobcat.DefaultComponent.Launch
 {
     /// <summary>
-    /// 提供了UWP版本MineCraft的启动核心
+    ///     提供了UWP版本MineCraft的启动核心
     /// </summary>
     public class DefaultMineCraftUWPCore : IGameCore
     {
         /// <summary>
-        /// 无用字段
+        ///     无用字段
         /// </summary>
         [Obsolete("UWP 版本的Minecraft不需要该字段。")]
         public string RootPath
@@ -24,7 +24,7 @@ namespace ProjBobcat.DefaultComponent.Launch
         }
 
         /// <summary>
-        /// 无用字段
+        ///     无用字段
         /// </summary>
         [Obsolete("UWP 版本的Minecraft不需要该字段。")]
         public Guid ClientToken
@@ -34,7 +34,7 @@ namespace ProjBobcat.DefaultComponent.Launch
         }
 
         /// <summary>
-        /// 无用字段
+        ///     无用字段
         /// </summary>
         [Obsolete("UWP 版本的Minecraft不需要该字段。")]
         public IVersionLocator VersionLocator
@@ -44,19 +44,19 @@ namespace ProjBobcat.DefaultComponent.Launch
         }
 
         /// <summary>
-        /// 无用字段
+        ///     无用字段
         /// </summary>
         [Obsolete("UWP 版本的Minecraft不需要该字段。")]
         public event EventHandler<GameExitEventArgs> GameExitEventDelegate;
 
         /// <summary>
-        /// 无用字段
+        ///     无用字段
         /// </summary>
         [Obsolete("UWP 版本的Minecraft不需要该字段。")]
         public event EventHandler<GameLogEventArgs> GameLogEventDelegate;
 
         /// <summary>
-        /// 无用字段
+        ///     无用字段
         /// </summary>
         [Obsolete("UWP 版本的Minecraft不需要该字段。")]
         public event EventHandler<LaunchLogEventArgs> LaunchLogEventDelegate;
@@ -79,7 +79,7 @@ namespace ProjBobcat.DefaultComponent.Launch
         }
 
         /// <summary>
-        /// 无用字段
+        ///     无用字段
         /// </summary>
         public void LogGameData(object sender, GameLogEventArgs e)
         {
@@ -87,7 +87,7 @@ namespace ProjBobcat.DefaultComponent.Launch
         }
 
         /// <summary>
-        /// 无用字段
+        ///     无用字段
         /// </summary>
         public void LogLaunchData(object sender, LaunchLogEventArgs e)
         {
@@ -95,14 +95,9 @@ namespace ProjBobcat.DefaultComponent.Launch
         }
 
         /// <summary>
-        /// 无用字段
+        ///     无用字段
         /// </summary>
         public void GameExit(object sender, GameExitEventArgs e)
-        {
-            throw new NotImplementedException();
-        }
-
-        private static void GameExit(object sender, EventArgs e)
         {
             throw new NotImplementedException();
         }
@@ -110,10 +105,17 @@ namespace ProjBobcat.DefaultComponent.Launch
         #region IDisposable Support
 
         /// <summary>
-        /// IDisposable保留字段
+        ///     IDisposable保留字段
         /// </summary>
-        public void Dispose() { }
+        public void Dispose()
+        {
+        }
 
         #endregion
+
+        private static void GameExit(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

@@ -41,7 +41,7 @@ namespace ProjBobcat.Class.Model
         public string Version { get; set; }
 
         /// <summary>
-        /// 游戏窗口标题
+        ///     游戏窗口标题
         /// </summary>
         public string WindowTitle { get; set; }
 

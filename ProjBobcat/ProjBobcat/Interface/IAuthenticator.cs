@@ -4,7 +4,7 @@ using ProjBobcat.Class.Model;
 namespace ProjBobcat.Interface
 {
     /// <summary>
-    /// 表示一个验证器。
+    ///     表示一个验证器。
     /// </summary>
     public interface IAuthenticator
     {

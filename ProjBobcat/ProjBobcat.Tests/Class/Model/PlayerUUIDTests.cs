@@ -25,7 +25,7 @@ namespace ProjBobcat.Class.Model.Tests
             var pairs = new Dictionary<PlayerUUID, string>
             {
                 { PlayerUUID.Random(), "abc" },
-                { PlayerUUID.Random(), "def" },
+                { PlayerUUID.Random(), "def" }
             };
             var s = JsonConvert.SerializeObject(pairs);
 

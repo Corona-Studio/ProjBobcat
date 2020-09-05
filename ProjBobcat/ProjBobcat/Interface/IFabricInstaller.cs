@@ -1,5 +1,5 @@
-﻿using ProjBobcat.Class.Model.Fabric;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using ProjBobcat.Class.Model.Fabric;
 
 namespace ProjBobcat.Interface
 {

@@ -1,4 +1,8 @@
-﻿using Newtonsoft.Json;
+﻿using System;
+using System.IO;
+using System.Security.Cryptography;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Forge;
@@ -7,10 +11,6 @@ using ProjBobcat.Event;
 using ProjBobcat.Interface;
 using SharpCompress.Common;
 using SharpCompress.Readers;
-using System;
-using System.IO;
-using System.Security.Cryptography;
-using System.Threading.Tasks;
 
 namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
 {
@@ -73,7 +73,8 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                 if (!forgeDi.Exists)
                     forgeDi.Create();
 
-                var versionJsonString = JsonConvert.SerializeObject(profileModel.VersionInfo, JsonHelper.CamelCasePropertyNamesSettings);
+                var versionJsonString = JsonConvert.SerializeObject(profileModel.VersionInfo,
+                    JsonHelper.CamelCasePropertyNamesSettings);
 
                 File.WriteAllText(jsonPath, versionJsonString);
                 InvokeStatusChangedEvent("文件写入完成", 1);

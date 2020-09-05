@@ -5,7 +5,7 @@ using ProjBobcat.Class.Model;
 namespace ProjBobcat.Class.Helper
 {
     /// <summary>
-    /// Maven解析工具类
+    ///     Maven解析工具类
     /// </summary>
     public static class MavenHelper
     {
@@ -47,7 +47,8 @@ namespace ProjBobcat.Class.Helper
             if (!string.IsNullOrEmpty(classifier)) basePath += $"-{classifier}";
 
             var fullPath = $"{basePath}.{type}";
-            return new MavenInfo {
+            return new MavenInfo
+            {
                 ArtifactId = artifactId,
                 Classifier = classifier,
                 IsSnapshot = isSnapshot,
@@ -59,7 +60,7 @@ namespace ProjBobcat.Class.Helper
         }
 
         /// <summary>
-        /// 获取Group Path
+        ///     获取Group Path
         /// </summary>
         /// <param name="artifactId">Maven Id</param>
         /// <returns>处理好的Group Path</returns>
@@ -70,14 +71,13 @@ namespace ProjBobcat.Class.Helper
         }
 
         /// <summary>
-        /// 获取Maven全名
+        ///     获取Maven全名
         /// </summary>
         /// <param name="mavenInfo">Maven 信息实例</param>
         /// <returns>拼接出来的Maven全称</returns>
         public static string GetMavenFullName(this MavenInfo mavenInfo)
         {
-            return mavenInfo is null ? string.Empty :
-                $"{mavenInfo.OrganizationName}.{mavenInfo.ArtifactId}";
+            return mavenInfo is null ? string.Empty : $"{mavenInfo.OrganizationName}.{mavenInfo.ArtifactId}";
         }
     }
 }
