@@ -1,6 +1,6 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using System.Collections.Generic;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
-using System.Collections.Generic;
 
 namespace ProjBobcat.Class.Model.Tests
 {
@@ -24,8 +24,8 @@ namespace ProjBobcat.Class.Model.Tests
         {
             var pairs = new Dictionary<PlayerUUID, string>
             {
-                { PlayerUUID.Random(), "abc" },
-                { PlayerUUID.Random(), "def" }
+                {PlayerUUID.Random(), "abc"},
+                {PlayerUUID.Random(), "def"}
             };
             var s = JsonConvert.SerializeObject(pairs);
 
@@ -33,10 +33,7 @@ namespace ProjBobcat.Class.Model.Tests
 
             Assert.AreEqual(pairs.Count, d.Count);
 
-            foreach (var p in pairs)
-            {
-                Assert.AreEqual(p.Value, d[p.Key]);
-            }
+            foreach (var p in pairs) Assert.AreEqual(p.Value, d[p.Key]);
         }
     }
 }

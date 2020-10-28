@@ -55,7 +55,10 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                     else
                         uri = $"{LibraryUriRoot}{lL.Path.Replace('\\', '/')}";
 
-                    var path = GamePathHelper.GetLibraryPath(BasePath, lL.Path.Replace('/', '\\'));
+                    var symbolIndex = lL.Path.LastIndexOf('/');
+                    var fileName = lL.Path.Substring(symbolIndex + 1);
+                    var path = GamePathHelper.GetLibraryPath(BasePath,
+                        lL.Path.Substring(0, symbolIndex).Replace('/', '\\'));
                     result.Add(new LibraryDownloadInfo
                     {
                         Path = path,
@@ -63,7 +66,8 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                         Type = "Library/Native",
                         Uri = uri,
                         FileSize = lL.Size,
-                        CheckSum = lL.Sha1
+                        CheckSum = lL.Sha1,
+                        FileName = fileName
                     });
                 }
 

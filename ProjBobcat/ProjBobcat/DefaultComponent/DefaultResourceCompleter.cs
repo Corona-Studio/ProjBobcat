@@ -16,8 +16,8 @@ namespace ProjBobcat.DefaultComponent
     /// </summary>
     public class DefaultResourceCompleter : IResourceCompleter
     {
-        private bool _needRetry;
         private readonly List<DownloadFile> _retryFileList = new List<DownloadFile>();
+        private bool _needRetry;
         private int _totalDownloaded, _needToDownload;
 
         public int DownloadParts { get; set; } = 16;
@@ -49,7 +49,7 @@ namespace ProjBobcat.DefaultComponent
 
                 var gameResources = resolverResult.ToList();
                 if (gameResources.Any())
-                    totalLostFiles.AddRange(gameResources.ToList());
+                    totalLostFiles.AddRange(gameResources);
             }
 
             if (!totalLostFiles.Any()) return new TaskResult<bool>(TaskResultStatus.Success, value: true);
@@ -103,12 +103,12 @@ namespace ProjBobcat.DefaultComponent
                         Completed = DownloadFileCompletedEvent,
                         DownloadPath = f.Path,
                         DownloadUri = f.Uri,
-                        FileName = f.Title,
+                        FileName = f.FileName,
                         FileSize = f.FileSize,
                         CheckSum = f.CheckSum,
                         FileType = f.Type
                     }
-                ).OrderBy(x => x.FileSize).ToList();
+                ).OrderByDescending(x => x.FileSize).ToList();
             _needToDownload = downloadList.Count;
 
             var result = await DownloadFiles(downloadList).ConfigureAwait(true);

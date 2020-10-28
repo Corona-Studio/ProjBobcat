@@ -79,7 +79,6 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                 File.WriteAllText(jsonPath, versionJsonString);
                 InvokeStatusChangedEvent("文件写入完成", 1);
 
-
                 return new ForgeInstallResult
                 {
                     Succeeded = true

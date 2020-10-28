@@ -36,7 +36,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                     LauncherVersion = new LauncherVersionModel
                     {
                         Format = 1,
-                        Name = ""
+                        Name = string.Empty
                     },
                     Profiles = new Dictionary<string, GameProfileModel>()
                 };

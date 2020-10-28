@@ -34,7 +34,7 @@ using System.Runtime.InteropServices;
 //可以指定所有这些值，也可以使用“生成号”和“修订号”的默认值
 //通过使用 "*"，如下所示:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.0.6.4")]
-[assembly: AssemblyFileVersion("1.0.6.4")]
+[assembly: AssemblyVersion("1.0.6.5")]
+[assembly: AssemblyFileVersion("1.0.6.5")]
 [assembly: InternalsVisibleTo("ProjBobcat.Tests")]
 [assembly: InternalsVisibleTo("ProjBobcat.Explorables")]

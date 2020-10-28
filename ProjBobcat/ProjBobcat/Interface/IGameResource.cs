@@ -22,6 +22,8 @@
         /// </summary>
         string Uri { get; set; }
 
+        string FileName { get; set; }
+
         long FileSize { get; set; }
 
         string CheckSum { get; set; }

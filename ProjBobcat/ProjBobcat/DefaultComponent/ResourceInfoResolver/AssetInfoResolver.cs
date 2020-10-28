@@ -47,19 +47,20 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
             if (!assetIndexesDi.Exists) assetIndexesDi.Create();
             if (!assetObjectsDi.Exists) assetObjectsDi.Create();
 
-            if (!File.Exists($"{assetIndexesDi.FullName}\\{VersionInfo.AssetInfo.Id}.json"))
+            var assetIndexesPath = Path.Combine(assetIndexesDi.FullName, $"{VersionInfo.AssetInfo.Id}.json");
+            if (!File.Exists(assetIndexesPath))
             {
                 LogGameResourceInfoResolveStatus("没有发现Asset Indexes 文件， 开始下载");
                 var assetIndexDownloadUri = VersionInfo.AssetInfo.Url;
                 if (!string.IsNullOrEmpty(AssetIndexUriRoot))
                 {
-                    var assetIndexUriRoot = HttpHelper.RegexMatchUri(VersionInfo.AssetInfo.Url);
+                    var assetIndexUriRoot = HttpHelper.RegexMatchUri(VersionInfo.AssetInfo.Url).TrimEnd('/');
                     assetIndexDownloadUri =
-                        $"{AssetIndexUriRoot.TrimEnd('/')}{assetIndexDownloadUri.Substring(assetIndexUriRoot.Length)}";
+                        $"{AssetIndexUriRoot}{assetIndexDownloadUri.Substring(assetIndexUriRoot.Length)}";
                 }
 
                 var indexDownloadResult = await DownloadHelper.DownloadSingleFileAsync(new Uri(assetIndexDownloadUri),
-                    $"{assetIndexesDi.FullName}\\",
+                    assetIndexesDi.FullName,
                     $"{VersionInfo.AssetInfo.Id}.json").ConfigureAwait(false);
                 if (indexDownloadResult.TaskStatus != TaskResultStatus.Success)
                 {
@@ -76,7 +77,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
             AssetObjectModel assetObject;
             try
             {
-                var content = File.ReadAllText($"{assetIndexesDi.FullName}\\{VersionInfo.AssetInfo.Id}.json");
+                var content = File.ReadAllText(assetIndexesPath);
                 assetObject = JsonConvert.DeserializeObject<AssetObjectModel>(content);
             }
             catch (Exception ex)
@@ -92,18 +93,19 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
             }
 
             var lostAssets = (from asset in assetObject.Objects
-                    let twoDigitsHash = asset.Value.Hash.Substring(0, 2)
-                    let eightDigitsHash = asset.Value.Hash.Substring(0, 8)
+                    let hash = asset.Value.Hash
+                    let twoDigitsHash = hash.Substring(0, 2)
                     let path = Path.Combine(assetObjectsDi.FullName, twoDigitsHash)
                     where !File.Exists(Path.Combine(path, asset.Value.Hash))
                     select new AssetDownloadInfo
                     {
-                        Title = eightDigitsHash,
+                        Title = hash,
                         Path = path,
                         Type = "Asset",
                         Uri = $"{AssetUriRoot}{twoDigitsHash}/{asset.Value.Hash}",
                         FileSize = asset.Value.Size,
-                        CheckSum = asset.Value.Hash
+                        CheckSum = hash,
+                        FileName = hash
                     })
                 .Cast<IGameResource>().ToList();
 
