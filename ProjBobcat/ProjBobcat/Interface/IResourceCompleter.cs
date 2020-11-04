@@ -9,11 +9,6 @@ namespace ProjBobcat.Interface
     public interface IResourceCompleter : IDisposable
     {
         /// <summary>
-        ///     下载线程数量
-        /// </summary>
-        int DownloadThread { get; set; }
-
-        /// <summary>
         ///     重试最大计数
         /// </summary>
         int TotalRetry { get; set; }

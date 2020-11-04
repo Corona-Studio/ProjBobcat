@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using System.Management;
+using System.Threading;
 
 namespace ProjBobcat.Class.Helper
 {
@@ -18,6 +19,17 @@ namespace ProjBobcat.Class.Helper
             var processorCoreCount = managedObject.Get().Cast<ManagementBaseObject>().Sum(item =>
                 int.TryParse(item["NumberOfCores"].ToString(), out var num) ? num : 1);
             return processorCoreCount;
+        }
+
+        public static bool SetMaxThreads()
+        {
+            ThreadPool.GetMaxThreads(out var maxWorkerThreads,
+                out var maxConcurrentActiveRequests);
+
+            var changeSucceeded = ThreadPool.SetMaxThreads(
+                maxWorkerThreads, maxConcurrentActiveRequests);
+
+            return changeSucceeded;
         }
     }
 }

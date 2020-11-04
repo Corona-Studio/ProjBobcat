@@ -54,21 +54,21 @@ namespace ProjBobcat.DefaultComponent.Launch
 
             if (!string.IsNullOrEmpty(LaunchSettings.GameArguments?.AgentPath))
             {
-                sb.Append("-javaagent:").Append("\"").Append(LaunchSettings.GameArguments.AgentPath).Append("\"");
+                sb.Append("-javaagent:").Append('"').Append(LaunchSettings.GameArguments.AgentPath).Append('"');
                 if (!string.IsNullOrEmpty(LaunchSettings.GameArguments.JavaAgentAdditionPara))
-                    sb.Append("=").Append(LaunchSettings.GameArguments.JavaAgentAdditionPara);
+                    sb.Append('=').Append(LaunchSettings.GameArguments.JavaAgentAdditionPara);
 
-                sb.Append(" ");
+                sb.Append(' ');
             }
 
             if (!string.IsNullOrEmpty(LaunchSettings.FallBackGameArguments.AgentPath))
             {
-                sb.Append("-javaagent:").Append("\"").Append(LaunchSettings.FallBackGameArguments.AgentPath)
-                    .Append("\"");
+                sb.Append("-javaagent:").Append('"').Append(LaunchSettings.FallBackGameArguments.AgentPath)
+                    .Append('"');
                 if (!string.IsNullOrEmpty(LaunchSettings.FallBackGameArguments.JavaAgentAdditionPara))
-                    sb.Append("=").Append(LaunchSettings.FallBackGameArguments.JavaAgentAdditionPara);
+                    sb.Append('=').Append(LaunchSettings.FallBackGameArguments.JavaAgentAdditionPara);
 
-                sb.Append(" ");
+                sb.Append(' ');
             }
 
 
@@ -78,18 +78,18 @@ namespace ProjBobcat.DefaultComponent.Launch
                 {
                     if (LaunchSettings.GameArguments.MinMemory < LaunchSettings.GameArguments.MaxMemory)
                     {
-                        sb.Append($"-Xms{LaunchSettings.GameArguments.MinMemory}m").Append(" ");
-                        sb.Append($"-Xmx{LaunchSettings.GameArguments.MaxMemory}m").Append(" ");
+                        sb.Append($"-Xms{LaunchSettings.GameArguments.MinMemory}m").Append(' ');
+                        sb.Append($"-Xmx{LaunchSettings.GameArguments.MaxMemory}m").Append(' ');
                     }
                     else
                     {
-                        sb.Append("-Xmx2G").Append(" ");
+                        sb.Append("-Xmx2G").Append(' ');
                     }
                 }
                 else
                 {
-                    sb.Append($"-Xms{LaunchSettings.FallBackGameArguments.MinMemory}m").Append(" ");
-                    sb.Append($"-Xmx{LaunchSettings.FallBackGameArguments.MaxMemory}m").Append(" ");
+                    sb.Append($"-Xms{LaunchSettings.FallBackGameArguments.MinMemory}m").Append(' ');
+                    sb.Append($"-Xmx{LaunchSettings.FallBackGameArguments.MaxMemory}m").Append(' ');
                 }
 
 
@@ -102,19 +102,20 @@ namespace ProjBobcat.DefaultComponent.Launch
                     GcType.G1Gc => "-XX:+UseG1GC",
                     GcType.ParallelGc => "-XX:+UseParallelGC",
                     GcType.SerialGc => "-XX:+UseSerialGC",
+                    GcType.ZGc => "-XX:UseZGC",
                     _ => "-XX:+UseG1GC"
                 };
 
-                sb.Append(gcArg).Append(" ");
+                sb.Append(gcArg).Append(' ');
             }
             else
             {
-                sb.Append(GameProfile.JavaArgs).Append(" ");
+                sb.Append(GameProfile.JavaArgs).Append(' ');
             }
 
             sb.Append(
                     "-XX:+UnlockExperimentalVMOptions -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=50 -XX:G1HeapRegionSize=32M")
-                .Append(" ");
+                .Append(' ');
 
             return sb.ToString();
         }
@@ -192,19 +193,19 @@ namespace ProjBobcat.DefaultComponent.Launch
                 (LaunchSettings.GameArguments.Resolution?.Width ?? 0) > 0)
             {
                 sb.Append($"--width {GameProfile.Resolution?.Width ?? LaunchSettings.GameArguments.Resolution.Width}")
-                    .Append(" ");
+                    .Append(' ');
                 sb.Append(
                         $"--height {GameProfile.Resolution?.Height ?? LaunchSettings.GameArguments.Resolution.Height}")
-                    .Append(" ");
+                    .Append(' ');
             }
             else
             {
                 sb.Append(
                         $"--width {GameProfile.Resolution?.Width ?? LaunchSettings.FallBackGameArguments.Resolution.Width}")
-                    .Append(" ");
+                    .Append(' ');
                 sb.Append(
                         $"--height {GameProfile.Resolution?.Height ?? LaunchSettings.FallBackGameArguments.Resolution.Height}")
-                    .Append(" ");
+                    .Append(' ');
             }
 
             if (LaunchSettings.GameArguments.ServerSettings == null) return sb.ToString();

@@ -28,6 +28,11 @@
         /// <summary>
         ///     Cms Gc
         /// </summary>
-        CmsGc
+        CmsGc,
+
+        /// <summary>
+        ///     ZGc (Java 14)
+        /// </summary>
+        ZGc
     }
 }

@@ -2,3 +2,9 @@
 
 # CA1063: 正确实现 IDisposable
 dotnet_diagnostic.CA1063.severity = silent
+
+dotnet_diagnostic.CS1591.severity = suggestion
+
+dotnet_diagnostic.CA2007.severity = silent
+
+dotnet_diagnostic.CA1816.severity = silent
