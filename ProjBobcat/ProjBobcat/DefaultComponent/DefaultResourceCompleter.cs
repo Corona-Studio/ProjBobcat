@@ -77,7 +77,7 @@ namespace ProjBobcat.DefaultComponent
 
                     File.Delete(args.File.DownloadPath);
 
-                    var flag = args.File.FileType.Equals("Library/Native");
+                    var flag = args.File.FileType.Equals("Library/Native", StringComparison.Ordinal);
                     _isLibraryFailed = flag || _isLibraryFailed;
                     _isNormalFileFailed = !flag || _isLibraryFailed;
                 }
