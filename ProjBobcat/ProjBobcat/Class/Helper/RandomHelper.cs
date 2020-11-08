@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 
 namespace ProjBobcat.Class.Helper
 {
@@ -9,7 +10,13 @@ namespace ProjBobcat.Class.Helper
     /// </summary>
     public static class RandomHelper
     {
-        private static readonly Random Random = new Random();
+        [ThreadStatic]
+        private static RandomNumberGenerator _random;
+
+        private static RandomNumberGenerator Random
+        {
+            get { return _random ??= new RNGCryptoServiceProvider(); }
+        }
 
         /// <summary>
         ///     在一个有限的 <see cref="IEnumerable{T}" /> 中等概率地随机取出一项返回。
@@ -24,9 +31,48 @@ namespace ProjBobcat.Class.Helper
         public static T RandomSample<T>(this IEnumerable<T> enumerable)
         {
             var arr = enumerable.ToArray();
-            if (arr.Length == 0)
-                return default;
-            return arr[Random.Next(0, arr.Length - 1)];
+            return arr.Length == 0 ? default : arr[RandomInteger(0, arr.Length - 1)];
+        }
+
+        /// <summary>
+        /// 生成一个完全随机数
+        /// </summary>
+        /// <param name="min"></param>
+        /// <param name="max"></param>
+        /// <returns></returns>
+        public static int RandomInteger(int min, int max)
+        {
+            var scale = uint.MaxValue;
+            while (scale == uint.MaxValue)
+            {
+                var fourBytes = new byte[4];
+                Random.GetBytes(fourBytes);
+
+                scale = BitConverter.ToUInt32(fourBytes, 0);
+            }
+
+            return (int)(min + (max - min) *
+                (scale / (double)uint.MaxValue));
+        }
+
+        /// <summary>
+        /// 随机打乱集合当中的元素
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="list"></param>
+        public static void Shuffle<T>(this IList<T> list)
+        {
+            if (!(list?.Any() ?? false)) return;
+
+            var n = list.Count;
+            while (n > 1)
+            {
+                n--;
+                var k = RandomInteger(0, n);
+                var value = list[k];
+                list[k] = list[n];
+                list[n] = value;
+            }
         }
     }
 }

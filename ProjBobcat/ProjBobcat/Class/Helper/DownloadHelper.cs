@@ -27,7 +27,48 @@ namespace ProjBobcat.Class.Helper
         /// </summary>
         public static string Ua { get; set; } = "ProjBobcat";
 
+        private static int _downloadThread;
+
+        /// <summary>
+        /// 下载线程
+        /// </summary>
+        public static int DownloadThread
+        {
+            get => _downloadThread;
+            set
+            {
+                if (_downloadThread == value) return;
+
+                _downloadThread = value;
+                ClientsPool.Dispose();
+                ClientsPool = new ObjectPool<HttpClient>(value,
+                    () =>
+                    {
+                        var client = new HttpClient(new RetryHandler(new HttpClientHandler(), RetryCount));
+
+                        client.DefaultRequestHeaders.ConnectionClose = false;
+                        client.Timeout = TimeSpan.FromMinutes(5);
+
+                        return client;
+                    });
+            }
+        }
+
+        /// <summary>
+        /// 最大重试计数
+        /// </summary>
         public static int RetryCount { get; set; } = 10;
+
+        private static ObjectPool<HttpClient> ClientsPool { get; set; } = new ObjectPool<HttpClient>(10,
+            () =>
+            {
+                var client = new HttpClient(new RetryHandler(new HttpClientHandler(), RetryCount));
+
+                client.DefaultRequestHeaders.ConnectionClose = false;
+                client.Timeout = TimeSpan.FromMinutes(5);
+
+                return client;
+            });
 
         /// <summary>
         ///     异步下载单个文件。
@@ -90,26 +131,32 @@ namespace ProjBobcat.Class.Helper
         private static async Task DownloadData(DownloadFile downloadProperty)
         {
             var filePath = Path.Combine(downloadProperty.DownloadPath, downloadProperty.FileName);
+            using var wcObj = ClientsPool.Get();
 
             try
             {
-                using var wc = new WebClient();
-                wc.Headers.Add(HttpRequestHeader.UserAgent, Ua);
+                using var request = new HttpRequestMessage { RequestUri = new Uri(downloadProperty.DownloadUri) };
+                var downloadTask = wcObj.Value.SendAsync(request, HttpCompletionOption.ResponseContentRead,
+                    CancellationToken.None);
 
-                wc.DownloadProgressChanged += (sender, args) =>
+                using var streamToRead = await downloadTask.Result.Content.ReadAsStreamAsync();
+
+                downloadProperty.Changed?.Invoke(null,
+                    new DownloadFileChangedEventArgs
+                    {
+                        ProgressPercentage = 1,
+                        BytesReceived = downloadTask.Result.Content.Headers.ContentLength ?? 0,
+                        TotalBytes = downloadTask.Result.Content.Headers.ContentLength
+                    });
+
+                using (var fileToWriteTo = File.Open(filePath, FileMode.OpenOrCreate,
+                    FileAccess.ReadWrite, FileShare.ReadWrite))
                 {
-                    downloadProperty.Changed?.Invoke(sender,
-                        new DownloadFileChangedEventArgs
-                        {
-                            ProgressPercentage = (double) args.BytesReceived / args.TotalBytesToReceive,
-                            BytesReceived = args.BytesReceived,
-                            TotalBytes = args.TotalBytesToReceive
-                        });
-                };
+                    fileToWriteTo.Position = 0;
+                    await streamToRead.CopyToAsync(fileToWriteTo, (int) streamToRead.Length, CancellationToken.None);
+                }
 
-                await wc.DownloadFileTaskAsync(downloadProperty.DownloadUri, filePath).ConfigureAwait(false);
-
-                downloadProperty.Completed?.Invoke(wc,
+                downloadProperty.Completed?.Invoke(null,
                     new DownloadFileCompletedEventArgs(true, null, downloadProperty));
             }
             catch (Exception e)
@@ -228,7 +275,6 @@ namespace ProjBobcat.Class.Helper
                 for (var i = (int) partSize; i <= responseLength; i += (int) partSize)
                     if (i + partSize < responseLength)
                     {
-                        //Start and end values for the chunk
                         var start = previous;
                         var currentEnd = i;
 

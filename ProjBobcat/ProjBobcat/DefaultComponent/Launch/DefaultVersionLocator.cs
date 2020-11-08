@@ -322,7 +322,7 @@ namespace ProjBobcat.DefaultComponent.Launch
 
             // 生成一个随机的名字来防止重复。
             // Generates a random name to avoid duplication.
-            var rs = new RandomStringHelper().UseLower().UseUpper().UseNumbers().HardMix(1);
+            var rs = new RandomStringHelper().UseLower().UseUpper().UseNumbers().Shuffle(1);
             var randomName =
                 $"{id}-{rs.Generate(5)}-{rs.Generate(5)}";
 

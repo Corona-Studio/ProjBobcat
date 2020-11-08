@@ -83,12 +83,14 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
             catch (Exception ex)
             {
                 LogGameResourceInfoResolveStatus($"解析Asset Indexes 文件失败！原因：{ex.Message}", LogType.Error);
+                File.Delete(assetIndexesPath);
                 return default;
             }
 
             if (assetObject == null)
             {
-                LogGameResourceInfoResolveStatus("解析Asset Indexes 文件失败！原因：未知错误", LogType.Error);
+                LogGameResourceInfoResolveStatus("解析Asset Indexes 文件失败！原因：文件可能损坏或为空", LogType.Error);
+                File.Delete(assetIndexesPath);
                 return default;
             }
 

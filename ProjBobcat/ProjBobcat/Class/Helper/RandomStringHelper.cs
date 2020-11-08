@@ -149,6 +149,19 @@ namespace ProjBobcat.Class.Helper
         }
 
         /// <summary>
+        /// 随机打乱启用的元素
+        /// </summary>
+        /// <param name="times"></param>
+        /// <returns></returns>
+        public RandomStringHelper Shuffle(int times)
+        {
+            for (var i = 0; i < times; i++)
+                enabled.Shuffle();
+
+            return this;
+        }
+
+        /// <summary>
         ///     根据加入的字符生成一个新的随机字符串。
         ///     如果 <see cref="EnabledCharacters" /> 的长度为 0 ，将返回 null 。
         /// </summary>

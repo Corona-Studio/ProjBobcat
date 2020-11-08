@@ -98,6 +98,7 @@ namespace ProjBobcat.DefaultComponent
                         FileType = f.Type
                     }
                 ).OrderByDescending(x => x.FileSize).ToList();
+
             _needToDownload = downloadList.Count;
 
             var result = await DownloadFiles(downloadList).ConfigureAwait(true);
