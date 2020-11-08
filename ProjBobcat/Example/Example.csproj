@@ -7,8 +7,8 @@
     <ProjectGuid>{9A7447FB-C120-4E4C-8AE9-CE09154C890F}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <RootNamespace>Example</RootNamespace>
-    <AssemblyName>Example</AssemblyName>
-    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <AssemblyName>a</AssemblyName>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
     <TargetFrameworkProfile />
