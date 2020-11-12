@@ -1,0 +1,234 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{9777E280-8601-4A6C-BD75-0D29FD4F5D6F}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>ProjBobcat</RootNamespace>
+    <AssemblyName>ProjBobcat</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+    <SccProjectName>SAK</SccProjectName>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccProvider>SAK</SccProvider>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <LangVersion>8.0</LangVersion>
+    <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
+    <DocumentationFile>bin\Debug\ProjBobcat.xml</DocumentationFile>
+    <NoWarn>CA1716;CA2227;CA2208;CA1031;CA5351;CA1065;CA1305;CS0067;CA1720;CA1055;CA1054;CA1056;CA1062</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <LangVersion>8.0</LangVersion>
+    <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
+    <DebugSymbols>true</DebugSymbols>
+    <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
+  </PropertyGroup>
+  <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Management" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Authenticator\OfflineAuthenticator.cs" />
+    <Compile Include="Authenticator\YggdrasilAuthenticator.cs" />
+    <Compile Include="Class\Helper\AuthPropertyHelper.cs" />
+    <Compile Include="Class\Helper\CryptoHelper.cs" />
+    <Compile Include="Class\Helper\DirectoryHelper.cs" />
+    <Compile Include="Class\Helper\DownloadHelper.cs" />
+    <Compile Include="Class\Helper\FileHelper.cs" />
+    <Compile Include="Class\Helper\GameRegexHelper.cs" />
+    <Compile Include="Class\Helper\JsonHelper.cs" />
+    <Compile Include="Class\Helper\MavenHelper.cs" />
+    <Compile Include="Class\Helper\ProcessorHelper.cs" />
+    <Compile Include="Class\Helper\RandomHelper.cs" />
+    <Compile Include="Class\Helper\RandomStringHelper.cs" />
+    <Compile Include="Class\Helper\RulesHelper.cs" />
+    <Compile Include="Class\Helper\SystemInfo\SystemArch.cs" />
+    <Compile Include="Class\Helper\SystemInfo\WindowsSystemVersion.cs" />
+    <Compile Include="Class\Helper\TimeHelper.cs" />
+    <Compile Include="Class\LaunchWrapper.cs" />
+    <Compile Include="Class\Model\AssetObjectModel.cs" />
+    <Compile Include="Class\Model\DownloadCheckResult.cs" />
+    <Compile Include="Class\Model\DownloadFile.cs" />
+    <Compile Include="Class\Model\DownloadRange.cs" />
+    <Compile Include="Class\Model\Fabric\FabricArtifactModel.cs" />
+    <Compile Include="Class\Model\Fabric\FabricLauncherMeta.cs" />
+    <Compile Include="Class\Model\Fabric\FabricLoaderArtifactModel.cs" />
+    <Compile Include="Class\Model\ForgeInstallResult.cs" />
+    <Compile Include="Class\Model\Forge\ForgeInstallProfile.cs" />
+    <Compile Include="Class\Model\GameResource\AssetDownloadInfo.cs" />
+    <Compile Include="Class\Model\GameResource\LibraryDownloadInfo.cs" />
+    <Compile Include="Class\Model\GcType.cs" />
+    <Compile Include="Class\Model\LauncherProfile\AuthProfileModel.cs" />
+    <Compile Include="Class\Model\LauncherProfile\AuthPropertyModel.cs" />
+    <Compile Include="Class\Model\LauncherProfile\ResolutionModel.cs" />
+    <Compile Include="Class\Model\LauncherProfile\SelectedUserModel.cs" />
+    <Compile Include="Class\Model\LaunchErrorType.cs" />
+    <Compile Include="Class\LaunchArgumentParserBase.cs" />
+    <Compile Include="Class\LauncherProfileParserBase.cs" />
+    <Compile Include="Class\Model\LiteLoader\LiteLoaderBuildModel.cs" />
+    <Compile Include="Class\Model\LiteLoader\LiteLoaderDownloadVersionModel.cs" />
+    <Compile Include="Class\Model\LogType.cs" />
+    <Compile Include="Class\Model\MavenInfo.cs" />
+    <Compile Include="Class\Model\Optifine\OptifineDownloadVersionModel.cs" />
+    <Compile Include="Class\Model\PlayerUUID.cs" />
+    <Compile Include="Class\Model\TaskResult.cs" />
+    <Compile Include="Class\Model\TaskResultStatus.cs" />
+    <Compile Include="Class\VersionLocatorBase.cs" />
+    <Compile Include="Class\Helper\GamePathHelper.cs" />
+    <Compile Include="Class\Helper\GuidHelper.cs" />
+    <Compile Include="Class\Helper\HttpHelper.cs" />
+    <Compile Include="Class\WebClient.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="DefaultComponent\DefaultResourceCompleter.cs" />
+    <Compile Include="DefaultComponent\Installer\FabricInstaller.cs" />
+    <Compile Include="DefaultComponent\Installer\ForgeInstaller\ForgeInstallerFactory.cs" />
+    <Compile Include="DefaultComponent\Installer\ForgeInstaller\HighVersionForgeInstaller.cs" />
+    <Compile Include="DefaultComponent\Installer\ForgeInstaller\LegacyForgeInstaller.cs" />
+    <Compile Include="DefaultComponent\Installer\LiteLoaderInstaller.cs" />
+    <Compile Include="DefaultComponent\Installer\OptifineInstaller.cs" />
+    <Compile Include="DefaultComponent\Launch\DefaultLaunchArgumentParser.cs" />
+    <Compile Include="Class\Helper\StringHelper.cs" />
+    <Compile Include="Class\Helper\SystemInfoHelper.cs" />
+    <Compile Include="Class\Model\AuthResult.cs" />
+    <Compile Include="Class\Model\AuthStatus.cs" />
+    <Compile Include="Class\Model\LauncherProfile\AuthInfoModel.cs" />
+    <Compile Include="Class\Model\LauncherProfile\GameProfileModel.cs" />
+    <Compile Include="Class\Model\GameRulesModel.cs" />
+    <Compile Include="Class\Model\JvmRulesModel.cs" />
+    <Compile Include="Class\Model\LauncherProfile\LauncherProfileModel.cs" />
+    <Compile Include="Class\Model\LauncherProfile\LauncherVersionModel.cs" />
+    <Compile Include="Class\Model\LaunchResult.cs" />
+    <Compile Include="Class\Model\LaunchSettings.cs" />
+    <Compile Include="Class\Model\NativeFileInfo.cs" />
+    <Compile Include="Class\Model\OperatingSystem.cs" />
+    <Compile Include="Class\Model\ServerSettings.cs" />
+    <Compile Include="Class\Model\VersionInfo.cs" />
+    <Compile Include="Class\Model\YggdrasilAuth\AuthRefreshRequestModel.cs" />
+    <Compile Include="Class\Model\YggdrasilAuth\AuthRequestModel.cs" />
+    <Compile Include="Class\Model\YggdrasilAuth\AuthResponseModel.cs" />
+    <Compile Include="Class\Model\YggdrasilAuth\AuthTokenRequestModel.cs" />
+    <Compile Include="Class\Model\YggdrasilAuth\ErrorModel.cs" />
+    <Compile Include="Class\Model\YggdrasilAuth\PlayerTextureInfoModel.cs" />
+    <Compile Include="Class\Model\YggdrasilAuth\ProfileInfoModel.cs" />
+    <Compile Include="Class\Model\YggdrasilAuth\PropertyModel.cs" />
+    <Compile Include="Class\Model\YggdrasilAuth\SignOutRequestModel.cs" />
+    <Compile Include="Class\Model\YggdrasilAuth\TextureInfoModel.cs" />
+    <Compile Include="Class\Model\YggdrasilAuth\UserInfoModel.cs" />
+    <Compile Include="DefaultComponent\Launch\DefaultGameCore.cs" />
+    <Compile Include="DefaultComponent\Launch\DefaultLauncherProfileParser.cs" />
+    <Compile Include="DefaultComponent\Launch\DefaultVersionLocator.cs" />
+    <Compile Include="DefaultComponent\Launch\DefaultMinecraftUWPCore.cs" />
+    <Compile Include="DefaultComponent\ResourceInfoResolver\AssetInfoResolver.cs" />
+    <Compile Include="DefaultComponent\ResourceInfoResolver\LibraryInfoResolver.cs" />
+    <Compile Include="Event\DownloadFileChangedEventArgs.cs" />
+    <Compile Include="Event\DownloadFileCompletedEventArgs.cs" />
+    <Compile Include="Event\GameExitEventArgs.cs" />
+    <Compile Include="Event\GameLogEventArgs.cs" />
+    <Compile Include="Event\GameResourceInfoResolveEventArgs.cs" />
+    <Compile Include="Event\InstallerStageChangedEventArgs.cs" />
+    <Compile Include="Event\LaunchLogEventArgs.cs" />
+    <Compile Include="Exceptions\UnknownGameNameException.cs" />
+    <Compile Include="Handler\RetryHandler.cs" />
+    <Compile Include="Interface\IArgumentParser.cs" />
+    <Compile Include="Interface\IAuthenticator.cs" />
+    <Compile Include="Interface\IFabricInstaller.cs" />
+    <Compile Include="Interface\IForgeInstaller.cs" />
+    <Compile Include="Interface\IGameCore.cs" />
+    <Compile Include="Interface\IGameResource.cs" />
+    <Compile Include="Interface\IInstaller.cs" />
+    <Compile Include="Interface\ILauncherProfileParser.cs" />
+    <Compile Include="Interface\ILiteLoaderInstaller.cs" />
+    <Compile Include="Interface\IOptifineInstaller.cs" />
+    <Compile Include="Interface\IResourceCompleter.cs" />
+    <Compile Include="Interface\IResourceInfoResolver.cs" />
+    <Compile Include="Interface\IVersionLocator.cs" />
+    <Compile Include="Class\Model\RawVersionModel.cs" />
+    <Compile Include="NativeMethods.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\.editorconfig">
+      <Link>.editorconfig</Link>
+    </None>
+    <None Include="app.config" />
+    <None Include="app.manifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="ConfigureAwait.Fody">
+      <Version>3.3.1</Version>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Fody">
+      <Version>6.3.0</Version>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Janitor.Fody">
+      <Version>1.8.0</Version>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.AspNet.WebApi.Client">
+      <Version>5.2.7</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers">
+      <Version>3.3.1</Version>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.PowerShell.5.ReferenceAssemblies">
+      <Version>1.1.0</Version>
+    </PackageReference>
+    <PackageReference Include="Newtonsoft.Json">
+      <Version>12.0.3</Version>
+    </PackageReference>
+    <PackageReference Include="SafeObjectPool">
+      <Version>2.3.1</Version>
+    </PackageReference>
+    <PackageReference Include="SharpCompress">
+      <Version>0.26.0</Version>
+    </PackageReference>
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe">
+      <Version>5.0.0</Version>
+    </PackageReference>
+    <PackageReference Include="System.Threading.Tasks.Dataflow">
+      <Version>5.0.0</Version>
+    </PackageReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

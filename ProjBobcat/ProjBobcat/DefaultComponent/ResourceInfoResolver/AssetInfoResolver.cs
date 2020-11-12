@@ -59,15 +59,13 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                         $"{AssetIndexUriRoot}{assetIndexDownloadUri.Substring(assetIndexUriRoot.Length)}";
                 }
 
-                var indexDownloadResult = await DownloadHelper.DownloadSingleFileAsync(new Uri(assetIndexDownloadUri),
-                    assetIndexesDi.FullName,
-                    $"{VersionInfo.AssetInfo.Id}.json").ConfigureAwait(false);
-                if (indexDownloadResult.TaskStatus != TaskResultStatus.Success)
+                var dp = new DownloadFile
                 {
-                    LogGameResourceInfoResolveStatus($"Asset Indexes 文件下载失败！原因{indexDownloadResult.Message}",
-                        LogType.Error);
-                    return default;
-                }
+                    DownloadPath = assetIndexesDi.FullName,
+                    FileName = $"{VersionInfo.AssetInfo.Id}.json",
+                    DownloadUri = assetIndexDownloadUri
+                };
+                await DownloadHelper.DownloadData(dp);
 
                 LogGameResourceInfoResolveStatus("Asset Indexes 文件下载完成", LogType.Success);
             }

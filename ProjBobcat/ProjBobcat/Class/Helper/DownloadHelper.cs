@@ -41,7 +41,7 @@ namespace ProjBobcat.Class.Helper
 
                 _downloadThread = value;
                 ClientsPool.Dispose();
-                ClientsPool = new ObjectPool<HttpClient>(value,
+                ClientsPool = new ObjectPool<HttpClient>(value + 2,
                     () =>
                     {
                         var client = new HttpClient(new RetryHandler(new HttpClientHandler(), RetryCount));
@@ -59,7 +59,7 @@ namespace ProjBobcat.Class.Helper
         /// </summary>
         public static int RetryCount { get; set; } = 10;
 
-        private static ObjectPool<HttpClient> ClientsPool { get; set; } = new ObjectPool<HttpClient>(10,
+        private static ObjectPool<HttpClient> ClientsPool { get; set; } = new ObjectPool<HttpClient>(12,
             () =>
             {
                 var client = new HttpClient(new RetryHandler(new HttpClientHandler(), RetryCount));
@@ -70,57 +70,6 @@ namespace ProjBobcat.Class.Helper
                 return client;
             });
 
-        /// <summary>
-        ///     异步下载单个文件。
-        /// </summary>
-        /// <param name="downloadUri"></param>
-        /// <param name="downloadDir"></param>
-        /// <param name="filename"></param>
-        /// <param name="complete"></param>
-        /// <param name="changedEvent"></param>
-        public static async Task DownloadSingleFileAsyncWithEvent(
-            Uri downloadUri, string downloadDir, string filename,
-            AsyncCompletedEventHandler complete,
-            DownloadProgressChangedEventHandler changedEvent)
-        {
-            var di = new DirectoryInfo(downloadDir);
-            if (!di.Exists) di.Create();
-
-            using var wc = new WebClient();
-            wc.Headers.Add("user-agent", Ua);
-            wc.DownloadFileCompleted += complete;
-            wc.DownloadProgressChanged += changedEvent;
-            await wc.DownloadFileTaskAsync(downloadUri, Path.Combine(downloadDir, filename)).ConfigureAwait(false);
-        }
-
-
-        /// <summary>
-        ///     异步下载单个文件。
-        /// </summary>
-        /// <param name="downloadUri"></param>
-        /// <param name="downloadDir"></param>
-        /// <param name="filename"></param>
-        /// <returns></returns>
-        public static async Task<TaskResult<string>> DownloadSingleFileAsync(
-            Uri downloadUri, string downloadDir, string filename)
-        {
-            var di = new DirectoryInfo(downloadDir);
-            if (!di.Exists) di.Create();
-
-            try
-            {
-                using var wc = new WebClient();
-                wc.Headers.Add(HttpRequestHeader.UserAgent, Ua);
-
-                await wc.DownloadFileTaskAsync(downloadUri, Path.Combine(downloadDir, filename)).ConfigureAwait(false);
-                return new TaskResult<string>(TaskResultStatus.Success);
-            }
-            catch (Exception ex)
-            {
-                return new TaskResult<string>(TaskResultStatus.Error, ex.GetBaseException().Message);
-            }
-        }
-
 
         #region 下载数据
 
@@ -128,7 +77,7 @@ namespace ProjBobcat.Class.Helper
         ///     下载文件（通过线程池）
         /// </summary>
         /// <param name="downloadProperty"></param>
-        private static async Task DownloadData(DownloadFile downloadProperty)
+        public static async Task DownloadData(DownloadFile downloadProperty)
         {
             var filePath = Path.Combine(downloadProperty.DownloadPath, downloadProperty.FileName);
             using var wcObj = ClientsPool.Get();
@@ -139,6 +88,7 @@ namespace ProjBobcat.Class.Helper
                 var downloadTask = wcObj.Value.SendAsync(request, HttpCompletionOption.ResponseContentRead,
                     CancellationToken.None);
 
+                downloadTask.Result.EnsureSuccessStatusCode();
                 using var streamToRead = await downloadTask.Result.Content.ReadAsStreamAsync();
 
                 downloadProperty.Changed?.Invoke(null,
@@ -236,10 +186,13 @@ namespace ProjBobcat.Class.Helper
 
             #region Get file size
 
-            var response = await WebRequest.Create(new Uri(downloadFile.DownloadUri)).GetResponseAsync()
-                .ConfigureAwait(false);
-            var responseLength = response.ContentLength;
-            var parallelDownloadSupported = (response.Headers.Get("Accept-Ranges")?.Contains("bytes") ?? false) &&
+            var headClient = ClientsPool.Get().Value;
+            using var message = new HttpRequestMessage(HttpMethod.Head, new Uri(downloadFile.DownloadUri));
+            var res = await headClient.SendAsync(message);
+            res.EnsureSuccessStatusCode();
+
+            var responseLength = res.Content.Headers.ContentLength ?? 0;
+            var parallelDownloadSupported = (res.Headers.AcceptRanges?.Contains("bytes") ?? false) &&
                                             responseLength != 0;
 
             if (!parallelDownloadSupported)

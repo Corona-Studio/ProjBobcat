@@ -97,9 +97,9 @@ namespace ProjBobcat.DefaultComponent.Launch
 
                 if (jvmRuleObj["value"].Type == JTokenType.Array)
                 {
-                    sb.Append(" ");
+                    sb.Append(' ');
                     foreach (var arg in jvmRuleObj["value"])
-                        sb.Append(" ").Append(StringHelper.FixArgument(arg.ToString()));
+                        sb.Append(' ').Append(StringHelper.FixArgument(arg.ToString()));
                 }
                 else
                 {
@@ -416,8 +416,8 @@ namespace ProjBobcat.DefaultComponent.Launch
 
                     if (string.IsNullOrEmpty(inherits[i].MinecraftArguments))
                     {
-                        jvmSb.Append(" ").Append(jvmArgs);
-                        gameArgsSb.Append(" ").Append(middleGameArgs.Item1);
+                        jvmSb.Append(' ').Append(jvmArgs);
+                        gameArgsSb.Append(' ').Append(middleGameArgs.Item1);
                         result.AvailableGameArguments = result.AvailableGameArguments
                             .Union(middleGameArgs.Item2)
                             .ToDictionary(x => x.Key, y => y.Value);

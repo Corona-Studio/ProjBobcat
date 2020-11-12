@@ -189,7 +189,7 @@ namespace ProjBobcat.DefaultComponent.Launch
 
                 //通过String Builder格式化参数。（转化成字符串）
                 //Format the arguments using string builder.(Convert to string)
-                arguments.ForEach(arg => sb.Append(arg.Trim()).Append(" "));
+                arguments.ForEach(arg => sb.Append(arg.Trim()).Append(' '));
                 InvokeLaunchLogThenStart(sb.ToString(), ref prevSpan, ref stopwatch);
 
                 #endregion

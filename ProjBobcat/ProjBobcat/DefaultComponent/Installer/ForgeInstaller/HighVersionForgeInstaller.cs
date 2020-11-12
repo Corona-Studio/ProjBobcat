@@ -70,10 +70,19 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
             var di = new DirectoryInfo(RootPath);
             di.CreateSubdirectory("Temp");
 
-            var taskResult = await DownloadHelper.DownloadSingleFileAsync(new Uri(HeadlessInstallerDownloadUri),
-                Path.Combine(di.FullName, "Temp"), "HeadlessInstaller.jar").ConfigureAwait(false);
-
-            if (taskResult.TaskStatus == TaskResultStatus.Error)
+            var dp = new DownloadFile
+            {
+                DownloadUri = HeadlessInstallerDownloadUri,
+                DownloadPath = Path.Combine(di.FullName, "Temp"),
+                FileName = "HeadlessInstaller.jar"
+            };
+            
+            try
+            {
+                await DownloadHelper.DownloadData(dp);
+            }
+            catch (Exception e)
+            {
                 return new ForgeInstallResult
                 {
                     Succeeded = false,
@@ -81,9 +90,11 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                     {
                         Cause = "Headless安装工具下载",
                         Error = "Headless安装工具下载失败",
-                        ErrorMessage = "Headless安装工具下载失败，请检查您的网络连接"
+                        ErrorMessage = "Headless安装工具下载失败，请检查您的网络连接",
+                        Exception = e
                     }
                 };
+            }
 
             var classes = new List<string>
             {

@@ -101,9 +101,9 @@ namespace ProjBobcat.DefaultComponent
 
             _needToDownload = downloadList.Count;
 
-            var result = await DownloadFiles(downloadList).ConfigureAwait(true);
+            var (item1, item2) = await DownloadFiles(downloadList);
 
-            return new TaskResult<bool>(result.Item1, value: result.Item2);
+            return new TaskResult<bool>(item1, value: item2);
         }
 
         /// <summary>
@@ -115,8 +115,7 @@ namespace ProjBobcat.DefaultComponent
 
         private async Task<Tuple<TaskResultStatus, bool>> DownloadFiles(IEnumerable<DownloadFile> downloadList)
         {
-            await DownloadHelper.AdvancedDownloadListFile(downloadList, DownloadParts)
-                .ConfigureAwait(false);
+            await DownloadHelper.AdvancedDownloadListFile(downloadList, DownloadParts);
 
             var resultType = _isNormalFileFailed ? TaskResultStatus.PartialSuccess : TaskResultStatus.Success;
 
