@@ -10,8 +10,7 @@ namespace ProjBobcat.Class.Helper
     /// </summary>
     public static class RandomHelper
     {
-        [ThreadStatic]
-        private static RandomNumberGenerator _random;
+        [ThreadStatic] private static RandomNumberGenerator _random;
 
         private static RandomNumberGenerator Random
         {
@@ -35,7 +34,7 @@ namespace ProjBobcat.Class.Helper
         }
 
         /// <summary>
-        /// 生成一个完全随机数
+        ///     生成一个完全随机数
         /// </summary>
         /// <param name="min"></param>
         /// <param name="max"></param>
@@ -51,12 +50,12 @@ namespace ProjBobcat.Class.Helper
                 scale = BitConverter.ToUInt32(fourBytes, 0);
             }
 
-            return (int)(min + (max - min) *
-                (scale / (double)uint.MaxValue));
+            return (int) (min + (max - min) *
+                (scale / (double) uint.MaxValue));
         }
 
         /// <summary>
-        /// 随机打乱集合当中的元素
+        ///     随机打乱集合当中的元素
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="list"></param>

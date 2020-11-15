@@ -23,6 +23,9 @@ namespace ProjBobcat.Interface
         /// </summary>
         bool CheckFile { get; set; }
 
+        public int TotalDownloaded { get; set; }
+        public int NeedToDownload { get; set; }
+
         /// <summary>
         ///     游戏资源解析器集合
         /// </summary>

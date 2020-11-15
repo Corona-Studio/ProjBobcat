@@ -100,7 +100,7 @@ namespace ProjBobcat.Authenticator
                 ContractResolver = new CamelCasePropertyNamesContractResolver()
             });
 
-            var resultJson = await HttpHelper.Post(LoginAddress, requestJson).ConfigureAwait(true);
+            using var resultJson = await HttpHelper.Post(LoginAddress, requestJson).ConfigureAwait(true);
             var content = await resultJson.Content.ReadAsStringAsync().ConfigureAwait(true);
             var result = JsonConvert.DeserializeObject<AuthResponseModel>(content);
 
@@ -218,7 +218,7 @@ namespace ProjBobcat.Authenticator
                 ContractResolver = new CamelCasePropertyNamesContractResolver()
             });
 
-            var resultJson = await HttpHelper.Post(RefreshAddress, requestJson).ConfigureAwait(true);
+            using var resultJson = await HttpHelper.Post(RefreshAddress, requestJson).ConfigureAwait(true);
             var content = await resultJson.Content.ReadAsStringAsync().ConfigureAwait(true);
             var result = JsonConvert.DeserializeObject<object>(content);
 
@@ -295,7 +295,7 @@ namespace ProjBobcat.Authenticator
                 ContractResolver = new CamelCasePropertyNamesContractResolver()
             });
 
-            var result = await HttpHelper.Post(ValidateAddress, requestJson).ConfigureAwait(true);
+            using var result = await HttpHelper.Post(ValidateAddress, requestJson).ConfigureAwait(true);
             return result.StatusCode.Equals(HttpStatusCode.NoContent);
         }
 
@@ -311,7 +311,7 @@ namespace ProjBobcat.Authenticator
                 ContractResolver = new CamelCasePropertyNamesContractResolver()
             });
 
-            _ = await HttpHelper.Post(RevokeAddress, requestJson).ConfigureAwait(true);
+            using var x = await HttpHelper.Post(RevokeAddress, requestJson).ConfigureAwait(true);
         }
 
         /// <summary>
@@ -331,7 +331,7 @@ namespace ProjBobcat.Authenticator
                 ContractResolver = new CamelCasePropertyNamesContractResolver()
             });
 
-            var result = await HttpHelper.Post(SignOutAddress, requestJson).ConfigureAwait(true);
+            using var result = await HttpHelper.Post(SignOutAddress, requestJson).ConfigureAwait(true);
             return result.StatusCode.Equals(HttpStatusCode.NoContent);
         }
     }

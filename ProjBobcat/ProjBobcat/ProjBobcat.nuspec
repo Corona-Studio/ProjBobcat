@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<package >
+
+<package>
   <metadata>
     <id>ProjBobcat</id>
     <version>1.0.7.0</version>
@@ -9,7 +10,8 @@
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <license type="expression">MIT</license>
     <projectUrl>https://github.com/Corona-Studio/ProjBobcat</projectUrl>
-    <repository type="git" url="https://github.com/Corona-Studio/ProjBobcat" branch="master" commit="bbc97d66567752df9e36135af6cb7f3ac5e854e7" />
+    <repository type="git" url="https://github.com/Corona-Studio/ProjBobcat" branch="master"
+                commit="bbc97d66567752df9e36135af6cb7f3ac5e854e7" />
     <icon>Bobcat.png</icon>
     <description>The next-generation Minecraft launcher core written in C# providing the freest, fastest and the most complete experience.</description>
     <summary>The next-generation Minecraft launcher core written in C# providing the freest, fastest and the most complete experience.</summary>

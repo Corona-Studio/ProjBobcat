@@ -17,7 +17,8 @@ namespace ProjBobcat.DefaultComponent
     public class DefaultResourceCompleter : IResourceCompleter
     {
         private bool _isLibraryFailed, _isNormalFileFailed;
-        private int _totalDownloaded, _needToDownload;
+        public int TotalDownloaded { get; set; }
+        public int NeedToDownload { get; set; }
 
         public int DownloadParts { get; set; } = 16;
         public int TotalRetry { get; set; }
@@ -54,9 +55,9 @@ namespace ProjBobcat.DefaultComponent
 
             DownloadFileCompletedEvent += (sender, args) =>
             {
-                _totalDownloaded++;
+                TotalDownloaded++;
 
-                InvokeDownloadProgressChangedEvent((double) _totalDownloaded / _needToDownload);
+                InvokeDownloadProgressChangedEvent((double) TotalDownloaded / NeedToDownload);
             };
 
             DownloadFileCompletedEvent += (sender, args) =>
@@ -99,7 +100,7 @@ namespace ProjBobcat.DefaultComponent
                     }
                 ).OrderByDescending(x => x.FileSize).ToList();
 
-            _needToDownload = downloadList.Count;
+            NeedToDownload = downloadList.Count;
 
             var (item1, item2) = await DownloadFiles(downloadList);
 

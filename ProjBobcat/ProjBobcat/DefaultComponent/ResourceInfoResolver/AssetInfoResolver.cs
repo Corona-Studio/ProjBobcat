@@ -14,10 +14,16 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
 {
     public class AssetInfoResolver : IResourceInfoResolver
     {
-        private string _basePath;
-        public string AssetIndexUriRoot { get; set; }
+        private string _assetIndexUrlRoot;
+        public string AssetIndexUriRoot
+        {
+            get => _assetIndexUrlRoot;
+            set => _assetIndexUrlRoot = value.TrimEnd('/');
+        }
+
         public string AssetUriRoot { get; set; } = "https://resources.download.minecraft.net/";
 
+        private string _basePath;
         public string BasePath
         {
             get => _basePath.TrimEnd('\\');
@@ -65,7 +71,16 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                     FileName = $"{VersionInfo.AssetInfo.Id}.json",
                     DownloadUri = assetIndexDownloadUri
                 };
-                await DownloadHelper.DownloadData(dp);
+
+                try
+                {
+                    await DownloadHelper.DownloadData(dp);
+                }
+                catch (Exception e)
+                {
+                    LogGameResourceInfoResolveStatus($"解析Asset Indexes 文件失败！原因：{e.Message}", LogType.Error);
+                    return default;
+                }
 
                 LogGameResourceInfoResolveStatus("Asset Indexes 文件下载完成", LogType.Success);
             }

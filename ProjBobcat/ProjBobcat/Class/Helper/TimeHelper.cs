@@ -3,12 +3,12 @@
 namespace ProjBobcat.Class.Helper
 {
     /// <summary>
-    /// 时间戳助手
+    ///     时间戳助手
     /// </summary>
     public static class TimeHelper
     {
         /// <summary>
-        /// Unix11 时间戳（11位）转 DateTIme
+        ///     Unix11 时间戳（11位）转 DateTIme
         /// </summary>
         /// <param name="time"></param>
         /// <returns></returns>
@@ -19,7 +19,7 @@ namespace ProjBobcat.Class.Helper
         }
 
         /// <summary>
-        /// Unix11 时间戳（13位）转 DateTIme
+        ///     Unix11 时间戳（13位）转 DateTIme
         /// </summary>
         /// <param name="time"></param>
         /// <returns></returns>

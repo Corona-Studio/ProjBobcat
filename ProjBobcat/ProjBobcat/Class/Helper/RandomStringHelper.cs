@@ -149,7 +149,7 @@ namespace ProjBobcat.Class.Helper
         }
 
         /// <summary>
-        /// 随机打乱启用的元素
+        ///     随机打乱启用的元素
         /// </summary>
         /// <param name="times"></param>
         /// <returns></returns>

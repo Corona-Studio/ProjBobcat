@@ -1,7 +1,10 @@
-﻿using System;
+﻿using ProjBobcat.Class.Model;
+using ProjBobcat.Event;
+using ProjBobcat.Handler;
+using SafeObjectPool;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -10,10 +13,6 @@ using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using ProjBobcat.Class.Model;
-using ProjBobcat.Event;
-using ProjBobcat.Handler;
-using SafeObjectPool;
 
 namespace ProjBobcat.Class.Helper
 {
@@ -22,15 +21,15 @@ namespace ProjBobcat.Class.Helper
     /// </summary>
     public static class DownloadHelper
     {
+        private static int _downloadThread;
+
         /// <summary>
         ///     获取或设置用户代理信息。
         /// </summary>
         public static string Ua { get; set; } = "ProjBobcat";
 
-        private static int _downloadThread;
-
         /// <summary>
-        /// 下载线程
+        ///     下载线程
         /// </summary>
         public static int DownloadThread
         {
@@ -40,36 +39,35 @@ namespace ProjBobcat.Class.Helper
                 if (_downloadThread == value) return;
 
                 _downloadThread = value;
+
                 ClientsPool.Dispose();
-                ClientsPool = new ObjectPool<HttpClient>(value + 2,
-                    () =>
-                    {
-                        var client = new HttpClient(new RetryHandler(new HttpClientHandler(), RetryCount));
-
-                        client.DefaultRequestHeaders.ConnectionClose = false;
-                        client.Timeout = TimeSpan.FromMinutes(5);
-
-                        return client;
-                    });
+                ClientsPool = GetObjectPool(value * 2);
             }
         }
 
         /// <summary>
-        /// 最大重试计数
+        ///     最大重试计数
         /// </summary>
-        public static int RetryCount { get; set; } = 10;
+        public static int RetryCount { get; set; } = 5;
 
-        private static ObjectPool<HttpClient> ClientsPool { get; set; } = new ObjectPool<HttpClient>(12,
-            () =>
-            {
-                var client = new HttpClient(new RetryHandler(new HttpClientHandler(), RetryCount));
+        private static ObjectPool<HttpClient> ClientsPool { get; set; } = GetObjectPool(30);
 
-                client.DefaultRequestHeaders.ConnectionClose = false;
-                client.Timeout = TimeSpan.FromMinutes(5);
+        private static ObjectPool<HttpClient> GetObjectPool(int num)
+        {
+            return new ObjectPool<HttpClient>(num,
+                () =>
+                {
+                    var client = new HttpClient(new RetryHandler(new RedirectHandler(new HttpClientHandler
+                    {
+                        AllowAutoRedirect = false
+                    }), RetryCount));
 
-                return client;
-            });
+                    client.DefaultRequestHeaders.ConnectionClose = false;
+                    client.Timeout = TimeSpan.FromMinutes(1.5);
 
+                    return client;
+                });
+        }
 
         #region 下载数据
 
@@ -80,23 +78,23 @@ namespace ProjBobcat.Class.Helper
         public static async Task DownloadData(DownloadFile downloadProperty)
         {
             var filePath = Path.Combine(downloadProperty.DownloadPath, downloadProperty.FileName);
-            using var wcObj = ClientsPool.Get();
+            using var client = await ClientsPool.GetAsync();
 
             try
             {
-                using var request = new HttpRequestMessage { RequestUri = new Uri(downloadProperty.DownloadUri) };
-                var downloadTask = wcObj.Value.SendAsync(request, HttpCompletionOption.ResponseContentRead,
+                using var request = new HttpRequestMessage {RequestUri = new Uri(downloadProperty.DownloadUri)};
+                using var downloadTask = await client.Value.SendAsync(request, HttpCompletionOption.ResponseContentRead,
                     CancellationToken.None);
 
-                downloadTask.Result.EnsureSuccessStatusCode();
-                using var streamToRead = await downloadTask.Result.Content.ReadAsStreamAsync();
+                // downloadTask.EnsureSuccessStatusCode();
+                using var streamToRead = await downloadTask.Content.ReadAsStreamAsync();
 
                 downloadProperty.Changed?.Invoke(null,
                     new DownloadFileChangedEventArgs
                     {
                         ProgressPercentage = 1,
-                        BytesReceived = downloadTask.Result.Content.Headers.ContentLength ?? 0,
-                        TotalBytes = downloadTask.Result.Content.Headers.ContentLength
+                        BytesReceived = downloadTask.Content.Headers.ContentLength ?? 0,
+                        TotalBytes = downloadTask.Content.Headers.ContentLength
                     });
 
                 using (var fileToWriteTo = File.Open(filePath, FileMode.OpenOrCreate,
@@ -131,28 +129,35 @@ namespace ProjBobcat.Class.Helper
             ProcessorHelper.SetMaxThreads();
 
             var filesBlock =
-                new TransformManyBlock<IEnumerable<DownloadFile>, DownloadFile>(d => d,
+                new TransformManyBlock<IEnumerable<DownloadFile>, DownloadFile>(d =>
+                    {
+                        var dl = d.ToList();
+
+                        foreach (var df in dl.Where(df => !Directory.Exists(df.DownloadPath)))
+                        {
+                            Directory.CreateDirectory(df.DownloadPath);
+                        }
+
+                        return dl;
+                    },
                     new ExecutionDataflowBlockOptions());
 
             var actionBlock = new ActionBlock<DownloadFile>(async d =>
             {
-                if (!Directory.Exists(d.DownloadPath)) Directory.CreateDirectory(d.DownloadPath);
-
                 if (d.FileSize >= 1048576 || d.FileSize == 0)
                     await MultiPartDownloadTaskAsync(d, downloadParts);
                 else
                     await DownloadData(d);
             }, new ExecutionDataflowBlockOptions
             {
-                BoundedCapacity = Environment.ProcessorCount,
-                MaxDegreeOfParallelism = Environment.ProcessorCount
+                BoundedCapacity = DownloadThread,
+                MaxDegreeOfParallelism = DownloadThread
             });
 
             var linkOptions = new DataflowLinkOptions {PropagateCompletion = true};
             filesBlock.LinkTo(actionBlock, linkOptions);
-            filesBlock.Post(fileEnumerable.ToList());
+            filesBlock.Post(fileEnumerable);
             filesBlock.Complete();
-
 
             await actionBlock.Completion;
         }
@@ -186,13 +191,22 @@ namespace ProjBobcat.Class.Helper
 
             #region Get file size
 
-            var headClient = ClientsPool.Get().Value;
-            using var message = new HttpRequestMessage(HttpMethod.Head, new Uri(downloadFile.DownloadUri));
-            var res = await headClient.SendAsync(message);
-            res.EnsureSuccessStatusCode();
+            using var headClient = await ClientsPool.GetAsync();
 
-            var responseLength = res.Content.Headers.ContentLength ?? 0;
-            var parallelDownloadSupported = (res.Headers.AcceptRanges?.Contains("bytes") ?? false) &&
+            using var message = new HttpRequestMessage(HttpMethod.Head, new Uri(downloadFile.DownloadUri));
+            using var res1 = await headClient.Value.SendAsync(message);
+
+            using var message2 = new HttpRequestMessage(HttpMethod.Head, new Uri(downloadFile.DownloadUri));
+            message2.Headers.Range =
+                new RangeHeaderValue(0, Math.Max(res1.Content.Headers.ContentLength / 2 ?? 0, 1));
+
+            using var res2 = await headClient.Value.SendAsync(message2);
+
+            // res1.EnsureSuccessStatusCode();
+            // res2.EnsureSuccessStatusCode();
+
+            var responseLength = res1.Content.Headers.ContentLength ?? 0;
+            var parallelDownloadSupported = res2.StatusCode == HttpStatusCode.PartialContent &&
                                             responseLength != 0;
 
             if (!parallelDownloadSupported)
@@ -206,7 +220,11 @@ namespace ProjBobcat.Class.Helper
             using var clientsPool = new ObjectPool<HttpClient>(10,
                 () =>
                 {
-                    var client = new HttpClient(new RetryHandler(new HttpClientHandler(), RetryCount))
+                    var client = new HttpClient(new RetryHandler(new RetryHandler(new RedirectHandler(
+                            new HttpClientHandler
+                            {
+                                AllowAutoRedirect = false
+                            })), RetryCount))
                         {MaxResponseContentBufferSize = responseLength};
 
                     client.DefaultRequestHeaders.ConnectionClose = false;
@@ -277,7 +295,7 @@ namespace ProjBobcat.Class.Helper
                     {
                         using var wcObj = clientsPool.Get();
 
-                        var request = new HttpRequestMessage {RequestUri = new Uri(downloadFile.DownloadUri)};
+                        using var request = new HttpRequestMessage {RequestUri = new Uri(downloadFile.DownloadUri)};
                         request.Headers.ConnectionClose = false;
                         request.Headers.Range = new RangeHeaderValue(p.Start, p.End);
 
@@ -291,13 +309,15 @@ namespace ProjBobcat.Class.Helper
                         return returnTuple;
                     }, new ExecutionDataflowBlockOptions
                     {
-                        BoundedCapacity = Environment.ProcessorCount,
-                        MaxDegreeOfParallelism = Environment.ProcessorCount
+                        BoundedCapacity = DownloadThread,
+                        MaxDegreeOfParallelism = DownloadThread
                     });
 
                 var writeActionBlock = new ActionBlock<Tuple<Task<HttpResponseMessage>, DownloadRange>>(async t =>
                 {
-                    using var streamToRead = await t.Item1.Result.Content.ReadAsStreamAsync();
+                    using var res = await t.Item1;
+                    using var streamToRead = await res.Content.ReadAsStreamAsync();
+
                     using (var fileToWriteTo = File.Open(t.Item2.TempFileName, FileMode.OpenOrCreate,
                         FileAccess.ReadWrite, FileShare.ReadWrite))
                     {
@@ -317,10 +337,11 @@ namespace ProjBobcat.Class.Helper
                         });
 
                     doneRanges.TryTake(out _);
+
                 }, new ExecutionDataflowBlockOptions
                 {
-                    BoundedCapacity = Environment.ProcessorCount,
-                    MaxDegreeOfParallelism = Environment.ProcessorCount
+                    BoundedCapacity = DownloadThread,
+                    MaxDegreeOfParallelism = DownloadThread
                 });
 
                 var linkOptions = new DataflowLinkOptions {PropagateCompletion = true};

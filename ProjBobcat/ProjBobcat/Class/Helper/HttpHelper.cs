@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using ProjBobcat.Handler;
 
 namespace ProjBobcat.Class.Helper
 {
@@ -13,6 +14,14 @@ namespace ProjBobcat.Class.Helper
     /// </summary>
     public static class HttpHelper
     {
+        [ThreadStatic] private static HttpClient _client;
+
+        private static HttpClient Client =>
+            _client ?? (_client = new HttpClient(new RedirectHandler(new HttpClientHandler
+            {
+                AllowAutoRedirect = false
+            })));
+
         /// <summary>
         ///     正则匹配Uri
         /// </summary>
@@ -32,10 +41,9 @@ namespace ProjBobcat.Class.Helper
         /// <returns>获取到的字符串</returns>
         public static async Task<string> Get(string address)
         {
-            using var client = new HttpClient();
             var acceptLanguage = new StringWithQualityHeaderValue(CultureInfo.CurrentCulture.Name);
-            client.DefaultRequestHeaders.AcceptLanguage.Add(acceptLanguage);
-            return await client.GetStringAsync(new Uri(address)).ConfigureAwait(true);
+            Client.DefaultRequestHeaders.AcceptLanguage.Add(acceptLanguage);
+            return await Client.GetStringAsync(new Uri(address));
         }
 
         /// <summary>
@@ -48,12 +56,11 @@ namespace ProjBobcat.Class.Helper
         public static async Task<HttpResponseMessage> Post(string address, string data,
             string contentType = "application/json")
         {
-            using var client = new HttpClient();
             using var content = new StringContent(data);
             content.Headers.ContentType = new MediaTypeWithQualityHeaderValue(contentType);
             var acceptLanguage = new StringWithQualityHeaderValue(CultureInfo.CurrentCulture.Name);
-            client.DefaultRequestHeaders.AcceptLanguage.Add(acceptLanguage);
-            var response = await client.PostAsync(new Uri(address), content).ConfigureAwait(true);
+            Client.DefaultRequestHeaders.AcceptLanguage.Add(acceptLanguage);
+            var response = await Client.PostAsync(new Uri(address), content);
             return response;
         }
 
@@ -67,12 +74,11 @@ namespace ProjBobcat.Class.Helper
         public static async Task<HttpResponseMessage> PostWithParams(string address,
             IEnumerable<KeyValuePair<string, string>> param, string contentType = "application/json")
         {
-            using var client = new HttpClient();
             using var content = new FormUrlEncodedContent(param);
             content.Headers.ContentType = new MediaTypeWithQualityHeaderValue(contentType);
             var acceptLanguage = new StringWithQualityHeaderValue(CultureInfo.CurrentCulture.Name);
-            client.DefaultRequestHeaders.AcceptLanguage.Add(acceptLanguage);
-            var response = await client.PostAsync(new Uri(address), content).ConfigureAwait(true);
+            Client.DefaultRequestHeaders.AcceptLanguage.Add(acceptLanguage);
+            var response = await Client.PostAsync(new Uri(address), content);
             return response;
         }
     }

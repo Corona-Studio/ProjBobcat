@@ -76,7 +76,7 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                 DownloadPath = Path.Combine(di.FullName, "Temp"),
                 FileName = "HeadlessInstaller.jar"
             };
-            
+
             try
             {
                 await DownloadHelper.DownloadData(dp);

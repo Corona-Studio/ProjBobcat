@@ -2,7 +2,7 @@
 
 namespace ProjBobcat.Class.Helper
 {
-    public class GameRegexHelper
+    public static class GameRegexHelper
     {
         public const string GameVersionRegexStr = "[0-9]{1,}.[0-9]{1,}[.]?[0-9]{0,}";
 
