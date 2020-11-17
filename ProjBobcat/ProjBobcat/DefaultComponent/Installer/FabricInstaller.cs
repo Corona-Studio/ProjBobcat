@@ -53,7 +53,7 @@ namespace ProjBobcat.DefaultComponent.Installer
             var mainClass = loaderArtifact.LauncherMeta.MainClass.Client;
             var inheritsFrom = mcVersion;
 
-            var installPath = GamePathHelper.GetGamePath(RootPath, id);
+            var installPath = Path.Combine(RootPath, GamePathHelper.GetGamePath(id));
             var di = new DirectoryInfo(installPath);
 
             if (!di.Exists)

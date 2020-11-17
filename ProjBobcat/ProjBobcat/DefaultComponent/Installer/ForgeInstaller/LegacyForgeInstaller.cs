@@ -66,7 +66,7 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                 var fileName = profileModel.VersionInfo.Id;
                 InvokeStatusChangedEvent("解析完成", 0.75);
 
-                var installDir = GamePathHelper.GetGamePath(RootPath, fileName);
+                var installDir = Path.Combine(RootPath, GamePathHelper.GetGamePath(fileName));
                 var jsonPath = GamePathHelper.GetGameJsonPath(RootPath, fileName);
 
                 var forgeDi = new DirectoryInfo(installDir);

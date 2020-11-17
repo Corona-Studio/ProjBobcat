@@ -15,6 +15,9 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
     public class AssetInfoResolver : IResourceInfoResolver
     {
         private string _assetIndexUrlRoot;
+
+        private string _basePath;
+
         public string AssetIndexUriRoot
         {
             get => _assetIndexUrlRoot;
@@ -23,7 +26,6 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
 
         public string AssetUriRoot { get; set; } = "https://resources.download.minecraft.net/";
 
-        private string _basePath;
         public string BasePath
         {
             get => _basePath.TrimEnd('\\');
@@ -46,9 +48,9 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
             if (string.IsNullOrEmpty(VersionInfo?.AssetInfo.Id)) return default;
 
             var assetIndexesDi =
-                new DirectoryInfo(Path.Combine(GamePathHelper.GetAssetsRoot(BasePath), "indexes"));
+                new DirectoryInfo(Path.Combine(BasePath, GamePathHelper.GetAssetsRoot(), "indexes"));
             var assetObjectsDi =
-                new DirectoryInfo(Path.Combine(GamePathHelper.GetAssetsRoot(BasePath), "objects"));
+                new DirectoryInfo(Path.Combine(BasePath, GamePathHelper.GetAssetsRoot(), "objects"));
 
             if (!assetIndexesDi.Exists) assetIndexesDi.Create();
             if (!assetObjectsDi.Exists) assetObjectsDi.Create();
@@ -62,7 +64,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                 {
                     var assetIndexUriRoot = HttpHelper.RegexMatchUri(VersionInfo.AssetInfo.Url).TrimEnd('/');
                     assetIndexDownloadUri =
-                        $"{AssetIndexUriRoot}{assetIndexDownloadUri.Substring(assetIndexUriRoot.Length)}";
+                        $"{AssetIndexUriRoot}{assetIndexDownloadUri[assetIndexUriRoot.Length..]}";
                 }
 
                 var dp = new DownloadFile
@@ -109,7 +111,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
 
             var lostAssets = (from asset in assetObject.Objects
                     let hash = asset.Value.Hash
-                    let twoDigitsHash = hash.Substring(0, 2)
+                    let twoDigitsHash = hash[..2]
                     let path = Path.Combine(assetObjectsDi.FullName, twoDigitsHash)
                     where !File.Exists(Path.Combine(path, asset.Value.Hash))
                     select new AssetDownloadInfo

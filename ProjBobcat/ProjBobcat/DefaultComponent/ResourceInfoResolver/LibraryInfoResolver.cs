@@ -33,16 +33,18 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                 if (!(VersionInfo?.Natives?.Any() ?? false)) return default;
                 if (!(VersionInfo?.Libraries?.Any() ?? false)) return default;
 
-                var libDi = new DirectoryInfo(GamePathHelper.GetLibraryRootPath(BasePath));
+                var libDi = new DirectoryInfo(Path.Combine(BasePath, GamePathHelper.GetLibraryRootPath()));
 
                 if (!libDi.Exists) libDi.Create();
 
                 var lostLibrary = (from lib in VersionInfo.Libraries
-                    where !File.Exists(GamePathHelper.GetLibraryPath(BasePath, lib.Path.Replace('/', '\\')))
+                    where !File.Exists(Path.Combine(BasePath,
+                        GamePathHelper.GetLibraryPath(lib.Path.Replace('/', '\\'))))
                     select lib).ToList();
 
                 lostLibrary.AddRange(from native in VersionInfo.Natives
-                    where !File.Exists(GamePathHelper.GetLibraryPath(BasePath, native.FileInfo.Path.Replace('/', '\\')))
+                    where !File.Exists(Path.Combine(BasePath,
+                        GamePathHelper.GetLibraryPath(native.FileInfo.Path.Replace('/', '\\'))))
                     select native.FileInfo);
 
                 var result = new List<IGameResource>();
@@ -56,9 +58,9 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                         uri = $"{LibraryUriRoot}{lL.Path.Replace('\\', '/')}";
 
                     var symbolIndex = lL.Path.LastIndexOf('/');
-                    var fileName = lL.Path.Substring(symbolIndex + 1);
-                    var path = GamePathHelper.GetLibraryPath(BasePath,
-                        lL.Path.Substring(0, symbolIndex).Replace('/', '\\'));
+                    var fileName = lL.Path[(symbolIndex + 1)..];
+                    var path = Path.Combine(BasePath,
+                        GamePathHelper.GetLibraryPath(lL.Path[..symbolIndex].Replace('/', '\\')));
                     result.Add(new LibraryDownloadInfo
                     {
                         Path = path,
@@ -72,7 +74,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                 }
 
                 LogGameResourceInfoResolveStatus("检查Library完成");
-                return (IEnumerable<IGameResource>) result;
+                return result.AsEnumerable();
             });
         }
 

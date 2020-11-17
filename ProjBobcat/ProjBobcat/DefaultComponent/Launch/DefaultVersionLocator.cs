@@ -257,7 +257,7 @@ namespace ProjBobcat.DefaultComponent.Launch
         {
             // 预防I/O的错误。
             // Prevents errors related to I/O.
-            if (!Directory.Exists(GamePathHelper.GetGamePath(RootPath, id)))
+            if (!Directory.Exists(Path.Combine(RootPath, GamePathHelper.GetGamePath(id))))
                 return null;
             if (!File.Exists(GamePathHelper.GetGameJsonPath(RootPath, id)))
                 return null;
@@ -459,12 +459,14 @@ namespace ProjBobcat.DefaultComponent.Launch
             ProcessProfile:
             var oldProfile = LauncherProfileParser.LauncherProfile.Profiles.FirstOrDefault(p =>
                 p.Value.LastVersionId?.Equals(id, StringComparison.Ordinal) ?? true);
+
+            var gamePath = Path.Combine(RootPath, GamePathHelper.GetGamePath(id));
             if (oldProfile.Equals(default(KeyValuePair<string, GameProfileModel>)))
             {
                 LauncherProfileParser.LauncherProfile.Profiles.Add(randomName.ToGuidHash().ToString("N"),
                     new GameProfileModel
                     {
-                        GameDir = GamePathHelper.GetGamePath(RootPath, id),
+                        GameDir = gamePath,
                         LastVersionId = id,
                         Name = randomName,
                         Created = DateTime.Now
@@ -474,7 +476,7 @@ namespace ProjBobcat.DefaultComponent.Launch
             }
 
             result.Name = oldProfile.Value.Name;
-            oldProfile.Value.GameDir = GamePathHelper.GetGamePath(RootPath, id);
+            oldProfile.Value.GameDir = gamePath;
             oldProfile.Value.LastVersionId = id;
             LauncherProfileParser.LauncherProfile.Profiles[oldProfile.Key] = oldProfile.Value;
             LauncherProfileParser.SaveProfile();

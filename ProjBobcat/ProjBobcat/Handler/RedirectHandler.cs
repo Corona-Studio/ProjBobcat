@@ -25,9 +25,7 @@ namespace ProjBobcat.Handler
             _currentRetries++;
             var redirectUri = response.Headers.Location;
             if (!redirectUri.IsAbsoluteUri)
-            {
                 redirectUri = new Uri(request.RequestUri.GetLeftPart(UriPartial.Authority) + redirectUri);
-            }
 
             Console.WriteLine("重定向至：" + redirectUri);
 
@@ -40,7 +38,7 @@ namespace ProjBobcat.Handler
             CancellationToken cancellationToken)
         {
             var response = await base.SendAsync(request, cancellationToken);
-            var statusCode = (int)response.StatusCode;
+            var statusCode = (int) response.StatusCode;
 
             return statusCode >= 300 && statusCode <= 399
                 ? _currentRetries == _maxRetries ? response :

@@ -206,7 +206,8 @@ namespace ProjBobcat.DefaultComponent.Launch
                     version.Natives.ForEach(n =>
                     {
                         var path =
-                            $"{GamePathHelper.GetLibraryPath(RootPath.TrimEnd('\\'), string.Empty)}\\{n.FileInfo.Path.Replace('/', '\\')}";
+                            Path.Combine(RootPath, GamePathHelper.GetLibraryPath(string.Empty),
+                                n.FileInfo.Path.Replace('/', '\\'));
                         using var stream =
                             File.OpenRead(path);
                         using var reader = ReaderFactory.Open(stream);
@@ -246,7 +247,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                     Process = Process.Start(new ProcessStartInfo(executable, sb.ToString())
                     {
                         UseShellExecute = false,
-                        WorkingDirectory = settings.GameResourcePath,
+                        WorkingDirectory = RootPath,
                         RedirectStandardError = true,
                         RedirectStandardOutput = true
                     })

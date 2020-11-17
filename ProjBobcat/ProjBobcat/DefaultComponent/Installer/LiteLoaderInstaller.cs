@@ -69,7 +69,7 @@ namespace ProjBobcat.DefaultComponent.Installer
                 InheritsFrom = versionModel.McVersion
             };
 
-            var gamePath = GamePathHelper.GetGamePath(RootPath, id);
+            var gamePath = Path.Combine(RootPath, GamePathHelper.GetGamePath(id));
             var di = new DirectoryInfo(gamePath);
 
             if (!di.Exists)

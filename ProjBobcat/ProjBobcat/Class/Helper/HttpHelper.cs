@@ -5,7 +5,6 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using ProjBobcat.Handler;
 
 namespace ProjBobcat.Class.Helper
 {
@@ -14,13 +13,7 @@ namespace ProjBobcat.Class.Helper
     /// </summary>
     public static class HttpHelper
     {
-        [ThreadStatic] private static HttpClient _client;
-
-        private static HttpClient Client =>
-            _client ?? (_client = new HttpClient(new RedirectHandler(new HttpClientHandler
-            {
-                AllowAutoRedirect = false
-            })));
+        private static readonly HttpClient Client = HttpClientHelper.GetClient();
 
         /// <summary>
         ///     正则匹配Uri

@@ -21,9 +21,9 @@ namespace ProjBobcat.Class
         private protected GameProfileModel GameProfile { get; set; }
 
         public virtual string NativeRoot =>
-            GamePathHelper.GetNativeRoot(RootPath, LaunchSettings.Version);
+            GamePathHelper.GetNativeRoot(LaunchSettings.Version);
 
-        public virtual string AssetRoot => GamePathHelper.GetAssetsRoot(RootPath);
+        public virtual string AssetRoot => GamePathHelper.GetAssetsRoot();
 
         private protected string ClassPath { get; set; }
 

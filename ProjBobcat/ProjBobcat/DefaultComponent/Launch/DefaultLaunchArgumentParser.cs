@@ -37,10 +37,10 @@ namespace ProjBobcat.DefaultComponent.Launch
 
             ClassPath = string.Join(string.Empty,
                 VersionInfo.Libraries.Select(l =>
-                    $"{GamePathHelper.GetLibraryPath(launchSettings.GameResourcePath, l.Path.Replace('/', '\\'))};"));
+                    $"{GamePathHelper.GetLibraryPath(l.Path.Replace('/', '\\'))};"));
             ClassPath += string.IsNullOrEmpty(rootVersion)
-                ? GamePathHelper.GetGameExecutablePath(rootPath, launchSettings.Version)
-                : GamePathHelper.GetGameExecutablePath(rootPath, rootVersion);
+                ? GamePathHelper.GetGameExecutablePath(launchSettings.Version)
+                : GamePathHelper.GetGameExecutablePath(rootVersion);
             LastAuthResult = LaunchSettings.Authenticator.GetLastAuthResult();
         }
 
@@ -149,7 +149,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                 {"${assets_index_name}", $"\"{VersionInfo.AssetInfo.Id}\""},
                 {
                     "${game_directory}",
-                    $"\"{(string.IsNullOrWhiteSpace(LaunchSettings.GamePath) ? "/" : LaunchSettings.GamePath)}\""
+                    $"\"{GamePathHelper.GetGamePath(LaunchSettings.GameName)}\""
                 },
                 {"${auth_player_name}", authResult?.SelectedProfile?.Name},
                 {"${auth_uuid}", authResult?.SelectedProfile?.UUID.ToString()},

@@ -11,7 +11,6 @@ namespace ProjBobcat.Class.Helper
         /// <summary>
         ///     .minecraft/versions/
         /// </summary>
-        /// <param name="rootPath">指 ".minecraft/" </param>
         /// <returns></returns>
         public static string GetVersionPath(string rootPath)
         {
@@ -21,12 +20,11 @@ namespace ProjBobcat.Class.Helper
         /// <summary>
         ///     .minecraft/versions/{id}
         /// </summary>
-        /// <param name="rootPath">指.minecraft/ Refers to .minecraft/</param>
         /// <param name="id"></param>
         /// <returns></returns>
-        public static string GetGamePath(string rootPath, string id)
+        public static string GetGamePath(string id)
         {
-            return Path.Combine(rootPath, "versions", id);
+            return Path.Combine("versions", id);
         }
 
         /// <summary>
@@ -46,41 +44,38 @@ namespace ProjBobcat.Class.Helper
         /// <param name="rootPath">指.minecraft/ Refers to .minecraft/</param>
         /// <param name="id"></param>
         /// <returns></returns>
-        public static string GetGameExecutablePath(string rootPath, string id)
+        public static string GetGameExecutablePath(string id)
         {
-            return Path.Combine(rootPath, "versions", id, $"{id}.jar");
+            return Path.Combine("versions", id, $"{id}.jar");
         }
 
         /// <summary>
         ///     .minecraft/libraries/{libraryPath}/
         /// </summary>
-        /// <param name="rootPath">指.minecraft/ Refers to .minecraft/</param>
         /// <param name="libraryPath"></param>
         /// <returns></returns>
-        public static string GetLibraryPath(string rootPath, string libraryPath)
+        public static string GetLibraryPath(string libraryPath)
         {
-            return Path.Combine(rootPath, "libraries", libraryPath);
+            return Path.Combine("libraries", libraryPath);
         }
 
         /// <summary>
         ///     .minecraft/libraries/{libraryPath}/
         /// </summary>
-        /// <param name="rootPath">指.minecraft/ Refers to .minecraft/</param>
         /// <returns></returns>
-        public static string GetLibraryRootPath(string rootPath)
+        public static string GetLibraryRootPath()
         {
-            return Path.Combine(rootPath, "libraries");
+            return "libraries";
         }
 
         /// <summary>
         ///     .minecraft/versions/natives/
         /// </summary>
-        /// <param name="rootPath">指.minecraft/ Refers to .minecraft/</param>
         /// <param name="versionId"></param>
         /// <returns></returns>
-        public static string GetNativeRoot(string rootPath, string versionId)
+        public static string GetNativeRoot(string versionId)
         {
-            return Path.Combine(rootPath, "versions", versionId, "natives");
+            return Path.Combine("versions", versionId, "natives");
         }
 
         /// <summary>
@@ -97,11 +92,10 @@ namespace ProjBobcat.Class.Helper
         /// <summary>
         ///     .minecraft/assets/
         /// </summary>
-        /// <param name="rootPath">指.minecraft/ Refers to .minecraft/</param>
         /// <returns></returns>
-        public static string GetAssetsRoot(string rootPath)
+        public static string GetAssetsRoot()
         {
-            return Path.Combine(rootPath, "assets");
+            return "assets";
         }
 
         /// <summary>
@@ -109,9 +103,9 @@ namespace ProjBobcat.Class.Helper
         /// </summary>
         /// <param name="rootPath">指.minecraft/ Refers to .minecraft/</param>
         /// <returns></returns>
-        public static string GetLauncherProfilePath(string rootPath)
+        public static string GetLauncherProfilePath()
         {
-            return Path.Combine(rootPath, "launcher_profiles.json");
+            return "launcher_profiles.json";
         }
     }
 }

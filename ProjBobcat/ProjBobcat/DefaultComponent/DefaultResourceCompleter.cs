@@ -56,6 +56,12 @@ namespace ProjBobcat.DefaultComponent
             DownloadFileCompletedEvent += (sender, args) =>
             {
                 TotalDownloaded++;
+                if (!args.Success)
+                {
+                    var flag = args.File.FileType.Equals("Library/Native", StringComparison.Ordinal);
+                    _isLibraryFailed = flag || _isLibraryFailed;
+                    _isNormalFileFailed = !flag || _isLibraryFailed;
+                }
 
                 InvokeDownloadProgressChangedEvent((double) TotalDownloaded / NeedToDownload);
             };
@@ -98,7 +104,9 @@ namespace ProjBobcat.DefaultComponent
                         CheckSum = f.CheckSum,
                         FileType = f.Type
                     }
-                ).OrderByDescending(x => x.FileSize).ToList();
+                ).ToList();
+
+            downloadList.Shuffle();
 
             NeedToDownload = downloadList.Count;
 
