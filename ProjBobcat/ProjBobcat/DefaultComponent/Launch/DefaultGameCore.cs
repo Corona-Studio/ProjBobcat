@@ -213,7 +213,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                         using var reader = ReaderFactory.Open(stream);
                         while (reader.MoveToNextEntry())
                             if (!(n.Extract?.Exclude?.Contains(reader.Entry.Key) ?? false))
-                                reader.WriteEntryToDirectory(argumentParser.NativeRoot,
+                                reader.WriteEntryToDirectory(Path.Combine(RootPath, argumentParser.NativeRoot),
                                     new ExtractionOptions
                                     {
                                         ExtractFullPath = true,

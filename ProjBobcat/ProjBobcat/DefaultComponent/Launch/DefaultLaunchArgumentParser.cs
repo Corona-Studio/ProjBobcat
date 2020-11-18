@@ -149,7 +149,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                 {"${assets_index_name}", $"\"{VersionInfo.AssetInfo.Id}\""},
                 {
                     "${game_directory}",
-                    $"\"{GamePathHelper.GetGamePath(LaunchSettings.GameName)}\""
+                    $"\"{GamePathHelper.GetGamePath(LaunchSettings.Version)}\""
                 },
                 {"${auth_player_name}", authResult?.SelectedProfile?.Name},
                 {"${auth_uuid}", authResult?.SelectedProfile?.UUID.ToString()},
