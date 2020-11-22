@@ -160,14 +160,14 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
 
             if (args.Data.StartsWith("START", StringComparison.Ordinal))
             {
-                _currentStage = args.Data.Substring(7);
+                _currentStage = args.Data[7..];
                 InvokeStatusChangedEvent(_currentStage, _currentProgress);
                 return;
             }
 
             if (!args.Data.StartsWith("STAGE", StringComparison.Ordinal)) return;
 
-            _currentStage = args.Data.Substring(7);
+            _currentStage = args.Data[7..];
 
             if (_currentStage.Equals("INSTALL SUCCESSFUL", StringComparison.Ordinal))
             {

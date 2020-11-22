@@ -64,7 +64,7 @@ namespace ProjBobcat.DefaultComponent.Launch
             {
                 if (!(jvmRule is JObject))
                 {
-                    sb.Append($" {jvmRule}");
+                    sb.Append(' ').Append(jvmRule);
                     continue;
                 }
 
@@ -103,7 +103,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                 }
                 else
                 {
-                    sb.Append($" {StringHelper.FixArgument(jvmRuleObj["value"].ToString())}");
+                    sb.Append(' ').Append(StringHelper.FixArgument(jvmRuleObj["value"].ToString()));
                 }
             }
 
@@ -121,20 +121,21 @@ namespace ProjBobcat.DefaultComponent.Launch
             var sb = new StringBuilder();
             var availableArguments = new Dictionary<string, string>();
 
-            if (!string.IsNullOrEmpty(arguments.Item1))
+            var (item1, item2) = arguments;
+            if (!string.IsNullOrEmpty(item1))
             {
-                sb.Append(arguments.Item1);
+                sb.Append(item1);
                 return new Tuple<string, Dictionary<string, string>>(sb.ToString(), availableArguments);
             }
 
-            if (!(arguments.Item2?.Any() ?? false))
+            if (!(item2?.Any() ?? false))
                 return new Tuple<string, Dictionary<string, string>>(sb.ToString(), availableArguments);
 
-            foreach (var gameRule in arguments.Item2)
+            foreach (var gameRule in item2)
             {
                 if (!(gameRule is JObject))
                 {
-                    sb.Append($" {gameRule}");
+                    sb.Append(' ').Append(gameRule);
                     continue;
                 }
 
