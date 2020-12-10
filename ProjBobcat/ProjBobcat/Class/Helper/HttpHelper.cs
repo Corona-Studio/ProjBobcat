@@ -32,11 +32,30 @@ namespace ProjBobcat.Class.Helper
         /// </summary>
         /// <param name="address">Get地址</param>
         /// <returns>获取到的字符串</returns>
-        public static async Task<string> Get(string address)
+        public static async Task<string> Get(string address, Tuple<string, string> auth = default)
         {
             var acceptLanguage = new StringWithQualityHeaderValue(CultureInfo.CurrentCulture.Name);
             Client.DefaultRequestHeaders.AcceptLanguage.Add(acceptLanguage);
+
+            if (!(auth?.Equals(default) ?? true))
+            {
+                Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(auth.Item1, auth.Item2);
+            }
+
             return await Client.GetStringAsync(new Uri(address));
+        }
+
+        public static async Task<HttpResponseMessage> PostFormData(string address,
+            IEnumerable<KeyValuePair<string, string>> data, string contentType = "application/json")
+        {
+            using var req = new HttpRequestMessage(HttpMethod.Post, address)
+            {
+                Content = new FormUrlEncodedContent(data)
+            };
+            Client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(contentType));
+
+            var response = await Client.SendAsync(req);
+            return response;
         }
 
         /// <summary>
@@ -47,11 +66,20 @@ namespace ProjBobcat.Class.Helper
         /// <param name="contentType">ContentType</param>
         /// <returns></returns>
         public static async Task<HttpResponseMessage> Post(string address, string data,
-            string contentType = "application/json")
+            string contentType = "application/json", Tuple<string, string> auth = default)
         {
             using var content = new StringContent(data);
+
+            Client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(contentType));
+
+            if (!(auth?.Equals(default) ?? true))
+            {
+                Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(auth.Item1, auth.Item2);
+            }
+
             content.Headers.ContentType = new MediaTypeWithQualityHeaderValue(contentType);
             var acceptLanguage = new StringWithQualityHeaderValue(CultureInfo.CurrentCulture.Name);
+
             Client.DefaultRequestHeaders.AcceptLanguage.Add(acceptLanguage);
             var response = await Client.PostAsync(new Uri(address), content);
             return response;

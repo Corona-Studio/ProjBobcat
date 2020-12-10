@@ -7,11 +7,12 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
+using ProjBobcat.Class.Model.LauncherAccount;
 using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.YggdrasilAuth;
 using ProjBobcat.Interface;
 
-namespace ProjBobcat.Authenticator
+namespace ProjBobcat.DefaultComponent.Authenticator
 {
     /// <summary>
     ///     表示一个正版联机凭据验证器。
@@ -69,7 +70,7 @@ namespace ProjBobcat.Authenticator
         private string SignOutAddress =>
             $"{AuthServer}{(string.IsNullOrEmpty(AuthServer) ? OfficialAuthServer : "/authserver")}/signout";
 
-        public ILauncherProfileParser LauncherProfileParser { get; set; }
+        public ILauncherAccountParser LauncherAccountParser { get; set; }
 
         /// <summary>
         ///     验证凭据。
@@ -90,15 +91,12 @@ namespace ProjBobcat.Authenticator
         {
             var requestModel = new AuthRequestModel
             {
-                ClientToken = LauncherProfileParser.LauncherProfile.ClientToken,
+                ClientToken = LauncherAccountParser.LauncherAccount.MojangClientToken,
                 RequestUser = userField,
                 Username = Email,
                 Password = Password
             };
-            var requestJson = JsonConvert.SerializeObject(requestModel, new JsonSerializerSettings
-            {
-                ContractResolver = new CamelCasePropertyNamesContractResolver()
-            });
+            var requestJson = JsonConvert.SerializeObject(requestModel, JsonHelper.CamelCasePropertyNamesSettings);
 
             using var resultJson = await HttpHelper.Post(LoginAddress, requestJson).ConfigureAwait(true);
             var content = await resultJson.Content.ReadAsStringAsync().ConfigureAwait(true);
@@ -133,20 +131,51 @@ namespace ProjBobcat.Authenticator
                     }
                 };
 
+            if(string.IsNullOrEmpty(AuthServer) && result.SelectedProfile == null)
+                return new AuthResult
+                {
+                    AuthStatus = AuthStatus.Failed,
+                    Error = new ErrorModel
+                    {
+                        Error = "没有发现档案",
+                        ErrorMessage = "没有在返回消息中发现任何可用的档案",
+                        Cause = "可能是因为您还没有购买正版游戏或是账户服务器出现了问题！"
+                    }
+                };
+
             var profiles = result.AvailableProfiles.ToDictionary(profile => profile.UUID,
                 profile => new AuthProfileModel {DisplayName = profile.Name});
 
-            foreach (var kv in profiles.Where(kv =>
-                LauncherProfileParser.IsAuthInfoExist(kv.Key, kv.Value.DisplayName)))
-                LauncherProfileParser.RemoveAuthInfo(kv.Key);
+            foreach (var (playerUuid, authProfileModel) in profiles)
+            {
+                LauncherAccountParser.RemoveAccount(playerUuid.ToString(), authProfileModel.DisplayName);
+            }
 
-            LauncherProfileParser.AddNewAuthInfo(new AuthInfoModel
+            var rUuid = GuidHelper.NewGuidString();
+
+            var profile = new AccountModel
             {
                 AccessToken = result.AccessToken,
-                Profiles = profiles,
-                Properties = (result.User?.Properties).ToAuthProperties(profiles).ToList(),
-                UserName = profiles.First().Value.DisplayName
-            }, result.User!.UUID);
+                AccessTokenExpiresAt = DateTime.Now.AddHours(48),
+                EligibleForMigration = false,
+                HasMultipleProfiles = profiles.Count > 1,
+                Legacy = false,
+                LocalId = rUuid,
+                Persistent = true,
+                RemoteId = result.User.UUID.ToString(),
+                Type = "Mojang",
+                UserProperites = (result.User?.Properties).ToAuthProperties(profiles).ToList(),
+                Username = Email
+            };
+
+            if (result.SelectedProfile != null)
+                profile.MinecraftProfile = new AccountProfileModel
+                {
+                    Id = result.SelectedProfile.UUID.ToString(),
+                    Name = result.SelectedProfile.Name
+                };
+
+            LauncherAccountParser.AddNewAccount(rUuid, profile);
 
             return new AuthResult
             {
@@ -165,8 +194,8 @@ namespace ProjBobcat.Authenticator
         public AuthResult GetLastAuthResult()
         {
             var profile =
-                LauncherProfileParser.LauncherProfile.AuthenticationDatabase.Values.FirstOrDefault(a =>
-                    a.UserName.Equals(Email, StringComparison.OrdinalIgnoreCase));
+                LauncherAccountParser.LauncherAccount.Accounts.Values.FirstOrDefault(a =>
+                    a.Username.Equals(Email, StringComparison.OrdinalIgnoreCase));
 
             if (profile is null)
                 return new AuthResult
@@ -185,12 +214,23 @@ namespace ProjBobcat.Authenticator
                 {
                     AuthStatus = AuthStatus.Succeeded,
                     AccessToken = profile.AccessToken,
-                    Profiles = profile.Profiles
-                        .Select(p => new ProfileInfoModel {Name = p.Value.DisplayName, UUID = p.Key}).ToList(),
+                    Profiles = new List<ProfileInfoModel>
+                    {
+                        new ProfileInfoModel
+                        {
+                            Name = profile.Username,
+                            Properties = profile.UserProperites.Select(x => new PropertyModel
+                            {
+                                Name = x.Name,
+                                Value = x.Value
+                            }).ToList(),
+                            UUID = new PlayerUUID(profile.RemoteId)
+                        }
+                    },
                     SelectedProfile = new ProfileInfoModel
                     {
-                        Name = profile.Profiles.First().Value.DisplayName,
-                        UUID = profile.Profiles.First().Key
+                        Name = profile.MinecraftProfile.Name,
+                        UUID = new PlayerUUID()
                     }
                 };
 
@@ -213,10 +253,7 @@ namespace ProjBobcat.Authenticator
                 RequestUser = userField,
                 SelectedProfile = response.SelectedProfile
             };
-            var requestJson = JsonConvert.SerializeObject(requestModel, new JsonSerializerSettings
-            {
-                ContractResolver = new CamelCasePropertyNamesContractResolver()
-            });
+            var requestJson = JsonConvert.SerializeObject(requestModel, JsonHelper.CamelCasePropertyNamesSettings);
 
             using var resultJson = await HttpHelper.Post(RefreshAddress, requestJson).ConfigureAwait(true);
             var content = await resultJson.Content.ReadAsStringAsync().ConfigureAwait(true);
@@ -246,25 +283,34 @@ namespace ProjBobcat.Authenticator
                     var profiles = authResponse.AvailableProfiles.ToDictionary(profile => profile.UUID,
                         profile => new AuthProfileModel {DisplayName = profile.Name});
 
-                    var uuid = authResponse.User.UUID;
-                    if (LauncherProfileParser.IsAuthInfoExist(uuid, authResponse.User.UserName))
-                        LauncherProfileParser.RemoveAuthInfo(uuid);
+                    var uuid = authResponse.User.UUID.ToString();
+                    LauncherAccountParser.RemoveAccount(uuid, authResponse.User.UserName);
 
-                    LauncherProfileParser.AddNewAuthInfo(new AuthInfoModel
+                    var rUuid = GuidHelper.NewGuidString();
+
+                    var profile = new AccountModel
                     {
                         AccessToken = authResponse.AccessToken,
-                        Profiles = profiles,
-                        Properties = new List<AuthPropertyModel>
+                        AccessTokenExpiresAt = DateTime.Now.AddHours(48),
+                        EligibleForMigration = false,
+                        HasMultipleProfiles = profiles.Count > 1,
+                        Legacy = false,
+                        LocalId = rUuid,
+                        Persistent = true,
+                        RemoteId = authResponse.User.UUID.ToString(),
+                        Type = "Mojang",
+                        UserProperites = (authResponse.User?.Properties).ToAuthProperties(profiles).ToList(),
+                        Username = Email
+                    };
+
+                    if (authResponse.SelectedProfile != null)
+                        profile.MinecraftProfile = new AccountProfileModel
                         {
-                            new AuthPropertyModel
-                            {
-                                Name = authResponse.User.Properties.First().Name,
-                                UserId = authResponse.User.UUID,
-                                Value = authResponse.User.Properties.First().Value
-                            }
-                        },
-                        UserName = authResponse.User.UserName
-                    }, uuid);
+                            Id = authResponse.SelectedProfile.UUID.ToString(),
+                            Name = authResponse.SelectedProfile.Name
+                        };
+
+                    LauncherAccountParser.AddNewAccount(rUuid, profile);
 
 
                     return new AuthResult
@@ -288,12 +334,9 @@ namespace ProjBobcat.Authenticator
             var requestModel = new AuthTokenRequestModel
             {
                 AccessToken = accessToken,
-                ClientToken = LauncherProfileParser.LauncherProfile.ClientToken
+                ClientToken = LauncherAccountParser.LauncherAccount.MojangClientToken
             };
-            var requestJson = JsonConvert.SerializeObject(requestModel, new JsonSerializerSettings
-            {
-                ContractResolver = new CamelCasePropertyNamesContractResolver()
-            });
+            var requestJson = JsonConvert.SerializeObject(requestModel, JsonHelper.CamelCasePropertyNamesSettings);
 
             using var result = await HttpHelper.Post(ValidateAddress, requestJson).ConfigureAwait(true);
             return result.StatusCode.Equals(HttpStatusCode.NoContent);
@@ -304,12 +347,9 @@ namespace ProjBobcat.Authenticator
             var requestModel = new AuthTokenRequestModel
             {
                 AccessToken = accessToken,
-                ClientToken = LauncherProfileParser.LauncherProfile.ClientToken
+                ClientToken = LauncherAccountParser.LauncherAccount.MojangClientToken
             };
-            var requestJson = JsonConvert.SerializeObject(requestModel, new JsonSerializerSettings
-            {
-                ContractResolver = new CamelCasePropertyNamesContractResolver()
-            });
+            var requestJson = JsonConvert.SerializeObject(requestModel, JsonHelper.CamelCasePropertyNamesSettings);
 
             using var x = await HttpHelper.Post(RevokeAddress, requestJson).ConfigureAwait(true);
         }
@@ -326,10 +366,7 @@ namespace ProjBobcat.Authenticator
                 Username = Email,
                 Password = Password
             };
-            var requestJson = JsonConvert.SerializeObject(requestModel, new JsonSerializerSettings
-            {
-                ContractResolver = new CamelCasePropertyNamesContractResolver()
-            });
+            var requestJson = JsonConvert.SerializeObject(requestModel, JsonHelper.CamelCasePropertyNamesSettings);
 
             using var result = await HttpHelper.Post(SignOutAddress, requestJson).ConfigureAwait(true);
             return result.StatusCode.Equals(HttpStatusCode.NoContent);

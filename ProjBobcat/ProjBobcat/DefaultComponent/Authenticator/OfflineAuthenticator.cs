@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
+using ProjBobcat.Class.Model.LauncherAccount;
 using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.YggdrasilAuth;
 using ProjBobcat.Interface;
 
-namespace ProjBobcat.Authenticator
+namespace ProjBobcat.DefaultComponent.Authenticator
 {
     /// <summary>
     ///     表示一个离线凭据验证器。
@@ -22,7 +23,7 @@ namespace ProjBobcat.Authenticator
         /// <summary>
         ///     获取或设置启动程序配置文件分析器。
         /// </summary>
-        public ILauncherProfileParser LauncherProfileParser { get; set; }
+        public ILauncherAccountParser LauncherAccountParser { get; set; }
 
         /// <summary>
         ///     验证凭据。
@@ -63,19 +64,29 @@ namespace ProjBobcat.Authenticator
                 }
             };
 
-            var authInfo = new AuthInfoModel
+            var localUuid = GuidHelper.NewGuidString();
+            LauncherAccountParser.AddNewAccount(localUuid, new AccountModel
             {
-                UserName = Username,
-                Profiles = new Dictionary<PlayerUUID, AuthProfileModel>
+                AccessToken = GuidHelper.NewGuidString(),
+                AccessTokenExpiresAt = DateTime.Now,
+                EligibleForMigration = false,
+                HasMultipleProfiles = false,
+                Legacy = false,
+                LocalId = localUuid,
+                MinecraftProfile = new AccountProfileModel
                 {
-                    {result.SelectedProfile.UUID, new AuthProfileModel {DisplayName = Username}}
+                    Id = uuid.ToString(),
+                    Name = Username
                 },
-                Properties = new List<AuthPropertyModel>
+                Persistent = true,
+                RemoteId = GuidHelper.NewGuidString(),
+                Type = "Mojang",
+                UserProperites = new List<AuthPropertyModel>
                 {
                     authProperty
-                }
-            };
-            LauncherProfileParser.AddNewAuthInfo(authInfo, uuid);
+                },
+                Username = Username
+            });
 
             return result;
         }

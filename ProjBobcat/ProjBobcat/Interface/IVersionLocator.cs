@@ -6,6 +6,7 @@ namespace ProjBobcat.Interface
     public interface IVersionLocator
     {
         ILauncherProfileParser LauncherProfileParser { get; set; }
+        ILauncherAccountParser LauncherAccountParser { get; set; }
 
         /// <summary>
         ///     获取某个特定ID的游戏信息。

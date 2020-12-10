@@ -37,6 +37,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                 Directory.CreateDirectory(GamePathHelper.GetVersionPath(RootPath));
         }
 
+        public ILauncherAccountParser LauncherAccountParser { get; set; }
         public ILauncherProfileParser LauncherProfileParser { get; set; }
 
         public IEnumerable<VersionInfo> GetAllGames()

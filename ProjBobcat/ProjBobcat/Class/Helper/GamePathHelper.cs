@@ -103,9 +103,12 @@ namespace ProjBobcat.Class.Helper
         /// </summary>
         /// <param name="rootPath">指.minecraft/ Refers to .minecraft/</param>
         /// <returns></returns>
-        public static string GetLauncherProfilePath()
-        {
-            return "launcher_profiles.json";
-        }
+        public static string GetLauncherProfilePath() => "launcher_profiles.json";
+
+        /// <summary>
+        /// .minecraft/launcher_accounts.json
+        /// </summary>
+        /// <returns></returns>
+        public static string GetLauncherAccountPath() => "launcher_accounts.json";
     }
 }

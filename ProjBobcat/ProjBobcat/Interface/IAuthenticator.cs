@@ -8,7 +8,7 @@ namespace ProjBobcat.Interface
     /// </summary>
     public interface IAuthenticator
     {
-        ILauncherProfileParser LauncherProfileParser { get; set; }
+        ILauncherAccountParser LauncherAccountParser { get; set; }
         AuthResult Auth(bool userField);
         Task<AuthResult> AuthTaskAsync(bool userField);
         AuthResult GetLastAuthResult();

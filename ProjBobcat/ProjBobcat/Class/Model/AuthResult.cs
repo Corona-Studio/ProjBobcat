@@ -37,5 +37,10 @@ namespace ProjBobcat.Class.Model
         ///     用户信息
         /// </summary>
         public UserInfoModel User { get; set; }
+
+        /// <summary>
+        /// 皮肤（微软账户）
+        /// </summary>
+        public string Skin { get; set; }
     }
 }

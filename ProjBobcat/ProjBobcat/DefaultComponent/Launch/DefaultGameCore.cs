@@ -4,11 +4,11 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using ProjBobcat.Authenticator;
 using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.YggdrasilAuth;
+using ProjBobcat.DefaultComponent.Authenticator;
 using ProjBobcat.Event;
 using ProjBobcat.Interface;
 using SharpCompress.Common;
@@ -91,7 +91,8 @@ namespace ProjBobcat.DefaultComponent.Launch
                 var authResult = settings.Authenticator switch
                 {
                     OfflineAuthenticator off => off.Auth(),
-                    YggdrasilAuthenticator ygg => await ygg.AuthTaskAsync(true).ConfigureAwait(true),
+                    YggdrasilAuthenticator ygg => await ygg.AuthTaskAsync(true),
+                    MicrosoftAuthenticator mic => await mic.AuthTaskAsync(),
                     _ => null
                 };
                 InvokeLaunchLogThenStart("验证账户凭据", ref prevSpan, ref stopwatch);

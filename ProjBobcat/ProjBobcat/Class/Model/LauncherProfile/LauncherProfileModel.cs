@@ -9,9 +9,6 @@ namespace ProjBobcat.Class.Model.LauncherProfile
 
         [JsonProperty("clientToken")] public string ClientToken { get; set; }
 
-        [JsonProperty("authenticationDatabase")]
-        public Dictionary<PlayerUUID, AuthInfoModel> AuthenticationDatabase { get; set; }
-
         [JsonProperty("selectedUser")] public SelectedUserModel SelectedUser { get; set; }
 
         [JsonProperty("launcherVersion")] public LauncherVersionModel LauncherVersion { get; set; }

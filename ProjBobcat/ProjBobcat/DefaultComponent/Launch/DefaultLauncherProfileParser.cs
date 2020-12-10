@@ -16,7 +16,7 @@ namespace ProjBobcat.DefaultComponent.Launch
     /// <summary>
     ///     默认的官方launcher_profile.json适配器
     /// </summary>
-    public sealed class DefaultLauncherProfileParser : LauncherProfileParserBase, ILauncherProfileParser
+    public sealed class DefaultLauncherProfileParser : LauncherParserBase, ILauncherProfileParser
     {
         private readonly string FullLauncherProfilePath;
 
@@ -34,7 +34,6 @@ namespace ProjBobcat.DefaultComponent.Launch
             {
                 var launcherProfile = new LauncherProfileModel
                 {
-                    AuthenticationDatabase = new Dictionary<PlayerUUID, AuthInfoModel>(),
                     ClientToken = clientToken.ToString("D"),
                     LauncherVersion = new LauncherVersionModel
                     {
@@ -64,29 +63,11 @@ namespace ProjBobcat.DefaultComponent.Launch
 
         public LauncherProfileModel LauncherProfile { get; set; }
 
-        public void AddNewAuthInfo(AuthInfoModel authInfo, PlayerUUID uuid)
-        {
-            if (IsAuthInfoExist(uuid, authInfo.UserName)) return;
-            if (!(LauncherProfile.AuthenticationDatabase?.Any() ?? false))
-                LauncherProfile.AuthenticationDatabase = new Dictionary<PlayerUUID, AuthInfoModel>();
-
-            LauncherProfile.AuthenticationDatabase.Add(
-                authInfo.Properties.Any() ? authInfo.Properties.First().UserId : authInfo.Profiles.First().Key,
-                authInfo);
-            SaveProfile();
-        }
-
         public void AddNewGameProfile(GameProfileModel gameProfile)
         {
             if (IsGameProfileExist(gameProfile.Name)) return;
 
             LauncherProfile.Profiles.Add(gameProfile.Name, gameProfile);
-            SaveProfile();
-        }
-
-        public void EmptyAuthInfo()
-        {
-            LauncherProfile.AuthenticationDatabase?.Clear();
             SaveProfile();
         }
 
@@ -96,11 +77,6 @@ namespace ProjBobcat.DefaultComponent.Launch
             SaveProfile();
         }
 
-        public AuthInfoModel GetAuthInfo(PlayerUUID uuid)
-        {
-            return LauncherProfile.AuthenticationDatabase.TryGetValue(uuid, out var authInfo) ? authInfo : null;
-        }
-
         public GameProfileModel GetGameProfile(string name)
         {
             return LauncherProfile.Profiles.FirstOrDefault(
@@ -108,35 +84,9 @@ namespace ProjBobcat.DefaultComponent.Launch
                    throw new UnknownGameNameException(name);
         }
 
-        public bool IsAuthInfoExist(PlayerUUID uuid, string userName)
-        {
-            if (!(LauncherProfile.AuthenticationDatabase?.Any() ?? false)) return false;
-
-            var isMatched =
-                LauncherProfile.AuthenticationDatabase
-                    .AsParallel()
-                    .Any(a =>
-                        a.Value.Profiles?
-                            .AsParallel()
-                            .Any(aa =>
-                                aa.Key
-                                    .ToString()
-                                    .Equals(uuid.ToString(), StringComparison.OrdinalIgnoreCase)
-                                && aa.Value.DisplayName.Equals(userName, StringComparison.Ordinal)
-                            ) ?? false);
-
-            return isMatched;
-        }
-
         public bool IsGameProfileExist(string name)
         {
             return LauncherProfile.Profiles.Any(p => p.Value.Name.Equals(name, StringComparison.Ordinal));
-        }
-
-
-        public void RemoveAuthInfo(PlayerUUID uuid)
-        {
-            LauncherProfile.AuthenticationDatabase.Remove(uuid);
         }
 
         public void RemoveGameProfile(string name)
