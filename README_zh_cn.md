@@ -58,7 +58,8 @@ All you need for minecraft launcher in typescript. https://voxelum.github.io/min
 | 功能 | 状态 |
 | - | - |
 | 离线验证模型 | ✅ |
-| 正版验证模型 | ✅ |
+| 正版验证模型 (Yggdrasil) | ✅ |
+| 正版验证模型 (Microsoft) | ✅ |
 | 版本隔离 | ✅ |
 | launcher_profiles.json 解析 | ✅ |
 | Nuget 分发 | ✅ |
