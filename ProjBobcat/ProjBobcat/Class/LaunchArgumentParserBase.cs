@@ -1,5 +1,6 @@
 ﻿using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
+using ProjBobcat.Class.Model.Auth;
 using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Interface;
 
@@ -16,7 +17,7 @@ namespace ProjBobcat.Class
 
         private protected IVersionLocator VersionLocator { get; set; }
 
-        private protected AuthResult AuthResult { get; set; }
+        private protected AuthResultBase AuthResult { get; set; }
 
         private protected GameProfileModel GameProfile { get; set; }
 
@@ -31,6 +32,6 @@ namespace ProjBobcat.Class
 
         private protected VersionInfo VersionInfo { get; set; }
 
-        private protected AuthResult LastAuthResult { get; set; }
+        private protected AuthResultBase LastAuthResult { get; set; }
     }
 }

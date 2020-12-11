@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using ProjBobcat.Class.Model;
+using ProjBobcat.Class.Model.Auth;
 
 namespace ProjBobcat.Interface
 {
@@ -22,7 +23,7 @@ namespace ProjBobcat.Interface
         /// </summary>
         /// <param name="authResult"></param>
         /// <returns>解析好的游戏参数</returns>
-        string ParseGameArguments(AuthResult authResult);
+        string ParseGameArguments(AuthResultBase authResult);
 
         /// <summary>
         ///     解析部分总成

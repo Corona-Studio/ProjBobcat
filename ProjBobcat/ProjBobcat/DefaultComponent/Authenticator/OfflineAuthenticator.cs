@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
+using ProjBobcat.Class.Model.Auth;
 using ProjBobcat.Class.Model.LauncherAccount;
 using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.YggdrasilAuth;
@@ -30,7 +31,7 @@ namespace ProjBobcat.DefaultComponent.Authenticator
         /// </summary>
         /// <param name="userField">该参数将被忽略。</param>
         /// <returns>身份验证结果。</returns>
-        public AuthResult Auth(bool userField = false)
+        public AuthResultBase Auth(bool userField = false)
         {
             var authProperty = new AuthPropertyModel
             {
@@ -41,7 +42,7 @@ namespace ProjBobcat.DefaultComponent.Authenticator
             };
 
             var uuid = PlayerUUID.FromOfflinePlayerName(Username);
-            var result = new AuthResult
+            var result = new YggdrasilAuthResult
             {
                 AccessToken = GuidHelper.NewGuidString(),
                 AuthStatus = AuthStatus.Succeeded,
@@ -96,10 +97,9 @@ namespace ProjBobcat.DefaultComponent.Authenticator
         /// </summary>
         /// <param name="userField">改参数将被忽略。</param>
         /// <returns></returns>
-        [Obsolete("此方法已过时，请使用其同步版本 Auth(bool) 。", true)]
-        public Task<AuthResult> AuthTaskAsync(bool userField)
+        public Task<AuthResultBase> AuthTaskAsync(bool userField)
         {
-            throw new NotImplementedException();
+            return Task.Run(() => Auth());
         }
 
         /// <summary>
@@ -107,7 +107,7 @@ namespace ProjBobcat.DefaultComponent.Authenticator
         /// </summary>
         /// <returns>验证结果。</returns>
         [Obsolete("此方法已过时，请使用 Auth(bool) 代替。")]
-        public AuthResult GetLastAuthResult()
+        public AuthResultBase GetLastAuthResult()
         {
             return Auth();
         }

@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
+using ProjBobcat.Class.Model.Auth;
 using ProjBobcat.Interface;
 
 namespace ProjBobcat.DefaultComponent.Launch
@@ -22,7 +23,7 @@ namespace ProjBobcat.DefaultComponent.Launch
         /// <param name="rootPath"></param>
         /// <param name="rootVersion"></param>
         public DefaultLaunchArgumentParser(LaunchSettings launchSettings, ILauncherProfileParser launcherProfileParser,
-            IVersionLocator versionLocator, AuthResult authResult, string rootPath, string rootVersion)
+            IVersionLocator versionLocator, AuthResultBase authResult, string rootPath, string rootVersion)
         {
             if (launchSettings == null || launcherProfileParser == null)
                 throw new ArgumentNullException();
@@ -141,7 +142,7 @@ namespace ProjBobcat.DefaultComponent.Launch
             return StringHelper.ReplaceByDic(preJvmArguments, jvmArgumentsDic);
         }
 
-        public string ParseGameArguments(AuthResult authResult)
+        public string ParseGameArguments(AuthResultBase authResult)
         {
             var mcArgumentsDic = new Dictionary<string, string>
             {

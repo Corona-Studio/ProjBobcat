@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using ProjBobcat.Class.Model;
+using ProjBobcat.Class.Model.Auth;
 
 namespace ProjBobcat.Interface
 {
@@ -9,8 +10,8 @@ namespace ProjBobcat.Interface
     public interface IAuthenticator
     {
         ILauncherAccountParser LauncherAccountParser { get; set; }
-        AuthResult Auth(bool userField);
-        Task<AuthResult> AuthTaskAsync(bool userField);
-        AuthResult GetLastAuthResult();
+        AuthResultBase Auth(bool userField);
+        Task<AuthResultBase> AuthTaskAsync(bool userField);
+        AuthResultBase GetLastAuthResult();
     }
 }

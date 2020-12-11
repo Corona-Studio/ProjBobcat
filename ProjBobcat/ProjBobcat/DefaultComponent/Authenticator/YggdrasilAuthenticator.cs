@@ -1,16 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
+﻿using Newtonsoft.Json;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
+using ProjBobcat.Class.Model.Auth;
 using ProjBobcat.Class.Model.LauncherAccount;
 using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.YggdrasilAuth;
 using ProjBobcat.Interface;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
 
 namespace ProjBobcat.DefaultComponent.Authenticator
 {
@@ -77,7 +77,7 @@ namespace ProjBobcat.DefaultComponent.Authenticator
         /// </summary>
         /// <param name="userField">指示是否获取user字段。</param>
         /// <returns></returns>
-        public AuthResult Auth(bool userField = false)
+        public AuthResultBase Auth(bool userField = false)
         {
             return AuthTaskAsync().GetAwaiter().GetResult();
         }
@@ -87,7 +87,7 @@ namespace ProjBobcat.DefaultComponent.Authenticator
         /// </summary>
         /// <param name="userField">是否获取user字段</param>
         /// <returns>验证状态。</returns>
-        public async Task<AuthResult> AuthTaskAsync(bool userField = false)
+        public async Task<AuthResultBase> AuthTaskAsync(bool userField = false)
         {
             var requestModel = new AuthRequestModel
             {
@@ -107,12 +107,12 @@ namespace ProjBobcat.DefaultComponent.Authenticator
                 var error = JsonConvert.DeserializeObject<ErrorModel>(content);
 
                 if (error is null)
-                    return new AuthResult
+                    return new AuthResultBase
                     {
                         AuthStatus = AuthStatus.Unknown
                     };
 
-                return new AuthResult
+                return new AuthResultBase
                 {
                     AuthStatus = AuthStatus.Failed,
                     Error = error
@@ -120,7 +120,7 @@ namespace ProjBobcat.DefaultComponent.Authenticator
             }
 
             if (result.SelectedProfile == null && !(result.AvailableProfiles?.Any() ?? false))
-                return new AuthResult
+                return new AuthResultBase
                 {
                     AuthStatus = AuthStatus.Failed,
                     Error = new ErrorModel
@@ -132,7 +132,7 @@ namespace ProjBobcat.DefaultComponent.Authenticator
                 };
 
             if(string.IsNullOrEmpty(AuthServer) && result.SelectedProfile == null)
-                return new AuthResult
+                return new AuthResultBase
                 {
                     AuthStatus = AuthStatus.Failed,
                     Error = new ErrorModel
@@ -177,7 +177,7 @@ namespace ProjBobcat.DefaultComponent.Authenticator
 
             LauncherAccountParser.AddNewAccount(rUuid, profile);
 
-            return new AuthResult
+            return new YggdrasilAuthResult
             {
                 AccessToken = result.AccessToken,
                 AuthStatus = AuthStatus.Succeeded,
@@ -191,14 +191,14 @@ namespace ProjBobcat.DefaultComponent.Authenticator
         ///     获取最后一次的验证状态。
         /// </summary>
         /// <returns>验证状态。</returns>
-        public AuthResult GetLastAuthResult()
+        public AuthResultBase GetLastAuthResult()
         {
             var profile =
                 LauncherAccountParser.LauncherAccount.Accounts.Values.FirstOrDefault(a =>
                     a.Username.Equals(Email, StringComparison.OrdinalIgnoreCase));
 
             if (profile is null)
-                return new AuthResult
+                return new AuthResultBase
                 {
                     AuthStatus = AuthStatus.Failed,
                     Error = new ErrorModel
@@ -210,7 +210,7 @@ namespace ProjBobcat.DefaultComponent.Authenticator
                 };
 
             if (!string.IsNullOrEmpty(profile.AccessToken))
-                return new AuthResult
+                return new YggdrasilAuthResult
                 {
                     AuthStatus = AuthStatus.Succeeded,
                     AccessToken = profile.AccessToken,
@@ -234,7 +234,7 @@ namespace ProjBobcat.DefaultComponent.Authenticator
                     }
                 };
 
-            return new AuthResult
+            return new AuthResultBase
             {
                 AuthStatus = AuthStatus.Unknown,
                 Error = new ErrorModel
@@ -244,7 +244,7 @@ namespace ProjBobcat.DefaultComponent.Authenticator
             };
         }
 
-        public async Task<AuthResult> AuthRefreshTaskAsync(AuthResponseModel response, bool userField = false)
+        public async Task<AuthResultBase> AuthRefreshTaskAsync(AuthResponseModel response, bool userField = false)
         {
             var requestModel = new AuthRefreshRequestModel
             {
@@ -262,14 +262,14 @@ namespace ProjBobcat.DefaultComponent.Authenticator
             switch (result)
             {
                 case ErrorModel error:
-                    return new AuthResult
+                    return new AuthResultBase
                     {
                         AuthStatus = AuthStatus.Failed,
                         Error = error
                     };
                 case AuthResponseModel authResponse:
                     if (authResponse.SelectedProfile == null)
-                        return new AuthResult
+                        return new AuthResultBase
                         {
                             AuthStatus = AuthStatus.Failed,
                             Error = new ErrorModel
@@ -313,7 +313,7 @@ namespace ProjBobcat.DefaultComponent.Authenticator
                     LauncherAccountParser.AddNewAccount(rUuid, profile);
 
 
-                    return new AuthResult
+                    return new YggdrasilAuthResult
                     {
                         AccessToken = authResponse.AccessToken,
                         AuthStatus = AuthStatus.Succeeded,
@@ -322,7 +322,7 @@ namespace ProjBobcat.DefaultComponent.Authenticator
                         User = authResponse.User
                     };
                 default:
-                    return new AuthResult
+                    return new AuthResultBase
                     {
                         AuthStatus = AuthStatus.Unknown
                     };

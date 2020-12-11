@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Security.Policy;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Interface;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using ProjBobcat.Class.Helper;
+using ProjBobcat.Class.Model.Auth;
 using ProjBobcat.Class.Model.LauncherAccount;
 using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.MicrosoftAuth;
@@ -28,7 +30,7 @@ namespace ProjBobcat.DefaultComponent.Authenticator
         public const string MojangProfileUrl = "https://api.minecraftservices.com/minecraft/profile";
 
         public static string MSLoginUrl => 
-            WebUtility.HtmlEncode("https://login.live.com/oauth20_authorize.srf"
+            Uri.EscapeUriString("https://login.live.com/oauth20_authorize.srf"
                                     + $"?client_id={MSClientId}"
                                     + "&response_type=code"
                                     + $"&scope={MSAuthScope}"
@@ -37,18 +39,56 @@ namespace ProjBobcat.DefaultComponent.Authenticator
 
         public string Email { get; set; }
         public string AuthCode { get; set; }
+
+        public AuthType AuthType { get; set; }
+        public string RefreshToken { get; set; }
+        public long ExpiresIn { get; set; }
+        public DateTime LastAuthTime { get; set; }
+
         public ILauncherAccountParser LauncherAccountParser { get; set; }
 
-        public AuthResult Auth(bool userField = false)
+        public AuthResultBase Auth(bool userField = false)
         {
             return AuthTaskAsync(userField).GetAwaiter().GetResult();
         }
 
-        public async Task<AuthResult> AuthTaskAsync(bool userField = false)
+        public async Task<AuthResultBase> AuthTaskAsync(bool userField = false)
         {
             #region STAGE 1
 
-            var reqForm = Class.Model.MicrosoftAuth.AuthTokenRequestModel.Get(AuthCode);
+            var reqForm = AuthType switch
+            {
+                AuthType.NormalAuth => Class.Model.MicrosoftAuth.AuthTokenRequestModel.Get(AuthCode),
+                AuthType.RefreshToken => Class.Model.MicrosoftAuth.AuthTokenRequestModel.GetRefresh(RefreshToken),
+                _ => Class.Model.MicrosoftAuth.AuthTokenRequestModel.Get(AuthCode)
+            };
+
+            if ((DateTime.Now - LastAuthTime).Hours >= 24 && AuthType == AuthType.NormalAuth)
+            {
+                if (string.IsNullOrEmpty(RefreshToken))
+                {
+                    return new AuthResultBase
+                    {
+                        Error = new ErrorModel
+                        {
+                            Cause = "由于 Token 已过期， 因此需要使用 RefreshToken 来刷新",
+                            Error = "RefreshToken 为空",
+                            ErrorMessage = "RefreshToken 为空"
+                        }
+                    };
+                }
+
+
+                reqForm = Class.Model.MicrosoftAuth.AuthTokenRequestModel.GetRefresh(RefreshToken);
+            }
+
+            if ((DateTime.Now - LastAuthTime).Hours < 24 && AuthType == AuthType.NormalAuth)
+            {
+                var result = GetLastAuthResult();
+                if (result != default)
+                    return result;
+            }
+
             using var tokenResMessage =
                 await HttpHelper.PostFormData(MSAuthTokenUrl, reqForm, "application/x-www-form-urlencoded");
             
@@ -97,7 +137,7 @@ namespace ProjBobcat.DefaultComponent.Authenticator
             var ownRes = JsonConvert.DeserializeObject<MojangOwnershipResponseModel>(ownResStr);
 
             if(!(ownRes.Items?.Any() ?? false))
-                return new AuthResult
+                return new AuthResultBase
                 {
                     AuthStatus = AuthStatus.Failed,
                     Error = new ErrorModel
@@ -146,15 +186,14 @@ namespace ProjBobcat.DefaultComponent.Authenticator
                 UUID = sPUuid
             };
 
-            return new AuthResult
+            return new MicrosoftAuthResult
             {
                 AccessToken = mcRes.AccessToken,
                 AuthStatus = AuthStatus.Succeeded,
                 Skin = profileRes.GetActiveSkin()?.Url,
-                Profiles = new List<ProfileInfoModel>
-                {
-                   sP
-                },
+                ExpiresIn = tokenRes.ExpiresIn,
+                RefreshToken = tokenRes.RefreshToken,
+                CurrentAuthTime = DateTime.Now,
                 SelectedProfile = sP,
                 User = new UserInfoModel
                 {
@@ -164,9 +203,37 @@ namespace ProjBobcat.DefaultComponent.Authenticator
             };
         }
 
-        public AuthResult GetLastAuthResult()
+        public AuthResultBase GetLastAuthResult()
         {
-            throw new NotImplementedException();
+            var (_, value) = LauncherAccountParser.LauncherAccount.Accounts
+                .FirstOrDefault(x =>
+                    x.Value.Username.Equals(Email, StringComparison.OrdinalIgnoreCase) &&
+                    x.Value.Type.Equals("XBox", StringComparison.OrdinalIgnoreCase));
+
+            if(value == default)
+                return default;
+
+            var sP = new ProfileInfoModel
+            {
+                Name = value.MinecraftProfile.Name,
+                UUID = new PlayerUUID(value.MinecraftProfile.Id)
+            };
+
+            return new MicrosoftAuthResult
+            {
+                AccessToken = value.AccessToken,
+                AuthStatus = AuthStatus.Succeeded,
+                Skin = value.Avatar,
+                ExpiresIn = ExpiresIn,
+                RefreshToken = RefreshToken,
+                CurrentAuthTime = DateTime.Now,
+                SelectedProfile = sP,
+                User = new UserInfoModel
+                {
+                    UUID = sP.UUID,
+                    UserName = sP.Name
+                }
+            };
         }
     }
 }

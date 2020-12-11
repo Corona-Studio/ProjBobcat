@@ -1,8 +1,8 @@
-﻿using System;
-using System.Diagnostics;
-using ProjBobcat.Class.Model;
+﻿using ProjBobcat.Class.Model.Auth;
 using ProjBobcat.Event;
 using ProjBobcat.Interface;
+using System;
+using System.Diagnostics;
 
 namespace ProjBobcat.Class
 {
@@ -15,7 +15,7 @@ namespace ProjBobcat.Class
         ///     构造函数
         /// </summary>
         /// <param name="authResult">验证结果</param>
-        public LaunchWrapper(AuthResult authResult)
+        public LaunchWrapper(AuthResultBase authResult)
         {
             AuthResult = authResult;
         }
@@ -23,7 +23,7 @@ namespace ProjBobcat.Class
         /// <summary>
         ///     验证结果
         /// </summary>
-        public AuthResult AuthResult { get; }
+        public AuthResultBase AuthResult { get; }
 
         /// <summary>
         ///     退出码
