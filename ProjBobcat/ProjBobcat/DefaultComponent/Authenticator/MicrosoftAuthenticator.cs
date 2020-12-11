@@ -1,18 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Security.Policy;
-using ProjBobcat.Class.Model;
-using ProjBobcat.Interface;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using ProjBobcat.Class.Helper;
+using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Auth;
 using ProjBobcat.Class.Model.LauncherAccount;
 using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.MicrosoftAuth;
 using ProjBobcat.Class.Model.YggdrasilAuth;
+using ProjBobcat.Interface;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace ProjBobcat.DefaultComponent.Authenticator
 {

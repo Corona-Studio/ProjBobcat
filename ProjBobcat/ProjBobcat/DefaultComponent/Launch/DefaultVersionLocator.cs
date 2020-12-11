@@ -170,7 +170,7 @@ namespace ProjBobcat.DefaultComponent.Launch
 
         /// <summary>
         ///     获取Natives与Libraries（核心依赖）列表
-        ///     Fetch list of Natives & Libraries.
+        ///     Fetch list of Natives and Libraries.
         /// </summary>
         /// <param name="libraries">反序列化后的库数据。Deserialized library data.</param>
         /// <returns>二元组（包含一组list，T1是Natives列表，T2是Libraries列表）。A tuple.(T1 -> Natives, T2 -> Libraries)</returns>

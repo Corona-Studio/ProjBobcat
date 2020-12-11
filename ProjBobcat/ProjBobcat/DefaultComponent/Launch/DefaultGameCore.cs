@@ -23,8 +23,14 @@ namespace ProjBobcat.DefaultComponent.Launch
     {
         private string _rootPath;
 
+        /// <summary>
+        /// 启动参数解析器
+        /// </summary>
         public IArgumentParser LaunchArgumentParser { get; set; }
 
+        /// <summary>
+        /// .minecraft 目录
+        /// </summary>
         public string RootPath
         {
             get => _rootPath;
@@ -37,19 +43,44 @@ namespace ProjBobcat.DefaultComponent.Launch
             }
         }
 
+        /// <summary>
+        /// 游戏版本查找器
+        /// </summary>
         public IVersionLocator VersionLocator { get; set; }
 
+        /// <summary>
+        /// 客户端识别码
+        /// </summary>
         public Guid ClientToken { get; set; }
 
+        /// <summary>
+        /// 游戏退出事件
+        /// </summary>
         public event EventHandler<GameExitEventArgs> GameExitEventDelegate;
+        /// <summary>
+        /// 游戏日志输出事件
+        /// </summary>
         public event EventHandler<GameLogEventArgs> GameLogEventDelegate;
+        /// <summary>
+        /// 启动日志输出事件
+        /// </summary>
         public event EventHandler<LaunchLogEventArgs> LaunchLogEventDelegate;
 
+        /// <summary>
+        /// 启动 （同步方法）
+        /// </summary>
+        /// <param name="settings"></param>
+        /// <returns></returns>
         public LaunchResult Launch(LaunchSettings settings)
         {
             return LaunchTaskAsync(settings).GetAwaiter().GetResult();
         }
 
+        /// <summary>
+        /// 启动 （异步方法）
+        /// </summary>
+        /// <param name="settings"></param>
+        /// <returns></returns>
         public async Task<LaunchResult> LaunchTaskAsync(LaunchSettings settings)
         {
             try

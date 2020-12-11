@@ -1,9 +1,9 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using ProjBobcat.Class.Helper.SystemInfo;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Management.Automation.Runspaces;
-using Microsoft.Win32;
-using ProjBobcat.Class.Helper.SystemInfo;
+using System.Management.Automation;
 
 namespace ProjBobcat.Class.Helper
 {
@@ -20,7 +20,7 @@ namespace ProjBobcat.Class.Helper
         {
             try
             {
-                var rootReg = Registry.LocalMachine.OpenSubKey("SOFTWARE");
+                using var rootReg = Registry.LocalMachine.OpenSubKey("SOFTWARE");
                 return rootReg == null
                     ? Array.Empty<string>()
                     : FindJavaInternal(rootReg).Union(FindJavaInternal(rootReg.OpenSubKey("Wow6432Node")));
@@ -35,7 +35,7 @@ namespace ProjBobcat.Class.Helper
         {
             try
             {
-                var registryKey = registry.OpenSubKey("JavaSoft");
+                using var registryKey = registry.OpenSubKey("JavaSoft");
                 if (registryKey == null || (registry = registryKey.OpenSubKey("Java Runtime Environment")) == null)
                     return Array.Empty<string>();
                 return from ver in registry.GetSubKeyNames()
@@ -82,19 +82,12 @@ namespace ProjBobcat.Class.Helper
         /// <returns>判断结果。</returns>
         public static bool IsMinecraftUWPInstalled()
         {
-            using var rs = RunspaceFactory.CreateRunspace();
-            rs.Open();
-            var pl = rs.CreatePipeline();
-            pl.Commands.AddScript("Get-AppxPackage -Name \"Microsoft.MinecraftUWP\"");
-            pl.Commands.Add("Out-String");
-            var result = pl.Invoke();
-            rs.Close();
+            using var ps = PowerShell.Create();
+
+            ps.AddScript("Get-AppxPackage -Name \"Microsoft.MinecraftUWP\"");
+            var result = ps.Invoke();
 
             return result != null && !string.IsNullOrEmpty(result[0].ToString());
-            /*
-            if (result == null || string.IsNullOrEmpty(result[0].ToString())) return false;
-            return true;
-            */
         }
     }
 }

@@ -31,6 +31,7 @@ namespace ProjBobcat.Class.Helper
         ///     Http Get方法
         /// </summary>
         /// <param name="address">Get地址</param>
+        /// <param name="auth">Auth 字段</param>
         /// <returns>获取到的字符串</returns>
         public static async Task<string> Get(string address, Tuple<string, string> auth = default)
         {
@@ -45,6 +46,13 @@ namespace ProjBobcat.Class.Helper
             return await Client.GetStringAsync(new Uri(address));
         }
 
+        /// <summary>
+        /// Http Post Form 数据
+        /// </summary>
+        /// <param name="address">Post 地址</param>
+        /// <param name="data">数据</param>
+        /// <param name="contentType">类型</param>
+        /// <returns>服务器返回数据</returns>
         public static async Task<HttpResponseMessage> PostFormData(string address,
             IEnumerable<KeyValuePair<string, string>> data, string contentType = "application/json")
         {
@@ -64,6 +72,7 @@ namespace ProjBobcat.Class.Helper
         /// <param name="address">Post地址</param>
         /// <param name="data">数据</param>
         /// <param name="contentType">ContentType</param>
+        /// <param name="auth">Auth 字段</param>
         /// <returns></returns>
         public static async Task<HttpResponseMessage> Post(string address, string data,
             string contentType = "application/json", Tuple<string, string> auth = default)

@@ -41,7 +41,6 @@ namespace ProjBobcat.Class.Helper
         /// <summary>
         ///     .minecraft/versions/{id}/{id}.jar
         /// </summary>
-        /// <param name="rootPath">指.minecraft/ Refers to .minecraft/</param>
         /// <param name="id"></param>
         /// <returns></returns>
         public static string GetGameExecutablePath(string id)
@@ -101,7 +100,6 @@ namespace ProjBobcat.Class.Helper
         /// <summary>
         ///     .minecraft/launcher_profiles.json
         /// </summary>
-        /// <param name="rootPath">指.minecraft/ Refers to .minecraft/</param>
         /// <returns></returns>
         public static string GetLauncherProfilePath() => "launcher_profiles.json";
 
