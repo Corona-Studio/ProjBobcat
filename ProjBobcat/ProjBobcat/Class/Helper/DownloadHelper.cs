@@ -3,7 +3,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Management.Automation;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -307,7 +306,7 @@ namespace ProjBobcat.Class.Helper
                 {
                     if (!doneRanges.IsEmpty)
                     {
-                        var ex = task.Exception ?? new AggregateException(new JobFailedException("没有完全下载所有的分片"));
+                        var ex = task.Exception ?? new AggregateException(new Exception("没有完全下载所有的分片"));
                         downloadFile.Completed?.Invoke(task,
                             new DownloadFileCompletedEventArgs(false, ex, downloadFile));
                         try

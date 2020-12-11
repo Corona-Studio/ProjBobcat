@@ -2,8 +2,8 @@
 using ProjBobcat.Class.Helper.SystemInfo;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
-using System.Management.Automation;
 
 namespace ProjBobcat.Class.Helper
 {
@@ -82,12 +82,21 @@ namespace ProjBobcat.Class.Helper
         /// <returns>判断结果。</returns>
         public static bool IsMinecraftUWPInstalled()
         {
-            using var ps = PowerShell.Create();
+            var process = new Process
+            {
+                StartInfo = new ProcessStartInfo("C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe")
+                {
+                    WorkingDirectory = Environment.CurrentDirectory,
+                    RedirectStandardOutput = true,
+                    CreateNoWindow = true,
+                    Arguments = "Get-AppxPackage -Name \"Microsoft.MinecraftUWP\""
+                }
+            };
 
-            ps.AddScript("Get-AppxPackage -Name \"Microsoft.MinecraftUWP\"");
-            var result = ps.Invoke();
+            process.Start();
 
-            return result != null && !string.IsNullOrEmpty(result[0].ToString());
+            var reader = process.StandardOutput;
+            return !string.IsNullOrEmpty(reader.ReadToEnd());
         }
     }
 }
