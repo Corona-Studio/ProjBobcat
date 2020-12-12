@@ -4,6 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using Microsoft.Extensions.Configuration;
+using ProjBobcat.Class.Model;
 
 namespace ProjBobcat.Class.Helper
 {
@@ -21,13 +23,42 @@ namespace ProjBobcat.Class.Helper
             try
             {
                 using var rootReg = Registry.LocalMachine.OpenSubKey("SOFTWARE");
-                return rootReg == null
+                var javas = (
+                    rootReg == null
                     ? Array.Empty<string>()
-                    : FindJavaInternal(rootReg).Union(FindJavaInternal(rootReg.OpenSubKey("Wow6432Node")));
+                    : FindJavaInternal(rootReg)
+                        .Union(FindJavaInternal(rootReg.OpenSubKey("Wow6432Node")))
+                    ).ToList();
+
+                var evJava = FindJavaUsingEnvironmentVariable();
+
+                if (string.IsNullOrEmpty(evJava))
+                    return javas;
+
+                if (!javas.Exists(x => x.Equals(evJava, StringComparison.OrdinalIgnoreCase)))
+                    javas.Add(evJava);
+
+                return javas;
             }
             catch
             {
                 return Array.Empty<string>();
+            }
+        }
+
+        private static string FindJavaUsingEnvironmentVariable()
+        {
+            try
+            {
+                IConfiguration configuration = new ConfigurationBuilder()
+                    .AddEnvironmentVariables()
+                    .Build();
+                var javaHome = configuration["JAVA_HOME"];
+                return javaHome;
+            }
+            catch (Exception)
+            {
+                return string.Empty;
             }
         }
 
@@ -97,6 +128,37 @@ namespace ProjBobcat.Class.Helper
 
             var reader = process.StandardOutput;
             return !string.IsNullOrEmpty(reader.ReadToEnd());
+        }
+
+        public static MemoryInfo GetWindowsMemoryStatus()
+        {
+            var info = new ProcessStartInfo
+            {
+                FileName = "wmic",
+                Arguments = "OS get FreePhysicalMemory,TotalVisibleMemorySize /Value",
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            var process = Process.Start(info);
+            var output = process.StandardOutput.ReadToEnd();
+
+            var lines = output.Trim().Split("\n");
+            var freeMemoryParts = lines[0].Split("=", StringSplitOptions.RemoveEmptyEntries);
+            var totalMemoryParts = lines[1].Split("=", StringSplitOptions.RemoveEmptyEntries);
+
+            var total = Math.Round(double.Parse(totalMemoryParts[1]) / 1024, 0);
+            var free = Math.Round(double.Parse(freeMemoryParts[1]) / 1024, 0);
+
+            var memoryInfo = new MemoryInfo
+            {
+                Total = total,
+                Free = free,
+                Used = total - free
+            };
+
+            return memoryInfo;
         }
     }
 }
