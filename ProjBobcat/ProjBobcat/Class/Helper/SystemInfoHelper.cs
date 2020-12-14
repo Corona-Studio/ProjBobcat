@@ -1,10 +1,10 @@
-﻿using Microsoft.Win32;
-using ProjBobcat.Class.Helper.SystemInfo;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Win32;
+using ProjBobcat.Class.Helper.SystemInfo;
 using ProjBobcat.Class.Model;
 
 namespace ProjBobcat.Class.Helper
@@ -25,10 +25,10 @@ namespace ProjBobcat.Class.Helper
                 using var rootReg = Registry.LocalMachine.OpenSubKey("SOFTWARE");
                 var javas = (
                     rootReg == null
-                    ? Array.Empty<string>()
-                    : FindJavaInternal(rootReg)
-                        .Union(FindJavaInternal(rootReg.OpenSubKey("Wow6432Node")))
-                    ).ToList();
+                        ? Array.Empty<string>()
+                        : FindJavaInternal(rootReg)
+                            .Union(FindJavaInternal(rootReg.OpenSubKey("Wow6432Node")))
+                ).ToList();
 
                 var evJava = FindJavaUsingEnvironmentVariable();
 

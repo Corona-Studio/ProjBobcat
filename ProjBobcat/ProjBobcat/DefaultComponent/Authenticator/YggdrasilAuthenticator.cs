@@ -1,4 +1,9 @@
-﻿using Newtonsoft.Json;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Auth;
@@ -6,11 +11,6 @@ using ProjBobcat.Class.Model.LauncherAccount;
 using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.YggdrasilAuth;
 using ProjBobcat.Interface;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
 
 namespace ProjBobcat.DefaultComponent.Authenticator
 {
@@ -131,7 +131,7 @@ namespace ProjBobcat.DefaultComponent.Authenticator
                     }
                 };
 
-            if(string.IsNullOrEmpty(AuthServer) && result.SelectedProfile == null)
+            if (string.IsNullOrEmpty(AuthServer) && result.SelectedProfile == null)
                 return new AuthResultBase
                 {
                     AuthStatus = AuthStatus.Failed,
@@ -147,9 +147,7 @@ namespace ProjBobcat.DefaultComponent.Authenticator
                 profile => new AuthProfileModel {DisplayName = profile.Name});
 
             foreach (var (playerUuid, authProfileModel) in profiles)
-            {
                 LauncherAccountParser.RemoveAccount(playerUuid.ToString(), authProfileModel.DisplayName);
-            }
 
             var rUuid = GuidHelper.NewGuidString();
 

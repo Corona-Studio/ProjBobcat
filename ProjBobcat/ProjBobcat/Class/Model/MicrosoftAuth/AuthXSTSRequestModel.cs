@@ -10,8 +10,13 @@ namespace ProjBobcat.Class.Model.MicrosoftAuth
 
     public class AuthXSTSRequestModel
     {
-        public static AuthXSTSRequestModel Get(string token) =>
-            new AuthXSTSRequestModel
+        public XSTSProperties Properties { get; set; }
+        public string RelyingParty { get; set; }
+        public string TokenType { get; set; }
+
+        public static AuthXSTSRequestModel Get(string token)
+        {
+            return new AuthXSTSRequestModel
             {
                 Properties = new XSTSProperties
                 {
@@ -24,9 +29,6 @@ namespace ProjBobcat.Class.Model.MicrosoftAuth
                 RelyingParty = "rp://api.minecraftservices.com/",
                 TokenType = "JWT"
             };
-
-        public XSTSProperties Properties { get; set; }
-        public string RelyingParty { get; set; }
-        public string TokenType { get; set; }
+        }
     }
 }

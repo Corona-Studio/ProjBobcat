@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Auth;
 
 namespace ProjBobcat.Interface

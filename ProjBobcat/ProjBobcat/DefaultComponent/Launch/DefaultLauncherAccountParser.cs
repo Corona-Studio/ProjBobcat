@@ -1,20 +1,19 @@
-﻿using Newtonsoft.Json;
-using ProjBobcat.Class;
-using ProjBobcat.Class.Helper;
-using ProjBobcat.Class.Model.LauncherAccount;
-using ProjBobcat.Interface;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Newtonsoft.Json;
+using ProjBobcat.Class;
+using ProjBobcat.Class.Helper;
+using ProjBobcat.Class.Model.LauncherAccount;
+using ProjBobcat.Interface;
 
 namespace ProjBobcat.DefaultComponent.Launch
 {
     public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccountParser
     {
         private readonly string FullLauncherAccountPath;
-        public LauncherAccountModel LauncherAccount { get; set; }
 
         /// <summary>
         ///     构造函数
@@ -51,6 +50,8 @@ namespace ProjBobcat.DefaultComponent.Launch
                 LauncherAccount = JsonConvert.DeserializeObject<LauncherAccountModel>(launcherProfileJson);
             }
         }
+
+        public LauncherAccountModel LauncherAccount { get; set; }
 
         public bool ActivateAccount(string uuid)
         {

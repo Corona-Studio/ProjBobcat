@@ -1,5 +1,4 @@
 ﻿using System.Threading.Tasks;
-using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Auth;
 
 namespace ProjBobcat.Interface

@@ -39,15 +39,13 @@ namespace ProjBobcat.Class.Helper
             Client.DefaultRequestHeaders.AcceptLanguage.Add(acceptLanguage);
 
             if (!(auth?.Equals(default) ?? true))
-            {
                 Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(auth.Item1, auth.Item2);
-            }
 
             return await Client.GetStringAsync(new Uri(address));
         }
 
         /// <summary>
-        /// Http Post Form 数据
+        ///     Http Post Form 数据
         /// </summary>
         /// <param name="address">Post 地址</param>
         /// <param name="data">数据</param>
@@ -82,9 +80,7 @@ namespace ProjBobcat.Class.Helper
             Client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(contentType));
 
             if (!(auth?.Equals(default) ?? true))
-            {
                 Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(auth.Item1, auth.Item2);
-            }
 
             content.Headers.ContentType = new MediaTypeWithQualityHeaderValue(contentType);
             var acceptLanguage = new StringWithQualityHeaderValue(CultureInfo.CurrentCulture.Name);

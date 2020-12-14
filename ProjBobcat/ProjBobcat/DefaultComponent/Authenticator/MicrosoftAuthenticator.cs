@@ -1,4 +1,8 @@
-﻿using Newtonsoft.Json;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Auth;
@@ -7,10 +11,7 @@ using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.MicrosoftAuth;
 using ProjBobcat.Class.Model.YggdrasilAuth;
 using ProjBobcat.Interface;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using AuthTokenRequestModel = ProjBobcat.Class.Model.MicrosoftAuth.AuthTokenRequestModel;
 
 namespace ProjBobcat.DefaultComponent.Authenticator
 {
@@ -27,12 +28,12 @@ namespace ProjBobcat.DefaultComponent.Authenticator
         public const string MojangOwnershipUrl = "https://api.minecraftservices.com/entitlements/mcstore";
         public const string MojangProfileUrl = "https://api.minecraftservices.com/minecraft/profile";
 
-        public static string MSLoginUrl => 
+        public static string MSLoginUrl =>
             Uri.EscapeUriString("https://login.live.com/oauth20_authorize.srf"
-                                    + $"?client_id={MSClientId}"
-                                    + "&response_type=code"
-                                    + $"&scope={MSAuthScope}"
-                                    + $"&redirect_uri={MSAuthRedirectUrl}");
+                                + $"?client_id={MSClientId}"
+                                + "&response_type=code"
+                                + $"&scope={MSAuthScope}"
+                                + $"&redirect_uri={MSAuthRedirectUrl}");
 
 
         public string Email { get; set; }
@@ -56,15 +57,14 @@ namespace ProjBobcat.DefaultComponent.Authenticator
 
             var reqForm = AuthType switch
             {
-                AuthType.NormalAuth => Class.Model.MicrosoftAuth.AuthTokenRequestModel.Get(AuthCode),
-                AuthType.RefreshToken => Class.Model.MicrosoftAuth.AuthTokenRequestModel.GetRefresh(RefreshToken),
-                _ => Class.Model.MicrosoftAuth.AuthTokenRequestModel.Get(AuthCode)
+                AuthType.NormalAuth => AuthTokenRequestModel.Get(AuthCode),
+                AuthType.RefreshToken => AuthTokenRequestModel.GetRefresh(RefreshToken),
+                _ => AuthTokenRequestModel.Get(AuthCode)
             };
 
             if ((DateTime.Now - LastAuthTime).Hours >= 24 && AuthType == AuthType.NormalAuth)
             {
                 if (string.IsNullOrEmpty(RefreshToken))
-                {
                     return new AuthResultBase
                     {
                         Error = new ErrorModel
@@ -74,10 +74,9 @@ namespace ProjBobcat.DefaultComponent.Authenticator
                             ErrorMessage = "RefreshToken 为空"
                         }
                     };
-                }
 
 
-                reqForm = Class.Model.MicrosoftAuth.AuthTokenRequestModel.GetRefresh(RefreshToken);
+                reqForm = AuthTokenRequestModel.GetRefresh(RefreshToken);
             }
 
             if ((DateTime.Now - LastAuthTime).Hours < 24 && AuthType == AuthType.NormalAuth)
@@ -89,7 +88,7 @@ namespace ProjBobcat.DefaultComponent.Authenticator
 
             using var tokenResMessage =
                 await HttpHelper.PostFormData(MSAuthTokenUrl, reqForm, "application/x-www-form-urlencoded");
-            
+
             tokenResMessage.EnsureSuccessStatusCode();
 
             var tokenResStr = await tokenResMessage.Content.ReadAsStringAsync();
@@ -131,10 +130,11 @@ namespace ProjBobcat.DefaultComponent.Authenticator
 
             #region STAGE 5
 
-            var ownResStr = await HttpHelper.Get(MojangOwnershipUrl, new Tuple<string, string>("Bearer", mcRes.AccessToken));
+            var ownResStr = await HttpHelper.Get(MojangOwnershipUrl,
+                new Tuple<string, string>("Bearer", mcRes.AccessToken));
             var ownRes = JsonConvert.DeserializeObject<MojangOwnershipResponseModel>(ownResStr);
 
-            if(!(ownRes.Items?.Any() ?? false))
+            if (!(ownRes.Items?.Any() ?? false))
                 return new AuthResultBase
                 {
                     AuthStatus = AuthStatus.Failed,
@@ -150,7 +150,8 @@ namespace ProjBobcat.DefaultComponent.Authenticator
 
             #region STAGE 6
 
-            var profileResStr = await HttpHelper.Get(MojangProfileUrl, new Tuple<string, string>("Bearer", mcRes.AccessToken));
+            var profileResStr =
+                await HttpHelper.Get(MojangProfileUrl, new Tuple<string, string>("Bearer", mcRes.AccessToken));
             var profileRes = JsonConvert.DeserializeObject<MojangProfileResponseModel>(profileResStr);
 
             #endregion
@@ -208,7 +209,7 @@ namespace ProjBobcat.DefaultComponent.Authenticator
                     x.Value.Username.Equals(Email, StringComparison.OrdinalIgnoreCase) &&
                     x.Value.Type.Equals("XBox", StringComparison.OrdinalIgnoreCase));
 
-            if(value == default)
+            if (value == default)
                 return default;
 
             var sP = new ProfileInfoModel

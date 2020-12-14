@@ -101,12 +101,18 @@ namespace ProjBobcat.Class.Helper
         ///     .minecraft/launcher_profiles.json
         /// </summary>
         /// <returns></returns>
-        public static string GetLauncherProfilePath() => "launcher_profiles.json";
+        public static string GetLauncherProfilePath()
+        {
+            return "launcher_profiles.json";
+        }
 
         /// <summary>
-        /// .minecraft/launcher_accounts.json
+        ///     .minecraft/launcher_accounts.json
         /// </summary>
         /// <returns></returns>
-        public static string GetLauncherAccountPath() => "launcher_accounts.json";
+        public static string GetLauncherAccountPath()
+        {
+            return "launcher_accounts.json";
+        }
     }
 }

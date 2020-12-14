@@ -1,8 +1,8 @@
-﻿using ProjBobcat.Class.Model.Auth;
+﻿using System;
+using System.Diagnostics;
+using ProjBobcat.Class.Model.Auth;
 using ProjBobcat.Event;
 using ProjBobcat.Interface;
-using System;
-using System.Diagnostics;
 
 namespace ProjBobcat.Class
 {

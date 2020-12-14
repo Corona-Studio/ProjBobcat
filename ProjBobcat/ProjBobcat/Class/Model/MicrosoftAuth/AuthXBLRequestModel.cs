@@ -9,8 +9,13 @@
 
     public class AuthXBLRequestModel
     {
-        public static AuthXBLRequestModel Get(string accessToken) => 
-            new AuthXBLRequestModel
+        public XBLProperties Properties { get; set; }
+        public string RelyingParty { get; set; }
+        public string TokenType { get; set; }
+
+        public static AuthXBLRequestModel Get(string accessToken)
+        {
+            return new AuthXBLRequestModel
             {
                 Properties = new XBLProperties
                 {
@@ -21,9 +26,6 @@
                 RelyingParty = "http://auth.xboxlive.com",
                 TokenType = "JWT"
             };
-
-        public XBLProperties Properties { get; set; }
-        public string RelyingParty { get; set; }
-        public string TokenType { get; set; }
+        }
     }
 }
