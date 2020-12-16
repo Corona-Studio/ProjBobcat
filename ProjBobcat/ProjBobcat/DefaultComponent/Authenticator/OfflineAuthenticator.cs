@@ -42,7 +42,7 @@ namespace ProjBobcat.DefaultComponent.Authenticator
             };
 
             var uuid = PlayerUUID.FromOfflinePlayerName(Username);
-            var result = new YggdrasilAuthResult
+            var result = new AuthResultBase
             {
                 AccessToken = GuidHelper.NewGuidString(),
                 AuthStatus = AuthStatus.Succeeded,

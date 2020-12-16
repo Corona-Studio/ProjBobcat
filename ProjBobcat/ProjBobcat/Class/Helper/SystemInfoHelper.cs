@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Win32;
 using ProjBobcat.Class.Helper.SystemInfo;
@@ -159,6 +160,34 @@ namespace ProjBobcat.Class.Helper
             };
 
             return memoryInfo;
+        }
+
+        public static CPUInfo GetWindowsCpuUsageTask()
+        {
+            var info = new ProcessStartInfo
+            {
+                FileName = "wmic",
+                Arguments = "CPU get Name,LoadPercentage /Value",
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            var process = Process.Start(info);
+            var output = process.StandardOutput.ReadToEnd();
+
+            var lines = output.Trim().Split("\n");
+            var loadPercentageParts = lines[0].Split("=", StringSplitOptions.RemoveEmptyEntries);
+            var nameParts = lines[1].Split("=", StringSplitOptions.RemoveEmptyEntries);
+
+            var usage = double.Parse(loadPercentageParts[1]);
+            var name = nameParts[1];
+
+            return new CPUInfo
+            {
+                Name = name,
+                Usage = usage
+            };
         }
     }
 }
