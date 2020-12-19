@@ -20,42 +20,56 @@ namespace ProjBobcat.DefaultComponent.Installer
         private const string ReleaseRoot = "http://repo.mumfrey.com/content/repositories/liteloader/";
 
         public string RootPath { get; set; }
+        public LiteLoaderDownloadVersionModel VersionModel { get; set; }
 
         public event EventHandler<InstallerStageChangedEventArgs> StageChangedEventDelegate;
 
-        public string Install(LiteLoaderDownloadVersionModel versionModel)
+        public string Install()
         {
+            return InstallTaskAsync().Result;
+        }
+
+        public async Task<string> InstallTaskAsync()
+        {
+            InvokeStageChangedEvent("开始安装 LiteLoader", 0);
+
             var vl = new DefaultVersionLocator(RootPath, Guid.Empty);
-            var rawVersion = vl.ParseRawVersion(versionModel.McVersion);
+            var rawVersion = vl.ParseRawVersion(VersionModel.McVersion);
+
+            InvokeStageChangedEvent("解析版本", 10);
 
             if (rawVersion == null)
-                throw new UnknownGameNameException(versionModel.McVersion);
+                throw new UnknownGameNameException(VersionModel.McVersion);
 
-            if (rawVersion.Id != versionModel.McVersion)
+            if (rawVersion.Id != VersionModel.McVersion)
                 throw new NotSupportedException("LiteLoader 并不支持这个 MineCraft 版本");
 
-            var id = $"{versionModel.McVersion}-LiteLoader{versionModel.McVersion}-{versionModel.Version}";
+            var id = $"{VersionModel.McVersion}-LiteLoader{VersionModel.McVersion}-{VersionModel.Version}";
 
-            var timeStamp = long.TryParse(versionModel.Build.Timestamp, out var timeResult) ? timeResult : 0;
+            var timeStamp = long.TryParse(VersionModel.Build.Timestamp, out var timeResult) ? timeResult : 0;
             var time = TimeHelper.Unix11ToDateTime(timeStamp);
+
+            InvokeStageChangedEvent("解析 Libraries", 30);
 
             var libraries = new List<Library>
             {
                 new Library
                 {
-                    Name = $"com.mumfrey:liteloader:{versionModel.Version}",
-                    Url = versionModel.Type.Equals("SNAPSHOT", StringComparison.OrdinalIgnoreCase)
+                    Name = $"com.mumfrey:liteloader:{VersionModel.Version}",
+                    Url = VersionModel.Type.Equals("SNAPSHOT", StringComparison.OrdinalIgnoreCase)
                         ? SnapshotRoot
                         : ReleaseRoot
                 }
             };
 
-            foreach (var lib in versionModel.Build.Libraries
+            foreach (var lib in VersionModel.Build.Libraries
                 .Where(lib => !string.IsNullOrEmpty(lib.Name) && string.IsNullOrEmpty(lib.Url)).Where(lib =>
                     lib.Name.StartsWith("org.ow2.asm", StringComparison.OrdinalIgnoreCase)))
                 lib.Url = "https://files.minecraftforge.net/maven/";
 
-            libraries.AddRange(versionModel.Build.Libraries);
+            libraries.AddRange(VersionModel.Build.Libraries);
+
+            InvokeStageChangedEvent("Libraries 解析完成", 60);
 
             const string mainClass = "net.minecraft.launchwrapper.Launch";
             var resultModel = new RawVersionModel
@@ -65,8 +79,8 @@ namespace ProjBobcat.DefaultComponent.Installer
                 ReleaseTime = time,
                 Libraries = libraries,
                 MainClass = mainClass,
-                MinecraftArguments = $"--tweakClass {versionModel.Build.TweakClass}",
-                InheritsFrom = versionModel.McVersion
+                MinecraftArguments = $"--tweakClass {VersionModel.Build.TweakClass}",
+                InheritsFrom = VersionModel.McVersion
             };
 
             var gamePath = Path.Combine(RootPath, GamePathHelper.GetGamePath(id));
@@ -80,14 +94,11 @@ namespace ProjBobcat.DefaultComponent.Installer
             var jsonPath = GamePathHelper.GetGameJsonPath(RootPath, id);
             var jsonContent = JsonConvert.SerializeObject(resultModel, JsonHelper.CamelCasePropertyNamesSettings);
 
-            File.WriteAllText(jsonPath, jsonContent);
+            await File.WriteAllTextAsync(jsonPath, jsonContent);
+
+            InvokeStageChangedEvent("LiteLoader 安装完成", 100);
 
             return id;
-        }
-
-        public Task<string> InstallTaskAsync(LiteLoaderDownloadVersionModel versionModel)
-        {
-            return Task.Run(() => Install(versionModel));
         }
 
         private void InvokeStageChangedEvent(string stage, double progress)

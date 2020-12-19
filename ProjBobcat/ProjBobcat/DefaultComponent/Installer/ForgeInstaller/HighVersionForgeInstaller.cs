@@ -158,24 +158,24 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                 return;
             }
 
-            if (args.Data.StartsWith("START", StringComparison.Ordinal))
+            if (args.Data?.StartsWith("START", StringComparison.Ordinal) ?? false)
             {
                 _currentStage = args.Data[7..];
                 InvokeStatusChangedEvent(_currentStage, _currentProgress);
                 return;
             }
 
-            if (!args.Data.StartsWith("STAGE", StringComparison.Ordinal)) return;
+            if (!args.Data?.StartsWith("STAGE", StringComparison.Ordinal) ?? false) return;
 
-            _currentStage = args.Data[7..];
+            _currentStage = args.Data?[7..];
 
-            if (_currentStage.Equals("INSTALL SUCCESSFUL", StringComparison.Ordinal))
+            if (_currentStage?.Equals("INSTALL SUCCESSFUL", StringComparison.Ordinal) ?? false)
             {
                 _succeed = true;
                 return;
             }
 
-            if (_currentStage.Equals("INSTALL FAILED", StringComparison.Ordinal))
+            if (_currentStage?.Equals("INSTALL FAILED", StringComparison.Ordinal) ?? false)
             {
                 _succeed = false;
                 return;

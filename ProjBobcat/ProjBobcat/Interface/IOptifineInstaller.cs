@@ -1,12 +1,15 @@
-﻿using System.Threading.Tasks;
-using ProjBobcat.Class.Model.Optifine;
+﻿using ProjBobcat.Class.Model.Optifine;
+using System.Threading.Tasks;
 
 namespace ProjBobcat.Interface
 {
     public interface IOptifineInstaller : IInstaller
     {
-        string OptifineExecutablePath { get; set; }
-        string Install(OptifineDownloadVersionModel versionModel);
-        Task<string> InstallTaskAsync(OptifineDownloadVersionModel versionModel);
+        string RootPath { get; set; }
+        string JavaExecutablePath { get; set; }
+        string OptifineJarPath { get; set; }
+        OptifineDownloadVersionModel OptifineDownloadVersion { get; set; }
+        string Install();
+        Task<string> InstallTaskAsync();
     }
 }

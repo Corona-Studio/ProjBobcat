@@ -131,63 +131,69 @@ namespace ProjBobcat.Class.Helper
             return !string.IsNullOrEmpty(reader.ReadToEnd());
         }
 
-        public static MemoryInfo GetWindowsMemoryStatus()
+        public static Task<MemoryInfo> GetWindowsMemoryStatus()
         {
-            var info = new ProcessStartInfo
+            return Task.Run(() =>
             {
-                FileName = "wmic",
-                Arguments = "OS get FreePhysicalMemory,TotalVisibleMemorySize /Value",
-                RedirectStandardOutput = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
+                var info = new ProcessStartInfo
+                {
+                    FileName = "wmic",
+                    Arguments = "OS get FreePhysicalMemory,TotalVisibleMemorySize /Value",
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
 
-            var process = Process.Start(info);
-            var output = process.StandardOutput.ReadToEnd();
+                var process = Process.Start(info);
+                var output = process.StandardOutput.ReadToEnd();
 
-            var lines = output.Trim().Split("\n");
-            var freeMemoryParts = lines[0].Split("=", StringSplitOptions.RemoveEmptyEntries);
-            var totalMemoryParts = lines[1].Split("=", StringSplitOptions.RemoveEmptyEntries);
+                var lines = output.Trim().Split("\n");
+                var freeMemoryParts = lines[0].Split("=", StringSplitOptions.RemoveEmptyEntries);
+                var totalMemoryParts = lines[1].Split("=", StringSplitOptions.RemoveEmptyEntries);
 
-            var total = Math.Round(double.Parse(totalMemoryParts[1]) / 1024, 0);
-            var free = Math.Round(double.Parse(freeMemoryParts[1]) / 1024, 0);
+                var total = Math.Round(double.Parse(totalMemoryParts[1]) / 1024, 0);
+                var free = Math.Round(double.Parse(freeMemoryParts[1]) / 1024, 0);
 
-            var memoryInfo = new MemoryInfo
-            {
-                Total = total,
-                Free = free,
-                Used = total - free
-            };
+                var memoryInfo = new MemoryInfo
+                {
+                    Total = total,
+                    Free = free,
+                    Used = total - free
+                };
 
-            return memoryInfo;
+                return memoryInfo;
+            });
         }
 
-        public static CPUInfo GetWindowsCpuUsageTask()
+        public static Task<CPUInfo> GetWindowsCpuUsageTask()
         {
-            var info = new ProcessStartInfo
+            return Task.Run(() =>
             {
-                FileName = "wmic",
-                Arguments = "CPU get Name,LoadPercentage /Value",
-                RedirectStandardOutput = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
+                var info = new ProcessStartInfo
+                {
+                    FileName = "wmic",
+                    Arguments = "CPU get Name,LoadPercentage /Value",
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
 
-            var process = Process.Start(info);
-            var output = process.StandardOutput.ReadToEnd();
+                var process = Process.Start(info);
+                var output = process.StandardOutput.ReadToEnd();
 
-            var lines = output.Trim().Split("\n");
-            var loadPercentageParts = lines[0].Split("=", StringSplitOptions.RemoveEmptyEntries);
-            var nameParts = lines[1].Split("=", StringSplitOptions.RemoveEmptyEntries);
+                var lines = output.Trim().Split("\n");
+                var loadPercentageParts = lines[0].Split("=", StringSplitOptions.RemoveEmptyEntries);
+                var nameParts = lines[1].Split("=", StringSplitOptions.RemoveEmptyEntries);
 
-            var usage = double.Parse(loadPercentageParts[1]);
-            var name = nameParts[1];
+                var usage = double.TryParse(loadPercentageParts[1], out var u) ? u : 0;
+                var name = nameParts[1];
 
-            return new CPUInfo
-            {
-                Name = name,
-                Usage = usage
-            };
+                return new CPUInfo
+                {
+                    Name = name,
+                    Usage = usage
+                };
+            });
         }
     }
 }

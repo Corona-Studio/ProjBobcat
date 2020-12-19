@@ -5,7 +5,9 @@ namespace ProjBobcat.Interface
 {
     public interface IFabricInstaller : IInstaller
     {
-        string Install(FabricLoaderArtifactModel loaderArtifact);
-        Task<string> InstallTaskAsync(FabricLoaderArtifactModel loaderArtifact);
+        public FabricArtifactModel YarnArtifact { get; set; }
+        FabricLoaderArtifactModel LoaderArtifact { get; set; }
+        string Install();
+        Task<string> InstallTaskAsync();
     }
 }
