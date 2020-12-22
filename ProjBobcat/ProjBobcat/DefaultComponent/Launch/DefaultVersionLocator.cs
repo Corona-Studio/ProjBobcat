@@ -18,7 +18,7 @@ namespace ProjBobcat.DefaultComponent.Launch
     /// <summary>
     ///     默认的版本定位器
     /// </summary>
-    public sealed class DefaultVersionLocator : VersionLocatorBase, IVersionLocator
+    public sealed class DefaultVersionLocator : VersionLocatorBase
     {
         /// <summary>
         ///     构造函数。
@@ -40,7 +40,7 @@ namespace ProjBobcat.DefaultComponent.Launch
         public ILauncherAccountParser LauncherAccountParser { get; set; }
         public ILauncherProfileParser LauncherProfileParser { get; set; }
 
-        public IEnumerable<VersionInfo> GetAllGames()
+        public override IEnumerable<VersionInfo> GetAllGames()
         {
             // 把每个DirectoryInfo类映射到VersionInfo类。
             // Map each DirectoryInfo dir to VersionInfo class.
@@ -48,13 +48,13 @@ namespace ProjBobcat.DefaultComponent.Launch
                 .Select(dir => ToVersion(dir.Name)).Where(ver => ver != null);
         }
 
-        public VersionInfo GetGame(string id)
+        public override VersionInfo GetGame(string id)
         {
             var version = ToVersion(id);
             return version;
         }
 
-        public string ParseJvmArguments(List<object> arguments)
+        public override string ParseJvmArguments(List<object> arguments)
         {
             if (!(arguments?.Any() ?? false))
                 return string.Empty;

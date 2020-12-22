@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using ProjBobcat.Class;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Event;
 
@@ -23,7 +24,7 @@ namespace ProjBobcat.Interface
         /// <summary>
         ///     获取或设置版本定位器。
         /// </summary>
-        IVersionLocator VersionLocator { get; set; }
+        VersionLocatorBase VersionLocator { get; set; }
 
         /// <summary>
         ///     启动游戏。

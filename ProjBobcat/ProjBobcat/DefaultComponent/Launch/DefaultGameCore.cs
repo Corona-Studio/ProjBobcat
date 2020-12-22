@@ -46,7 +46,7 @@ namespace ProjBobcat.DefaultComponent.Launch
         /// <summary>
         ///     游戏版本查找器
         /// </summary>
-        public IVersionLocator VersionLocator { get; set; }
+        public VersionLocatorBase VersionLocator { get; set; }
 
         /// <summary>
         ///     客户端识别码
