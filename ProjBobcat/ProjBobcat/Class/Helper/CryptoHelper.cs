@@ -8,7 +8,7 @@ namespace ProjBobcat.Class.Helper
     {
         public static string ComputeFileHash(string path, HashAlgorithm hashAlgorithm)
         {
-            using var fs = new FileStream(path, FileMode.Open);
+            using var fs = File.OpenRead(path);
             var retVal = hashAlgorithm.ComputeHash(fs);
             fs.Close();
 

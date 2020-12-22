@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Interface;
 using SharpCompress.Archives;
@@ -9,7 +10,7 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
 {
     public static class ForgeInstallerFactory
     {
-        public static IForgeInstaller GetForgeInstaller(string rootPath, string forgeExecutable, string javaPath)
+        public static IForgeInstaller GetForgeInstaller(string rootPath, string forgeExecutable, string javaPath, VersionLocatorBase vl, string downloadUrl)
         {
             if (string.IsNullOrEmpty(rootPath))
                 throw new ArgumentNullException(nameof(rootPath));
@@ -33,7 +34,9 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
             {
                 ForgeExecutablePath = forgeExecutable,
                 JavaExecutablePath = javaPath,
-                RootPath = rootPath
+                RootPath = rootPath,
+                VersionLocator = vl,
+                DownloadUrlRoot = downloadUrl
             };
         }
     }

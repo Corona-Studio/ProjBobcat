@@ -16,12 +16,12 @@ namespace ProjBobcat.Class.Helper.SystemInfo
         /// <summary>
         ///     X64 。
         /// </summary>
-        public static SystemArch X64 { get; } = new SystemArch {_is64BitOperatingSystem = true};
+        public static SystemArch X64 { get; } = new() {_is64BitOperatingSystem = true};
 
         /// <summary>
         ///     X86 。
         /// </summary>
-        public static SystemArch X86 { get; } = new SystemArch {_is64BitOperatingSystem = false};
+        public static SystemArch X86 { get; } = new() {_is64BitOperatingSystem = false};
 
         /// <summary>
         ///     获取当前程序运行所在的系统架构。

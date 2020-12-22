@@ -118,7 +118,7 @@ namespace ProjBobcat.Class.Model
 
         public static PlayerUUID Random()
         {
-            return new PlayerUUID(Guid.NewGuid());
+            return new(Guid.NewGuid());
         }
     }
 }

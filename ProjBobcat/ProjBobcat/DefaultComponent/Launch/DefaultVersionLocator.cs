@@ -174,7 +174,7 @@ namespace ProjBobcat.DefaultComponent.Launch
         /// </summary>
         /// <param name="libraries">反序列化后的库数据。Deserialized library data.</param>
         /// <returns>二元组（包含一组list，T1是Natives列表，T2是Libraries列表）。A tuple.(T1 -> Natives, T2 -> Libraries)</returns>
-        private protected override Tuple<List<NativeFileInfo>, List<FileInfo>> GetNatives(
+        public override Tuple<List<NativeFileInfo>, List<FileInfo>> GetNatives(
             IEnumerable<Library> libraries)
         {
             var result =

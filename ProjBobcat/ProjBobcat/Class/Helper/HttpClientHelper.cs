@@ -14,7 +14,7 @@ namespace ProjBobcat.Class.Helper
         /// <returns></returns>
         public static HttpClient GetClient(int retryCount = 5)
         {
-            return new HttpClient(new RetryHandler(new RedirectHandler(new HttpClientHandler
+            return new(new RetryHandler(new RedirectHandler(new HttpClientHandler
             {
                 AllowAutoRedirect = false
             }), retryCount));

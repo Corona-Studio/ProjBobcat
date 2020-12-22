@@ -8,21 +8,17 @@ using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.LiteLoader;
 using ProjBobcat.DefaultComponent.Launch;
-using ProjBobcat.Event;
 using ProjBobcat.Exceptions;
 using ProjBobcat.Interface;
 
 namespace ProjBobcat.DefaultComponent.Installer
 {
-    public class LiteLoaderInstaller : ILiteLoaderInstaller
+    public class LiteLoaderInstaller : InstallerBase, ILiteLoaderInstaller
     {
         private const string SnapshotRoot = "http://dl.liteloader.com/versions/";
         private const string ReleaseRoot = "http://repo.mumfrey.com/content/repositories/liteloader/";
 
-        public string RootPath { get; set; }
         public LiteLoaderDownloadVersionModel VersionModel { get; set; }
-
-        public event EventHandler<InstallerStageChangedEventArgs> StageChangedEventDelegate;
 
         public string Install()
         {
@@ -31,12 +27,12 @@ namespace ProjBobcat.DefaultComponent.Installer
 
         public async Task<string> InstallTaskAsync()
         {
-            InvokeStageChangedEvent("开始安装 LiteLoader", 0);
+            InvokeStatusChangedEvent("开始安装 LiteLoader", 0);
 
             var vl = new DefaultVersionLocator(RootPath, Guid.Empty);
             var rawVersion = vl.ParseRawVersion(VersionModel.McVersion);
 
-            InvokeStageChangedEvent("解析版本", 10);
+            InvokeStatusChangedEvent("解析版本", 10);
 
             if (rawVersion == null)
                 throw new UnknownGameNameException(VersionModel.McVersion);
@@ -49,11 +45,11 @@ namespace ProjBobcat.DefaultComponent.Installer
             var timeStamp = long.TryParse(VersionModel.Build.Timestamp, out var timeResult) ? timeResult : 0;
             var time = TimeHelper.Unix11ToDateTime(timeStamp);
 
-            InvokeStageChangedEvent("解析 Libraries", 30);
+            InvokeStatusChangedEvent("解析 Libraries", 30);
 
             var libraries = new List<Library>
             {
-                new Library
+                new()
                 {
                     Name = $"com.mumfrey:liteloader:{VersionModel.Version}",
                     Url = VersionModel.Type.Equals("SNAPSHOT", StringComparison.OrdinalIgnoreCase)
@@ -69,7 +65,7 @@ namespace ProjBobcat.DefaultComponent.Installer
 
             libraries.AddRange(VersionModel.Build.Libraries);
 
-            InvokeStageChangedEvent("Libraries 解析完成", 60);
+            InvokeStatusChangedEvent("Libraries 解析完成", 60);
 
             const string mainClass = "net.minecraft.launchwrapper.Launch";
             var resultModel = new RawVersionModel
@@ -96,18 +92,9 @@ namespace ProjBobcat.DefaultComponent.Installer
 
             await File.WriteAllTextAsync(jsonPath, jsonContent);
 
-            InvokeStageChangedEvent("LiteLoader 安装完成", 100);
+            InvokeStatusChangedEvent("LiteLoader 安装完成", 100);
 
             return id;
-        }
-
-        private void InvokeStageChangedEvent(string stage, double progress)
-        {
-            StageChangedEventDelegate?.Invoke(this, new InstallerStageChangedEventArgs
-            {
-                CurrentStage = stage,
-                Progress = progress
-            });
         }
     }
 }

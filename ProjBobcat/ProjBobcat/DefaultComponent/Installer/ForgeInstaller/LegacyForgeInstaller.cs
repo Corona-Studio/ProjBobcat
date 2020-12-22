@@ -3,25 +3,30 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Forge;
 using ProjBobcat.Class.Model.YggdrasilAuth;
-using ProjBobcat.Event;
 using ProjBobcat.Interface;
 using SharpCompress.Common;
 using SharpCompress.Readers;
 
 namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
 {
-    public class LegacyForgeInstaller : IForgeInstaller
+    public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
     {
-        public string RootPath { get; set; }
         public string ForgeExecutablePath { get; set; }
-
-        public event EventHandler<InstallerStageChangedEventArgs> StageChangedEventDelegate;
+        public string ForgeVersion { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public VersionLocatorBase VersionLocator { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public string DownloadUrlRoot { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
         public ForgeInstallResult InstallForge()
+        {
+            return InstallForgeTaskAsync().Result;
+        }
+
+        public async Task<ForgeInstallResult> InstallForgeTaskAsync()
         {
             if (string.IsNullOrEmpty(ForgeExecutablePath))
                 throw new ArgumentNullException("未指定\"ForgeExecutablePath\"参数");
@@ -41,7 +46,7 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
             try
             {
                 InvokeStatusChangedEvent("解压安装文件", 0.05);
-                using var stream =
+                await using var stream =
                     File.OpenRead(ForgeExecutablePath);
                 using var reader = ReaderFactory.Open(stream);
                 while (reader.MoveToNextEntry())
@@ -61,8 +66,8 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                 InvokeStatusChangedEvent("解压完成", 0.1);
 
                 InvokeStatusChangedEvent("解析安装文档", 0.35);
-                var profileContent = File.ReadAllText(Path.Combine(extractPath, "install_profile.json"));
-                var profileModel = JsonConvert.DeserializeObject<ForgeInstallProfile>(profileContent);
+                var profileContent = await File.ReadAllTextAsync(Path.Combine(extractPath, "install_profile.json"));
+                var profileModel = JsonConvert.DeserializeObject<LegacyForgeInstallProfile>(profileContent);
                 var fileName = profileModel.VersionInfo.Id;
                 InvokeStatusChangedEvent("解析完成", 0.75);
 
@@ -76,7 +81,7 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                 var versionJsonString = JsonConvert.SerializeObject(profileModel.VersionInfo,
                     JsonHelper.CamelCasePropertyNamesSettings);
 
-                File.WriteAllText(jsonPath, versionJsonString);
+                await File.WriteAllTextAsync(jsonPath, versionJsonString);
                 InvokeStatusChangedEvent("文件写入完成", 1);
 
                 return new ForgeInstallResult
@@ -96,21 +101,6 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                     Succeeded = false
                 };
             }
-        }
-
-        [Obsolete("此方法已过时，请使用其同步版本 InstallForge() 。", true)]
-        public Task<ForgeInstallResult> InstallForgeTaskAsync()
-        {
-            throw new NotImplementedException();
-        }
-
-        private void InvokeStatusChangedEvent(string currentStage, double progress)
-        {
-            StageChangedEventDelegate?.Invoke(this, new InstallerStageChangedEventArgs
-            {
-                CurrentStage = currentStage,
-                Progress = progress
-            });
         }
     }
 }

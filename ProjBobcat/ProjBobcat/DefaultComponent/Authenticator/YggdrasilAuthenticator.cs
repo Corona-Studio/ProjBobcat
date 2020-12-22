@@ -214,7 +214,7 @@ namespace ProjBobcat.DefaultComponent.Authenticator
                     AccessToken = profile.AccessToken,
                     Profiles = new List<ProfileInfoModel>
                     {
-                        new ProfileInfoModel
+                        new()
                         {
                             Name = profile.Username,
                             Properties = profile.UserProperites.Select(x => new PropertyModel

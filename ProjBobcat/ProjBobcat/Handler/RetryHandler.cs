@@ -1,4 +1,6 @@
-﻿using System.Net.Http;
+﻿using System;
+using System.Diagnostics;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -24,7 +26,16 @@ namespace ProjBobcat.Handler
             HttpResponseMessage response = null;
             for (var i = 0; i < _maxRetries; i++)
             {
-                response = await base.SendAsync(request, cancellationToken);
+                try
+                {
+                    response = await base.SendAsync(request, cancellationToken);
+                }
+                catch (Exception e)
+                {
+                    Trace.WriteLine(e);
+                    continue;
+                }
+                
                 if (response.IsSuccessStatusCode) return response;
             }
 

@@ -9,7 +9,7 @@ namespace ProjBobcat.Class.Helper
     /// </summary>
     public static class FileHelper
     {
-        private static readonly object locker = new object();
+        private static readonly object Locker = new();
 
         /// <summary>
         ///     写入文件。
@@ -18,7 +18,7 @@ namespace ProjBobcat.Class.Helper
         /// <param name="content">内容。</param>
         public static void Write(string path, string content)
         {
-            lock (locker)
+            lock (Locker)
             {
                 File.WriteAllText(path, content);
             }
@@ -31,7 +31,7 @@ namespace ProjBobcat.Class.Helper
         /// <param name="content">内容。</param>
         public static void Write(string path, byte[] content)
         {
-            lock (locker)
+            lock (Locker)
             {
                 File.WriteAllBytes(path, content);
             }
@@ -49,7 +49,7 @@ namespace ProjBobcat.Class.Helper
         {
             try
             {
-                lock (locker)
+                lock (Locker)
                 {
                     using var outStream = File.Create(fileName);
                     stream.CopyTo(outStream, bufferSize);
@@ -77,7 +77,7 @@ namespace ProjBobcat.Class.Helper
 
         public static FileType GetFileType(string path)
         {
-            using var fs = new FileStream(path, FileMode.Open, FileAccess.Read);
+            using var fs = File.OpenRead(path);
             using var reader = new BinaryReader(fs);
 
             var b = new byte[2];

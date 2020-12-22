@@ -10,7 +10,7 @@ namespace ProjBobcat.Class
 
         private protected abstract VersionInfo ToVersion(string id);
 
-        private protected abstract Tuple<List<NativeFileInfo>, List<FileInfo>> GetNatives(
+        public abstract Tuple<List<NativeFileInfo>, List<FileInfo>> GetNatives(
             IEnumerable<Library> libraries);
 
         private protected abstract Tuple<string, Dictionary<string, string>> ParseGameArguments(

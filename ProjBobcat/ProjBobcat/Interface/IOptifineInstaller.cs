@@ -1,5 +1,5 @@
-﻿using ProjBobcat.Class.Model.Optifine;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using ProjBobcat.Class.Model.Optifine;
 
 namespace ProjBobcat.Interface
 {

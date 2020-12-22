@@ -1,21 +1,18 @@
-﻿using Newtonsoft.Json;
+﻿using System;
+using System.IO;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Fabric;
-using ProjBobcat.Event;
 using ProjBobcat.Interface;
-using System;
-using System.IO;
-using System.Threading.Tasks;
 
 namespace ProjBobcat.DefaultComponent.Installer
 {
-    public class FabricInstaller : IFabricInstaller
+    public class FabricInstaller : InstallerBase, IFabricInstaller
     {
-        public string RootPath { get; set; }
         public FabricLoaderArtifactModel LoaderArtifact { get; set; }
         public FabricArtifactModel YarnArtifact { get; set; }
-        public event EventHandler<InstallerStageChangedEventArgs> StageChangedEventDelegate;
 
         public string Install()
         {
@@ -105,7 +102,7 @@ namespace ProjBobcat.DefaultComponent.Installer
 
         public async Task<string> InstallTaskAsync()
         {
-            InvokeStageChangedEvent("开始安装", 0);
+            InvokeStatusChangedEvent("开始安装", 0);
 
             var jsonUrl = "https://fabricmc.net/download/technic/?yarn="
                           + Uri.EscapeDataString(YarnArtifact.Version)
@@ -118,7 +115,7 @@ namespace ProjBobcat.DefaultComponent.Installer
             versionModel.Id = id;
             versionModel.InheritsFrom = YarnArtifact.GameVersion;
 
-            InvokeStageChangedEvent("解析 Libraries 完成", 23.3333);
+            InvokeStatusChangedEvent("解析 Libraries 完成", 23.3333);
 
             var dir = Path.Combine(RootPath, GamePathHelper.GetGamePath(id));
             var di = new DirectoryInfo(dir);
@@ -129,25 +126,16 @@ namespace ProjBobcat.DefaultComponent.Installer
                 DirectoryHelper.CleanDirectory(di.FullName);
 
             var resultJson = JsonConvert.SerializeObject(versionModel, JsonHelper.CamelCasePropertyNamesSettings);
-            InvokeStageChangedEvent("生成版本总成", 70);
+            InvokeStatusChangedEvent("生成版本总成", 70);
             var jsonPath = GamePathHelper.GetGameJsonPath(RootPath, id);
 
-            InvokeStageChangedEvent("将版本 Json 写入文件", 90);
+            InvokeStatusChangedEvent("将版本 Json 写入文件", 90);
 
             await File.WriteAllTextAsync(jsonPath, resultJson);
 
-            InvokeStageChangedEvent("安装完成", 100);
+            InvokeStatusChangedEvent("安装完成", 100);
 
             return id;
-        }
-
-        private void InvokeStageChangedEvent(string stage, double progress)
-        {
-            StageChangedEventDelegate?.Invoke(this, new InstallerStageChangedEventArgs
-            {
-                CurrentStage = stage,
-                Progress = progress
-            });
         }
     }
 }

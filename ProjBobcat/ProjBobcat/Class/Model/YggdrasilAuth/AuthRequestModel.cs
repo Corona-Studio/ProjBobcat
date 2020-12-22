@@ -20,7 +20,7 @@ namespace ProjBobcat.Class.Model.YggdrasilAuth
         [JsonProperty("requestUser")] public bool RequestUser { get; set; }
 
         [JsonProperty("agent")]
-        public Agent Agent { get; set; } = new Agent
+        public Agent Agent { get; set; } = new()
         {
             Name = "Minecraft",
             Version = 1

@@ -32,7 +32,7 @@ namespace ProjBobcat.Class.Helper
         /// <summary>
         ///     最大重试计数
         /// </summary>
-        public static int RetryCount { get; set; } = 5;
+        public static int RetryCount { get; set; } = 10;
 
         #region 下载一个列表中的文件（自动确定是否使用分片下载）
 
@@ -109,12 +109,9 @@ namespace ProjBobcat.Class.Helper
                         TotalBytes = downloadTask.Content.Headers.ContentLength
                     });
 
-                await using (var fileToWriteTo = File.Open(filePath, FileMode.OpenOrCreate,
-                    FileAccess.ReadWrite, FileShare.ReadWrite))
-                {
-                    fileToWriteTo.Position = 0;
-                    await streamToRead.CopyToAsync(fileToWriteTo, (int) streamToRead.Length, CancellationToken.None);
-                }
+                await using var fileToWriteTo = File.OpenWrite(filePath);
+                streamToRead.Seek(0, SeekOrigin.Begin);
+                await streamToRead.CopyToAsync(fileToWriteTo);
 
                 downloadProperty.Completed?.Invoke(null,
                     new DownloadFileCompletedEventArgs(true, null, downloadProperty));
@@ -137,7 +134,7 @@ namespace ProjBobcat.Class.Helper
         /// <param name="numberOfParts">分段数量</param>
         public static void MultiPartDownload(DownloadFile downloadFile, int numberOfParts = 16)
         {
-            MultiPartDownloadTaskAsync(downloadFile, numberOfParts).GetAwaiter().GetResult();
+            MultiPartDownloadTaskAsync(downloadFile, numberOfParts).Wait();
         }
 
         private static readonly HttpClient HeadClient = HttpClientHelper.GetClient(RetryCount);
@@ -191,7 +188,7 @@ namespace ProjBobcat.Class.Helper
             var partSize = (long) Math.Round((double) responseLength / numberOfParts);
             var previous = 0L;
 
-            if (partSize != 0)
+            if (responseLength > numberOfParts)
                 for (var i = (int) partSize; i <= responseLength; i += (int) partSize)
                     if (i + partSize < responseLength)
                     {
@@ -265,12 +262,12 @@ namespace ProjBobcat.Class.Helper
                     using var res = await t.Item1;
                     await using var streamToRead = await res.Content.ReadAsStreamAsync();
 
-                    await using (var fileToWriteTo = File.Open(t.Item2.TempFileName, FileMode.OpenOrCreate,
-                        FileAccess.ReadWrite, FileShare.ReadWrite))
+                    await using (var fileToWriteTo = File.OpenWrite(t.Item2.TempFileName))
                     {
-                        fileToWriteTo.Position = 0;
-                        await streamToRead.CopyToAsync(fileToWriteTo, (int) partSize, CancellationToken.None);
+                        fileToWriteTo.Seek(0, SeekOrigin.Begin);
+                        await streamToRead.CopyToAsync(fileToWriteTo, (int)partSize, CancellationToken.None);
                     }
+
 
                     Interlocked.Add(ref tasksDone, 1);
                     Interlocked.Add(ref downloadedBytesCount, t.Item2.End - t.Item2.Start);
@@ -302,7 +299,7 @@ namespace ProjBobcat.Class.Helper
                 filesBlock.Post(readRanges);
                 filesBlock.Complete();
 
-                await writeActionBlock.Completion.ContinueWith(task =>
+                await writeActionBlock.Completion.ContinueWith(async task =>
                 {
                     if (!doneRanges.IsEmpty)
                     {
@@ -320,13 +317,13 @@ namespace ProjBobcat.Class.Helper
                         return;
                     }
 
-                    using var outputStream = File.Create(filePath);
+                    await using var outputStream = File.Create(filePath);
                     foreach (var inputFilePath in readRanges)
                     {
-                        using (var inputStream = File.OpenRead(inputFilePath.TempFileName))
+                        await using (var inputStream = File.OpenRead(inputFilePath.TempFileName))
                         {
-                            outputStream.Position = inputFilePath.Start;
-                            inputStream.CopyTo(outputStream);
+                            outputStream.Seek(inputFilePath.Start, SeekOrigin.Begin);
+                            await inputStream.CopyToAsync(outputStream);
                         }
 
                         File.Delete(inputFilePath.TempFileName);

@@ -53,7 +53,7 @@ namespace ProjBobcat.DefaultComponent
 
             if (!totalLostFiles.Any()) return new TaskResult<bool>(TaskResultStatus.Success, value: true);
 
-            DownloadFileCompletedEvent += (sender, args) =>
+            DownloadFileCompletedEvent += (_, args) =>
             {
                 TotalDownloaded++;
                 if (!args.Success)
@@ -66,7 +66,7 @@ namespace ProjBobcat.DefaultComponent
                 InvokeDownloadProgressChangedEvent((double) TotalDownloaded / NeedToDownload);
             };
 
-            DownloadFileCompletedEvent += (sender, args) =>
+            DownloadFileCompletedEvent += (_, args) =>
             {
                 if (!CheckFile) return;
                 if (!File.Exists(args.File.DownloadPath)) return;

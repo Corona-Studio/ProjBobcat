@@ -56,7 +56,7 @@ namespace ProjBobcat.DefaultComponent.Authenticator
                     UUID = uuid,
                     Properties = new List<PropertyModel>
                     {
-                        new PropertyModel
+                        new()
                         {
                             Name = authProperty.Name,
                             Value = authProperty.Value

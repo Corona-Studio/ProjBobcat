@@ -9,7 +9,7 @@ namespace ProjBobcat.Class.Helper
         public const string ForgeLegacyJarRegexStr =
             "forge-[0-9]{1,}.[0-9]{1,}[.]?[0-9]{0,}-[0-9]{1,}.[0-9]{1,}.[0-9]{1,}.[0-9]{4}-[0-9]{1,}.[0-9]{1,}[.]?[0-9]{0,}-universal.jar";
 
-        public static Regex GameVersionRegex => new Regex(GameVersionRegexStr);
-        public static Regex ForgeLegacyJarRegex => new Regex(ForgeLegacyJarRegexStr);
+        public static Regex GameVersionRegex => new(GameVersionRegexStr);
+        public static Regex ForgeLegacyJarRegex => new(ForgeLegacyJarRegexStr);
     }
 }

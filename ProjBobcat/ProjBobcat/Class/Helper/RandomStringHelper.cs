@@ -46,7 +46,7 @@ namespace ProjBobcat.Class.Helper
         ///     获取该帮助器已启用的字符所构成的字符串。
         ///     如果需要移除部分字符，请创建一个新的实例并重新添加。
         /// </summary>
-        public string EnabledCharacters => new string(enabled.ToArray());
+        public string EnabledCharacters => new(enabled.ToArray());
 
         /// <summary>
         ///     加入数字字符。

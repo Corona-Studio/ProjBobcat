@@ -9,15 +9,13 @@ using Newtonsoft.Json;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Optifine;
-using ProjBobcat.Event;
 using ProjBobcat.Interface;
 using SharpCompress.Archives;
 
 namespace ProjBobcat.DefaultComponent.Installer
 {
-    public class OptifineInstaller : IOptifineInstaller
+    public class OptifineInstaller : InstallerBase, IOptifineInstaller
     {
-        public string RootPath { get; set; }
         public string JavaExecutablePath { get; set; }
         public string OptifineJarPath { get; set; }
         public OptifineDownloadVersionModel OptifineDownloadVersion { get; set; }
@@ -29,7 +27,7 @@ namespace ProjBobcat.DefaultComponent.Installer
 
         public async Task<string> InstallTaskAsync()
         {
-            InvokeStageChangedEvent("开始安装 Optifine", 0);
+            InvokeStatusChangedEvent("开始安装 Optifine", 0);
             var mcVersion = OptifineDownloadVersion.McVersion;
             var edition = OptifineDownloadVersion.Type;
             var release = OptifineDownloadVersion.Patch;
@@ -39,10 +37,10 @@ namespace ProjBobcat.DefaultComponent.Installer
             var versionPath = Path.Combine(RootPath, GamePathHelper.GetGamePath(id));
             var di = new DirectoryInfo(versionPath);
 
-            if(!di.Exists)
+            if (!di.Exists)
                 di.Create();
 
-            InvokeStageChangedEvent("读取 Optifine 数据", 20);
+            InvokeStatusChangedEvent("读取 Optifine 数据", 20);
             using var archive = ArchiveFactory.Open(OptifineJarPath);
             var entries = archive.Entries;
 
@@ -56,13 +54,13 @@ namespace ProjBobcat.DefaultComponent.Installer
                 launchWrapperVersion = await sr.ReadToEndAsync();
             }
 
-            if(string.IsNullOrEmpty(launchWrapperVersion))
+            if (string.IsNullOrEmpty(launchWrapperVersion))
                 throw new NullReferenceException("launchwrapper-of.txt 未找到");
 
             var launchWrapperEntry =
                 entries.First(x => x.Key.Equals($"launchwrapper-of-{launchWrapperVersion}.jar"));
 
-            InvokeStageChangedEvent("生成版本总成", 40);
+            InvokeStatusChangedEvent("生成版本总成", 40);
 
             var versionModel = new RawVersionModel
             {
@@ -82,11 +80,11 @@ namespace ProjBobcat.DefaultComponent.Installer
                 BuildType = "release",
                 Libraries = new List<Library>
                 {
-                    new Library
+                    new()
                     {
                         Name = $"optifine:launchwrapper-of:{launchWrapperVersion}"
                     },
-                    new Library
+                    new()
                     {
                         Name = $"optifine:Optifine:{OptifineDownloadVersion.McVersion}_{editionRelease}"
                     }
@@ -103,11 +101,11 @@ namespace ProjBobcat.DefaultComponent.Installer
                 launchWrapperVersion);
             var libDi = new DirectoryInfo(librariesPath);
 
-            InvokeStageChangedEvent("写入 Optifine 数据", 60);
+            InvokeStatusChangedEvent("写入 Optifine 数据", 60);
 
             if (!libDi.Exists)
                 libDi.Create();
-            
+
             launchWrapperEntry.WriteToDirectory(Path.Combine(librariesPath,
                 $"launchwrapper-of-{launchWrapperVersion}.jar"));
 
@@ -131,31 +129,20 @@ namespace ProjBobcat.DefaultComponent.Installer
             };
             var p = Process.Start(ps);
 
-            if(p == null)
+            if (p == null)
                 throw new NullReferenceException();
 
             await p.WaitForExitAsync();
             var err = await p.StandardError.ReadToEndAsync();
 
-            InvokeStageChangedEvent("安装即将完成", 90);
+            InvokeStatusChangedEvent("安装即将完成", 90);
 
             if (!string.IsNullOrEmpty(err))
                 throw new NullReferenceException();
 
-            InvokeStageChangedEvent("Optifine 安装完成", 0);
+            InvokeStatusChangedEvent("Optifine 安装完成", 0);
 
             return id;
         }
-
-        private void InvokeStageChangedEvent(string stage, double progress)
-        {
-            StageChangedEventDelegate?.Invoke(this, new InstallerStageChangedEventArgs
-            {
-                CurrentStage = stage,
-                Progress = progress
-            });
-        }
-
-        public event EventHandler<InstallerStageChangedEventArgs> StageChangedEventDelegate;
     }
 }
