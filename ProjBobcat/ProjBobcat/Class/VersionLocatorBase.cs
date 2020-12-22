@@ -17,8 +17,8 @@ namespace ProjBobcat.Class
 
         public abstract RawVersionModel ParseRawVersion(string id);
         
-        public virtual ILauncherProfileParser LauncherProfileParser { get; set; }
-        public virtual ILauncherAccountParser LauncherAccountParser { get; set; }
+        public ILauncherProfileParser LauncherProfileParser { get; set; }
+        public ILauncherAccountParser LauncherAccountParser { get; set; }
 
         public abstract VersionInfo GetGame(string id);
 

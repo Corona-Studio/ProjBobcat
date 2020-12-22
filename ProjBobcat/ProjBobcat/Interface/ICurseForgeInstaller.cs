@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.CurseForge;
 
 namespace ProjBobcat.Interface

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
@@ -43,27 +44,27 @@ namespace ProjBobcat.DefaultComponent.Installer
             _needToDownload = manifest.Files.Count;
             _needToResolve = manifest.Files.Count;
 
-            var filesBlock =
-                new TransformManyBlock<IEnumerable<CurseForgeFileModel>, string>(async d =>
-                    {
-                        var urls = new List<string>();
+            var reqUrlBlock = new TransformManyBlock<IEnumerable<CurseForgeFileModel>, string>(d =>
+            {
+                return d.Select(file => CurseForgeModRequestUrl(file.ProjectId, file.FileId));
+            }, new ExecutionDataflowBlockOptions());
 
-                        foreach (var f in d.Select(file => CurseForgeModRequestUrl(file.ProjectId, file.FileId)))
-                        {
-                            var downloadUrl = await HttpHelper.Get(f);
+            var streamBlock = new TransformBlock<string, string>(async d =>
+            {
+                var downloadUrl = await HttpHelper.Get(d);
 
-                            InvokeStatusChangedEvent(
-                                $"解析安装文件 - {Path.GetFileName(downloadUrl)} ({_totalResolved} / {_needToResolve})",
-                                (double) _totalResolved / _needToResolve * 100);
+                InvokeStatusChangedEvent(
+                    $"解析安装文件 - {Path.GetFileName(downloadUrl)} ({_totalResolved} / {_needToResolve})",
+                    (double)_totalResolved / _needToResolve * 100);
 
-                            urls.Add(downloadUrl);
+                _totalResolved++;
 
-                            _totalResolved++;
-                        }
-                        
-                        return urls;
-                    },
-                    new ExecutionDataflowBlockOptions());
+                return downloadUrl;
+            }, new ExecutionDataflowBlockOptions
+            {
+                BoundedCapacity = 64,
+                MaxDegreeOfParallelism = 64
+            });
 
             var actionBlock = new ActionBlock<string>(async d =>
             {
@@ -74,6 +75,9 @@ namespace ProjBobcat.DefaultComponent.Installer
                     {
                         _totalDownloaded++;
                         _isModAllDownloaded = _isModAllDownloaded && args.Success;
+
+                        if (!args.Success)
+                            throw args.Error;
 
                         InvokeStatusChangedEvent($"下载整合包中的 Mods - {fileName} ({_totalDownloaded} / {_needToDownload})",
                             (double) _totalDownloaded / _needToDownload * 100);
@@ -91,9 +95,11 @@ namespace ProjBobcat.DefaultComponent.Installer
             });
 
             var linkOptions = new DataflowLinkOptions { PropagateCompletion = true };
-            filesBlock.LinkTo(actionBlock, linkOptions);
-            filesBlock.Post(manifest.Files);
-            filesBlock.Complete();
+            reqUrlBlock.LinkTo(streamBlock, linkOptions);
+            streamBlock.LinkTo(actionBlock, linkOptions);
+
+            reqUrlBlock.Post(manifest.Files);
+            reqUrlBlock.Complete();
 
             await actionBlock.Completion;
 

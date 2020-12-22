@@ -14,5 +14,6 @@
         public string Message { get; set; }
 
         public TaskResultStatus TaskStatus { get; set; }
+       
     }
 }
