@@ -11,6 +11,7 @@ namespace ProjBobcat.DefaultComponent.Installer
 {
     public class FabricInstaller : InstallerBase, IFabricInstaller
     {
+        public string CustomId { get; set; }
         public FabricLoaderArtifactModel LoaderArtifact { get; set; }
         public FabricArtifactModel YarnArtifact { get; set; }
 
@@ -110,8 +111,10 @@ namespace ProjBobcat.DefaultComponent.Installer
                           + Uri.EscapeDataString(LoaderArtifact.Loader.Version);
             var jsonContent = await HttpHelper.Get(jsonUrl);
             var versionModel = JsonConvert.DeserializeObject<RawVersionModel>(jsonContent);
-            var id =
-                $"{YarnArtifact.GameVersion}-fabric{YarnArtifact.Version}-{LoaderArtifact.Loader.Version}";
+            var id = string.IsNullOrEmpty(CustomId) ?
+                    $"{YarnArtifact.GameVersion}-fabric{YarnArtifact.Version}-{LoaderArtifact.Loader.Version}"
+                    : CustomId;
+            
             versionModel.Id = id;
             versionModel.InheritsFrom = YarnArtifact.GameVersion;
 

@@ -99,7 +99,9 @@ namespace ProjBobcat.Class.Helper
                     CancellationToken.None);
 
                 // downloadTask.EnsureSuccessStatusCode();
-                await using var streamToRead = await downloadTask.Content.ReadAsStreamAsync();
+
+                await using var fileToWriteTo = File.OpenWrite(filePath);
+                await downloadTask.Content.CopyToAsync(fileToWriteTo, CancellationToken.None);
 
                 downloadProperty.Changed?.Invoke(null,
                     new DownloadFileChangedEventArgs
@@ -109,9 +111,10 @@ namespace ProjBobcat.Class.Helper
                         TotalBytes = downloadTask.Content.Headers.ContentLength
                     });
 
-                await using var fileToWriteTo = File.OpenWrite(filePath);
+                /*
                 streamToRead.Seek(0, SeekOrigin.Begin);
                 await streamToRead.CopyToAsync(fileToWriteTo);
+                */
 
                 downloadProperty.Completed?.Invoke(null,
                     new DownloadFileCompletedEventArgs(true, null, downloadProperty));
@@ -260,14 +263,9 @@ namespace ProjBobcat.Class.Helper
                 var writeActionBlock = new ActionBlock<Tuple<Task<HttpResponseMessage>, DownloadRange>>(async t =>
                 {
                     using var res = await t.Item1;
-                    await using var streamToRead = await res.Content.ReadAsStreamAsync();
-
-                    await using (var fileToWriteTo = File.OpenWrite(t.Item2.TempFileName))
-                    {
-                        fileToWriteTo.Seek(0, SeekOrigin.Begin);
-                        await streamToRead.CopyToAsync(fileToWriteTo, (int)partSize, CancellationToken.None);
-                    }
-
+                    
+                    await using var fileToWriteTo = File.OpenWrite(t.Item2.TempFileName);
+                    await res.Content.CopyToAsync(fileToWriteTo, CancellationToken.None);
 
                     Interlocked.Add(ref tasksDone, 1);
                     Interlocked.Add(ref downloadedBytesCount, t.Item2.End - t.Item2.Start);

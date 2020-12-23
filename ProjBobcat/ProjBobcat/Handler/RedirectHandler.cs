@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,12 +23,12 @@ namespace ProjBobcat.Handler
         private async Task<HttpResponseMessage> CreateRedirectResponse(HttpRequestMessage request,
             HttpResponseMessage response, CancellationToken cancellationToken)
         {
-            _currentRetries++;
+            // _currentRetries++;
             var redirectUri = response.Headers.Location;
             if (!redirectUri.IsAbsoluteUri)
                 redirectUri = new Uri(request.RequestUri.GetLeftPart(UriPartial.Authority) + redirectUri);
 
-            Console.WriteLine("重定向至：" + redirectUri);
+            Trace.WriteLine($"<302>: {redirectUri}");
 
             using var newRequest = new HttpRequestMessage(request.Method, redirectUri);
             return await base.SendAsync(newRequest, cancellationToken);

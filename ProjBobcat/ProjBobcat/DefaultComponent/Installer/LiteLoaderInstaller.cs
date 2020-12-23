@@ -18,6 +18,7 @@ namespace ProjBobcat.DefaultComponent.Installer
         private const string SnapshotRoot = "http://dl.liteloader.com/versions/";
         private const string ReleaseRoot = "http://repo.mumfrey.com/content/repositories/liteloader/";
 
+        public string CustomId { get; set; }
         public LiteLoaderDownloadVersionModel VersionModel { get; set; }
 
         public string Install()
@@ -40,7 +41,9 @@ namespace ProjBobcat.DefaultComponent.Installer
             if (rawVersion.Id != VersionModel.McVersion)
                 throw new NotSupportedException("LiteLoader 并不支持这个 MineCraft 版本");
 
-            var id = $"{VersionModel.McVersion}-LiteLoader{VersionModel.McVersion}-{VersionModel.Version}";
+            var id = string.IsNullOrEmpty(CustomId) ?
+                    $"{VersionModel.McVersion}-LiteLoader{VersionModel.McVersion}-{VersionModel.Version}"
+                    : CustomId;
 
             var timeStamp = long.TryParse(VersionModel.Build.Timestamp, out var timeResult) ? timeResult : 0;
             var time = TimeHelper.Unix11ToDateTime(timeStamp);

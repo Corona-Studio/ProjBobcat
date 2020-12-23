@@ -1,17 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.CurseForge;
 using ProjBobcat.Interface;
 using SharpCompress.Archives;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 
 namespace ProjBobcat.DefaultComponent.Installer
 {
@@ -44,10 +43,8 @@ namespace ProjBobcat.DefaultComponent.Installer
             _needToDownload = manifest.Files.Count;
             _needToResolve = manifest.Files.Count;
 
-            var reqUrlBlock = new TransformManyBlock<IEnumerable<CurseForgeFileModel>, string>(d =>
-            {
-                return d.Select(file => CurseForgeModRequestUrl(file.ProjectId, file.FileId));
-            }, new ExecutionDataflowBlockOptions());
+            var reqUrlBlock =
+                new TransformManyBlock<IEnumerable<string>, string>(d => d, new ExecutionDataflowBlockOptions());
 
             var streamBlock = new TransformBlock<string, string>(async d =>
             {
@@ -62,8 +59,8 @@ namespace ProjBobcat.DefaultComponent.Installer
                 return downloadUrl;
             }, new ExecutionDataflowBlockOptions
             {
-                BoundedCapacity = 64,
-                MaxDegreeOfParallelism = 64
+                BoundedCapacity = 8,
+                MaxDegreeOfParallelism = 8
             });
 
             var actionBlock = new ActionBlock<string>(async d =>
@@ -76,8 +73,8 @@ namespace ProjBobcat.DefaultComponent.Installer
                         _totalDownloaded++;
                         _isModAllDownloaded = _isModAllDownloaded && args.Success;
 
-                        if (!args.Success)
-                            throw args.Error;
+                        // if (!args.Success)
+                        //     throw args.Error;
 
                         InvokeStatusChangedEvent($"下载整合包中的 Mods - {fileName} ({_totalDownloaded} / {_needToDownload})",
                             (double) _totalDownloaded / _needToDownload * 100);
@@ -90,15 +87,16 @@ namespace ProjBobcat.DefaultComponent.Installer
                 await DownloadHelper.MultiPartDownloadTaskAsync(downloadFile);
             }, new ExecutionDataflowBlockOptions
             {
-                BoundedCapacity = 64,
-                MaxDegreeOfParallelism = 64
+                BoundedCapacity = 32,
+                MaxDegreeOfParallelism = 32
             });
 
             var linkOptions = new DataflowLinkOptions { PropagateCompletion = true };
             reqUrlBlock.LinkTo(streamBlock, linkOptions);
             streamBlock.LinkTo(actionBlock, linkOptions);
 
-            reqUrlBlock.Post(manifest.Files);
+            var collections = manifest.Files.Select(file => CurseForgeModRequestUrl(file.ProjectId, file.FileId));
+            reqUrlBlock.Post(collections);
             reqUrlBlock.Complete();
 
             await actionBlock.Completion;
@@ -154,9 +152,7 @@ namespace ProjBobcat.DefaultComponent.Installer
             return manifestModel;
         }
 
-        private static string CurseForgeModRequestUrl(long projectId, long fileId)
-        {
-            return $"https://addons-ecs.forgesvc.net/api/v2/addon/{projectId}/file/{fileId}/download-url";
-        }
+        private static string CurseForgeModRequestUrl(long projectId, long fileId) =>
+            $"https://addons-ecs.forgesvc.net/api/v2/addon/{projectId}/file/{fileId}/download-url";
     }
 }

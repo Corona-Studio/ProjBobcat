@@ -16,6 +16,7 @@ namespace ProjBobcat.DefaultComponent.Installer
 {
     public class OptifineInstaller : InstallerBase, IOptifineInstaller
     {
+        public string CustomId { get; set; }
         public string JavaExecutablePath { get; set; }
         public string OptifineJarPath { get; set; }
         public OptifineDownloadVersionModel OptifineDownloadVersion { get; set; }
@@ -32,7 +33,9 @@ namespace ProjBobcat.DefaultComponent.Installer
             var edition = OptifineDownloadVersion.Type;
             var release = OptifineDownloadVersion.Patch;
             var editionRelease = $"{edition}_{release}";
-            var id = $"{mcVersion}-Optifine_{editionRelease}";
+            var id = string.IsNullOrEmpty(CustomId)
+                ? $"{mcVersion}-Optifine_{editionRelease}"
+                : CustomId;
 
             var versionPath = Path.Combine(RootPath, GamePathHelper.GetGamePath(id));
             var di = new DirectoryInfo(versionPath);

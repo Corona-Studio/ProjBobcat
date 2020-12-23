@@ -26,6 +26,7 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
         public string ForgeExecutablePath { get; set; }
         
         public VersionLocatorBase VersionLocator { get; set; }
+        public string CustomId { get; set; }
 
         public ForgeInstallResult InstallForge()
         {
@@ -89,7 +90,11 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
             var versionJsonContent = await sr.ReadToEndAsync();
             var versionJsonModel = JsonConvert.DeserializeObject<RawVersionModel>(versionJsonContent);
 
-            var id = versionJsonModel.Id;
+            var forgeVersion = versionJsonModel.Id.Replace("-forge-", "-");
+            var id = string.IsNullOrEmpty(CustomId) ? versionJsonModel.Id : CustomId;
+
+            versionJsonModel.Id = id;
+            
             var jsonPath = GamePathHelper.GetGameJsonPath(RootPath, id);
 
             await using var fs = File.OpenWrite(jsonPath);
@@ -110,8 +115,6 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
             var ipModel = JsonConvert.DeserializeObject<ForgeInstallProfile>(ipContent);
 
             #endregion
-
-            var forgeVersion = id.Replace("-forge-", "-");
 
             #region 解析 Lzma
 
