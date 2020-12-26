@@ -63,7 +63,7 @@ namespace ProjBobcat.DefaultComponent
                     _isNormalFileFailed = !flag || _isLibraryFailed;
                 }
 
-                InvokeDownloadProgressChangedEvent((double) TotalDownloaded / NeedToDownload);
+                InvokeDownloadProgressChangedEvent((double) TotalDownloaded / NeedToDownload, args.AverageSpeed);
             };
 
             DownloadFileCompletedEvent += (_, args) =>
@@ -131,11 +131,12 @@ namespace ProjBobcat.DefaultComponent
             return new Tuple<TaskResultStatus, bool>(resultType, _isLibraryFailed);
         }
 
-        private void InvokeDownloadProgressChangedEvent(double progress)
+        private void InvokeDownloadProgressChangedEvent(double progress, double speed)
         {
             DownloadFileChangedEvent?.Invoke(this, new DownloadFileChangedEventArgs
             {
-                ProgressPercentage = progress
+                ProgressPercentage = progress,
+                Speed = speed
             });
         }
     }

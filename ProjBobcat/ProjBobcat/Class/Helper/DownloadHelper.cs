@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -33,6 +34,8 @@ namespace ProjBobcat.Class.Helper
         ///     最大重试计数
         /// </summary>
         public static int RetryCount { get; set; } = 10;
+
+        private const int BufferSize = 1024 * 10 * 10;
 
         #region 下载一个列表中的文件（自动确定是否使用分片下载）
 
@@ -95,34 +98,64 @@ namespace ProjBobcat.Class.Helper
             try
             {
                 using var request = new HttpRequestMessage {RequestUri = new Uri(downloadProperty.DownloadUri)};
-                using var downloadTask = await DataClient.SendAsync(request, HttpCompletionOption.ResponseContentRead,
+
+                if (!string.IsNullOrEmpty(downloadProperty.Host))
+                    request.Headers.Host = downloadProperty.Host;
+
+                using var res = await DataClient.SendAsync(request, HttpCompletionOption.ResponseContentRead,
                     CancellationToken.None);
 
                 // downloadTask.EnsureSuccessStatusCode();
 
-                await using var fileToWriteTo = File.OpenWrite(filePath);
-                await downloadTask.Content.CopyToAsync(fileToWriteTo, CancellationToken.None);
+                await using var stream = await res.Content.ReadAsStreamAsync();
+                await using var fileToWriteTo = File.Create(filePath);
 
-                downloadProperty.Changed?.Invoke(null,
-                    new DownloadFileChangedEventArgs
-                    {
-                        ProgressPercentage = 1,
-                        BytesReceived = downloadTask.Content.Headers.ContentLength ?? 0,
-                        TotalBytes = downloadTask.Content.Headers.ContentLength
-                    });
+                var responseLength = res.Content.Headers.ContentLength ?? 0;
+                var downloadedBytesCount = 0L;
+                var buffer = new byte[BufferSize];
+                var sw = new Stopwatch();
+                sw.Start();
 
-                /*
-                streamToRead.Seek(0, SeekOrigin.Begin);
-                await streamToRead.CopyToAsync(fileToWriteTo);
-                */
+                var tSpeed = 0D;
+                var cSpeed = 0;
 
+                while (true)
+                {
+                    var bytesRead = await stream.ReadAsync(buffer.AsMemory(0, BufferSize));
+
+                    if (bytesRead == 0)
+                        break;
+
+                    await fileToWriteTo.WriteAsync(buffer.AsMemory(0, bytesRead));
+
+                    Interlocked.Add(ref downloadedBytesCount, bytesRead);
+
+                    var elapsedTime = sw.Elapsed.TotalSeconds;
+                    var speed = (double) downloadedBytesCount / 1024 / 1024 / elapsedTime;
+
+                    tSpeed += speed;
+                    cSpeed++;
+
+                    downloadProperty.Changed?.Invoke(null,
+                        new DownloadFileChangedEventArgs
+                        {
+                            ProgressPercentage = (double)downloadedBytesCount / responseLength,
+                            BytesReceived = downloadedBytesCount,
+                            TotalBytes = responseLength,
+                            Speed = speed
+                        });
+                }
+
+                sw.Stop();
+
+                var aSpeed = tSpeed / cSpeed;
                 downloadProperty.Completed?.Invoke(null,
-                    new DownloadFileCompletedEventArgs(true, null, downloadProperty));
+                    new DownloadFileCompletedEventArgs(true, null, downloadProperty, aSpeed));
             }
             catch (Exception e)
             {
                 downloadProperty.Completed?.Invoke(null,
-                    new DownloadFileCompletedEventArgs(false, e, downloadProperty));
+                    new DownloadFileCompletedEventArgs(false, e, downloadProperty, 0));
             }
         }
 
@@ -244,6 +277,10 @@ namespace ProjBobcat.Class.Helper
                     {
                         using var request = new HttpRequestMessage {RequestUri = new Uri(downloadFile.DownloadUri)};
                         request.Headers.ConnectionClose = false;
+
+                        if (!string.IsNullOrEmpty(downloadFile.Host))
+                            request.Headers.Host = downloadFile.Host;
+
                         request.Headers.Range = new RangeHeaderValue(p.Start, p.End);
 
                         var downloadTask = MultiPartClient.SendAsync(request, HttpCompletionOption.ResponseContentRead,
@@ -260,24 +297,52 @@ namespace ProjBobcat.Class.Helper
                         MaxDegreeOfParallelism = numberOfParts
                     });
 
+                var tSpeed = 0D;
+                var cSpeed = 0;
+
                 var writeActionBlock = new ActionBlock<Tuple<Task<HttpResponseMessage>, DownloadRange>>(async t =>
                 {
                     using var res = await t.Item1;
-                    
+
+                    await using var stream = await res.Content.ReadAsStreamAsync();
                     await using var fileToWriteTo = File.OpenWrite(t.Item2.TempFileName);
-                    await res.Content.CopyToAsync(fileToWriteTo, CancellationToken.None);
+
+                    var buffer = new byte[BufferSize];
+                    var sw = new Stopwatch();
+                    sw.Start();
+
+                    while (true)
+                    {
+                        var bytesRead = await stream.ReadAsync(buffer.AsMemory(0, BufferSize));
+                        
+                        if(bytesRead == 0)
+                            break;
+
+                        await fileToWriteTo.WriteAsync(buffer.AsMemory(0, bytesRead));
+
+                        Interlocked.Add(ref downloadedBytesCount, bytesRead);
+
+                        var elapsedTime = sw.Elapsed.TotalSeconds;
+                        var speed = (double) downloadedBytesCount / 1024 / 1024 / elapsedTime;
+
+                        tSpeed += speed;
+                        cSpeed++;
+
+                        downloadFile.Changed?.Invoke(t,
+                            new DownloadFileChangedEventArgs
+                            {
+                                ProgressPercentage = (double)downloadedBytesCount / responseLength,
+                                BytesReceived = downloadedBytesCount,
+                                TotalBytes = responseLength,
+                                Speed = speed
+                            });
+                    }
+                    
+                    sw.Stop();
+
+                    //await res.Content.CopyToAsync(fileToWriteTo, CancellationToken.None);
 
                     Interlocked.Add(ref tasksDone, 1);
-                    Interlocked.Add(ref downloadedBytesCount, t.Item2.End - t.Item2.Start);
-
-                    downloadFile.Changed?.Invoke(t,
-                        new DownloadFileChangedEventArgs
-                        {
-                            ProgressPercentage = (double) downloadedBytesCount / responseLength,
-                            BytesReceived = downloadedBytesCount,
-                            TotalBytes = responseLength
-                        });
-
                     doneRanges.TryTake(out _);
                 }, new ExecutionDataflowBlockOptions
                 {
@@ -299,11 +364,14 @@ namespace ProjBobcat.Class.Helper
 
                 await writeActionBlock.Completion.ContinueWith(async task =>
                 {
+                    var aSpeed = tSpeed / cSpeed;
+                    
                     if (!doneRanges.IsEmpty)
                     {
                         var ex = task.Exception ?? new AggregateException(new Exception("没有完全下载所有的分片"));
+
                         downloadFile.Completed?.Invoke(task,
-                            new DownloadFileCompletedEventArgs(false, ex, downloadFile));
+                            new DownloadFileCompletedEventArgs(false, ex, downloadFile, aSpeed));
                         try
                         {
                             File.Delete(filePath);
@@ -328,7 +396,7 @@ namespace ProjBobcat.Class.Helper
                     }
 
                     downloadFile.Completed?.Invoke(null,
-                        new DownloadFileCompletedEventArgs(true, null, downloadFile));
+                        new DownloadFileCompletedEventArgs(true, null, downloadFile, aSpeed));
                 }, CancellationToken.None, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Current);
 
                 #endregion
@@ -336,7 +404,7 @@ namespace ProjBobcat.Class.Helper
             catch (Exception ex)
             {
                 downloadFile.Completed?.Invoke(null,
-                    new DownloadFileCompletedEventArgs(false, ex, downloadFile));
+                    new DownloadFileCompletedEventArgs(false, ex, downloadFile, 0));
                 foreach (var piece in readRanges)
                     try
                     {

@@ -5,6 +5,7 @@ using ProjBobcat.Class.Model.CurseForge;
 using ProjBobcat.Interface;
 using SharpCompress.Archives;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -40,32 +41,35 @@ namespace ProjBobcat.DefaultComponent.Installer
             if(!di.Exists)
                 di.Create();
 
-            _needToDownload = manifest.Files.Count;
-            _needToResolve = manifest.Files.Count;
+            _needToDownload = _needToResolve = manifest.Files.Count;
 
             var reqUrlBlock =
-                new TransformManyBlock<IEnumerable<string>, string>(d => d, new ExecutionDataflowBlockOptions());
+                new TransformManyBlock<IEnumerable<string>, ValueTuple<string, string>>(async d =>
+                {
+                    var result = new List<ValueTuple<string, string>>();
 
-            var streamBlock = new TransformBlock<string, string>(async d =>
+                    foreach (var req in d)
+                    {
+                        var downloadUrl = (await HttpHelper.Get(req)).Trim('"');
+                        var fileName = Path.GetFileName(downloadUrl);
+
+                        var progress = (double) _totalResolved / _needToResolve * 100;
+                        InvokeStatusChangedEvent(
+                            $"解析安装文件 - {fileName} ({_totalResolved} / {_needToResolve})",
+                            progress);
+
+                        var dU = $"https://202.81.235.92/?url={ Uri.EscapeUriString(downloadUrl) }";
+                        result.Add((fileName, dU));
+
+                        _totalResolved++;
+                    }
+
+                    return result;
+                }, new ExecutionDataflowBlockOptions());
+
+            var actionBlock = new ActionBlock<ValueTuple<string, string>>(async t =>
             {
-                var downloadUrl = await HttpHelper.Get(d);
-
-                InvokeStatusChangedEvent(
-                    $"解析安装文件 - {Path.GetFileName(downloadUrl)} ({_totalResolved} / {_needToResolve})",
-                    (double)_totalResolved / _needToResolve * 100);
-
-                _totalResolved++;
-
-                return downloadUrl;
-            }, new ExecutionDataflowBlockOptions
-            {
-                BoundedCapacity = 8,
-                MaxDegreeOfParallelism = 8
-            });
-
-            var actionBlock = new ActionBlock<string>(async d =>
-            {
-                var fileName = Path.GetFileName(d);
+                var (fn, d) = t;
                 var downloadFile = new DownloadFile
                 {
                     Completed = (_, args) =>
@@ -76,12 +80,15 @@ namespace ProjBobcat.DefaultComponent.Installer
                         // if (!args.Success)
                         //     throw args.Error;
 
-                        InvokeStatusChangedEvent($"下载整合包中的 Mods - {fileName} ({_totalDownloaded} / {_needToDownload})",
-                            (double) _totalDownloaded / _needToDownload * 100);
+                        var progress = (double) _totalDownloaded / _needToDownload * 100;
+
+                        InvokeStatusChangedEvent($"下载整合包中的 Mods - {fn} ({_totalDownloaded} / {_needToDownload})",
+                            progress);
                     },
                     DownloadPath = di.FullName,
                     DownloadUri = d,
-                    FileName = fileName
+                    FileName = fn,
+                    Host = "proxy.freecdn.workers.dev"
                 };
 
                 await DownloadHelper.MultiPartDownloadTaskAsync(downloadFile);
@@ -92,18 +99,17 @@ namespace ProjBobcat.DefaultComponent.Installer
             });
 
             var linkOptions = new DataflowLinkOptions { PropagateCompletion = true };
-            reqUrlBlock.LinkTo(streamBlock, linkOptions);
-            streamBlock.LinkTo(actionBlock, linkOptions);
+            reqUrlBlock.LinkTo(actionBlock, linkOptions);
 
-            var collections = manifest.Files.Select(file => CurseForgeModRequestUrl(file.ProjectId, file.FileId));
-            reqUrlBlock.Post(collections);
+            var collection = manifest.Files.Select(file => CurseForgeModRequestUrl(file.ProjectId, file.FileId));
+            reqUrlBlock.Post(collection);
             reqUrlBlock.Complete();
 
             await actionBlock.Completion;
 
             _totalDownloaded = 0;
 
-            if (_isModAllDownloaded)
+            if (!_isModAllDownloaded)
                 throw new NullReferenceException("未能下载全部的 Mods");
 
             using var archive = ArchiveFactory.Open(Path.GetFullPath(ModPackPath));

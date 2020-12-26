@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -37,7 +38,7 @@ namespace ProjBobcat.Class.Helper
                     return javas;
 
                 if (!javas.Exists(x => x.Equals(evJava, StringComparison.OrdinalIgnoreCase)))
-                    javas.Add(evJava);
+                    javas.Add(Path.Combine(evJava, "bin", "javaw.exe"));
 
                 return javas;
             }
@@ -131,6 +132,10 @@ namespace ProjBobcat.Class.Helper
             return !string.IsNullOrEmpty(reader.ReadToEnd());
         }
 
+        /// <summary>
+        /// 获取 系统的内存信息
+        /// </summary>
+        /// <returns></returns>
         public static Task<MemoryInfo> GetWindowsMemoryStatus()
         {
             return Task.Run(() =>
@@ -165,6 +170,10 @@ namespace ProjBobcat.Class.Helper
             });
         }
 
+        /// <summary>
+        /// 获取系统 Cpu 信息
+        /// </summary>
+        /// <returns></returns>
         public static Task<CPUInfo> GetWindowsCpuUsageTask()
         {
             return Task.Run(() =>
