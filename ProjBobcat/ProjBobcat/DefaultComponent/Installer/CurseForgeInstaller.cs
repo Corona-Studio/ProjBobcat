@@ -5,7 +5,6 @@ using ProjBobcat.Class.Model.CurseForge;
 using ProjBobcat.Interface;
 using SharpCompress.Archives;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -58,8 +57,8 @@ namespace ProjBobcat.DefaultComponent.Installer
                             $"解析安装文件 - {fileName} ({_totalResolved} / {_needToResolve})",
                             progress);
 
-                        var dU = $"https://202.81.235.92/?url={ Uri.EscapeUriString(downloadUrl) }";
-                        result.Add((fileName, dU));
+                        // var dU = $"https://202.81.235.92/?url={ Uri.EscapeUriString(downloadUrl) }";
+                        result.Add((fileName, downloadUrl));
 
                         _totalResolved++;
                     }
@@ -87,8 +86,8 @@ namespace ProjBobcat.DefaultComponent.Installer
                     },
                     DownloadPath = di.FullName,
                     DownloadUri = d,
-                    FileName = fn,
-                    Host = "proxy.freecdn.workers.dev"
+                    FileName = fn
+                    // Host = "proxy.freecdn.workers.dev"
                 };
 
                 await DownloadHelper.MultiPartDownloadTaskAsync(downloadFile);

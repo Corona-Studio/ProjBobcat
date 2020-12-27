@@ -192,11 +192,15 @@ namespace ProjBobcat.Class.Helper
             #region Get file size
 
             using var message = new HttpRequestMessage(HttpMethod.Head, new Uri(downloadFile.DownloadUri));
+            if (!string.IsNullOrEmpty(downloadFile.Host))
+                message.Headers.Host = downloadFile.Host;
             using var res1 = await HeadClient.SendAsync(message);
 
             using var message2 = new HttpRequestMessage(HttpMethod.Head, new Uri(downloadFile.DownloadUri));
             message2.Headers.Range =
                 new RangeHeaderValue(0, Math.Max(res1.Content.Headers.ContentLength / 2 ?? 0, 1));
+            if (!string.IsNullOrEmpty(downloadFile.Host))
+                message2.Headers.Host = downloadFile.Host;
 
             using var res2 = await HeadClient.SendAsync(message2);
 
