@@ -69,7 +69,9 @@ namespace ProjBobcat.DefaultComponent
             DownloadFileCompletedEvent += (_, args) =>
             {
                 if (!CheckFile) return;
-                if (!File.Exists(args.File.DownloadPath)) return;
+
+                var filePath = Path.Combine(args.File.DownloadPath, args.File.FileName);
+                if (!File.Exists(filePath)) return;
 
 #pragma warning disable CA5350 // 不要使用弱加密算法
                 using var hA = SHA1.Create();
@@ -77,12 +79,12 @@ namespace ProjBobcat.DefaultComponent
 
                 try
                 {
-                    var hash = CryptoHelper.ComputeFileHash(args.File.DownloadPath, hA);
+                    var hash = CryptoHelper.ComputeFileHash(filePath, hA);
 
                     if (string.IsNullOrEmpty(args.File.CheckSum)) return;
                     if (hash.Equals(args.File.CheckSum, StringComparison.OrdinalIgnoreCase)) return;
 
-                    File.Delete(args.File.DownloadPath);
+                    File.Delete(filePath);
 
                     var flag = args.File.FileType.Equals("Library/Native", StringComparison.Ordinal);
                     _isLibraryFailed = flag || _isLibraryFailed;

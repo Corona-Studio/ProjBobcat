@@ -110,7 +110,7 @@ namespace ProjBobcat.Class.Helper
                 await using var stream = await res.Content.ReadAsStreamAsync();
                 await using var fileToWriteTo = File.Create(filePath);
 
-                var responseLength = res.Content.Headers.ContentLength ?? 0;
+                    var responseLength = res.Content.Headers.ContentLength ?? 0;
                 var downloadedBytesCount = 0L;
                 var buffer = new byte[BufferSize];
                 var sw = new Stopwatch();
@@ -147,6 +147,7 @@ namespace ProjBobcat.Class.Helper
                 }
 
                 sw.Stop();
+                fileToWriteTo.Close();
 
                 var aSpeed = tSpeed / cSpeed;
                 downloadProperty.Completed?.Invoke(null,
@@ -399,6 +400,7 @@ namespace ProjBobcat.Class.Helper
                         File.Delete(inputFilePath.TempFileName);
                     }
 
+                    outputStream.Close();
                     downloadFile.Completed?.Invoke(null,
                         new DownloadFileCompletedEventArgs(true, null, downloadFile, aSpeed));
                 }, CancellationToken.None, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Current);

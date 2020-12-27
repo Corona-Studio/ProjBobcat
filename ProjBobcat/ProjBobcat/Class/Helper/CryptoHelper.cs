@@ -8,9 +8,8 @@ namespace ProjBobcat.Class.Helper
     {
         public static string ComputeFileHash(string path, HashAlgorithm hashAlgorithm)
         {
-            using var fs = File.OpenRead(path);
-            var retVal = hashAlgorithm.ComputeHash(fs);
-            fs.Close();
+            var bytes = File.ReadAllBytes(path);
+            var retVal = hashAlgorithm.ComputeHash(bytes);
 
             return BitConverter.ToString(retVal).Replace("-", string.Empty);
         }
