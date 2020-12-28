@@ -11,7 +11,6 @@ namespace ProjBobcat.DefaultComponent.Installer
 {
     public class FabricInstaller : InstallerBase, IFabricInstaller
     {
-        public string CustomId { get; set; }
         public FabricLoaderArtifactModel LoaderArtifact { get; set; }
         public FabricArtifactModel YarnArtifact { get; set; }
 

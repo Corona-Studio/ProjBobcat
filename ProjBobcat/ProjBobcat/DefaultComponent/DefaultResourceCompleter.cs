@@ -32,7 +32,7 @@ namespace ProjBobcat.DefaultComponent
 
         public bool CheckAndDownload()
         {
-            return CheckAndDownloadTaskAsync().GetAwaiter().GetResult().Value;
+            return CheckAndDownloadTaskAsync().Result.Value;
         }
 
         public async Task<TaskResult<bool>> CheckAndDownloadTaskAsync()

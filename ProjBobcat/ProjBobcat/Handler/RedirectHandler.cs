@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace ProjBobcat.Handler
 {
+    /// <summary>
+    /// HttpClient 重定向助手
+    /// </summary>
     public class RedirectHandler : DelegatingHandler
     {
         private readonly int _maxRetries = 20;
@@ -28,7 +31,7 @@ namespace ProjBobcat.Handler
             if (!redirectUri.IsAbsoluteUri)
                 redirectUri = new Uri(request.RequestUri.GetLeftPart(UriPartial.Authority) + redirectUri);
 
-            Trace.WriteLine($"<302>: {redirectUri}");
+            Trace.WriteLine($"302: {redirectUri}");
 
             using var newRequest = new HttpRequestMessage(request.Method, redirectUri);
             return await base.SendAsync(newRequest, cancellationToken);

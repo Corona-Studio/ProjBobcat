@@ -38,7 +38,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
 
         public IEnumerable<IGameResource> ResolveResource()
         {
-            return ResolveResourceTaskAsync().GetAwaiter().GetResult();
+            return ResolveResourceTaskAsync().Result;
         }
 
         public async Task<IEnumerable<IGameResource>> ResolveResourceTaskAsync()

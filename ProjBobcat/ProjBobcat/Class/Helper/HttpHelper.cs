@@ -13,7 +13,7 @@ namespace ProjBobcat.Class.Helper
     /// </summary>
     public static class HttpHelper
     {
-        public static readonly HttpClient Client = HttpClientHelper.GetClient();
+        private static readonly HttpClient Client = HttpClientHelper.GetClient();
 
         /// <summary>
         ///     正则匹配Uri

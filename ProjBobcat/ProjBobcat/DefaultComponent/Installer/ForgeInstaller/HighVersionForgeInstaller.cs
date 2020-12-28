@@ -26,7 +26,6 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
         public string ForgeExecutablePath { get; set; }
         
         public VersionLocatorBase VersionLocator { get; set; }
-        public string CustomId { get; set; }
 
         public ForgeInstallResult InstallForge()
         {

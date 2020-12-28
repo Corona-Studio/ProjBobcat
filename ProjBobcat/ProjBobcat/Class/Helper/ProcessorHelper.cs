@@ -21,6 +21,10 @@ namespace ProjBobcat.Class.Helper
             return processorCoreCount;
         }
 
+        /// <summary>
+        /// 自动设置最大线程数
+        /// </summary>
+        /// <returns></returns>
         public static bool SetMaxThreads()
         {
             ThreadPool.GetMaxThreads(out var maxWorkerThreads,

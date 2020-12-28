@@ -48,7 +48,7 @@ namespace ProjBobcat.DefaultComponent.Authenticator
 
         public AuthResultBase Auth(bool userField = false)
         {
-            return AuthTaskAsync(userField).GetAwaiter().GetResult();
+            return AuthTaskAsync(userField).Result;
         }
 
         public async Task<AuthResultBase> AuthTaskAsync(bool userField = false)

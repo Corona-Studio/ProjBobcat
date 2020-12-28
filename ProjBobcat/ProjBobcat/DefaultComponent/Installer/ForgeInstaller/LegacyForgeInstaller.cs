@@ -1,10 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
@@ -12,15 +6,18 @@ using ProjBobcat.Class.Model.Forge;
 using ProjBobcat.Class.Model.YggdrasilAuth;
 using ProjBobcat.Interface;
 using SharpCompress.Archives;
-using SharpCompress.Common;
-using SharpCompress.Readers;
+using System;
+using System.IO;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
 {
     public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
     {
         public string ForgeExecutablePath { get; set; }
-        public string CustomId { get; set; }
         public string ForgeVersion { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
         public VersionLocatorBase VersionLocator { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
         public string DownloadUrlRoot { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
