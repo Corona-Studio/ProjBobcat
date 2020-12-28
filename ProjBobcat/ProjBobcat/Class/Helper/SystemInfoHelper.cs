@@ -133,7 +133,7 @@ namespace ProjBobcat.Class.Helper
         }
 
         /// <summary>
-        /// 获取 系统的内存信息
+        ///     获取 系统的内存信息
         /// </summary>
         /// <returns></returns>
         public static Task<MemoryInfo> GetWindowsMemoryStatus()
@@ -171,7 +171,7 @@ namespace ProjBobcat.Class.Helper
         }
 
         /// <summary>
-        /// 获取系统 Cpu 信息
+        ///     获取系统 Cpu 信息
         /// </summary>
         /// <returns></returns>
         public static Task<CPUInfo> GetWindowsCpuUsageTask()

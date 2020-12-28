@@ -130,8 +130,9 @@ namespace ProjBobcat.DefaultComponent.Authenticator
 
             #region STAGE 5
 
-            var ownResStr = await HttpHelper.Get(MojangOwnershipUrl,
+            var ownResRes = await HttpHelper.Get(MojangOwnershipUrl,
                 new Tuple<string, string>("Bearer", mcRes.AccessToken));
+            var ownResStr = await ownResRes.Content.ReadAsStringAsync();
             var ownRes = JsonConvert.DeserializeObject<MojangOwnershipResponseModel>(ownResStr);
 
             if (!(ownRes.Items?.Any() ?? false))
@@ -150,8 +151,9 @@ namespace ProjBobcat.DefaultComponent.Authenticator
 
             #region STAGE 6
 
-            var profileResStr =
+            var profileResRes =
                 await HttpHelper.Get(MojangProfileUrl, new Tuple<string, string>("Bearer", mcRes.AccessToken));
+            var profileResStr = await profileResRes.Content.ReadAsStringAsync();
             var profileRes = JsonConvert.DeserializeObject<MojangProfileResponseModel>(profileResStr);
 
             #endregion

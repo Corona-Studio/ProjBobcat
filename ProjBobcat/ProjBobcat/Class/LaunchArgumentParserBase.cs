@@ -12,56 +12,56 @@ namespace ProjBobcat.Class
     public abstract class LaunchArgumentParserBase : LauncherParserBase
     {
         /// <summary>
-        /// 启动设置
+        ///     启动设置
         /// </summary>
         private protected LaunchSettings LaunchSettings { get; set; }
 
         /// <summary>
-        /// launcher_profile 解析器
+        ///     launcher_profile 解析器
         /// </summary>
         private protected ILauncherProfileParser LauncherProfileParser { get; set; }
 
         /// <summary>
-        /// 版本定位器
+        ///     版本定位器
         /// </summary>
 
         private protected IVersionLocator VersionLocator { get; set; }
 
         /// <summary>
-        /// 账户验证结果
+        ///     账户验证结果
         /// </summary>
 
         private protected AuthResultBase AuthResult { get; set; }
 
         /// <summary>
-        /// 游戏档案
+        ///     游戏档案
         /// </summary>
 
         private protected GameProfileModel GameProfile { get; set; }
 
         /// <summary>
-        /// Native 根目录
+        ///     Native 根目录
         /// </summary>
         public virtual string NativeRoot =>
             GamePathHelper.GetNativeRoot(LaunchSettings.Version);
 
         /// <summary>
-        /// Asset 根目录
+        ///     Asset 根目录
         /// </summary>
         public virtual string AssetRoot => GamePathHelper.GetAssetsRoot();
 
         /// <summary>
-        /// Class 路径
+        ///     Class 路径
         /// </summary>
         private protected string ClassPath { get; set; }
 
         /// <summary>
-        /// 版本信息
+        ///     版本信息
         /// </summary>
         private protected VersionInfo VersionInfo { get; set; }
 
         /// <summary>
-        /// 上一次的验证结果
+        ///     上一次的验证结果
         /// </summary>
         private protected AuthResultBase LastAuthResult { get; set; }
     }

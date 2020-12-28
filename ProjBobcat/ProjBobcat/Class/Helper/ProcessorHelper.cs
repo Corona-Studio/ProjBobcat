@@ -22,7 +22,7 @@ namespace ProjBobcat.Class.Helper
         }
 
         /// <summary>
-        /// 自动设置最大线程数
+        ///     自动设置最大线程数
         /// </summary>
         /// <returns></returns>
         public static bool SetMaxThreads()

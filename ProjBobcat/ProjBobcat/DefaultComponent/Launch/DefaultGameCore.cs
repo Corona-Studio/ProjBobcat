@@ -232,22 +232,21 @@ namespace ProjBobcat.DefaultComponent.Launch
 
                 try
                 {
-                    if (!Directory.Exists(argumentParser.NativeRoot))
-                        Directory.CreateDirectory(argumentParser.NativeRoot);
+                    var nativeRootPath = Path.Combine(RootPath, argumentParser.NativeRoot);
+                    if (!Directory.Exists(nativeRootPath))
+                        Directory.CreateDirectory(nativeRootPath);
 
-                    //TODO
-                    DirectoryHelper.CleanDirectory(argumentParser.NativeRoot);
+                    DirectoryHelper.CleanDirectory(nativeRootPath);
                     version.Natives.ForEach(n =>
                     {
                         var path =
-                            Path.Combine(RootPath, GamePathHelper.GetLibraryPath(string.Empty),
-                                n.FileInfo.Path.Replace('/', '\\'));
+                            Path.Combine(RootPath, GamePathHelper.GetLibraryPath(n.FileInfo.Path.Replace('/', '\\')));
                         using var stream =
                             File.OpenRead(path);
                         using var reader = ReaderFactory.Open(stream);
                         while (reader.MoveToNextEntry())
                             if (!(n.Extract?.Exclude?.Contains(reader.Entry.Key) ?? false))
-                                reader.WriteEntryToDirectory(Path.Combine(RootPath, argumentParser.NativeRoot),
+                                reader.WriteEntryToDirectory(nativeRootPath,
                                     new ExtractionOptions
                                     {
                                         ExtractFullPath = true,

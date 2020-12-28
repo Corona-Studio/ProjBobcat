@@ -5,12 +5,12 @@ using System.Security.Cryptography;
 namespace ProjBobcat.Class.Helper
 {
     /// <summary>
-    /// 加密助手
+    ///     加密助手
     /// </summary>
     public static class CryptoHelper
     {
         /// <summary>
-        /// 计算文件 Hash 值
+        ///     计算文件 Hash 值
         /// </summary>
         /// <param name="path"></param>
         /// <param name="hashAlgorithm"></param>
@@ -24,7 +24,7 @@ namespace ProjBobcat.Class.Helper
         }
 
         /// <summary>
-        /// 计算字节数组 Hash 值
+        ///     计算字节数组 Hash 值
         /// </summary>
         /// <param name="bytes"></param>
         /// <param name="hashAlgorithm"></param>

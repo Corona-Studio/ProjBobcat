@@ -20,6 +20,8 @@ namespace ProjBobcat.Class.Helper
     /// </summary>
     public static class DownloadHelper
     {
+        private const int BufferSize = 1024 * 10 * 10;
+
         /// <summary>
         ///     获取或设置用户代理信息。
         /// </summary>
@@ -34,8 +36,6 @@ namespace ProjBobcat.Class.Helper
         ///     最大重试计数
         /// </summary>
         public static int RetryCount { get; set; } = 10;
-
-        private const int BufferSize = 1024 * 10 * 10;
 
         #region 下载一个列表中的文件（自动确定是否使用分片下载）
 
@@ -110,7 +110,7 @@ namespace ProjBobcat.Class.Helper
                 await using var stream = await res.Content.ReadAsStreamAsync();
                 await using var fileToWriteTo = File.Create(filePath);
 
-                    var responseLength = res.Content.Headers.ContentLength ?? 0;
+                var responseLength = res.Content.Headers.ContentLength ?? 0;
                 var downloadedBytesCount = 0L;
                 var buffer = new byte[BufferSize];
                 var sw = new Stopwatch();
@@ -139,7 +139,7 @@ namespace ProjBobcat.Class.Helper
                     downloadProperty.Changed?.Invoke(null,
                         new DownloadFileChangedEventArgs
                         {
-                            ProgressPercentage = (double)downloadedBytesCount / responseLength,
+                            ProgressPercentage = (double) downloadedBytesCount / responseLength,
                             BytesReceived = downloadedBytesCount,
                             TotalBytes = responseLength,
                             Speed = speed
@@ -319,8 +319,8 @@ namespace ProjBobcat.Class.Helper
                     while (true)
                     {
                         var bytesRead = await stream.ReadAsync(buffer.AsMemory(0, BufferSize));
-                        
-                        if(bytesRead == 0)
+
+                        if (bytesRead == 0)
                             break;
 
                         await fileToWriteTo.WriteAsync(buffer.AsMemory(0, bytesRead));
@@ -336,13 +336,13 @@ namespace ProjBobcat.Class.Helper
                         downloadFile.Changed?.Invoke(t,
                             new DownloadFileChangedEventArgs
                             {
-                                ProgressPercentage = (double)downloadedBytesCount / responseLength,
+                                ProgressPercentage = (double) downloadedBytesCount / responseLength,
                                 BytesReceived = downloadedBytesCount,
                                 TotalBytes = responseLength,
                                 Speed = speed
                             });
                     }
-                    
+
                     sw.Stop();
 
                     //await res.Content.CopyToAsync(fileToWriteTo, CancellationToken.None);
@@ -370,7 +370,7 @@ namespace ProjBobcat.Class.Helper
                 await writeActionBlock.Completion.ContinueWith(async task =>
                 {
                     var aSpeed = tSpeed / cSpeed;
-                    
+
                     if (!doneRanges.IsEmpty)
                     {
                         var ex = task.Exception ?? new AggregateException(new Exception("没有完全下载所有的分片"));

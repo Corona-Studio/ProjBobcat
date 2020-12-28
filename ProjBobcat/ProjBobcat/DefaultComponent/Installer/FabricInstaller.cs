@@ -108,12 +108,13 @@ namespace ProjBobcat.DefaultComponent.Installer
                           + Uri.EscapeDataString(YarnArtifact.Version)
                           + "&loader="
                           + Uri.EscapeDataString(LoaderArtifact.Loader.Version);
-            var jsonContent = await HttpHelper.Get(jsonUrl);
+            var jsonContentRes = await HttpHelper.Get(jsonUrl);
+            var jsonContent = await jsonContentRes.Content.ReadAsStringAsync();
             var versionModel = JsonConvert.DeserializeObject<RawVersionModel>(jsonContent);
-            var id = string.IsNullOrEmpty(CustomId) ?
-                    $"{YarnArtifact.GameVersion}-fabric{YarnArtifact.Version}-{LoaderArtifact.Loader.Version}"
-                    : CustomId;
-            
+            var id = string.IsNullOrEmpty(CustomId)
+                ? $"{YarnArtifact.GameVersion}-fabric{YarnArtifact.Version}-{LoaderArtifact.Loader.Version}"
+                : CustomId;
+
             versionModel.Id = id;
             versionModel.InheritsFrom = YarnArtifact.GameVersion;
 

@@ -35,7 +35,7 @@ namespace ProjBobcat.Handler
                     Trace.WriteLine(e);
                     continue;
                 }
-                
+
                 if (response.IsSuccessStatusCode) return response;
             }
 

@@ -42,9 +42,9 @@ namespace ProjBobcat.Class.Model
         ///     文件检验码
         /// </summary>
         public string CheckSum { get; set; }
-        
+
         /// <summary>
-        /// 请求源
+        ///     请求源
         /// </summary>
         public string Host { get; set; }
 

@@ -7,13 +7,13 @@ using System.Threading.Tasks;
 namespace ProjBobcat.Handler
 {
     /// <summary>
-    /// HttpClient 重定向助手
+    ///     HttpClient 重定向助手
     /// </summary>
     public class RedirectHandler : DelegatingHandler
     {
         private readonly int _maxRetries = 20;
         private int _currentRetries;
-        
+
         public RedirectHandler(HttpMessageHandler innerHandler) : base(innerHandler)
         {
         }

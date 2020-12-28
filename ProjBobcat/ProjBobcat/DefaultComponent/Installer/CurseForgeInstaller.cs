@@ -1,26 +1,26 @@
-﻿using Newtonsoft.Json;
-using ProjBobcat.Class.Helper;
-using ProjBobcat.Class.Model;
-using ProjBobcat.Class.Model.CurseForge;
-using ProjBobcat.Interface;
-using SharpCompress.Archives;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
+using Newtonsoft.Json;
+using ProjBobcat.Class.Helper;
+using ProjBobcat.Class.Model;
+using ProjBobcat.Class.Model.CurseForge;
+using ProjBobcat.Interface;
+using SharpCompress.Archives;
 
 namespace ProjBobcat.DefaultComponent.Installer
 {
     public class CurseForgeInstaller : InstallerBase, ICurseForgeInstaller
     {
-        public string ModPackPath { get; set; }
-        public string GameId { get; set; }
+        private bool _isModAllDownloaded = true;
 
         private int _totalDownloaded, _needToDownload, _totalResolved, _needToResolve;
-        private bool _isModAllDownloaded = true;
+        public string ModPackPath { get; set; }
+        public string GameId { get; set; }
 
         public void Install()
         {
@@ -30,14 +30,14 @@ namespace ProjBobcat.DefaultComponent.Installer
         public async Task InstallTaskAsync()
         {
             InvokeStatusChangedEvent("开始安装", 0);
-            
+
             var manifest = await ReadManifestTask();
             var idPath = Path.Combine(RootPath, GamePathHelper.GetGamePath(GameId));
             var downloadPath = Path.Combine(Path.GetFullPath(idPath), "mods");
 
             var di = new DirectoryInfo(downloadPath);
-            
-            if(!di.Exists)
+
+            if (!di.Exists)
                 di.Create();
 
             _needToDownload = _needToResolve = manifest.Files.Count;
@@ -49,7 +49,8 @@ namespace ProjBobcat.DefaultComponent.Installer
 
                     foreach (var req in d)
                     {
-                        var downloadUrl = (await HttpHelper.Get(req)).Trim('"');
+                        var downloadUrlRes = await HttpHelper.Get(req);
+                        var downloadUrl = (await downloadUrlRes.Content.ReadAsStringAsync()).Trim('"');
                         var fileName = Path.GetFileName(downloadUrl);
 
                         var progress = (double) _totalResolved / _needToResolve * 100;
@@ -97,7 +98,7 @@ namespace ProjBobcat.DefaultComponent.Installer
                 MaxDegreeOfParallelism = 32
             });
 
-            var linkOptions = new DataflowLinkOptions { PropagateCompletion = true };
+            var linkOptions = new DataflowLinkOptions {PropagateCompletion = true};
             reqUrlBlock.LinkTo(actionBlock, linkOptions);
 
             var collection = manifest.Files.Select(file => CurseForgeModRequestUrl(file.ProjectId, file.FileId));
@@ -115,7 +116,7 @@ namespace ProjBobcat.DefaultComponent.Installer
 
             _totalDownloaded = 0;
             _needToDownload = archive.Entries.Count();
-            
+
             foreach (var entry in archive.Entries)
             {
                 InvokeStatusChangedEvent("解压缩安装文件", (double) _totalDownloaded / _needToDownload * 100);
@@ -126,8 +127,8 @@ namespace ProjBobcat.DefaultComponent.Installer
                 var path = Path.Combine(Path.GetFullPath(idPath), subPath);
 
                 var entryDi = new DirectoryInfo(path);
-                
-                if(!entryDi.Exists)
+
+                if (!entryDi.Exists)
                     entryDi.Create();
 
                 await using var fs = File.OpenWrite(path);
@@ -157,7 +158,9 @@ namespace ProjBobcat.DefaultComponent.Installer
             return manifestModel;
         }
 
-        private static string CurseForgeModRequestUrl(long projectId, long fileId) =>
-            $"https://addons-ecs.forgesvc.net/api/v2/addon/{projectId}/file/{fileId}/download-url";
+        private static string CurseForgeModRequestUrl(long projectId, long fileId)
+        {
+            return $"https://addons-ecs.forgesvc.net/api/v2/addon/{projectId}/file/{fileId}/download-url";
+        }
     }
 }

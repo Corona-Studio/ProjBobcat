@@ -1,4 +1,10 @@
-﻿using Newtonsoft.Json;
+﻿using System;
+using System.IO;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
 using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
@@ -6,21 +12,30 @@ using ProjBobcat.Class.Model.Forge;
 using ProjBobcat.Class.Model.YggdrasilAuth;
 using ProjBobcat.Interface;
 using SharpCompress.Archives;
-using System;
-using System.IO;
-using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
 {
     public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
     {
+        public string ForgeVersion
+        {
+            get => throw new NotImplementedException();
+            set => throw new NotImplementedException();
+        }
+
         public string ForgeExecutablePath { get; set; }
-        public string ForgeVersion { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public VersionLocatorBase VersionLocator { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public string DownloadUrlRoot { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+        public VersionLocatorBase VersionLocator
+        {
+            get => throw new NotImplementedException();
+            set => throw new NotImplementedException();
+        }
+
+        public string DownloadUrlRoot
+        {
+            get => throw new NotImplementedException();
+            set => throw new NotImplementedException();
+        }
 
         public ForgeInstallResult InstallForge()
         {
@@ -47,7 +62,7 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
             try
             {
                 InvokeStatusChangedEvent("解压安装文件", 0.05);
-                
+
                 using var reader = ArchiveFactory.Open(ForgeExecutablePath);
                 var profileEntry =
                     reader.Entries.FirstOrDefault(e => e.Key.Equals("install_profile.json", StringComparison.Ordinal));
@@ -63,7 +78,7 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                         },
                         Succeeded = false
                     };
-                
+
                 InvokeStatusChangedEvent("解压完成", 0.1);
 
                 await using var stream = profileEntry.OpenEntryStream();
@@ -84,7 +99,7 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
 
                 var id = string.IsNullOrEmpty(CustomId) ? profileModel.VersionInfo.Id : CustomId;
                 profileModel.VersionInfo.Id = id;
-                
+
                 var versionJsonString = JsonConvert.SerializeObject(profileModel.VersionInfo,
                     JsonHelper.CamelCasePropertyNamesSettings);
 

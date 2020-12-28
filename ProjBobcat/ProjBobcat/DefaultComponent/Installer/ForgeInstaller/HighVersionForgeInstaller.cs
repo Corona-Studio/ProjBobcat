@@ -20,11 +20,11 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
     public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
     {
         private int _totalDownloaded, _needToDownload, _totalProcessed, _needToProcess;
-        
-        public string DownloadUrlRoot { get; set; }
         public string JavaExecutablePath { get; init; }
+
+        public string DownloadUrlRoot { get; set; }
         public string ForgeExecutablePath { get; set; }
-        
+
         public VersionLocatorBase VersionLocator { get; set; }
 
         public ForgeInstallResult InstallForge()
@@ -71,8 +71,8 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
 
             var versionJsonEntry =
                 archive.Entries.FirstOrDefault(e => e.Key.Equals("version.json", StringComparison.OrdinalIgnoreCase));
-            
-            if(versionJsonEntry == default)
+
+            if (versionJsonEntry == default)
                 return new ForgeInstallResult
                 {
                     Succeeded = false,
@@ -93,7 +93,7 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
             var id = string.IsNullOrEmpty(CustomId) ? versionJsonModel.Id : CustomId;
 
             versionJsonModel.Id = id;
-            
+
             var jsonPath = GamePathHelper.GetGameJsonPath(RootPath, id);
 
             await using var fs = File.OpenWrite(jsonPath);
@@ -106,8 +106,9 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
             InvokeStatusChangedEvent("解析 Install_profile.json", 0.2);
 
             var installProfileEntry =
-                archive.Entries.FirstOrDefault(e => e.Key.Equals("install_profile.json", StringComparison.OrdinalIgnoreCase));
-            
+                archive.Entries.FirstOrDefault(e =>
+                    e.Key.Equals("install_profile.json", StringComparison.OrdinalIgnoreCase));
+
             await using var ipStream = installProfileEntry.OpenEntryStream();
             using var ipSr = new StreamReader(ipStream, Encoding.UTF8);
             var ipContent = await ipSr.ReadToEndAsync();
@@ -131,15 +132,16 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                 ipModel.Data["BINPATCH"].Server = $"[{serverMaven}]";
 
                 var serverBinMaven = serverMaven.ResolveMavenString();
-                var serverBinPath = Path.Combine(RootPath, GamePathHelper.GetLibraryPath(serverBinMaven.Path.Replace('/', '\\')));
+                var serverBinPath = Path.Combine(RootPath,
+                    GamePathHelper.GetLibraryPath(serverBinMaven.Path.Replace('/', '\\')));
 
                 var di = new DirectoryInfo(Path.GetDirectoryName(serverBinPath));
-                
-                if(!di.Exists)
+
+                if (!di.Exists)
                     di.Create();
 
                 await using var sFs = File.OpenWrite(serverBinPath);
-                
+
                 serverLzma.WriteTo(sFs);
             }
 
@@ -150,7 +152,8 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                 ipModel.Data["BINPATCH"].Client = $"[{clientMaven}]";
 
                 var clientBinMaven = clientMaven.ResolveMavenString();
-                var clientBinPath = Path.Combine(RootPath, GamePathHelper.GetLibraryPath(clientBinMaven.Path.Replace('/', '\\')));
+                var clientBinPath = Path.Combine(RootPath,
+                    GamePathHelper.GetLibraryPath(clientBinMaven.Path.Replace('/', '\\')));
 
                 var di = new DirectoryInfo(Path.GetDirectoryName(clientBinPath));
 
@@ -173,13 +176,14 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
             var forgeUniversalJar = archive.Entries.FirstOrDefault(e =>
                 e.Key.Equals($"maven/net/minecraftforge/forge/{forgeVersion}/forge-{forgeVersion}-universal.jar",
                     StringComparison.OrdinalIgnoreCase));
-            
+
 
             var forgeSubPath = forgeJar.Key[(forgeJar.Key.IndexOf('/') + 1)..];
             var forgeLibPath = Path.Combine(RootPath, GamePathHelper.GetLibraryPath(forgeSubPath.Replace('/', '\\')));
 
             var forgeUniversalSubPath = forgeUniversalJar.Key[(forgeUniversalJar.Key.IndexOf('/') + 1)..];
-            var forgeUniversalLibPath = Path.Combine(RootPath, GamePathHelper.GetLibraryPath(forgeUniversalSubPath.Replace('/', '\\')));
+            var forgeUniversalLibPath = Path.Combine(RootPath,
+                GamePathHelper.GetLibraryPath(forgeUniversalSubPath.Replace('/', '\\')));
 
             await using var forgeUniversalFs = File.OpenWrite(forgeUniversalLibPath);
             await using var forgeFs = File.OpenWrite(forgeLibPath);
@@ -204,7 +208,7 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
             string ResolvePathRegex(string val)
             {
                 if (string.IsNullOrEmpty(val) || string.IsNullOrEmpty(pathRegex.Match(val).Value)) return val;
-                
+
                 var name = val[1..^1];
                 var maven = name.ResolveMavenString();
                 var path = Path.Combine(RootPath,
@@ -225,13 +229,11 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
             };
 
             foreach (var (k, v) in ipModel.Data)
-            {
                 variables.TryAdd(k, new ForgeInstallProfileData
                 {
                     Client = ResolvePathRegex(v.Client),
                     Server = ResolvePathRegex(v.Server)
                 });
-            }
 
             string ResolveVariableRegex(string val)
             {
@@ -245,12 +247,10 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
             foreach (var proc in ipModel.Processors)
             {
                 var outputs = new Dictionary<string, string>();
-                
-                if(proc.Outputs?.Any() ?? false)
+
+                if (proc.Outputs?.Any() ?? false)
                     foreach (var (k, v) in proc.Outputs)
-                    {
                         outputs.TryAdd(ResolveVariableRegex(k), ResolveVariableRegex(v));
-                    }
 
                 var model = new ForgeInstallProcessorModel
                 {
@@ -258,7 +258,7 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                     Arguments = proc.Arguments.Select(ResolvePathRegex).Select(ResolveVariableRegex).ToList(),
                     Outputs = outputs
                 };
-                
+
                 procList.Add(model);
             }
 
@@ -274,9 +274,9 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
 
             foreach (var lib in resolvedLibs)
             {
-                if(lib.Name.StartsWith("net.minecraftforge:forge", StringComparison.OrdinalIgnoreCase))
+                if (lib.Name.StartsWith("net.minecraftforge:forge", StringComparison.OrdinalIgnoreCase))
                     continue;
-                
+
                 var symbolIndex = lib.Path.LastIndexOf('/');
                 var fileName = lib.Path[(symbolIndex + 1)..];
                 var path = Path.Combine(RootPath,
@@ -291,12 +291,12 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
 
                     lib.Url = $"{DownloadUrlRoot}{url}";
                 }
-                
+
                 var libDi = new DirectoryInfo(path);
 
-                if(!libDi.Exists)
+                if (!libDi.Exists)
                     libDi.Create();
-                
+
                 var df = new DownloadFile
                 {
                     Completed = (_, args) =>
@@ -313,7 +313,7 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                     DownloadUri = lib.Url,
                     FileSize = lib.Size
                 };
-                
+
                 libDownloadInfo.Add(df);
             }
 
@@ -338,12 +338,12 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                 await using var libStream = libEntry.OpenEntryStream();
                 using var libSr = new StreamReader(libStream, Encoding.UTF8);
                 var content = await libSr.ReadToEndAsync();
-                var mainClass = 
+                var mainClass =
                     (from line in content.Split('\n')
-                    select line.Split(": ")
-                    into lineSp
-                    where lineSp[0].Equals("Main-Class", StringComparison.OrdinalIgnoreCase)
-                    select lineSp[1].Trim()).First();
+                        select line.Split(": ")
+                        into lineSp
+                        where lineSp[0].Equals("Main-Class", StringComparison.OrdinalIgnoreCase)
+                        select lineSp[1].Trim()).First();
 
                 var totalLibs = processor.Processor.ClassPath;
                 totalLibs.Add(processor.Processor.Jar);
@@ -357,7 +357,7 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                     $"\"{cpStr}\"",
                     mainClass
                 };
-                
+
                 parameter.AddRange(processor.Arguments);
 
                 var pi = new ProcessStartInfo(JavaExecutablePath)
@@ -370,23 +370,23 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                 };
 
                 var p = Process.Start(pi);
-                
+
                 p.OutputDataReceived += (_, args) =>
                 {
                     if (string.IsNullOrEmpty(args.Data)) return;
-                    
+
                     var progress = (double) _totalProcessed / _needToProcess;
                     InvokeStatusChangedEvent($"{args.Data} <安装信息> ( {_totalProcessed} / {_needToProcess} )", progress);
                 };
-                
+
                 p.ErrorDataReceived += (_, args) =>
                 {
                     if (string.IsNullOrEmpty(args.Data)) return;
-                    
-                    var progress = (double)_totalProcessed / _needToProcess;
+
+                    var progress = (double) _totalProcessed / _needToProcess;
                     InvokeStatusChangedEvent($"{args.Data} <错误> ( {_totalProcessed} / {_needToProcess} )", progress);
                 };
-                
+
                 p.BeginOutputReadLine();
                 p.BeginErrorReadLine();
 
