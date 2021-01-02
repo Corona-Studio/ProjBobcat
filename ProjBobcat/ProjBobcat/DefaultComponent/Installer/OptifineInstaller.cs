@@ -46,7 +46,7 @@ namespace ProjBobcat.DefaultComponent.Installer
             using var archive = ArchiveFactory.Open(OptifineJarPath);
             var entries = archive.Entries;
 
-            var launchWrapperVersion = string.Empty;
+            var launchWrapperVersion = "1.7";
 
             foreach (var entry in entries)
             {
@@ -55,9 +55,6 @@ namespace ProjBobcat.DefaultComponent.Installer
                 using var sr = new StreamReader(stream, Encoding.UTF8);
                 launchWrapperVersion = await sr.ReadToEndAsync();
             }
-
-            if (string.IsNullOrEmpty(launchWrapperVersion))
-                throw new NullReferenceException("launchwrapper-of.txt 未找到");
 
             var launchWrapperEntry =
                 entries.First(x => x.Key.Equals($"launchwrapper-of-{launchWrapperVersion}.jar"));

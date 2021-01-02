@@ -109,9 +109,17 @@ namespace ProjBobcat.Class.Helper
         {
             using var content = new FormUrlEncodedContent(param);
             content.Headers.ContentType = new MediaTypeWithQualityHeaderValue(contentType);
+
             var acceptLanguage = new StringWithQualityHeaderValue(CultureInfo.CurrentCulture.Name);
-            Client.DefaultRequestHeaders.AcceptLanguage.Add(acceptLanguage);
-            var response = await Client.PostAsync(new Uri(address), content);
+
+            using var req = new HttpRequestMessage(HttpMethod.Post, new Uri(address))
+            {
+                Content = content
+            };
+
+            req.Headers.AcceptLanguage.Add(acceptLanguage);
+            var response = await Client.SendAsync(req);
+            
             return response;
         }
     }

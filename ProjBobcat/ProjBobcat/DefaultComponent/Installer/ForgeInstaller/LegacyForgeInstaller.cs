@@ -1,10 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
@@ -12,17 +6,17 @@ using ProjBobcat.Class.Model.Forge;
 using ProjBobcat.Class.Model.YggdrasilAuth;
 using ProjBobcat.Interface;
 using SharpCompress.Archives;
+using System;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
 {
     public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
     {
-        public string ForgeVersion
-        {
-            get => throw new NotImplementedException();
-            set => throw new NotImplementedException();
-        }
-
+        public string ForgeVersion { get; set; }
         public string ForgeExecutablePath { get; set; }
 
         public VersionLocatorBase VersionLocator
@@ -49,16 +43,6 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
             if (string.IsNullOrEmpty(RootPath))
                 throw new ArgumentNullException("未指定\"RootPath\"参数");
 
-            var di = new DirectoryInfo(RootPath);
-            if (!di.Exists)
-                di.Create();
-
-            using var md5 = MD5.Create();
-            var hash = CryptoHelper.ComputeFileHash(ForgeExecutablePath, md5);
-
-            di.CreateSubdirectory("Temp").CreateSubdirectory(hash);
-
-            var extractPath = Path.Combine(di.FullName, "Temp", hash);
             try
             {
                 InvokeStatusChangedEvent("解压安装文件", 0.05);
@@ -66,6 +50,8 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                 using var reader = ArchiveFactory.Open(ForgeExecutablePath);
                 var profileEntry =
                     reader.Entries.FirstOrDefault(e => e.Key.Equals("install_profile.json", StringComparison.Ordinal));
+                var legacyJarEntry =
+                    reader.Entries.FirstOrDefault(e => e.Key.Equals($"forge-{ForgeVersion}-universal.jar", StringComparison.OrdinalIgnoreCase));
 
                 if (profileEntry == default)
                     return new ForgeInstallResult
@@ -79,6 +65,18 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                         Succeeded = false
                     };
 
+                if (legacyJarEntry == default)
+                    return new ForgeInstallResult
+                    {
+                        Error = new ErrorModel
+                        {
+                            Cause = "未找到 Forge Jar",
+                            Error = "未找到 Forge Jar",
+                            ErrorMessage = "未找到 Forge Jar"
+                        },
+                        Succeeded = false
+                    };
+
                 InvokeStatusChangedEvent("解压完成", 0.1);
 
                 await using var stream = profileEntry.OpenEntryStream();
@@ -87,18 +85,33 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
 
                 InvokeStatusChangedEvent("解析安装文档", 0.35);
                 var profileModel = JsonConvert.DeserializeObject<LegacyForgeInstallProfile>(content);
-                var fileName = profileModel.VersionInfo.Id;
                 InvokeStatusChangedEvent("解析完成", 0.75);
 
-                var installDir = Path.Combine(RootPath, GamePathHelper.GetGamePath(fileName));
-                var jsonPath = GamePathHelper.GetGameJsonPath(RootPath, fileName);
+                var id = string.IsNullOrEmpty(CustomId) ? profileModel.VersionInfo.Id : CustomId;
+
+                var installDir = Path.Combine(RootPath, GamePathHelper.GetGamePath(id));
+                var jsonPath = GamePathHelper.GetGameJsonPath(RootPath, id);
 
                 var forgeDi = new DirectoryInfo(installDir);
                 if (!forgeDi.Exists)
                     forgeDi.Create();
 
-                var id = string.IsNullOrEmpty(CustomId) ? profileModel.VersionInfo.Id : CustomId;
                 profileModel.VersionInfo.Id = id;
+
+                var forgeLibrary = profileModel.VersionInfo.Libraries.First(l =>
+                    l.Name.StartsWith("net.minecraftforge:forge", StringComparison.OrdinalIgnoreCase));
+                var mavenInfo = forgeLibrary.Name.ResolveMavenString();
+
+                var libSubPath = GamePathHelper.GetLibraryPath(mavenInfo.Path).Replace('/', '\\');
+                var forgeLibPath = Path.Combine(RootPath, libSubPath);
+
+                var libDi = new DirectoryInfo(Path.GetDirectoryName(forgeLibPath));
+
+                if(!libDi.Exists)
+                    libDi.Create();
+
+                await using var fs = File.OpenWrite(forgeLibPath);
+                legacyJarEntry.WriteTo(fs);
 
                 var versionJsonString = JsonConvert.SerializeObject(profileModel.VersionInfo,
                     JsonHelper.CamelCasePropertyNamesSettings);

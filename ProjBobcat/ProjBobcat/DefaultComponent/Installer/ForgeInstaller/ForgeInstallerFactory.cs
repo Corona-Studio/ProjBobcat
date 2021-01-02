@@ -8,14 +8,13 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
 {
     public static class ForgeInstallerFactory
     {
-        public static bool IsLegacyForgeInstaller(string forgeExecutable)
+        public static bool IsLegacyForgeInstaller(string forgeExecutable, string forgeVersion)
         {
             if (string.IsNullOrEmpty(forgeExecutable))
                 throw new ArgumentNullException(nameof(forgeExecutable));
 
-            var regex = GameRegexHelper.ForgeLegacyJarRegex;
             using var archive = ArchiveFactory.Open(Path.GetFullPath(forgeExecutable));
-            var flag = archive.Entries.Any(entry => !string.IsNullOrEmpty(regex.Match(entry.Key).Value));
+            var flag = archive.Entries.Any(entry => entry.Key.Equals($"forge-{forgeVersion}-universal.jar"));
 
             return flag;
         }

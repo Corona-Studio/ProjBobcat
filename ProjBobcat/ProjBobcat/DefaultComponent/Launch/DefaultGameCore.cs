@@ -241,8 +241,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                     {
                         var path =
                             Path.Combine(RootPath, GamePathHelper.GetLibraryPath(n.FileInfo.Path.Replace('/', '\\')));
-                        using var stream =
-                            File.OpenRead(path);
+                        using var stream = File.OpenRead(path);
                         using var reader = ReaderFactory.Open(stream);
                         while (reader.MoveToNextEntry())
                             if (!(n.Extract?.Exclude?.Contains(reader.Entry.Key) ?? false))
