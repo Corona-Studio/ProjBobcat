@@ -156,14 +156,15 @@ namespace ProjBobcat.Class.Helper
                 var freeMemoryParts = lines[0].Split("=", StringSplitOptions.RemoveEmptyEntries);
                 var totalMemoryParts = lines[1].Split("=", StringSplitOptions.RemoveEmptyEntries);
 
-                var total = Math.Round(double.Parse(totalMemoryParts[1]) / 1024, 0);
-                var free = Math.Round(double.Parse(freeMemoryParts[1]) / 1024, 0);
+                var total = Math.Round(double.Parse(totalMemoryParts[1]) / 1024 / 1024, 0);
+                var free = Math.Round(double.Parse(freeMemoryParts[1]) / 1024 / 1024, 0);
 
                 var memoryInfo = new MemoryInfo
                 {
                     Total = total,
                     Free = free,
-                    Used = total - free
+                    Used = total - free,
+                    Percentage = (total - free) / total
                 };
 
                 return memoryInfo;
@@ -200,7 +201,7 @@ namespace ProjBobcat.Class.Helper
                 return new CPUInfo
                 {
                     Name = name,
-                    Usage = usage
+                    Usage = usage / 100
                 };
             });
         }
