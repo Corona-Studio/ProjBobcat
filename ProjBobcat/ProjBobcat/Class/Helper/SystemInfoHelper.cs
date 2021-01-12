@@ -156,8 +156,8 @@ namespace ProjBobcat.Class.Helper
                 var freeMemoryParts = lines[0].Split("=", StringSplitOptions.RemoveEmptyEntries);
                 var totalMemoryParts = lines[1].Split("=", StringSplitOptions.RemoveEmptyEntries);
 
-                var total = Math.Round(double.Parse(totalMemoryParts[1]) / 1024 / 1024, 0);
-                var free = Math.Round(double.Parse(freeMemoryParts[1]) / 1024 / 1024, 0);
+                var total = Math.Round(double.Parse(totalMemoryParts[1]) / 1024, 0);
+                var free = Math.Round(double.Parse(freeMemoryParts[1]) / 1024, 0);
 
                 var memoryInfo = new MemoryInfo
                 {
