@@ -1,16 +1,16 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using ProjBobcat.Class.Helper;
+using ProjBobcat.Class.Model;
+using ProjBobcat.Class.Model.CurseForge;
+using ProjBobcat.Interface;
+using SharpCompress.Archives;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using Newtonsoft.Json;
-using ProjBobcat.Class.Helper;
-using ProjBobcat.Class.Model;
-using ProjBobcat.Class.Model.CurseForge;
-using ProjBobcat.Interface;
-using SharpCompress.Archives;
 
 namespace ProjBobcat.DefaultComponent.Installer
 {
@@ -18,7 +18,7 @@ namespace ProjBobcat.DefaultComponent.Installer
     {
         private bool _isModAllDownloaded = true;
 
-        private int _totalDownloaded, _needToDownload, _totalResolved, _needToResolve;
+        private int _totalDownloaded, _needToDownload;
         public string ModPackPath { get; set; }
         public string GameId { get; set; }
 
@@ -40,36 +40,19 @@ namespace ProjBobcat.DefaultComponent.Installer
             if (!di.Exists)
                 di.Create();
 
-            _needToDownload = _needToResolve = manifest.Files.Count;
+            _needToDownload = manifest.Files.Count;
 
-            var reqUrlBlock =
-                new TransformManyBlock<IEnumerable<string>, ValueTuple<string, string>>(async d =>
-                {
-                    var result = new List<ValueTuple<string, string>>();
-
-                    foreach (var req in d)
-                    {
-                        var downloadUrlRes = await HttpHelper.Get(req);
-                        var downloadUrl = (await downloadUrlRes.Content.ReadAsStringAsync()).Trim('"');
-                        var fileName = Path.GetFileName(downloadUrl);
-
-                        var progress = (double) _totalResolved / _needToResolve * 100;
-                        InvokeStatusChangedEvent(
-                            $"解析安装文件 - {fileName} ({_totalResolved} / {_needToResolve})",
-                            progress);
-
-                        // var dU = $"https://202.81.235.92/?url={ Uri.EscapeUriString(downloadUrl) }";
-                        result.Add((fileName, downloadUrl));
-
-                        _totalResolved++;
-                    }
-
-                    return result;
-                }, new ExecutionDataflowBlockOptions());
-
-            var actionBlock = new ActionBlock<ValueTuple<string, string>>(async t =>
+            var urlBlock = new TransformManyBlock<IEnumerable<CurseForgeFileModel>, string>(urls =>
             {
-                var (fn, d) = t;
+                return urls.Select(file => CurseForgeModRequestUrl(file.ProjectId, file.FileId));
+            });
+
+            var actionBlock = new ActionBlock<string>(async url =>
+            {
+                var downloadUrlRes = await HttpHelper.Get(url);
+                var d = (await downloadUrlRes.Content.ReadAsStringAsync()).Trim('"');
+                var fn = Path.GetFileName(d);
+
                 var downloadFile = new DownloadFile
                 {
                     Completed = (_, args) =>
@@ -99,11 +82,9 @@ namespace ProjBobcat.DefaultComponent.Installer
             });
 
             var linkOptions = new DataflowLinkOptions {PropagateCompletion = true};
-            reqUrlBlock.LinkTo(actionBlock, linkOptions);
-
-            var collection = manifest.Files.Select(file => CurseForgeModRequestUrl(file.ProjectId, file.FileId));
-            reqUrlBlock.Post(collection);
-            reqUrlBlock.Complete();
+            urlBlock.LinkTo(actionBlock, linkOptions);
+            urlBlock.Post(manifest.Files);
+            urlBlock.Complete();
 
             await actionBlock.Completion;
 
