@@ -10,7 +10,7 @@
 ![Nuget](https://img.shields.io/nuget/v/ProjBobcat?logo=nuget&label=NUGET版本&style=for-the-badge)
 ![Nuget](https://img.shields.io/nuget/dt/projbobcat?logo=nuget&label=NUGET下载量&style=for-the-badge)
 ![GitHub](https://img.shields.io/github/license/corona-studio/projbobcat?logo=github&label=开源协议&style=for-the-badge)
-![Maintenance](https://img.shields.io/maintenance/yes/2020?logo=diaspora&label=已维护&style=for-the-badge)
+![Maintenance](https://img.shields.io/maintenance/yes/2021?logo=diaspora&label=已维护&style=for-the-badge)
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/corona-studio/projbobcat?label=COMMIT统计&logo=github&style=for-the-badge)
 ![GitHub closed pull requests](https://img.shields.io/github/issues-pr-closed/corona-studio/projbobcat?logo=github&label=已关闭PR&style=for-the-badge)
 ![GitHub repo size](https://img.shields.io/github/repo-size/corona-studio/projbobcat?logo=github&label=仓库大小&style=for-the-badge)
@@ -62,12 +62,16 @@ All you need for minecraft launcher in typescript. https://voxelum.github.io/min
 | 正版验证模型 (Microsoft) | ✅ |
 | 版本隔离 | ✅ |
 | launcher_profiles.json 解析 | ✅ |
+| launcher_accounts.json 解析 | ✅ |
 | Nuget 分发 | ✅ |
 | 旧版Forge安装模型 | ✅ |
 | 新版Forge安装模型 | ✅ |
+| Optifine安装模型 | ✅ |
+| LiteLoader安装模型 | ✅ |
+| Fabric安装模型 | ✅ |
 | 资源自动补全（多线程下载） | ✅ |
 | Windows 10 版 Minecraft 支持（检测和启动） | ✅ |
-| 游戏崩溃探测器 | ❌ |
+| 游戏崩溃探测器 | 制作中 |
 
 ## 使用说明
 

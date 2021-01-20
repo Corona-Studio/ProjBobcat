@@ -7,7 +7,7 @@
 ![Nuget](https://img.shields.io/nuget/v/ProjBobcat?logo=nuget&style=for-the-badge)
 ![Nuget](https://img.shields.io/nuget/dt/projbobcat?logo=nuget&style=for-the-badge)
 ![GitHub](https://img.shields.io/github/license/corona-studio/projbobcat?logo=github&style=for-the-badge)
-![Maintenance](https://img.shields.io/maintenance/yes/2020?logo=diaspora&style=for-the-badge)
+![Maintenance](https://img.shields.io/maintenance/yes/2021?logo=diaspora&style=for-the-badge)
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/corona-studio/projbobcat?logo=github&style=for-the-badge)
 ![GitHub closed pull requests](https://img.shields.io/github/issues-pr-closed/corona-studio/projbobcat?logo=github&style=for-the-badge)
 ![GitHub repo size](https://img.shields.io/github/repo-size/corona-studio/projbobcat?logo=github&style=for-the-badge)
@@ -48,12 +48,16 @@ All you need for minecraft launcher in typescript. https://voxelum.github.io/min
 | Online Auth Model (Microsoft) | ✅ |
 | Version Isolation | ✅ |
 | launcher_profiles.json Analysis | ✅ |
+| launcher_accounts.json Analysis | ✅ |
 | Nuget Distribution | ✅ |
 | Old Forge Installation Model | ✅ |
 | New Forge Installation Model | ✅ |
+| Optifine Installation Model | ✅ |
+| Fabric Installation Model | ✅ |
+| LiteLoader Installation Model | ✅ |
 | Resource Auto Completion (Multi-thread downloader) | ✅ |
 | Minecraft: Windows 10 Edition Support (Detector and launcher) | ✅ |
-| Game crashing detector | ❌ |
+| Game crashing detector | WIP |
 
 ## Instruction
 
