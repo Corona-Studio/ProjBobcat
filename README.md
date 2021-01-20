@@ -48,6 +48,7 @@ All you need for minecraft launcher in typescript. https://voxelum.github.io/min
 | Online Auth Model (Microsoft) | ✅ |
 | Version Isolation | ✅ |
 | launcher_profiles.json Analysis | ✅ |
+| launcher_accounts.json Analysis | ✅ |
 | Nuget Distribution | ✅ |
 | Old Forge Installation Model | ✅ |
 | New Forge Installation Model | ✅ |
