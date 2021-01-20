@@ -62,12 +62,16 @@ All you need for minecraft launcher in typescript. https://voxelum.github.io/min
 | 正版验证模型 (Microsoft) | ✅ |
 | 版本隔离 | ✅ |
 | launcher_profiles.json 解析 | ✅ |
+| launcher_accounts.json 解析 | ✅ |
 | Nuget 分发 | ✅ |
 | 旧版Forge安装模型 | ✅ |
 | 新版Forge安装模型 | ✅ |
+| Optifine安装模型 | ✅ |
+| LiteLoader安装模型 | ✅ |
+| Fabric安装模型 | ✅ |
 | 资源自动补全（多线程下载） | ✅ |
 | Windows 10 版 Minecraft 支持（检测和启动） | ✅ |
-| 游戏崩溃探测器 | ❌ |
+| 游戏崩溃探测器 | 制作中 |
 
 ## 使用说明
 
