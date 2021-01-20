@@ -1,16 +1,16 @@
-﻿using Newtonsoft.Json;
-using ProjBobcat.Class.Helper;
-using ProjBobcat.Class.Model;
-using ProjBobcat.Class.Model.CurseForge;
-using ProjBobcat.Interface;
-using SharpCompress.Archives;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
+using Newtonsoft.Json;
+using ProjBobcat.Class.Helper;
+using ProjBobcat.Class.Model;
+using ProjBobcat.Class.Model.CurseForge;
+using ProjBobcat.Interface;
+using SharpCompress.Archives;
 
 namespace ProjBobcat.DefaultComponent.Installer
 {

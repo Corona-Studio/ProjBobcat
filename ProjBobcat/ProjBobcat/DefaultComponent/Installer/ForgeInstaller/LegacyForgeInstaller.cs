@@ -1,4 +1,9 @@
-﻿using Newtonsoft.Json;
+﻿using System;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
 using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
@@ -6,11 +11,6 @@ using ProjBobcat.Class.Model.Forge;
 using ProjBobcat.Class.Model.YggdrasilAuth;
 using ProjBobcat.Interface;
 using SharpCompress.Archives;
-using System;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
 {
@@ -51,7 +51,8 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                 var profileEntry =
                     reader.Entries.FirstOrDefault(e => e.Key.Equals("install_profile.json", StringComparison.Ordinal));
                 var legacyJarEntry =
-                    reader.Entries.FirstOrDefault(e => e.Key.Equals($"forge-{ForgeVersion}-universal.jar", StringComparison.OrdinalIgnoreCase));
+                    reader.Entries.FirstOrDefault(e =>
+                        e.Key.Equals($"forge-{ForgeVersion}-universal.jar", StringComparison.OrdinalIgnoreCase));
 
                 if (profileEntry == default)
                     return new ForgeInstallResult
@@ -107,7 +108,7 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
 
                 var libDi = new DirectoryInfo(Path.GetDirectoryName(forgeLibPath));
 
-                if(!libDi.Exists)
+                if (!libDi.Exists)
                     libDi.Create();
 
                 await using var fs = File.OpenWrite(forgeLibPath);

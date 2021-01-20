@@ -118,7 +118,7 @@ namespace ProjBobcat.DefaultComponent.Installer
                 $"Optifine-{OptifineDownloadVersion.McVersion}_{editionRelease}.jar");
 
             var optifineLibPathDi = new DirectoryInfo(Path.GetDirectoryName(optifineLibPath));
-            if(!optifineLibPathDi.Exists)
+            if (!optifineLibPathDi.Exists)
                 optifineLibPathDi.Create();
 
             InvokeStatusChangedEvent("执行安装脚本", 80);
@@ -158,7 +158,7 @@ namespace ProjBobcat.DefaultComponent.Installer
             {
                 LogReceivedEvent(sender, args);
 
-                if(!string.IsNullOrEmpty(args.Data))
+                if (!string.IsNullOrEmpty(args.Data))
                     errList.Add(args.Data);
             };
 

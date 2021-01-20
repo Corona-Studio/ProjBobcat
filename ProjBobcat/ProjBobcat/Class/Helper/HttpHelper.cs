@@ -119,7 +119,7 @@ namespace ProjBobcat.Class.Helper
 
             req.Headers.AcceptLanguage.Add(acceptLanguage);
             var response = await Client.SendAsync(req);
-            
+
             return response;
         }
     }

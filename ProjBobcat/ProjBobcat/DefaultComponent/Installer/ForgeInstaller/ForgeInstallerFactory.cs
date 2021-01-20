@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using ProjBobcat.Class.Helper;
 using SharpCompress.Archives;
 
 namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
