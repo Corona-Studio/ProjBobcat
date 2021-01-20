@@ -81,7 +81,7 @@ namespace ProjBobcat.Class.Helper
                     select javaHomes.ToString()
                     into str
                     where !string.IsNullOrWhiteSpace(str)
-                    select str + @"\bin\javaw.exe";
+                    select str + "\\bin\\javaw.exe";
             }
             catch
             {

@@ -284,6 +284,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                         RedirectStandardOutput = true
                     })
                 };
+
                 launchWrapper.Do();
                 InvokeLaunchLogThenStart("启动游戏", ref prevSpan, ref stopwatch);
 
@@ -292,13 +293,12 @@ namespace ProjBobcat.DefaultComponent.Launch
                 new Thread(async () =>
                 {
                     await Task.Run(launchWrapper.Process.WaitForExit).ContinueWith(task =>
-                                GameExit(launchWrapper, new GameExitEventArgs
-                                {
-                                    Exception = task.Exception,
-                                    ExitCode = launchWrapper.ExitCode
-                                }),
-                            CancellationToken.None, TaskContinuationOptions.DenyChildAttach, TaskScheduler.Default)
-                        .ConfigureAwait(false);
+                            GameExit(launchWrapper, new GameExitEventArgs
+                            {
+                                Exception = task.Exception,
+                                ExitCode = launchWrapper.ExitCode
+                            }),
+                        CancellationToken.None, TaskContinuationOptions.DenyChildAttach, TaskScheduler.Default);
                 }).Start();
 
                 if (!string.IsNullOrEmpty(settings.WindowTitle))

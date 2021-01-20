@@ -96,7 +96,8 @@ namespace ProjBobcat.DefaultComponent.Installer
             var jsonStr = JsonConvert.SerializeObject(versionModel, JsonHelper.CamelCasePropertyNamesSettings);
             await File.WriteAllTextAsync(versionJsonPath, jsonStr);
 
-            var librariesPath = Path.Combine(RootPath, GamePathHelper.GetLibraryRootPath(), "launchwrapper-of",
+            var librariesPath = Path.Combine(RootPath, GamePathHelper.GetLibraryRootPath(), "optifine",
+                "launchwrapper-of",
                 launchWrapperVersion);
             var libDi = new DirectoryInfo(librariesPath);
 
@@ -105,14 +106,22 @@ namespace ProjBobcat.DefaultComponent.Installer
             if (!libDi.Exists)
                 libDi.Create();
 
-            launchWrapperEntry.WriteToDirectory(Path.Combine(librariesPath,
+            await using var launchWrapperFs = File.OpenWrite(Path.Combine(librariesPath,
                 $"launchwrapper-of-{launchWrapperVersion}.jar"));
+            launchWrapperEntry.WriteTo(launchWrapperFs);
+            launchWrapperFs.Close();
 
             var gameJarPath = Path.Combine(RootPath,
                 GamePathHelper.GetGameExecutablePath(OptifineDownloadVersion.McVersion));
             var optifineLibPath = Path.Combine(RootPath, GamePathHelper.GetLibraryRootPath(), "optifine", "Optifine",
                 $"{OptifineDownloadVersion.McVersion}_{editionRelease}",
                 $"Optifine-{OptifineDownloadVersion.McVersion}_{editionRelease}.jar");
+
+            var optifineLibPathDi = new DirectoryInfo(Path.GetDirectoryName(optifineLibPath));
+            if(!optifineLibPathDi.Exists)
+                optifineLibPathDi.Create();
+
+            InvokeStatusChangedEvent("执行安装脚本", 80);
 
             var ps = new ProcessStartInfo(JavaExecutablePath)
             {
@@ -124,22 +133,42 @@ namespace ProjBobcat.DefaultComponent.Installer
                     Path.GetFullPath(gameJarPath),
                     OptifineJarPath,
                     Path.GetFullPath(optifineLibPath)
-                }
+                },
+                RedirectStandardError = true,
+                RedirectStandardOutput = true,
+                UseShellExecute = false
             };
-            var p = Process.Start(ps);
 
+            var p = Process.Start(ps);
             if (p == null)
                 throw new NullReferenceException();
 
-            await p.WaitForExitAsync();
-            var err = await p.StandardError.ReadToEndAsync();
+            p.BeginOutputReadLine();
+            p.BeginErrorReadLine();
 
+            void LogReceivedEvent(object sender, DataReceivedEventArgs args)
+            {
+                InvokeStatusChangedEvent(args.Data ?? "loading...", 85);
+            }
+
+            p.OutputDataReceived += LogReceivedEvent;
+
+            var errList = new List<string>();
+            p.ErrorDataReceived += (sender, args) =>
+            {
+                LogReceivedEvent(sender, args);
+
+                if(!string.IsNullOrEmpty(args.Data))
+                    errList.Add(args.Data);
+            };
+
+            await p.WaitForExitAsync();
             InvokeStatusChangedEvent("安装即将完成", 90);
 
-            if (!string.IsNullOrEmpty(err))
+            if (errList.Any())
                 throw new NullReferenceException();
 
-            InvokeStatusChangedEvent("Optifine 安装完成", 0);
+            InvokeStatusChangedEvent("Optifine 安装完成", 100);
 
             return id;
         }
