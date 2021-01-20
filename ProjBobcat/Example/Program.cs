@@ -1,12 +1,12 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
-using ProjBobcat.Authenticator;
-using ProjBobcat.Class.Helper;
+﻿using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.DefaultComponent.Launch;
 using ProjBobcat.Event;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+using ProjBobcat.DefaultComponent.Authenticator;
 
 namespace Example
 {
