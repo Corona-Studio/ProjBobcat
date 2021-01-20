@@ -51,9 +51,12 @@ All you need for minecraft launcher in typescript. https://voxelum.github.io/min
 | Nuget Distribution | ✅ |
 | Old Forge Installation Model | ✅ |
 | New Forge Installation Model | ✅ |
+| Optifine Installation Model | ✅ |
+| Fabric Installation Model | ✅ |
+| LiteLoader Installation Model | ✅ |
 | Resource Auto Completion (Multi-thread downloader) | ✅ |
 | Minecraft: Windows 10 Edition Support (Detector and launcher) | ✅ |
-| Game crashing detector | ❌ |
+| Game crashing detector | WIP |
 
 ## Instruction
 
