@@ -90,26 +90,6 @@ namespace ProjBobcat.Class.Helper
         }
 
         /// <summary>
-        ///     获取当前程序运行所在的系统架构。
-        /// </summary>
-        /// <returns>当前程序运行所在的系统架构。</returns>
-        [Obsolete("已过时，使用 ProjBobcat.Class.Helper.SystemInfo.SystemArch.CurrentArch 属性替代。")]
-        public static SystemArch GetSystemArch()
-        {
-            return SystemArch.CurrentArch;
-        }
-
-        /// <summary>
-        ///     获取当前程序运行所在的系统版本。
-        /// </summary>
-        /// <returns>当前程序运行所在的系统版本。</returns>
-        [Obsolete("已过时，使用 ProjBobcat.Class.Helper.SystemInfo.WindowsSystemVersion.CurrentVersion 属性替代。")]
-        public static WindowsSystemVersion GetSystemVersion()
-        {
-            return WindowsSystemVersion.CurrentVersion;
-        }
-
-        /// <summary>
         ///     判断是否安装了 UWP 版本的 Minecraft 。
         /// </summary>
         /// <returns>判断结果。</returns>
