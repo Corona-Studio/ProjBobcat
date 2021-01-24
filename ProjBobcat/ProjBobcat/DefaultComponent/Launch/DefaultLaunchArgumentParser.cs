@@ -210,9 +210,16 @@ namespace ProjBobcat.DefaultComponent.Launch
                     GameProfile.Resolution?.Height ?? LaunchSettings.FallBackGameArguments.Resolution.Height);
             }
 
-            if (LaunchSettings.GameArguments.ServerSettings == null) return sb.ToString();
-            sb.AppendFormat("--server {0} ", LaunchSettings.GameArguments.ServerSettings.Address);
-            sb.AppendFormat("--port {0}", LaunchSettings.GameArguments.ServerSettings.Port);
+            if (LaunchSettings.GameArguments.ServerSettings == null &&
+                LaunchSettings.FallBackGameArguments.ServerSettings == null) return sb.ToString();
+
+            var serverSettings = LaunchSettings.GameArguments.ServerSettings ??
+                                 LaunchSettings.FallBackGameArguments.ServerSettings;
+
+            if (string.IsNullOrEmpty(serverSettings.Address)) return sb.ToString();
+
+            sb.AppendFormat("--server {0} ", serverSettings.Address);
+            sb.AppendFormat("--port {0}", serverSettings.Port);
 
             return sb.ToString();
         }

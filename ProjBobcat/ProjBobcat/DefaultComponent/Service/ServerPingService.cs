@@ -19,7 +19,7 @@ namespace ProjBobcat.DefaultComponent.Service
         private int _offset;
 
         public string Address { get; init; }
-        public short Port { get; init; }
+        public ushort Port { get; init; }
         public int VersionId { get; init; }
 
         public override string ToString()
@@ -40,7 +40,7 @@ namespace ProjBobcat.DefaultComponent.Service
                 ReceiveTimeout = 5000
             };
             var sw = new Stopwatch();
-            var timeOut = TimeSpan.FromSeconds(2);
+            var timeOut = TimeSpan.FromSeconds(3);
             var cancellationCompletionSource = new TaskCompletionSource<bool>();
             using var cts = new CancellationTokenSource(timeOut);
 
@@ -50,7 +50,7 @@ namespace ProjBobcat.DefaultComponent.Service
             {
                 if (connectTask != await Task.WhenAny(connectTask, cancellationCompletionSource.Task))
                 {
-                    throw new OperationCanceledException($"服务器 {this} 连接失败，连接超时 (2s)。", cts.Token);
+                    throw new OperationCanceledException($"服务器 {this} 连接失败，连接超时 ({timeOut.Seconds}s)。", cts.Token);
                 }
 
                 if (connectTask.Exception?.InnerException != null)
@@ -185,7 +185,7 @@ namespace ProjBobcat.DefaultComponent.Service
             _buffer.Add((byte)value);
         }
 
-        private void WriteShort(short value)
+        private void WriteShort(ushort value)
         {
             _buffer.AddRange(BitConverter.GetBytes(value));
         }
@@ -195,11 +195,6 @@ namespace ProjBobcat.DefaultComponent.Service
             var buffer = Encoding.UTF8.GetBytes(data);
             WriteVarInt(buffer.Length);
             _buffer.AddRange(buffer);
-        }
-
-        private void Write(byte b)
-        {
-            _stream.WriteByte(b);
         }
 
         private async Task Flush(int id = -1)
