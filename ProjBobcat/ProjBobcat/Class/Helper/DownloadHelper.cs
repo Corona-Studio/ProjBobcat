@@ -83,9 +83,9 @@ namespace ProjBobcat.Class.Helper
 
         #endregion
 
-        #region 下载数据
+        private static HttpClient DataClient => HttpClientHelper.GetClient(HttpClientHelper.DataClientName);
 
-        private static readonly HttpClient DataClient = HttpClientHelper.GetClient(RetryCount);
+        #region 下载数据
 
         /// <summary>
         ///     下载文件（通过线程池）
@@ -174,8 +174,8 @@ namespace ProjBobcat.Class.Helper
             MultiPartDownloadTaskAsync(downloadFile, numberOfParts).Wait();
         }
 
-        private static readonly HttpClient HeadClient = HttpClientHelper.GetClient(RetryCount);
-        private static readonly HttpClient MultiPartClient = HttpClientHelper.GetClient(RetryCount);
+        private static HttpClient HeadClient => HttpClientHelper.GetClient(HttpClientHelper.HeadClientName);
+        private static HttpClient MultiPartClient => HttpClientHelper.GetClient(HttpClientHelper.MultiPartClientName);
 
         /// <summary>
         ///     分片下载方法（异步）
