@@ -124,13 +124,13 @@ namespace ProjBobcat.DefaultComponent
         {
         }
 
-        private async Task<Tuple<TaskResultStatus, bool>> DownloadFiles(IEnumerable<DownloadFile> downloadList)
+        private async Task<ValueTuple<TaskResultStatus, bool>> DownloadFiles(IEnumerable<DownloadFile> downloadList)
         {
             await DownloadHelper.AdvancedDownloadListFile(downloadList, DownloadParts);
 
             var resultType = _isNormalFileFailed ? TaskResultStatus.PartialSuccess : TaskResultStatus.Success;
 
-            return new Tuple<TaskResultStatus, bool>(resultType, _isLibraryFailed);
+            return (resultType, _isLibraryFailed);
         }
 
         private void InvokeDownloadProgressChangedEvent(double progress, double speed)

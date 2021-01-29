@@ -112,8 +112,8 @@ namespace ProjBobcat.DefaultComponent.Launch
         /// </summary>
         /// <param name="arguments"></param>
         /// <returns></returns>
-        private protected override Tuple<string, Dictionary<string, string>> ParseGameArguments(
-            Tuple<string, List<object>> arguments)
+        private protected override ValueTuple<string, Dictionary<string, string>> ParseGameArguments(
+            ValueTuple<string, List<object>> arguments)
         {
             var sb = new StringBuilder();
             var availableArguments = new Dictionary<string, string>();
@@ -122,11 +122,11 @@ namespace ProjBobcat.DefaultComponent.Launch
             if (!string.IsNullOrEmpty(item1))
             {
                 sb.Append(item1);
-                return new Tuple<string, Dictionary<string, string>>(sb.ToString(), availableArguments);
+                return (sb.ToString(), availableArguments);
             }
 
             if (!(item2?.Any() ?? false))
-                return new Tuple<string, Dictionary<string, string>>(sb.ToString(), availableArguments);
+                return (sb.ToString(), availableArguments);
 
             foreach (var gameRule in item2)
             {
@@ -160,7 +160,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                 if (!string.IsNullOrEmpty(ruleValue)) availableArguments.Add(ruleKey, ruleValue);
             }
 
-            return new Tuple<string, Dictionary<string, string>>(sb.ToString().Trim(), availableArguments);
+            return (sb.ToString().Trim(), availableArguments);
             ;
         }
 
@@ -170,11 +170,10 @@ namespace ProjBobcat.DefaultComponent.Launch
         /// </summary>
         /// <param name="libraries">反序列化后的库数据。Deserialized library data.</param>
         /// <returns>二元组（包含一组list，T1是Natives列表，T2是Libraries列表）。A tuple.(T1 -> Natives, T2 -> Libraries)</returns>
-        public override Tuple<List<NativeFileInfo>, List<FileInfo>> GetNatives(
+        public override ValueTuple<List<NativeFileInfo>, List<FileInfo>> GetNatives(
             IEnumerable<Library> libraries)
         {
-            var result =
-                new Tuple<List<NativeFileInfo>, List<FileInfo>>(new List<NativeFileInfo>(), new List<FileInfo>());
+            var result = (new List<NativeFileInfo>(), new List<FileInfo>());
 
             // 扫描库数据。
             // Scan the library data.
@@ -363,8 +362,7 @@ namespace ProjBobcat.DefaultComponent.Launch
 
                         jvmSb.Append(ParseJvmArguments(inherits[i].Arguments?.Jvm));
 
-                        var rootArgs = ParseGameArguments(
-                            new Tuple<string, List<object>>(inherits[i].MinecraftArguments,
+                        var rootArgs = ParseGameArguments((inherits[i].MinecraftArguments,
                                 inherits[i].Arguments?.Game));
                         gameArgsSb.Append(rootArgs.Item1);
                         result.AvailableGameArguments = rootArgs.Item2;
@@ -410,7 +408,7 @@ namespace ProjBobcat.DefaultComponent.Launch
 
                     var jvmArgs = ParseJvmArguments(inherits[i].Arguments?.Jvm);
                     var middleGameArgs = ParseGameArguments(
-                        new Tuple<string, List<object>>(inherits[i].MinecraftArguments, inherits[i].Arguments?.Game));
+                        (inherits[i].MinecraftArguments, inherits[i].Arguments?.Game));
 
                     if (string.IsNullOrEmpty(inherits[i].MinecraftArguments))
                     {
@@ -449,7 +447,7 @@ namespace ProjBobcat.DefaultComponent.Launch
             result.JvmArguments = ParseJvmArguments(rawVersion.Arguments?.Jvm);
 
             var gameArgs =
-                ParseGameArguments(new Tuple<string, List<object>>(rawVersion.MinecraftArguments,
+                ParseGameArguments((rawVersion.MinecraftArguments,
                     rawVersion.Arguments?.Game));
             result.GameArguments = gameArgs.Item1;
             result.AvailableGameArguments = gameArgs.Item2;

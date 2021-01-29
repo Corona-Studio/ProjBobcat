@@ -277,7 +277,7 @@ namespace ProjBobcat.Class.Helper
                 var tasksDone = 0;
                 var doneRanges = new ConcurrentBag<DownloadRange>();
 
-                var streamBlock = new TransformBlock<DownloadRange, Tuple<Task<HttpResponseMessage>, DownloadRange>>(
+                var streamBlock = new TransformBlock<DownloadRange, ValueTuple<Task<HttpResponseMessage>, DownloadRange>>(
                     p =>
                     {
                         using var request = new HttpRequestMessage {RequestUri = new Uri(downloadFile.DownloadUri)};
@@ -293,9 +293,7 @@ namespace ProjBobcat.Class.Helper
 
                         doneRanges.Add(p);
 
-                        var returnTuple = new Tuple<Task<HttpResponseMessage>, DownloadRange>(downloadTask, p);
-
-                        return returnTuple;
+                        return (downloadTask, p);
                     }, new ExecutionDataflowBlockOptions
                     {
                         BoundedCapacity = numberOfParts,
@@ -305,7 +303,7 @@ namespace ProjBobcat.Class.Helper
                 var tSpeed = 0D;
                 var cSpeed = 0;
 
-                var writeActionBlock = new ActionBlock<Tuple<Task<HttpResponseMessage>, DownloadRange>>(async t =>
+                var writeActionBlock = new ActionBlock<ValueTuple<Task<HttpResponseMessage>, DownloadRange>>(async t =>
                 {
                     using var res = await t.Item1;
 

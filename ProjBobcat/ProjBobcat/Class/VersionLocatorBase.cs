@@ -17,11 +17,11 @@ namespace ProjBobcat.Class
         public abstract string ParseJvmArguments(List<object> arguments);
         private protected abstract VersionInfo ToVersion(string id);
 
-        public abstract Tuple<List<NativeFileInfo>, List<FileInfo>> GetNatives(
+        public abstract ValueTuple<List<NativeFileInfo>, List<FileInfo>> GetNatives(
             IEnumerable<Library> libraries);
-
-        private protected abstract Tuple<string, Dictionary<string, string>> ParseGameArguments(
-            Tuple<string, List<object>> arguments);
+        
+        private protected abstract ValueTuple<string, Dictionary<string, string>> ParseGameArguments(
+            ValueTuple<string, List<object>> arguments);
 
         public abstract RawVersionModel ParseRawVersion(string id);
     }
