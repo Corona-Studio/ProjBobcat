@@ -9,6 +9,16 @@ namespace ProjBobcat.Class.Model.ServerPing
         public string Type { get; set; }
 
         [JsonProperty("modList")]
-        public List<object> ModList { get; set; }
+        public List<ModInfo> ModList { get; set; }
+    }
+
+    public class ModInfo
+    {
+        [JsonProperty("modid")]
+        public string ModId { get; set; }
+
+
+        [JsonProperty("version")]
+        public string Version { get; set; }
     }
 }
