@@ -6,7 +6,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Win32;
-using ProjBobcat.Class.Helper.SystemInfo;
 using ProjBobcat.Class.Model;
 
 namespace ProjBobcat.Class.Helper

@@ -200,18 +200,17 @@ namespace ProjBobcat.DefaultComponent.Launch
                 sb.AppendFormat(
                     "--height {0} ", GameProfile.Resolution?.Height ?? LaunchSettings.GameArguments.Resolution.Height);
             }
-            else
+            else if ((LaunchSettings.FallBackGameArguments?.Resolution?.Width ?? 0) > 0
+            && (LaunchSettings.FallBackGameArguments?.Resolution?.Height ?? 0) > 0)
             {
                 sb.AppendFormat(
-                    "--width {0} ",
-                    GameProfile.Resolution?.Width ?? LaunchSettings.FallBackGameArguments.Resolution.Width);
+                    "--width {0} ", LaunchSettings.FallBackGameArguments.Resolution.Width);
                 sb.AppendFormat(
-                    "--height {0} ",
-                    GameProfile.Resolution?.Height ?? LaunchSettings.FallBackGameArguments.Resolution.Height);
+                    "--height {0} ", LaunchSettings.FallBackGameArguments.Resolution.Height);
             }
 
             if (LaunchSettings.GameArguments.ServerSettings == null &&
-                LaunchSettings.FallBackGameArguments.ServerSettings == null) return sb.ToString();
+                LaunchSettings.FallBackGameArguments?.ServerSettings == null) return sb.ToString();
 
             var serverSettings = LaunchSettings.GameArguments.ServerSettings ??
                                  LaunchSettings.FallBackGameArguments.ServerSettings;

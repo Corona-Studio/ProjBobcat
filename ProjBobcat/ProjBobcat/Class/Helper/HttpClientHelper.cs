@@ -20,7 +20,6 @@ namespace ProjBobcat.Class.Helper
         {
             var arr = new[] {DefaultClientName, DataClientName, HeadClientName, MultiPartClientName};
             foreach (var name in arr)
-            {
                 ServiceHelper.ServiceCollection
                     .AddHttpClient(name)
                     .ConfigurePrimaryHttpMessageHandler(_ => new HttpClientHandler
@@ -29,7 +28,6 @@ namespace ProjBobcat.Class.Helper
                     })
                     .AddHttpMessageHandler<RedirectHandler>()
                     .AddHttpMessageHandler<RetryHandler>();
-            }
 
             ServiceHelper.UpdateServiceProvider();
 

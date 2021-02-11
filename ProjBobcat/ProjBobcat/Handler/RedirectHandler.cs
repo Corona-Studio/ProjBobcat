@@ -13,8 +13,10 @@ namespace ProjBobcat.Handler
     {
         private readonly int _maxRetries = 20;
         private int _currentRetries;
-        
-        public RedirectHandler() { }
+
+        public RedirectHandler()
+        {
+        }
 
         public RedirectHandler(HttpMessageHandler innerHandler) : base(innerHandler)
         {

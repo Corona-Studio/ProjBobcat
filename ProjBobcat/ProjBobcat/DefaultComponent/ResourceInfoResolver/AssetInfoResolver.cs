@@ -92,7 +92,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
             AssetObjectModel assetObject;
             try
             {
-                var content = File.ReadAllText(assetIndexesPath);
+                var content = await File.ReadAllTextAsync(assetIndexesPath);
                 assetObject = JsonConvert.DeserializeObject<AssetObjectModel>(content);
             }
             catch (Exception ex)

@@ -1,6 +1,4 @@
-﻿using Newtonsoft.Json;
-using ProjBobcat.Class.Model.ServerPing;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -8,15 +6,17 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using ProjBobcat.Class.Model;
+using ProjBobcat.Class.Model.ServerPing;
 
 namespace ProjBobcat.DefaultComponent.Service
 {
     public class ServerPingService : ProgressReportBase
     {
-        private NetworkStream _stream;
         private List<byte> _buffer;
         private int _offset;
+        private NetworkStream _stream;
 
         public string Address { get; init; }
         public ushort Port { get; init; }
@@ -49,15 +49,11 @@ namespace ProjBobcat.DefaultComponent.Service
             await using (cts.Token.Register(() => cancellationCompletionSource.TrySetResult(true)))
             {
                 if (connectTask != await Task.WhenAny(connectTask, cancellationCompletionSource.Task))
-                {
                     throw new OperationCanceledException($"服务器 {this} 连接失败，连接超时 ({timeOut.Seconds}s)。", cts.Token);
-                }
 
-                if (connectTask.Exception?.InnerException != null)
-                {
-                    throw connectTask.Exception.InnerException;
-                }
+                if (connectTask.Exception?.InnerException != null) throw connectTask.Exception.InnerException;
             }
+
             sw.Stop();
 
             InvokeStatusChangedEvent("正在连接到服务器...", 10);
@@ -161,11 +157,9 @@ namespace ProjBobcat.DefaultComponent.Service
             while (((b = ReadByte(buffer)) & 0x80) == 0x80)
             {
                 value |= (b & 0x7F) << (size++ * 7);
-                if (size > 5)
-                {
-                    throw new IOException("This VarInt is an imposter!");
-                }
+                if (size > 5) throw new IOException("This VarInt is an imposter!");
             }
+
             return value | ((b & 0x7F) << (size * 7));
         }
 
@@ -179,10 +173,11 @@ namespace ProjBobcat.DefaultComponent.Service
         {
             while ((value & 128) != 0)
             {
-                _buffer.Add((byte)(value & 127 | 128));
-                value = (int)(uint)value >> 7;
+                _buffer.Add((byte) ((value & 127) | 128));
+                value = (int) (uint) value >> 7;
             }
-            _buffer.Add((byte)value);
+
+            _buffer.Add((byte) value);
         }
 
         private void WriteShort(ushort value)
@@ -203,7 +198,7 @@ namespace ProjBobcat.DefaultComponent.Service
             _buffer.Clear();
 
             var add = 0;
-            var packetData = new[] { (byte)0x00 };
+            var packetData = new[] {(byte) 0x00};
             if (id >= 0)
             {
                 WriteVarInt(id);

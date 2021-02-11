@@ -363,7 +363,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                         jvmSb.Append(ParseJvmArguments(inherits[i].Arguments?.Jvm));
 
                         var rootArgs = ParseGameArguments((inherits[i].MinecraftArguments,
-                                inherits[i].Arguments?.Game));
+                            inherits[i].Arguments?.Game));
                         gameArgsSb.Append(rootArgs.Item1);
                         result.AvailableGameArguments = rootArgs.Item2;
 

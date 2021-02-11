@@ -11,7 +11,9 @@ namespace ProjBobcat.Handler
     {
         private readonly int _maxRetries = 5;
 
-        public RetryHandler() { }
+        public RetryHandler()
+        {
+        }
 
         public RetryHandler(HttpMessageHandler innerHandler) : base(innerHandler)
         {

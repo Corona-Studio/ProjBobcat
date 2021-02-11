@@ -37,6 +37,8 @@ namespace ProjBobcat.Class.Helper
         /// </summary>
         public static int RetryCount { get; set; } = 10;
 
+        private static HttpClient DataClient => HttpClientHelper.GetClient(HttpClientHelper.DataClientName);
+
         #region 下载一个列表中的文件（自动确定是否使用分片下载）
 
         /// <summary>
@@ -82,8 +84,6 @@ namespace ProjBobcat.Class.Helper
         }
 
         #endregion
-
-        private static HttpClient DataClient => HttpClientHelper.GetClient(HttpClientHelper.DataClientName);
 
         #region 下载数据
 
@@ -277,28 +277,30 @@ namespace ProjBobcat.Class.Helper
                 var tasksDone = 0;
                 var doneRanges = new ConcurrentBag<DownloadRange>();
 
-                var streamBlock = new TransformBlock<DownloadRange, ValueTuple<Task<HttpResponseMessage>, DownloadRange>>(
-                    p =>
-                    {
-                        using var request = new HttpRequestMessage {RequestUri = new Uri(downloadFile.DownloadUri)};
-                        request.Headers.ConnectionClose = false;
+                var streamBlock =
+                    new TransformBlock<DownloadRange, ValueTuple<Task<HttpResponseMessage>, DownloadRange>>(
+                        p =>
+                        {
+                            using var request = new HttpRequestMessage {RequestUri = new Uri(downloadFile.DownloadUri)};
+                            request.Headers.ConnectionClose = false;
 
-                        if (!string.IsNullOrEmpty(downloadFile.Host))
-                            request.Headers.Host = downloadFile.Host;
+                            if (!string.IsNullOrEmpty(downloadFile.Host))
+                                request.Headers.Host = downloadFile.Host;
 
-                        request.Headers.Range = new RangeHeaderValue(p.Start, p.End);
+                            request.Headers.Range = new RangeHeaderValue(p.Start, p.End);
 
-                        var downloadTask = MultiPartClient.SendAsync(request, HttpCompletionOption.ResponseContentRead,
-                            CancellationToken.None);
+                            var downloadTask = MultiPartClient.SendAsync(request,
+                                HttpCompletionOption.ResponseContentRead,
+                                CancellationToken.None);
 
-                        doneRanges.Add(p);
+                            doneRanges.Add(p);
 
-                        return (downloadTask, p);
-                    }, new ExecutionDataflowBlockOptions
-                    {
-                        BoundedCapacity = numberOfParts,
-                        MaxDegreeOfParallelism = numberOfParts
-                    });
+                            return (downloadTask, p);
+                        }, new ExecutionDataflowBlockOptions
+                        {
+                            BoundedCapacity = numberOfParts,
+                            MaxDegreeOfParallelism = numberOfParts
+                        });
 
                 var tSpeed = 0D;
                 var cSpeed = 0;
