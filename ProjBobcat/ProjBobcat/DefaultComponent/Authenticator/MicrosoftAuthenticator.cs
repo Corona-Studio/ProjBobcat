@@ -36,13 +36,13 @@ namespace ProjBobcat.DefaultComponent.Authenticator
                                 + $"&redirect_uri={MSAuthRedirectUrl}");
 
 
-        public string Email { get; set; }
-        public string AuthCode { get; set; }
+        public string Email { get; init; }
+        public string AuthCode { get; init; }
 
-        public AuthType AuthType { get; set; }
-        public string RefreshToken { get; set; }
-        public long ExpiresIn { get; set; }
-        public DateTime LastAuthTime { get; set; }
+        public AuthType AuthType { get; init; }
+        public string RefreshToken { get; init; }
+        public long ExpiresIn { get; init; }
+        public DateTime LastAuthTime { get; init; }
 
         public ILauncherAccountParser LauncherAccountParser { get; set; }
 

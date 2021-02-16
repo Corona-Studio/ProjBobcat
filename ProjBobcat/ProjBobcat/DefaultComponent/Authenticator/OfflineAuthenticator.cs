@@ -19,7 +19,7 @@ namespace ProjBobcat.DefaultComponent.Authenticator
         /// <summary>
         ///     获取或设置用户名。
         /// </summary>
-        public string Username { get; set; }
+        public string Username { get; init; }
 
         /// <summary>
         ///     获取或设置启动程序配置文件分析器。

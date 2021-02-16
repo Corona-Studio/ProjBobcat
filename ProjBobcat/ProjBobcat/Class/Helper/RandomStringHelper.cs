@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using System.Text;
 
 namespace ProjBobcat.Class.Helper
@@ -30,7 +28,7 @@ namespace ProjBobcat.Class.Helper
         /// </summary>
         public const string Symbols = "~!@#$%^&*()_+=-`,./<>?;':[]{}\\|";
 
-        private const int totalLength = 93;
+        private const int TotalLength = 93;
 
         private readonly List<char> enabled;
 
@@ -39,7 +37,7 @@ namespace ProjBobcat.Class.Helper
         /// </summary>
         public RandomStringHelper()
         {
-            enabled = new List<char>(totalLength);
+            enabled = new List<char>(TotalLength);
         }
 
         /// <summary>
@@ -120,31 +118,6 @@ namespace ProjBobcat.Class.Helper
         public RandomStringHelper UseCharacters(IEnumerable<char> characters)
         {
             enabled.AddRange(characters);
-            return this;
-        }
-
-        /// <summary>
-        ///     打乱顺序。此方法是不需要的。
-        /// </summary>
-        /// <param name="times">打乱次数。</param>
-        /// <returns>帮助器本身。</returns>
-        [Obsolete("不需要调用此方法。")]
-        public RandomStringHelper HardMix(int times)
-        {
-            var range = Enumerable.Range(0, enabled.Count - 1).ToArray();
-            for (var i = 0; i < times; i++)
-            for (var j = 0; j < enabled.Count; j++)
-            {
-                var i1 = range.RandomSample();
-                var i2 = range.RandomSample();
-
-                while (i1 == i2) i2 = range.RandomSample();
-
-                var temp = enabled[i1];
-                enabled[i1] = enabled[i2];
-                enabled[i2] = temp;
-            }
-
             return this;
         }
 

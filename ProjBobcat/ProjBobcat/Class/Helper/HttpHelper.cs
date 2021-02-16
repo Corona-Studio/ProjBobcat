@@ -14,6 +14,9 @@ namespace ProjBobcat.Class.Helper
     /// </summary>
     public static class HttpHelper
     {
+        private const string UriRegex =
+            "((([A-Za-z]{3,9}:(?:\\/\\/)?)(?:[-;:&=\\+$,\\w]+@)?[A-Za-z0-9.-]+(:[0-9]+)?|(?:ww‌​w.|[-;:&=\\+$,\\w]+@)[A-Za-z0-9.-]+)((?:\\/[\\+~%\\/.\\w-_]*)?\\??(?:[-\\+=&;%@.\\w_]*)#?‌​(?:[\\w]*))?)";
+
         private static HttpClient Client => HttpClientHelper.GetClient(HttpClientHelper.DefaultClientName);
 
         /// <summary>
@@ -23,8 +26,7 @@ namespace ProjBobcat.Class.Helper
         /// <returns>匹配的Uri</returns>
         public static string RegexMatchUri(string uri)
         {
-            var r = new Regex(
-                "((([A-Za-z]{3,9}:(?:\\/\\/)?)(?:[-;:&=\\+$,\\w]+@)?[A-Za-z0-9.-]+(:[0-9]+)?|(?:ww‌​w.|[-;:&=\\+$,\\w]+@)[A-Za-z0-9.-]+)((?:\\/[\\+~%\\/.\\w-_]*)?\\??(?:[-\\+=&;%@.\\w_]*)#?‌​(?:[\\w]*))?)");
+            var r = new Regex(UriRegex);
             return r.Match(uri).Value;
         }
 

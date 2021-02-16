@@ -33,12 +33,12 @@ namespace ProjBobcat.Class
         /// <summary>
         ///     游戏核心
         /// </summary>
-        public IGameCore GameCore { get; set; }
+        public IGameCore GameCore { get; init; }
 
         /// <summary>
         ///     游戏进程
         /// </summary>
-        public Process Process { get; set; }
+        public Process Process { get; init; }
 
         /// <summary>
         ///     执行过程

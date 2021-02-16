@@ -16,7 +16,7 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
 {
     public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
     {
-        public string ForgeVersion { get; set; }
+        public string ForgeVersion { get; init; }
         public string ForgeExecutablePath { get; set; }
 
         public VersionLocatorBase VersionLocator

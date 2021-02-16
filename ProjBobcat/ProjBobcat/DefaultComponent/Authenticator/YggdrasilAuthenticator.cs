@@ -27,18 +27,18 @@ namespace ProjBobcat.DefaultComponent.Authenticator
         /// <summary>
         ///     获取或设置邮箱。
         /// </summary>
-        public string Email { get; set; }
+        public string Email { get; init; }
 
         /// <summary>
         ///     获取或设置密码。
         /// </summary>
-        public string Password { get; set; }
+        public string Password { get; init; }
 
         /// <summary>
         ///     获取或设置验证服务器。
         ///     这个属性允许为 null 。
         /// </summary>
-        public string AuthServer { get; set; }
+        public string AuthServer { get; init; }
 
         /// <summary>
         ///     获取登录Api地址。

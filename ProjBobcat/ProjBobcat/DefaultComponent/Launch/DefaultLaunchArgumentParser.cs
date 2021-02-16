@@ -201,7 +201,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                     "--height {0} ", GameProfile.Resolution?.Height ?? LaunchSettings.GameArguments.Resolution.Height);
             }
             else if ((LaunchSettings.FallBackGameArguments?.Resolution?.Width ?? 0) > 0
-            && (LaunchSettings.FallBackGameArguments?.Resolution?.Height ?? 0) > 0)
+                     && (LaunchSettings.FallBackGameArguments?.Resolution?.Height ?? 0) > 0)
             {
                 sb.AppendFormat(
                     "--width {0} ", LaunchSettings.FallBackGameArguments.Resolution.Width);

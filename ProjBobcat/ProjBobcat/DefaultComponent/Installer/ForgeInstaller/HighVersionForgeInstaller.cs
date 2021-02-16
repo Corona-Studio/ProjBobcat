@@ -95,9 +95,10 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
             versionJsonModel.Id = id;
 
             var jsonPath = GamePathHelper.GetGameJsonPath(RootPath, id);
+            var jsonContent = JsonConvert.SerializeObject(versionJsonModel,
+                JsonHelper.CamelCasePropertyNamesSettings);
 
-            await using var fs = File.OpenWrite(jsonPath);
-            versionJsonEntry.WriteTo(fs);
+            await File.WriteAllTextAsync(jsonPath, jsonContent);
 
             #endregion
 
