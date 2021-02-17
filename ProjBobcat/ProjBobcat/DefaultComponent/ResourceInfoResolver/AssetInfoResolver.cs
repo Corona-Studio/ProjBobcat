@@ -38,14 +38,18 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
 
         public IEnumerable<IGameResource> ResolveResource()
         {
-            return ResolveResourceTaskAsync().Result;
+            var itr = ResolveResourceAsync().GetAsyncEnumerator();
+            while (itr.MoveNextAsync().Result)
+            {
+                yield return itr.Current;
+            }
         }
 
-        public async Task<IEnumerable<IGameResource>> ResolveResourceTaskAsync()
+        public async IAsyncEnumerable<IGameResource> ResolveResourceAsync()
         {
             LogGameResourceInfoResolveStatus("开始进行游戏资源(Asset)检查");
-            if (string.IsNullOrEmpty(VersionInfo?.AssetInfo.Url)) return default;
-            if (string.IsNullOrEmpty(VersionInfo?.AssetInfo.Id)) return default;
+            if (string.IsNullOrEmpty(VersionInfo?.AssetInfo.Url)) yield break;
+            if (string.IsNullOrEmpty(VersionInfo?.AssetInfo.Id)) yield break;
 
             var assetIndexesDi =
                 new DirectoryInfo(Path.Combine(BasePath, GamePathHelper.GetAssetsRoot(), "indexes"));
@@ -81,7 +85,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                 catch (Exception e)
                 {
                     LogGameResourceInfoResolveStatus($"解析Asset Indexes 文件失败！原因：{e.Message}", LogType.Error);
-                    return default;
+                    yield break;
                 }
 
                 LogGameResourceInfoResolveStatus("Asset Indexes 文件下载完成", LogType.Success);
@@ -99,35 +103,37 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
             {
                 LogGameResourceInfoResolveStatus($"解析Asset Indexes 文件失败！原因：{ex.Message}", LogType.Error);
                 File.Delete(assetIndexesPath);
-                return default;
+                yield break;
             }
 
             if (assetObject == null)
             {
                 LogGameResourceInfoResolveStatus("解析Asset Indexes 文件失败！原因：文件可能损坏或为空", LogType.Error);
                 File.Delete(assetIndexesPath);
-                return default;
+                yield break;
             }
 
-            var lostAssets = (from asset in assetObject.Objects
-                    let hash = asset.Value.Hash
-                    let twoDigitsHash = hash[..2]
-                    let path = Path.Combine(assetObjectsDi.FullName, twoDigitsHash)
-                    where !File.Exists(Path.Combine(path, asset.Value.Hash))
-                    select new AssetDownloadInfo
-                    {
-                        Title = hash,
-                        Path = path,
-                        Type = "Asset",
-                        Uri = $"{AssetUriRoot}{twoDigitsHash}/{asset.Value.Hash}",
-                        FileSize = asset.Value.Size,
-                        CheckSum = hash,
-                        FileName = hash
-                    })
-                .Cast<IGameResource>().ToList();
+            foreach (var asset in assetObject.Objects)
+            {
+                var hash = asset.Value.Hash;
+                var twoDigitsHash = hash[..2];
+                var path = Path.Combine(assetObjectsDi.FullName, twoDigitsHash);
+
+                if(File.Exists(Path.Combine(path, asset.Value.Hash))) continue;
+
+                yield return new AssetDownloadInfo
+                {
+                    Title = hash,
+                    Path = path,
+                    Type = "Asset",
+                    Uri = $"{AssetUriRoot}{twoDigitsHash}/{asset.Value.Hash}",
+                    FileSize = asset.Value.Size,
+                    CheckSum = hash,
+                    FileName = hash
+                };
+            }
 
             LogGameResourceInfoResolveStatus("Assets 解析完成", LogType.Success);
-            return lostAssets;
         }
 
         private void LogGameResourceInfoResolveStatus(string currentStatus, LogType logType = LogType.Normal)

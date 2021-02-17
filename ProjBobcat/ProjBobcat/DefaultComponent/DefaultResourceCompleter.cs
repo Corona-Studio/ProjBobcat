@@ -44,11 +44,9 @@ namespace ProjBobcat.DefaultComponent
             foreach (var resolver in ResourceInfoResolvers)
             {
                 resolver.GameResourceInfoResolveEvent += GameResourceInfoResolveStatus;
-                var resolverResult = await resolver.ResolveResourceTaskAsync().ConfigureAwait(false);
 
-                var gameResources = resolverResult.ToList();
-                if (gameResources.Any())
-                    totalLostFiles.AddRange(gameResources);
+                await foreach(var lostFile in resolver.ResolveResourceAsync())
+                    totalLostFiles.Add(lostFile);
             }
 
             if (!totalLostFiles.Any()) return new TaskResult<bool>(TaskResultStatus.Success, value: true);

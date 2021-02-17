@@ -40,8 +40,14 @@ namespace ProjBobcat.DefaultComponent.Launch
         {
             // 把每个DirectoryInfo类映射到VersionInfo类。
             // Map each DirectoryInfo dir to VersionInfo class.
-            return new DirectoryInfo(GamePathHelper.GetVersionPath(RootPath)).EnumerateDirectories()
-                .Select(dir => ToVersion(dir.Name)).Where(ver => ver != null);
+            var di = new DirectoryInfo(GamePathHelper.GetVersionPath(RootPath));
+
+            foreach (var dir in di.EnumerateDirectories())
+            {
+                var version = ToVersion(dir.Name);
+                if(version == null) continue;
+                yield return version;
+            }
         }
 
         public override VersionInfo GetGame(string id)

@@ -22,60 +22,60 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
 
         public IEnumerable<IGameResource> ResolveResource()
         {
-            return ResolveResourceTaskAsync().Result;
+            var itr = ResolveResourceAsync().GetAsyncEnumerator();
+            while (itr.MoveNextAsync().Result)
+            {
+                yield return itr.Current;
+            }
         }
 
-        public Task<IEnumerable<IGameResource>> ResolveResourceTaskAsync()
+        public async IAsyncEnumerable<IGameResource> ResolveResourceAsync()
         {
-            return Task.Run(() =>
+            LogGameResourceInfoResolveStatus("开始进行游戏资源(Library)检查");
+            if (!(VersionInfo?.Natives?.Any() ?? false)) yield break;
+            if (!(VersionInfo?.Libraries?.Any() ?? false)) yield break;
+
+            var libDi = new DirectoryInfo(Path.Combine(BasePath, GamePathHelper.GetLibraryRootPath()));
+
+            if (!libDi.Exists) libDi.Create();
+
+            var lostLibrary = (from lib in VersionInfo.Libraries
+                               where !File.Exists(Path.Combine(BasePath,
+                                   GamePathHelper.GetLibraryPath(lib.Path.Replace('/', '\\'))))
+                               select lib).ToList();
+
+            lostLibrary.AddRange(from native in VersionInfo.Natives
+                                 where !File.Exists(Path.Combine(BasePath,
+                                     GamePathHelper.GetLibraryPath(native.FileInfo.Path.Replace('/', '\\'))))
+                                 select native.FileInfo);
+
+            foreach (var lL in lostLibrary)
             {
-                LogGameResourceInfoResolveStatus("开始进行游戏资源(Library)检查");
-                if (!(VersionInfo?.Natives?.Any() ?? false)) return default;
-                if (!(VersionInfo?.Libraries?.Any() ?? false)) return default;
+                string uri;
+                if (lL.Name.StartsWith("forge", StringComparison.Ordinal) ||
+                    lL.Name.StartsWith("net.minecraftforge", StringComparison.Ordinal))
+                    uri = $"{ForgeUriRoot}{lL.Path.Replace('\\', '/')}";
+                else
+                    uri = $"{LibraryUriRoot}{lL.Path.Replace('\\', '/')}";
 
-                var libDi = new DirectoryInfo(Path.Combine(BasePath, GamePathHelper.GetLibraryRootPath()));
+                var symbolIndex = lL.Path.LastIndexOf('/');
+                var fileName = lL.Path[(symbolIndex + 1)..];
+                var path = Path.Combine(BasePath,
+                    GamePathHelper.GetLibraryPath(lL.Path[..symbolIndex].Replace('/', '\\')));
 
-                if (!libDi.Exists) libDi.Create();
-
-                var lostLibrary = (from lib in VersionInfo.Libraries
-                    where !File.Exists(Path.Combine(BasePath,
-                        GamePathHelper.GetLibraryPath(lib.Path.Replace('/', '\\'))))
-                    select lib).ToList();
-
-                lostLibrary.AddRange(from native in VersionInfo.Natives
-                    where !File.Exists(Path.Combine(BasePath,
-                        GamePathHelper.GetLibraryPath(native.FileInfo.Path.Replace('/', '\\'))))
-                    select native.FileInfo);
-
-                var result = new List<IGameResource>();
-                foreach (var lL in lostLibrary)
+                yield return new LibraryDownloadInfo
                 {
-                    string uri;
-                    if (lL.Name.StartsWith("forge", StringComparison.Ordinal) ||
-                        lL.Name.StartsWith("net.minecraftforge", StringComparison.Ordinal))
-                        uri = $"{ForgeUriRoot}{lL.Path.Replace('\\', '/')}";
-                    else
-                        uri = $"{LibraryUriRoot}{lL.Path.Replace('\\', '/')}";
+                    Path = path,
+                    Title = lL.Name.Split(':')[1],
+                    Type = "Library/Native",
+                    Uri = uri,
+                    FileSize = lL.Size,
+                    CheckSum = lL.Sha1,
+                    FileName = fileName
+                };
+            }
 
-                    var symbolIndex = lL.Path.LastIndexOf('/');
-                    var fileName = lL.Path[(symbolIndex + 1)..];
-                    var path = Path.Combine(BasePath,
-                        GamePathHelper.GetLibraryPath(lL.Path[..symbolIndex].Replace('/', '\\')));
-                    result.Add(new LibraryDownloadInfo
-                    {
-                        Path = path,
-                        Title = lL.Name.Split(':')[1],
-                        Type = "Library/Native",
-                        Uri = uri,
-                        FileSize = lL.Size,
-                        CheckSum = lL.Sha1,
-                        FileName = fileName
-                    });
-                }
-
-                LogGameResourceInfoResolveStatus("检查Library完成");
-                return result.AsEnumerable();
-            });
+            LogGameResourceInfoResolveStatus("检查Library完成");
         }
 
         private void LogGameResourceInfoResolveStatus(string currentStatus, LogType logType = LogType.Normal)

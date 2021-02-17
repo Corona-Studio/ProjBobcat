@@ -1,8 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using ProjBobcat.Class.Model;
+﻿using ProjBobcat.Class.Model;
 using ProjBobcat.Event;
+using System;
+using System.Collections.Generic;
 
 namespace ProjBobcat.Interface
 {
@@ -10,7 +9,7 @@ namespace ProjBobcat.Interface
     {
         string BasePath { get; set; }
         VersionInfo VersionInfo { get; set; }
-        Task<IEnumerable<IGameResource>> ResolveResourceTaskAsync();
+        IAsyncEnumerable<IGameResource> ResolveResourceAsync();
         IEnumerable<IGameResource> ResolveResource();
 
         event EventHandler<GameResourceInfoResolveEventArgs> GameResourceInfoResolveEvent;
