@@ -31,6 +31,35 @@ namespace ProjBobcat.Class.Helper
         }
 
         /// <summary>
+        ///     Http Delete方法
+        /// </summary>
+        /// <param name="address">Post地址</param>
+        /// <param name="data">数据</param>
+        /// <param name="contentType">ContentType</param>
+        /// <param name="auth">Auth 字段</param>
+        /// <returns></returns>
+        public static async Task<HttpResponseMessage> Delete(string address, string data,
+            string contentType = "application/json", Tuple<string, string> auth = default)
+        {
+            using var req = new HttpRequestMessage(HttpMethod.Delete, new Uri(address))
+            {
+                Content = new StringContent(data, Encoding.UTF8, contentType)
+            };
+
+            req.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(contentType));
+
+            if (!(auth?.Equals(default) ?? true))
+                req.Headers.Authorization = new AuthenticationHeaderValue(auth.Item1, auth.Item2);
+
+            var acceptLanguage = new StringWithQualityHeaderValue(CultureInfo.CurrentCulture.Name);
+
+            req.Headers.AcceptLanguage.Add(acceptLanguage);
+            var response = await Client.SendAsync(req);
+
+            return response;
+        }
+
+        /// <summary>
         ///     Http Get方法
         /// </summary>
         /// <param name="address">Get地址</param>
