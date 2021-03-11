@@ -17,7 +17,7 @@ namespace ProjBobcat.Class.Helper
         private const string UriRegex =
             "((([A-Za-z]{3,9}:(?:\\/\\/)?)(?:[-;:&=\\+$,\\w]+@)?[A-Za-z0-9.-]+(:[0-9]+)?|(?:ww‌​w.|[-;:&=\\+$,\\w]+@)[A-Za-z0-9.-]+)((?:\\/[\\+~%\\/.\\w-_]*)?\\??(?:[-\\+=&;%@.\\w_]*)#?‌​(?:[\\w]*))?)";
 
-        private static HttpClient Client => HttpClientHelper.GetClient(HttpClientHelper.DefaultClientName);
+        private static HttpClient Client { get; } = HttpClientHelper.GetNewClient();
 
         /// <summary>
         ///     正则匹配Uri
