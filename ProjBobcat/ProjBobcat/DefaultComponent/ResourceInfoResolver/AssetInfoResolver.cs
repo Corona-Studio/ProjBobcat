@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using Newtonsoft.Json;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
@@ -39,10 +37,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
         public IEnumerable<IGameResource> ResolveResource()
         {
             var itr = ResolveResourceAsync().GetAsyncEnumerator();
-            while (itr.MoveNextAsync().Result)
-            {
-                yield return itr.Current;
-            }
+            while (itr.MoveNextAsync().Result) yield return itr.Current;
         }
 
         public async IAsyncEnumerable<IGameResource> ResolveResourceAsync()
@@ -119,7 +114,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                 var twoDigitsHash = hash[..2];
                 var path = Path.Combine(assetObjectsDi.FullName, twoDigitsHash);
 
-                if(File.Exists(Path.Combine(path, asset.Value.Hash))) continue;
+                if (File.Exists(Path.Combine(path, asset.Value.Hash))) continue;
 
                 yield return new AssetDownloadInfo
                 {

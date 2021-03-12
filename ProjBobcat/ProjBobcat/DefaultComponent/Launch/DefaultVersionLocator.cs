@@ -45,7 +45,7 @@ namespace ProjBobcat.DefaultComponent.Launch
             foreach (var dir in di.EnumerateDirectories())
             {
                 var version = ToVersion(dir.Name);
-                if(version == null) continue;
+                if (version == null) continue;
                 yield return version;
             }
         }

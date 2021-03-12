@@ -45,7 +45,7 @@ namespace ProjBobcat.DefaultComponent
             {
                 resolver.GameResourceInfoResolveEvent += GameResourceInfoResolveStatus;
 
-                await foreach(var lostFile in resolver.ResolveResourceAsync())
+                await foreach (var lostFile in resolver.ResolveResourceAsync())
                     totalLostFiles.Add(lostFile);
             }
 

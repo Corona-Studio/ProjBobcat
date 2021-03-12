@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.GameResource;
@@ -23,10 +22,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
         public IEnumerable<IGameResource> ResolveResource()
         {
             var itr = ResolveResourceAsync().GetAsyncEnumerator();
-            while (itr.MoveNextAsync().Result)
-            {
-                yield return itr.Current;
-            }
+            while (itr.MoveNextAsync().Result) yield return itr.Current;
         }
 
         public async IAsyncEnumerable<IGameResource> ResolveResourceAsync()
@@ -40,14 +36,14 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
             if (!libDi.Exists) libDi.Create();
 
             var lostLibrary = (from lib in VersionInfo.Libraries
-                               where !File.Exists(Path.Combine(BasePath,
-                                   GamePathHelper.GetLibraryPath(lib.Path.Replace('/', '\\'))))
-                               select lib).ToList();
+                where !File.Exists(Path.Combine(BasePath,
+                    GamePathHelper.GetLibraryPath(lib.Path.Replace('/', '\\'))))
+                select lib).ToList();
 
             lostLibrary.AddRange(from native in VersionInfo.Natives
-                                 where !File.Exists(Path.Combine(BasePath,
-                                     GamePathHelper.GetLibraryPath(native.FileInfo.Path.Replace('/', '\\'))))
-                                 select native.FileInfo);
+                where !File.Exists(Path.Combine(BasePath,
+                    GamePathHelper.GetLibraryPath(native.FileInfo.Path.Replace('/', '\\'))))
+                select native.FileInfo);
 
             foreach (var lL in lostLibrary)
             {
