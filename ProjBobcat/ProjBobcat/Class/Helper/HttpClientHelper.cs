@@ -16,8 +16,7 @@ namespace ProjBobcat.Class.Helper
         {
             return new(new RedirectHandler(new RetryHandler(new HttpClientHandler
             {
-                AllowAutoRedirect = false,
-                ServerCertificateCustomValidationCallback = (_, _, _, _) => true
+                AllowAutoRedirect = false
             })));
         }
     }
