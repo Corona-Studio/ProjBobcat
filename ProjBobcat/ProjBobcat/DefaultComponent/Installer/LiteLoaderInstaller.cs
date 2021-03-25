@@ -18,6 +18,7 @@ namespace ProjBobcat.DefaultComponent.Installer
         private const string SnapshotRoot = "http://dl.liteloader.com/versions/";
         private const string ReleaseRoot = "http://repo.mumfrey.com/content/repositories/liteloader/";
 
+        public RawVersionModel InheritVersion { get; set; }
         public LiteLoaderDownloadVersionModel VersionModel { get; set; }
 
         public string Install()
@@ -27,6 +28,11 @@ namespace ProjBobcat.DefaultComponent.Installer
 
         public async Task<string> InstallTaskAsync()
         {
+            if (InheritVersion == null)
+                throw new NullReferenceException("InheritVersion 不能为 null");
+            if (VersionModel == null)
+                throw new NullReferenceException("VersionModel 不能为 null");
+
             InvokeStatusChangedEvent("开始安装 LiteLoader", 0);
 
             var vl = new DefaultVersionLocator(RootPath, Guid.Empty);
@@ -77,9 +83,27 @@ namespace ProjBobcat.DefaultComponent.Installer
                 ReleaseTime = time,
                 Libraries = libraries,
                 MainClass = mainClass,
-                MinecraftArguments = $"--tweakClass {VersionModel.Build.TweakClass}",
-                InheritsFrom = VersionModel.McVersion
+                InheritsFrom = VersionModel.McVersion,
+                BuildType = VersionModel.Type,
+                JarFile = InheritVersion.JarFile ?? InheritVersion.Id
             };
+
+            if(InheritVersion.Arguments != null)
+            {
+                resultModel.Arguments = new Arguments
+                {
+                    Game = new List<object>
+                    {
+                        "--tweakClass",
+                        VersionModel.Build.TweakClass
+                    }
+                };
+            }
+            else
+            {
+                resultModel.MinecraftArguments =
+                    $"{InheritVersion.MinecraftArguments} --tweakClass {VersionModel.Build.TweakClass}";
+            }
 
             var gamePath = Path.Combine(RootPath, GamePathHelper.GetGamePath(id));
             var di = new DirectoryInfo(gamePath);

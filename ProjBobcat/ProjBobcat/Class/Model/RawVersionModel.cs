@@ -209,5 +209,11 @@ namespace ProjBobcat.Class.Model
         /// </summary>
         [JsonProperty("type")]
         public string BuildType { get; set; }
+
+        /// <summary>
+        ///     Jar 参数，LiteLoader 使用
+        /// </summary>
+        [JsonProperty("jar")]
+        public string JarFile { get; set; }
     }
 }
