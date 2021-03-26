@@ -30,21 +30,21 @@ namespace ProjBobcat.Class.Helper
 
         private const int TotalLength = 93;
 
-        private readonly List<char> enabled;
+        private readonly List<char> _enabled;
 
         /// <summary>
         ///     创建一个新的随机字符串帮助器的实例。
         /// </summary>
         public RandomStringHelper()
         {
-            enabled = new List<char>(TotalLength);
+            _enabled = new List<char>(TotalLength);
         }
 
         /// <summary>
         ///     获取该帮助器已启用的字符所构成的字符串。
         ///     如果需要移除部分字符，请创建一个新的实例并重新添加。
         /// </summary>
-        public string EnabledCharacters => new(enabled.ToArray());
+        public string EnabledCharacters => new(_enabled.ToArray());
 
         /// <summary>
         ///     加入数字字符。
@@ -54,7 +54,7 @@ namespace ProjBobcat.Class.Helper
         /// <returns>帮助器本身。</returns>
         public RandomStringHelper UseNumbers()
         {
-            enabled.AddRange(Numbers);
+            _enabled.AddRange(Numbers);
             return this;
         }
 
@@ -66,7 +66,7 @@ namespace ProjBobcat.Class.Helper
         /// <returns>帮助器本身。</returns>
         public RandomStringHelper UseLower()
         {
-            enabled.AddRange(LowerCases);
+            _enabled.AddRange(LowerCases);
             return this;
         }
 
@@ -78,7 +78,7 @@ namespace ProjBobcat.Class.Helper
         /// <returns>帮助器本身。</returns>
         public RandomStringHelper UseUpper()
         {
-            enabled.AddRange(UpperCases);
+            _enabled.AddRange(UpperCases);
             return this;
         }
 
@@ -90,7 +90,7 @@ namespace ProjBobcat.Class.Helper
         /// <returns>帮助器本身。</returns>
         public RandomStringHelper UseSymbols()
         {
-            enabled.AddRange(Symbols);
+            _enabled.AddRange(Symbols);
             return this;
         }
 
@@ -104,7 +104,7 @@ namespace ProjBobcat.Class.Helper
         /// <returns>帮助器本身。</returns>
         public RandomStringHelper UseCharacters(params char[] characters)
         {
-            enabled.AddRange(characters);
+            _enabled.AddRange(characters);
             return this;
         }
 
@@ -117,7 +117,7 @@ namespace ProjBobcat.Class.Helper
         /// <returns>帮助器本身。</returns>
         public RandomStringHelper UseCharacters(IEnumerable<char> characters)
         {
-            enabled.AddRange(characters);
+            _enabled.AddRange(characters);
             return this;
         }
 
@@ -129,7 +129,7 @@ namespace ProjBobcat.Class.Helper
         public RandomStringHelper Shuffle(int times)
         {
             for (var i = 0; i < times; i++)
-                enabled.Shuffle();
+                _enabled.Shuffle();
 
             return this;
         }
@@ -142,12 +142,12 @@ namespace ProjBobcat.Class.Helper
         /// <returns>生成的字符串。</returns>
         public string Generate(int length)
         {
-            if (enabled.Count == 0)
+            if (_enabled.Count == 0)
                 return null;
 
             var sb = new StringBuilder(length);
             for (var i = 0; i < length; i++)
-                sb.Append(enabled.RandomSample());
+                sb.Append(_enabled.RandomSample());
 
             return sb.ToString();
         }

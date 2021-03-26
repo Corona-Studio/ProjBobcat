@@ -18,8 +18,8 @@ namespace ProjBobcat.DefaultComponent.Installer
         private const string SnapshotRoot = "http://dl.liteloader.com/versions/";
         private const string ReleaseRoot = "http://repo.mumfrey.com/content/repositories/liteloader/";
 
-        public RawVersionModel InheritVersion { get; set; }
-        public LiteLoaderDownloadVersionModel VersionModel { get; set; }
+        public RawVersionModel InheritVersion { get; init; }
+        public LiteLoaderDownloadVersionModel VersionModel { get; init; }
 
         public string Install()
         {

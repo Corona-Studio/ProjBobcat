@@ -37,7 +37,7 @@ namespace ProjBobcat.Class.Helper
         /// </summary>
         public static int RetryCount { get; set; } = 10;
 
-        private static HttpClient DataClient { get; } = HttpClientHelper.GetNewClient();
+        private static HttpClient DataClient => HttpClientHelper.GetNewClient(HttpClientHelper.DataClientName);
 
         #region 下载一个列表中的文件（自动确定是否使用分片下载）
 
@@ -114,14 +114,15 @@ namespace ProjBobcat.Class.Helper
                 var downloadedBytesCount = 0L;
                 var buffer = new byte[BufferSize];
                 var sw = new Stopwatch();
-                sw.Start();
 
                 var tSpeed = 0D;
                 var cSpeed = 0;
 
                 while (true)
                 {
+                    sw.Restart();
                     var bytesRead = await stream.ReadAsync(buffer.AsMemory(0, BufferSize));
+                    sw.Stop();
 
                     if (bytesRead == 0)
                         break;
@@ -130,8 +131,8 @@ namespace ProjBobcat.Class.Helper
 
                     Interlocked.Add(ref downloadedBytesCount, bytesRead);
 
-                    var elapsedTime = sw.Elapsed.TotalSeconds;
-                    var speed = (double) downloadedBytesCount / 1024 / 1024 / elapsedTime;
+                    var elapsedTime = Math.Ceiling(sw.Elapsed.TotalSeconds);
+                    var speed = CalculateDownloadSpeed(bytesRead, elapsedTime, SizeUnit.Kb);
 
                     tSpeed += speed;
                     cSpeed++;
@@ -174,8 +175,8 @@ namespace ProjBobcat.Class.Helper
             MultiPartDownloadTaskAsync(downloadFile, numberOfParts).Wait();
         }
 
-        private static HttpClient HeadClient { get; } = HttpClientHelper.GetNewClient();
-        private static HttpClient MultiPartClient { get; } = HttpClientHelper.GetNewClient();
+        private static HttpClient HeadClient => HttpClientHelper.GetNewClient(HttpClientHelper.HeadClientName);
+        private static HttpClient MultiPartClient => HttpClientHelper.GetNewClient(HttpClientHelper.MultiPartClientName);
 
         /// <summary>
         ///     分片下载方法（异步）
@@ -314,11 +315,12 @@ namespace ProjBobcat.Class.Helper
 
                     var buffer = new byte[BufferSize];
                     var sw = new Stopwatch();
-                    sw.Start();
 
                     while (true)
                     {
+                        sw.Restart();
                         var bytesRead = await stream.ReadAsync(buffer.AsMemory(0, BufferSize));
+                        sw.Stop();
 
                         if (bytesRead == 0)
                             break;
@@ -327,8 +329,8 @@ namespace ProjBobcat.Class.Helper
 
                         Interlocked.Add(ref downloadedBytesCount, bytesRead);
 
-                        var elapsedTime = sw.Elapsed.TotalSeconds;
-                        var speed = (double) downloadedBytesCount / 1024 / 1024 / elapsedTime;
+                        var elapsedTime = Math.Ceiling(sw.Elapsed.TotalSeconds);
+                        var speed = CalculateDownloadSpeed(bytesRead, elapsedTime, SizeUnit.Kb);
 
                         tSpeed += speed;
                         cSpeed++;
@@ -423,5 +425,20 @@ namespace ProjBobcat.Class.Helper
         }
 
         #endregion
+
+        public static double CalculateDownloadSpeed(int bytesReceived, double passedSeconds, SizeUnit unit = SizeUnit.Mb)
+        {
+            const double baseNum = 1024;
+
+            return unit switch
+            {
+                SizeUnit.B => bytesReceived / passedSeconds,
+                SizeUnit.Kb => bytesReceived / baseNum / passedSeconds,
+                SizeUnit.Mb => bytesReceived / Math.Pow(baseNum, 2) / passedSeconds,
+                SizeUnit.Gb => bytesReceived / Math.Pow(baseNum, 3) / passedSeconds,
+                SizeUnit.Tb => bytesReceived / Math.Pow(baseNum, 4) / passedSeconds,
+                _ => bytesReceived / passedSeconds
+            };
+        }
     }
 }
