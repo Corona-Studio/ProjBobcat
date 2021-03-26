@@ -38,6 +38,11 @@ All you need for minecraft launcher in typescript. https://voxelum.github.io/min
   Install-Package ProjBobcat
   ```
   in Package Manager Console.
+* You need to add two lines of code into your program's entry point (App.xaml.cs or something else):
+  ```c#
+  ServiceHelper.Init();
+  HttpClientHelper.Init();
+  ```
 
 ## Roadmap
 
