@@ -47,9 +47,14 @@ All you need for minecraft launcher in typescript. https://voxelum.github.io/min
 
 ## 安装方法
 * 复制本项目源代码至您的解决方案中，然后在您的主项目添加引用。
-* 直接通过Nuget包管理器安装或者在包管理器控制台执行
+* 直接通过 Nuget 包管理器安装 ProjBobcat 或在包管理器控制台中执行以下命令
   ```
   Install-Package ProjBobcat
+  ```
+* 你需要在主程序入口处添加以下两行代码 (通常是 App.xaml.cs 或其他):
+  ```c#
+  ServiceHelper.Init();
+  HttpClientHelper.Init();
   ```
 
 
