@@ -36,8 +36,10 @@ namespace ProjBobcat.Handler
                 redirectUri = new Uri(request.RequestUri.GetLeftPart(UriPartial.Authority) + redirectUri);
 
             Trace.WriteLine($"302: {redirectUri}");
-
+            
             using var newRequest = new HttpRequestMessage(request.Method, redirectUri);
+            newRequest.Headers.Host = request.Headers.Host;
+
             return await base.SendAsync(newRequest, cancellationToken);
         }
 
