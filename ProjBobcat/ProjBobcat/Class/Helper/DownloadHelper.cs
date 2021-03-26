@@ -20,7 +20,7 @@ namespace ProjBobcat.Class.Helper
     /// </summary>
     public static class DownloadHelper
     {
-        private const int BufferSize = 1024 * 10 * 10;
+        private const int BufferSize = 1024 * 1024 * 10;
 
         /// <summary>
         ///     获取或设置用户代理信息。
@@ -102,7 +102,7 @@ namespace ProjBobcat.Class.Helper
                 if (!string.IsNullOrEmpty(downloadProperty.Host))
                     request.Headers.Host = downloadProperty.Host;
 
-                using var res = await DataClient.SendAsync(request, HttpCompletionOption.ResponseContentRead,
+                using var res = await DataClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead,
                     CancellationToken.None);
 
                 // downloadTask.EnsureSuccessStatusCode();
@@ -291,7 +291,7 @@ namespace ProjBobcat.Class.Helper
                             request.Headers.Range = new RangeHeaderValue(p.Start, p.End);
 
                             var downloadTask = MultiPartClient.SendAsync(request,
-                                HttpCompletionOption.ResponseContentRead,
+                                HttpCompletionOption.ResponseHeadersRead,
                                 CancellationToken.None);
 
                             doneRanges.Add(p);
