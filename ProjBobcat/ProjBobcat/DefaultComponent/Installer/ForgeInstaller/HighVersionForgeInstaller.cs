@@ -182,9 +182,20 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
             var forgeSubPath = forgeJar.Key[(forgeJar.Key.IndexOf('/') + 1)..];
             var forgeLibPath = Path.Combine(RootPath, GamePathHelper.GetLibraryPath(forgeSubPath.Replace('/', '\\')));
 
-            var forgeUniversalSubPath = forgeUniversalJar.Key[(forgeUniversalJar.Key.IndexOf('/') + 1)..];
+            var forgeUniversalSubPath = forgeUniversalJar?.Key[(forgeUniversalJar.Key.IndexOf('/') + 1)..];
             var forgeUniversalLibPath = Path.Combine(RootPath,
-                GamePathHelper.GetLibraryPath(forgeUniversalSubPath.Replace('/', '\\')));
+                GamePathHelper.GetLibraryPath(forgeUniversalSubPath?.Replace('/', '\\')));
+
+            if (string.IsNullOrEmpty(forgeUniversalSubPath)
+                || string.IsNullOrEmpty(forgeUniversalLibPath))
+                return new ForgeInstallResult
+                {
+                    Error = new ErrorModel
+                    {
+                        ErrorMessage = "不支持的格式"
+                    },
+                    Succeeded = false
+                };
 
             await using var forgeUniversalFs = File.OpenWrite(forgeUniversalLibPath);
             await using var forgeFs = File.OpenWrite(forgeLibPath);

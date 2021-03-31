@@ -88,8 +88,7 @@ namespace ProjBobcat.DefaultComponent.Installer
                 JarFile = InheritVersion.JarFile ?? InheritVersion.Id
             };
 
-            if(InheritVersion.Arguments != null)
-            {
+            if (InheritVersion.Arguments != null)
                 resultModel.Arguments = new Arguments
                 {
                     Game = new List<object>
@@ -98,12 +97,9 @@ namespace ProjBobcat.DefaultComponent.Installer
                         VersionModel.Build.TweakClass
                     }
                 };
-            }
             else
-            {
                 resultModel.MinecraftArguments =
                     $"{InheritVersion.MinecraftArguments} --tweakClass {VersionModel.Build.TweakClass}";
-            }
 
             var gamePath = Path.Combine(RootPath, GamePathHelper.GetGamePath(id));
             var di = new DirectoryInfo(gamePath);

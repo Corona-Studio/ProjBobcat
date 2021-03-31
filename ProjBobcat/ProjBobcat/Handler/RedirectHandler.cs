@@ -36,7 +36,7 @@ namespace ProjBobcat.Handler
                 redirectUri = new Uri(request.RequestUri.GetLeftPart(UriPartial.Authority) + redirectUri);
 
             Trace.WriteLine($"302: {redirectUri}");
-            
+
             using var newRequest = new HttpRequestMessage(request.Method, redirectUri);
             newRequest.Headers.Host = request.Headers.Host;
 
@@ -49,7 +49,7 @@ namespace ProjBobcat.Handler
         {
             var response = await base.SendAsync(request, cancellationToken);
 
-            var statusCode = (int)response?.StatusCode;
+            var statusCode = (int) response?.StatusCode;
             if (statusCode == 0) return null;
 
             return statusCode >= 300 && statusCode <= 399

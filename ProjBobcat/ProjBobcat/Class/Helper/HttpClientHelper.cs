@@ -18,7 +18,7 @@ namespace ProjBobcat.Class.Helper
 
         public static void Init()
         {
-            var arr = new[] { DefaultClientName, DataClientName, HeadClientName, MultiPartClientName };
+            var arr = new[] {DefaultClientName, DataClientName, HeadClientName, MultiPartClientName};
             foreach (var name in arr)
                 ServiceHelper.ServiceCollection
                     .AddHttpClient(name)
