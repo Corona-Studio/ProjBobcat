@@ -178,26 +178,38 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                 e.Key.Equals($"maven/net/minecraftforge/forge/{forgeVersion}/forge-{forgeVersion}-universal.jar",
                     StringComparison.OrdinalIgnoreCase));
 
+            if(forgeUniversalJar != default)
+            {
+                var forgeUniversalSubPath = forgeUniversalJar?.Key[(forgeUniversalJar.Key.IndexOf('/') + 1)..];
+                var forgeUniversalLibPath = Path.Combine(RootPath,
+                    GamePathHelper.GetLibraryPath(forgeUniversalSubPath?.Replace('/', '\\')));
+
+                if (string.IsNullOrEmpty(forgeUniversalSubPath)
+                    || string.IsNullOrEmpty(forgeUniversalLibPath))
+                    return new ForgeInstallResult
+                    {
+                        Error = new ErrorModel
+                        {
+                            ErrorMessage = "不支持的格式"
+                        },
+                        Succeeded = false
+                    };
+
+                var forgeUniversalLibDir = Path.GetDirectoryName(forgeUniversalLibPath);
+                if (!Directory.Exists(forgeUniversalLibDir))
+                    Directory.CreateDirectory(forgeUniversalLibDir);
+
+                await using var forgeUniversalFs = File.OpenWrite(forgeUniversalLibPath);
+                forgeUniversalJar.WriteTo(forgeUniversalFs);
+            }
 
             var forgeSubPath = forgeJar.Key[(forgeJar.Key.IndexOf('/') + 1)..];
             var forgeLibPath = Path.Combine(RootPath, GamePathHelper.GetLibraryPath(forgeSubPath.Replace('/', '\\')));
 
-            var forgeUniversalSubPath = forgeUniversalJar?.Key[(forgeUniversalJar.Key.IndexOf('/') + 1)..];
-            var forgeUniversalLibPath = Path.Combine(RootPath,
-                GamePathHelper.GetLibraryPath(forgeUniversalSubPath?.Replace('/', '\\')));
+            var forgeLibDir = Path.GetDirectoryName(forgeLibPath);
+            if (!Directory.Exists(forgeLibDir))
+                Directory.CreateDirectory(forgeLibDir);
 
-            if (string.IsNullOrEmpty(forgeUniversalSubPath)
-                || string.IsNullOrEmpty(forgeUniversalLibPath))
-                return new ForgeInstallResult
-                {
-                    Error = new ErrorModel
-                    {
-                        ErrorMessage = "不支持的格式"
-                    },
-                    Succeeded = false
-                };
-
-            await using var forgeUniversalFs = File.OpenWrite(forgeUniversalLibPath);
             await using var forgeFs = File.OpenWrite(forgeLibPath);
 
             var fLDi = new DirectoryInfo(Path.GetDirectoryName(forgeLibPath));
@@ -206,7 +218,6 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                 fLDi.Create();
 
             forgeJar.WriteTo(forgeFs);
-            forgeUniversalJar.WriteTo(forgeUniversalFs);
 
             #endregion
 

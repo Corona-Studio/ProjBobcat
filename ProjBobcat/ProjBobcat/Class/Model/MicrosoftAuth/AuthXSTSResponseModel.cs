@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace ProjBobcat.Class.Model.MicrosoftAuth
 {
-    public class AuthXSResponseModel
+    public class AuthXSTSResponseModel
     {
         public DateTime IssueInstant { get; set; }
         public DateTime NotAfter { get; set; }

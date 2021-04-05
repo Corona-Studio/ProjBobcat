@@ -41,7 +41,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                 if (!Directory.Exists(RootPath))
                     Directory.CreateDirectory(RootPath);
 
-                FileHelper.Write(FullLauncherAccountPath, launcherProfileJson);
+                File.WriteAllText(FullLauncherAccountPath, launcherProfileJson);
             }
             else
             {
@@ -110,7 +110,7 @@ namespace ProjBobcat.DefaultComponent.Launch
             var launcherProfileJson =
                 JsonConvert.SerializeObject(LauncherAccount, JsonHelper.CamelCasePropertyNamesSettings);
 
-            FileHelper.Write(FullLauncherAccountPath, launcherProfileJson);
+            File.WriteAllText(FullLauncherAccountPath, launcherProfileJson);
         }
     }
 }

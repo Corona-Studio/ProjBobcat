@@ -6,7 +6,7 @@ namespace ProjBobcat.Class.Model.MicrosoftAuth
     {
         [JsonProperty("token_type")] public string TokenType { get; set; }
 
-        [JsonProperty("expires_in")] public long ExpiresIn { get; set; }
+        [JsonProperty("expires_in")] public int ExpiresIn { get; set; }
 
         [JsonProperty("scope")] public string Scope { get; set; }
 

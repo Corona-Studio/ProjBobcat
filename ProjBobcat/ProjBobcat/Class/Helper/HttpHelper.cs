@@ -93,7 +93,6 @@ namespace ProjBobcat.Class.Helper
             {
                 Content = new FormUrlEncodedContent(data)
             };
-            req.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(contentType));
 
             var response = await Client.SendAsync(req);
             return response;

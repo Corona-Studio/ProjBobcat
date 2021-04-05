@@ -5,13 +5,13 @@ namespace ProjBobcat.Class.Model.MicrosoftAuth
 {
     public class AuthTokenRequestModel
     {
-        public static Dictionary<string, string> GetRefresh(string token)
+        public static Dictionary<string, string> GetRefresh(string token, string clientId, string redirect)
         {
             return new()
             {
                 {
                     "client_id",
-                    MicrosoftAuthenticator.MSClientId
+                    clientId
                 },
                 {
                     "refresh_token",
@@ -23,11 +23,7 @@ namespace ProjBobcat.Class.Model.MicrosoftAuth
                 },
                 {
                     "redirect_uri",
-                    MicrosoftAuthenticator.MSAuthRedirectUrl
-                },
-                {
-                    "scope",
-                    MicrosoftAuthenticator.MSAuthScope
+                    redirect
                 }
             };
         }
@@ -37,13 +33,13 @@ namespace ProjBobcat.Class.Model.MicrosoftAuth
         /// </summary>
         /// <param name="authCode"></param>
         /// <returns></returns>
-        public static Dictionary<string, string> Get(string authCode)
+        public static Dictionary<string, string> Get(string authCode, string clientId, string redirect)
         {
             return new()
             {
                 {
                     "client_id",
-                    MicrosoftAuthenticator.MSClientId
+                    clientId
                 },
                 {
                     "code",
@@ -55,11 +51,7 @@ namespace ProjBobcat.Class.Model.MicrosoftAuth
                 },
                 {
                     "redirect_uri",
-                    MicrosoftAuthenticator.MSAuthRedirectUrl
-                },
-                {
-                    "scope",
-                    MicrosoftAuthenticator.MSAuthScope
+                    redirect
                 }
             };
         }

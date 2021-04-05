@@ -51,7 +51,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                 if (!Directory.Exists(RootPath))
                     Directory.CreateDirectory(RootPath);
 
-                FileHelper.Write(FullLauncherProfilePath, launcherProfileJson);
+                File.WriteAllText(FullLauncherProfilePath, launcherProfileJson);
             }
             else
             {
@@ -102,7 +102,7 @@ namespace ProjBobcat.DefaultComponent.Launch
             var launcherProfileJson =
                 JsonConvert.SerializeObject(LauncherProfile, JsonHelper.CamelCasePropertyNamesSettings);
 
-            FileHelper.Write(FullLauncherProfilePath, launcherProfileJson);
+            File.WriteAllText(FullLauncherProfilePath, launcherProfileJson);
         }
 
         public void SelectGameProfile(string name)

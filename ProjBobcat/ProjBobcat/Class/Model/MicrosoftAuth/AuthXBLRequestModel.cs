@@ -21,7 +21,7 @@
                 {
                     AuthMethod = "RPS",
                     SiteName = "user.auth.xboxlive.com",
-                    RpsTicket = accessToken
+                    RpsTicket = $"d={accessToken}"
                 },
                 RelyingParty = "http://auth.xboxlive.com",
                 TokenType = "JWT"

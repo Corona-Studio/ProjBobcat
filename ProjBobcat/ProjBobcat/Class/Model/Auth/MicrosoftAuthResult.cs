@@ -22,6 +22,6 @@ namespace ProjBobcat.Class.Model.Auth
         /// <summary>
         ///     Token 失效时间
         /// </summary>
-        public long ExpiresIn { get; set; }
+        public int ExpiresIn { get; set; }
     }
 }

@@ -13,9 +13,12 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                 throw new ArgumentNullException(nameof(forgeExecutable));
 
             using var archive = ArchiveFactory.Open(Path.GetFullPath(forgeExecutable));
-            var flag = archive.Entries.Any(entry => entry.Key.Equals($"forge-{forgeVersion}-universal.jar"));
 
-            return flag;
+            var legacyUniversalJar = archive.Entries.Any(entry => entry.Key.Equals($"forge-{forgeVersion}-universal.jar"));
+            var installProfileJson = archive.Entries.Any(entry =>
+                entry.Key.Equals("install_profile.json", StringComparison.OrdinalIgnoreCase));
+
+            return legacyUniversalJar && installProfileJson;
         }
     }
 }

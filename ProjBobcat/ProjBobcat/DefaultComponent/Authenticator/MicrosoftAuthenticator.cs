@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Auth;
@@ -11,38 +7,35 @@ using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.MicrosoftAuth;
 using ProjBobcat.Class.Model.YggdrasilAuth;
 using ProjBobcat.Interface;
-using AuthTokenRequestModel = ProjBobcat.Class.Model.MicrosoftAuth.AuthTokenRequestModel;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 
 namespace ProjBobcat.DefaultComponent.Authenticator
 {
     public class MicrosoftAuthenticator : IAuthenticator
     {
-        public const string MSClientId = "00000000402b5328";
-        public const string MSAuthScope = "service::user.auth.xboxlive.com::MBI_SSL";
-
-        public const string MSAuthRedirectUrl = "https://login.live.com/oauth20_desktop.srf";
-        public const string MSAuthTokenUrl = " https://login.live.com/oauth20_token.srf";
+        public const string MSAuthScope = "XboxLive.signin offline_access";
         public const string MSAuthXBLUrl = "https://user.auth.xboxlive.com/user/authenticate";
         public const string MSAuthXSTSUrl = "https://xsts.auth.xboxlive.com/xsts/authorize";
         public const string MojangAuthUrl = "https://api.minecraftservices.com/authentication/login_with_xbox";
         public const string MojangOwnershipUrl = "https://api.minecraftservices.com/entitlements/mcstore";
         public const string MojangProfileUrl = "https://api.minecraftservices.com/minecraft/profile";
 
-        public static string MSLoginUrl =>
-            Uri.EscapeUriString("https://login.live.com/oauth20_authorize.srf"
-                                + $"?client_id={MSClientId}"
-                                + "&response_type=code"
-                                + $"&scope={MSAuthScope}"
-                                + $"&redirect_uri={MSAuthRedirectUrl}");
-
+        public static string GetLoginUri(string clientId, string redirectUri)
+        {
+            return Uri.EscapeUriString("https://login.live.com/oauth20_authorize.srf"
+                                       + $"?client_id={clientId}"
+                                       + "&response_type=code"
+                                       + $"&scope={MSAuthScope}"
+                                       + $"&redirect_uri={redirectUri}");
+        }
 
         public string Email { get; init; }
-        public string AuthCode { get; init; }
-
-        public AuthType AuthType { get; init; }
-        public string RefreshToken { get; init; }
-        public long ExpiresIn { get; init; }
-        public DateTime LastAuthTime { get; init; }
+        public Func<Task<ValueTuple<string, string, int>>> AccessTokenProvider { get; init; }
 
         public ILauncherAccountParser LauncherAccountParser { get; set; }
 
@@ -55,106 +48,136 @@ namespace ProjBobcat.DefaultComponent.Authenticator
         {
             #region STAGE 1
 
-            var reqForm = AuthType switch
-            {
-                AuthType.NormalAuth => AuthTokenRequestModel.Get(AuthCode),
-                AuthType.RefreshToken => AuthTokenRequestModel.GetRefresh(RefreshToken),
-                _ => AuthTokenRequestModel.Get(AuthCode)
-            };
+            var provider = await AccessTokenProvider();
 
-            if ((DateTime.Now - LastAuthTime).Hours >= 24 && AuthType == AuthType.NormalAuth)
+            if (provider == default)
             {
-                if (string.IsNullOrEmpty(RefreshToken))
-                    return new AuthResultBase
+                return new MicrosoftAuthResult
+                {
+                    AuthStatus = AuthStatus.Failed,
+                    Error = new ErrorModel
                     {
-                        Error = new ErrorModel
-                        {
-                            Cause = "由于 Token 已过期， 因此需要使用 RefreshToken 来刷新",
-                            Error = "RefreshToken 为空",
-                            ErrorMessage = "RefreshToken 为空"
-                        }
-                    };
-
-
-                reqForm = AuthTokenRequestModel.GetRefresh(RefreshToken);
+                        Cause = "缺少重要凭据",
+                        Error = $"{nameof(AccessTokenProvider)} 未提供有效的数据",
+                        ErrorMessage = "缺失重要的登陆参数"
+                    }
+                };
             }
 
-            if ((DateTime.Now - LastAuthTime).Hours < 24 && AuthType == AuthType.NormalAuth)
+            var (accessToken, refreshToken, expiresIn) = provider;
+
+            var xBoxLiveToken =
+                await SendRequest<AuthXSTSResponseModel>(MSAuthXBLUrl, AuthXBLRequestModel.Get(accessToken));
+
+            if (xBoxLiveToken == null)
             {
-                var result = GetLastAuthResult();
-                if (result != default)
-                    return result;
+                return new MicrosoftAuthResult
+                {
+                    AuthStatus = AuthStatus.Failed,
+                    Error = new ErrorModel
+                    {
+                        Cause = "无法获取认证 Token",
+                        Error = "XBox Live 验证失败",
+                        ErrorMessage = "XBox Live 验证失败"
+                    }
+                };
             }
-
-            using var tokenResMessage =
-                await HttpHelper.PostFormData(MSAuthTokenUrl, reqForm, "application/x-www-form-urlencoded");
-
-            tokenResMessage.EnsureSuccessStatusCode();
-
-            var tokenResStr = await tokenResMessage.Content.ReadAsStringAsync();
-            var tokenRes = JsonConvert.DeserializeObject<AuthTokenResponseModel>(tokenResStr);
 
             #endregion
 
             #region STAGE 2
 
-            var xBLRequestModel = AuthXBLRequestModel.Get(tokenRes.AccessToken);
-            var xBLReqStr = JsonConvert.SerializeObject(xBLRequestModel);
-            using var xBLResMessage = await HttpHelper.Post(MSAuthXBLUrl, xBLReqStr);
-            var xBLResStr = await xBLResMessage.Content.ReadAsStringAsync();
-            var xBLRes = JsonConvert.DeserializeObject<AuthXSResponseModel>(xBLResStr);
+            var xStsReqStr = JsonConvert.SerializeObject(AuthXSTSRequestModel.Get(xBoxLiveToken.Token));
+            using var xStsMessage = await HttpHelper.Post(MSAuthXSTSUrl, xStsReqStr);
+
+            if (!xStsMessage.IsSuccessStatusCode)
+            {
+                var errContent = await xStsMessage.Content.ReadAsStringAsync();
+                var errModel = JsonConvert.DeserializeObject<AuthXSTSErrorModel>(errContent);
+                var reason = (errModel?.XErr ?? 0) switch
+                {
+                    2148916233 => "未创建 XBox 账户",
+                    2148916238 => "未成年人账户",
+                    _ => "未知"
+                };
+
+                var err = new ErrorModel
+                {
+                    Cause = reason,
+                    Error = $"XSTS 认证失败，原因：{reason}",
+                    ErrorMessage = errModel?.Message ?? "未知"
+                };
+
+                if (!string.IsNullOrEmpty(errModel?.Redirect))
+                {
+                    err.Error += $"，相关链接：{errModel.Redirect}";
+                }
+
+                return new MicrosoftAuthResult
+                {
+                    AuthStatus = AuthStatus.Failed,
+                    Error = err
+                };
+            }
+
+            var xStsResStr = await xStsMessage.Content.ReadAsStringAsync();
+            var xStsRes = JsonConvert.DeserializeObject<AuthXSTSResponseModel>(xStsResStr);
 
             #endregion
 
             #region STAGE 3
 
-            var xSTSRequestModel = AuthXSTSRequestModel.Get(xBLRes.Token);
-            var xSTSReqStr = JsonConvert.SerializeObject(xSTSRequestModel);
-            using var xSTSResMessage = await HttpHelper.Post(MSAuthXSTSUrl, xSTSReqStr);
-            var xSTSResStr = await xSTSResMessage.Content.ReadAsStringAsync();
-            var xSTSRes = JsonConvert.DeserializeObject<AuthXSResponseModel>(xSTSResStr);
+            var mcReqModel = new
+            {
+                identityToken = $"XBL3.0 x={xStsRes.DisplayClaims["xui"].First()["uhs"]};{xStsRes.Token}"
+            };
+            var mcRes = await SendRequest<AuthMojangResponseModel>(MojangAuthUrl, mcReqModel);
 
             #endregion
 
             #region STAGE 4
-
-            var mcReqStr = JsonConvert.SerializeObject(new
-            {
-                identityToken = $"XBL3.0 x={xSTSRes.DisplayClaims["xui"].First()["uhs"]};{xSTSRes.Token}"
-            });
-            using var mcResMessage = await HttpHelper.Post(MojangAuthUrl, mcReqStr);
-            var mcResStr = await mcResMessage.Content.ReadAsStringAsync();
-            var mcRes = JsonConvert.DeserializeObject<AuthMojangResponseModel>(mcResStr);
-
-            #endregion
-
-            #region STAGE 5
 
             var ownResRes = await HttpHelper.Get(MojangOwnershipUrl,
                 new Tuple<string, string>("Bearer", mcRes.AccessToken));
             var ownResStr = await ownResRes.Content.ReadAsStringAsync();
             var ownRes = JsonConvert.DeserializeObject<MojangOwnershipResponseModel>(ownResStr);
 
-            if (!(ownRes.Items?.Any() ?? false))
-                return new AuthResultBase
+            if (!(ownRes?.Items?.Any() ?? false))
+                return new MicrosoftAuthResult
                 {
                     AuthStatus = AuthStatus.Failed,
                     Error = new ErrorModel
                     {
-                        Error = "没有找到该账户对应的验证信息！",
-                        ErrorMessage = "没有找到该账户",
-                        Cause = "可能是因为该账户还没有进行过验证，凭据已被吊销或失效"
+                        Error = "您没有购买游戏",
+                        ErrorMessage = "该账户没有找到 MineCraft 正版拷贝，登录终止",
+                        Cause = "没有购买游戏"
                     }
                 };
 
             #endregion
 
-            #region STAGE 6
+            #region STAGE 5
 
             var profileResRes =
                 await HttpHelper.Get(MojangProfileUrl, new Tuple<string, string>("Bearer", mcRes.AccessToken));
             var profileResStr = await profileResRes.Content.ReadAsStringAsync();
             var profileRes = JsonConvert.DeserializeObject<MojangProfileResponseModel>(profileResStr);
+
+            if (profileRes == null)
+            {
+                var errModel = JsonConvert.DeserializeObject<MojangErrorResponseModel>(profileResStr);
+
+                return new MicrosoftAuthResult
+                {
+                    AuthStatus = AuthStatus.Failed,
+                    Error = new ErrorModel
+                    {
+                        Cause = "没有找到账户档案",
+                        Error = $"无法从服务器拉取用户档案，原因：{errModel?.Error ?? "未知"}",
+                        ErrorMessage = errModel?.ErrorMessage ?? "未知"
+                    }
+                };
+            }
 
             #endregion
 
@@ -177,7 +200,7 @@ namespace ProjBobcat.DefaultComponent.Authenticator
                 RemoteId = mcRes.UserName,
                 Type = "XBox",
                 UserProperites = new List<AuthPropertyModel>(),
-                Username = Email
+                Username = mcRes.UserName
             });
 
             var sPUuid = new PlayerUUID(profileRes.Id);
@@ -192,8 +215,8 @@ namespace ProjBobcat.DefaultComponent.Authenticator
                 AccessToken = mcRes.AccessToken,
                 AuthStatus = AuthStatus.Succeeded,
                 Skin = profileRes.GetActiveSkin()?.Url,
-                ExpiresIn = tokenRes.ExpiresIn,
-                RefreshToken = tokenRes.RefreshToken,
+                ExpiresIn = expiresIn,
+                RefreshToken = refreshToken,
                 CurrentAuthTime = DateTime.Now,
                 SelectedProfile = sP,
                 User = new UserInfoModel
@@ -202,6 +225,20 @@ namespace ProjBobcat.DefaultComponent.Authenticator
                     UserName = profileRes.Name
                 }
             };
+        }
+
+        private async Task<T> SendRequest<T>(string url, object model)
+        {
+            var reqStr = JsonConvert.SerializeObject(model);
+
+            using var res = await HttpHelper.Post(url, reqStr);
+
+            if (!res.IsSuccessStatusCode) return default;
+
+            var resStr = await res.Content.ReadAsStringAsync();
+            var result = JsonConvert.DeserializeObject<T>(resStr);
+
+            return result;
         }
 
         public AuthResultBase GetLastAuthResult()
@@ -225,9 +262,6 @@ namespace ProjBobcat.DefaultComponent.Authenticator
                 AccessToken = value.AccessToken,
                 AuthStatus = AuthStatus.Succeeded,
                 Skin = value.Avatar,
-                ExpiresIn = ExpiresIn,
-                RefreshToken = RefreshToken,
-                CurrentAuthTime = DateTime.Now,
                 SelectedProfile = sP,
                 User = new UserInfoModel
                 {

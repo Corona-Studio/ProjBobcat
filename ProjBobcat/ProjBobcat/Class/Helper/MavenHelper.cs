@@ -41,9 +41,7 @@ namespace ProjBobcat.Class.Helper
             var isSnapshot = mavenArr[2].EndsWith("-SNAPSHOT", StringComparison.OrdinalIgnoreCase);
 
             var artifactPath = orgName.GetGroupPath();
-            var basePath = isSnapshot
-                ? $"{artifactPath}/{artifactId}/{version}/{version}"
-                : $"{artifactPath}/{artifactId}/{version}/{artifactId}-{version}";
+            var basePath = $"{artifactPath}/{artifactId}/{version}/{artifactId}-{version}";
             if (!string.IsNullOrEmpty(classifier)) basePath += $"-{classifier}";
 
             var fullPath = $"{basePath}.{type}";
