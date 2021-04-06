@@ -233,7 +233,5 @@ MIT. This means that you can modify or use our code for any purpose, however cop
 ## Disclaimer
 ProjBobcat is not affiliated with Mojang or any part of its software.
 
-The code of "Forge Installer" is an implementation of [xfl03/ForgeInstallerHeadless](https://github.com/xfl03/ForgeInstallerHeadless). We **DID NOT** apply any modifications to the MinecraftForge binaries, neither distribute any source codes or binaries of MinecraftForge and Mojang. Use it at your own risk.
-
 ## Hall of Shame
 Here we'll list all programs using our code without obeying MIT License.
