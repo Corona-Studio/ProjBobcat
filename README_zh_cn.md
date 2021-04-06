@@ -243,8 +243,6 @@ var result = await Core.LaunchTaskAsync(launchSettings).ConfigureAwait(true); //
 ## 免责声明
 ProjBobcat 不隶属于Mojang以及其附属软件的任何一部分。
 
-“Forge 安装模型” 的代码仅仅是 [xfl03/ForgeInstallerHeadless](https://github.com/xfl03/ForgeInstallerHeadless) 的具体实现。 我们**并没有**对MinecraftForge的代码做出任何的修改，也**没有**未经允许的分发 MinecraftForge 以及 Mojang 的任何代码或是二进制文件。需要您自担风险来使用它。
-
 ## 协议
 MIT。这意味着你可以以任何目的修改和使用本项目的代码。但是您必须保留我们的版权声明和许可声明。
 
