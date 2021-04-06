@@ -24,7 +24,7 @@
     <RepositoryUrl>https://github.com/Corona-Studio/ProjBobcat</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>minecraft-launcher minecraft launcher csharp</PackageTags>
-    <PackageReleaseNotes>Update HttpClient and fix download speed calculation.</PackageReleaseNotes>
+    <PackageReleaseNotes>rewrote whole Microsoft auth process and fix bugs in MavenHelper.</PackageReleaseNotes>
   </PropertyGroup>
   <PropertyGroup>
     <IncludeSymbols>true</IncludeSymbols>
