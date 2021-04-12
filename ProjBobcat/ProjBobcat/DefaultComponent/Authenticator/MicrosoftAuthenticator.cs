@@ -1,4 +1,8 @@
-﻿using Newtonsoft.Json;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Auth;
@@ -7,12 +11,6 @@ using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.MicrosoftAuth;
 using ProjBobcat.Class.Model.YggdrasilAuth;
 using ProjBobcat.Interface;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
 
 namespace ProjBobcat.DefaultComponent.Authenticator
 {
@@ -24,15 +22,6 @@ namespace ProjBobcat.DefaultComponent.Authenticator
         public const string MojangAuthUrl = "https://api.minecraftservices.com/authentication/login_with_xbox";
         public const string MojangOwnershipUrl = "https://api.minecraftservices.com/entitlements/mcstore";
         public const string MojangProfileUrl = "https://api.minecraftservices.com/minecraft/profile";
-
-        public static string GetLoginUri(string clientId, string redirectUri)
-        {
-            return Uri.EscapeUriString("https://login.live.com/oauth20_authorize.srf"
-                                       + $"?client_id={clientId}"
-                                       + "&response_type=code"
-                                       + $"&scope={MSAuthScope}"
-                                       + $"&redirect_uri={redirectUri}");
-        }
 
         public string Email { get; init; }
         public Func<Task<ValueTuple<string, string, int>>> AccessTokenProvider { get; init; }
@@ -51,7 +40,6 @@ namespace ProjBobcat.DefaultComponent.Authenticator
             var provider = await AccessTokenProvider();
 
             if (provider == default)
-            {
                 return new MicrosoftAuthResult
                 {
                     AuthStatus = AuthStatus.Failed,
@@ -62,7 +50,6 @@ namespace ProjBobcat.DefaultComponent.Authenticator
                         ErrorMessage = "缺失重要的登陆参数"
                     }
                 };
-            }
 
             var (accessToken, refreshToken, expiresIn) = provider;
 
@@ -70,7 +57,6 @@ namespace ProjBobcat.DefaultComponent.Authenticator
                 await SendRequest<AuthXSTSResponseModel>(MSAuthXBLUrl, AuthXBLRequestModel.Get(accessToken));
 
             if (xBoxLiveToken == null)
-            {
                 return new MicrosoftAuthResult
                 {
                     AuthStatus = AuthStatus.Failed,
@@ -81,7 +67,6 @@ namespace ProjBobcat.DefaultComponent.Authenticator
                         ErrorMessage = "XBox Live 验证失败"
                     }
                 };
-            }
 
             #endregion
 
@@ -108,10 +93,7 @@ namespace ProjBobcat.DefaultComponent.Authenticator
                     ErrorMessage = errModel?.Message ?? "未知"
                 };
 
-                if (!string.IsNullOrEmpty(errModel?.Redirect))
-                {
-                    err.Error += $"，相关链接：{errModel.Redirect}";
-                }
+                if (!string.IsNullOrEmpty(errModel?.Redirect)) err.Error += $"，相关链接：{errModel.Redirect}";
 
                 return new MicrosoftAuthResult
                 {
@@ -227,20 +209,6 @@ namespace ProjBobcat.DefaultComponent.Authenticator
             };
         }
 
-        private async Task<T> SendRequest<T>(string url, object model)
-        {
-            var reqStr = JsonConvert.SerializeObject(model);
-
-            using var res = await HttpHelper.Post(url, reqStr);
-
-            if (!res.IsSuccessStatusCode) return default;
-
-            var resStr = await res.Content.ReadAsStringAsync();
-            var result = JsonConvert.DeserializeObject<T>(resStr);
-
-            return result;
-        }
-
         public AuthResultBase GetLastAuthResult()
         {
             var (_, value) = LauncherAccountParser.LauncherAccount.Accounts
@@ -269,6 +237,29 @@ namespace ProjBobcat.DefaultComponent.Authenticator
                     UserName = sP.Name
                 }
             };
+        }
+
+        public static string GetLoginUri(string clientId, string redirectUri)
+        {
+            return Uri.EscapeUriString("https://login.live.com/oauth20_authorize.srf"
+                                       + $"?client_id={clientId}"
+                                       + "&response_type=code"
+                                       + $"&scope={MSAuthScope}"
+                                       + $"&redirect_uri={redirectUri}");
+        }
+
+        private async Task<T> SendRequest<T>(string url, object model)
+        {
+            var reqStr = JsonConvert.SerializeObject(model);
+
+            using var res = await HttpHelper.Post(url, reqStr);
+
+            if (!res.IsSuccessStatusCode) return default;
+
+            var resStr = await res.Content.ReadAsStringAsync();
+            var result = JsonConvert.DeserializeObject<T>(resStr);
+
+            return result;
         }
     }
 }

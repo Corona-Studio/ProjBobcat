@@ -14,7 +14,8 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
 
             using var archive = ArchiveFactory.Open(Path.GetFullPath(forgeExecutable));
 
-            var legacyUniversalJar = archive.Entries.Any(entry => entry.Key.Equals($"forge-{forgeVersion}-universal.jar"));
+            var legacyUniversalJar =
+                archive.Entries.Any(entry => entry.Key.Equals($"forge-{forgeVersion}-universal.jar"));
             var installProfileJson = archive.Entries.Any(entry =>
                 entry.Key.Equals("install_profile.json", StringComparison.OrdinalIgnoreCase));
 

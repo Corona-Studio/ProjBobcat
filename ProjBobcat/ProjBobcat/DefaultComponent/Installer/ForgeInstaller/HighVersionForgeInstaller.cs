@@ -178,7 +178,7 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                 e.Key.Equals($"maven/net/minecraftforge/forge/{forgeVersion}/forge-{forgeVersion}-universal.jar",
                     StringComparison.OrdinalIgnoreCase));
 
-            if(forgeUniversalJar != default)
+            if (forgeUniversalJar != default)
             {
                 var forgeUniversalSubPath = forgeUniversalJar?.Key[(forgeUniversalJar.Key.IndexOf('/') + 1)..];
                 var forgeUniversalLibPath = Path.Combine(RootPath,

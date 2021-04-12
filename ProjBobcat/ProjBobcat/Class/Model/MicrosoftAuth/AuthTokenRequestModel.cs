@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using ProjBobcat.DefaultComponent.Authenticator;
 
 namespace ProjBobcat.Class.Model.MicrosoftAuth
 {
