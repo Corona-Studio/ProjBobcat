@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -295,6 +296,8 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
             var resolvedLibs = VersionLocator.GetNatives(libs).Item2;
             var libDownloadInfo = new List<DownloadFile>();
 
+            var hasDownloadFailed = false;
+
             foreach (var lib in resolvedLibs)
             {
                 if (lib.Name.StartsWith("net.minecraftforge:forge", StringComparison.OrdinalIgnoreCase))
@@ -329,6 +332,20 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                         InvokeStatusChangedEvent(
                             $"下载 Forge Library - {args.File.FileName} ( {_totalDownloaded} / {_needToDownload} )",
                             progress);
+
+                        if (!args.Success)
+                        {
+                            hasDownloadFailed = true;
+                            return;
+                        }
+
+                        if (string.IsNullOrEmpty(lib.Sha1))
+                            return;
+
+                        var filePath = Path.Combine(path, fileName);
+                        var sha1 = CryptoHelper.ComputeFileHash(filePath, new SHA1Managed());
+                        if (!sha1.Equals(lib.Sha1, StringComparison.OrdinalIgnoreCase))
+                            hasDownloadFailed = true;
                     },
                     CheckSum = lib.Sha1,
                     DownloadPath = path,
@@ -341,7 +358,26 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
             }
 
             _needToDownload = libDownloadInfo.Count;
-            await DownloadHelper.AdvancedDownloadListFile(libDownloadInfo);
+            // await DownloadHelper.AdvancedDownloadListFile(libDownloadInfo);
+
+            foreach (var libDi in libDownloadInfo)
+            {
+                await DownloadHelper.DownloadData(libDi);
+            }
+
+            if (hasDownloadFailed)
+            {
+                return new ForgeInstallResult
+                {
+                    Succeeded = false,
+                    Error = new ErrorModel
+                    {
+                        Cause = "未能下载全部依赖",
+                        Error = "未能下载全部依赖",
+                        ErrorMessage = "未能下载全部依赖"
+                    }
+                };
+            }
 
             #endregion
 
@@ -393,6 +429,7 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                 };
 
                 var p = Process.Start(pi);
+                var errSb = new StringBuilder();
 
                 p.OutputDataReceived += (_, args) =>
                 {
@@ -406,6 +443,7 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                 {
                     if (string.IsNullOrEmpty(args.Data)) return;
 
+                    errSb.Append(args.Data);
                     var progress = (double) _totalProcessed / _needToProcess;
                     InvokeStatusChangedEvent($"{args.Data} <错误> ( {_totalProcessed} / {_needToProcess} )", progress);
                 };
@@ -415,6 +453,19 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
 
                 _totalProcessed++;
                 await p.WaitForExitAsync();
+
+                
+                if (errSb.Length != 0)
+                    return new ForgeInstallResult
+                    {
+                        Error = new ErrorModel
+                        {
+                            Cause = "执行 Forge 安装脚本时出现了错误",
+                            Error = errSb.ToString(),
+                            ErrorMessage = "安装过程中出现了错误"
+                        },
+                        Succeeded = false
+                    };
             }
 
             #endregion

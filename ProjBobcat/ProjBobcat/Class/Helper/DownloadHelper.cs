@@ -365,8 +365,6 @@ namespace ProjBobcat.Class.Helper
 
                     sw.Stop();
 
-                    //await res.Content.CopyToAsync(fileToWriteTo, CancellationToken.None);
-
                     Interlocked.Add(ref tasksDone, 1);
                     doneRanges.TryTake(out _);
                 }, new ExecutionDataflowBlockOptions
@@ -397,13 +395,9 @@ namespace ProjBobcat.Class.Helper
 
                         downloadFile.Completed?.Invoke(task,
                             new DownloadFileCompletedEventArgs(false, ex, downloadFile, aSpeed));
-                        try
-                        {
+                        
+                        if(File.Exists(filePath))
                             File.Delete(filePath);
-                        }
-                        catch (FileNotFoundException)
-                        {
-                        }
 
                         return;
                     }
@@ -431,14 +425,10 @@ namespace ProjBobcat.Class.Helper
             {
                 downloadFile.Completed?.Invoke(null,
                     new DownloadFileCompletedEventArgs(false, ex, downloadFile, 0));
-                foreach (var piece in readRanges)
-                    try
-                    {
-                        File.Delete(piece.TempFileName);
-                    }
-                    catch (FileNotFoundException)
-                    {
-                    }
+                foreach (var piece in readRanges.Where(piece => File.Exists(piece.TempFileName)))
+                {
+                    File.Delete(piece.TempFileName);
+                }
             }
         }
 

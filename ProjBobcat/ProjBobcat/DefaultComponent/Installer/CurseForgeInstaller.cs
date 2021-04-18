@@ -74,7 +74,7 @@ namespace ProjBobcat.DefaultComponent.Installer
                     // Host = "proxy.freecdn.workers.dev"
                 };
 
-                await DownloadHelper.MultiPartDownloadTaskAsync(downloadFile);
+                await DownloadHelper.DownloadData(downloadFile);
             }, new ExecutionDataflowBlockOptions
             {
                 BoundedCapacity = 32,
@@ -100,17 +100,20 @@ namespace ProjBobcat.DefaultComponent.Installer
 
             foreach (var entry in archive.Entries)
             {
-                InvokeStatusChangedEvent("解压缩安装文件", (double) _totalDownloaded / _needToDownload * 100);
-
                 if (!entry.Key.StartsWith(manifest.Overrides, StringComparison.OrdinalIgnoreCase)) continue;
 
-                var subPath = entry.Key[manifest.Overrides.Length..];
+                var subPath = entry.Key[(manifest.Overrides.Length + 1)..].Replace('/', '\\');
+                if(string.IsNullOrEmpty(subPath)) continue;
+
                 var path = Path.Combine(Path.GetFullPath(idPath), subPath);
+                if (entry.IsDirectory)
+                {
+                    if (!Directory.Exists(path))
+                        Directory.CreateDirectory(path);
+                    continue;
+                }
 
-                var entryDi = new DirectoryInfo(path);
-
-                if (!entryDi.Exists)
-                    entryDi.Create();
+                InvokeStatusChangedEvent($"解压缩安装文件：{subPath}", (double)_totalDownloaded / _needToDownload * 100);
 
                 await using var fs = File.OpenWrite(path);
                 entry.WriteTo(fs);
