@@ -6,7 +6,7 @@ namespace ProjBobcat.Class.Model
     /// <summary>
     ///     下载文件信息类
     /// </summary>
-    public class DownloadFile
+    public class DownloadFile : ICloneable
     {
         /// <summary>
         ///     下载Uri
@@ -57,5 +57,19 @@ namespace ProjBobcat.Class.Model
         ///     下载改变事件
         /// </summary>
         public EventHandler<DownloadFileChangedEventArgs> Changed { get; set; }
+
+        public object Clone()
+        {
+            return new DownloadFile
+            {
+                DownloadUri = DownloadUri,
+                DownloadPath = DownloadPath,
+                FileName = FileName,
+                FileType = FileType,
+                FileSize = FileSize,
+                CheckSum = CheckSum,
+                Host = Host
+            };
+        }
     }
 }

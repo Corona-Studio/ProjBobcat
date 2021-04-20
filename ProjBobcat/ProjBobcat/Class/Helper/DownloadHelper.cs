@@ -60,12 +60,11 @@ namespace ProjBobcat.Class.Helper
                             Directory.CreateDirectory(df.DownloadPath);
 
                         return dl;
-                    },
-                    new ExecutionDataflowBlockOptions());
+                    });
 
             var actionBlock = new ActionBlock<DownloadFile>(async d =>
             {
-                if (d.FileSize >= 1048576 || d.FileSize == 0)
+                if (d.FileSize is >= 1048576 or 0)
                     await MultiPartDownloadTaskAsync(d, downloadParts);
                 else
                     await DownloadData(d);
@@ -104,8 +103,6 @@ namespace ProjBobcat.Class.Helper
 
                 using var res = await DataClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead,
                     CancellationToken.None);
-
-                // downloadTask.EnsureSuccessStatusCode();
 
                 await using var stream = await res.Content.ReadAsStreamAsync();
                 await using var fileToWriteTo = File.Create(filePath);
@@ -149,6 +146,7 @@ namespace ProjBobcat.Class.Helper
 
                 sw.Stop();
                 fileToWriteTo.Close();
+                stream.Close();
 
                 var aSpeed = tSpeed / cSpeed;
                 downloadProperty.Completed?.Invoke(null,
@@ -224,9 +222,6 @@ namespace ProjBobcat.Class.Helper
 
             using var res2 = await HeadClient.SendAsync(message2);
 
-            // res1.EnsureSuccessStatusCode();
-            // res2.EnsureSuccessStatusCode();
-
             var responseLength = res1.Content.Headers.ContentLength ?? 0;
             var parallelDownloadSupported = res2.StatusCode == HttpStatusCode.PartialContent &&
                                             responseLength != 0;
@@ -253,21 +248,19 @@ namespace ProjBobcat.Class.Helper
                     if (i + partSize < responseLength)
                     {
                         var start = previous;
-                        var currentEnd = i;
 
                         readRanges.Add(new DownloadRange
                         {
                             Start = start,
-                            End = currentEnd,
+                            End = i,
                             TempFileName = Path.GetTempFileName()
                         });
 
-                        previous = currentEnd;
+                        previous = i;
                     }
                     else
                     {
                         var start = previous;
-                        var currentEnd = i;
 
                         readRanges.Add(new DownloadRange
                         {
@@ -276,7 +269,7 @@ namespace ProjBobcat.Class.Helper
                             TempFileName = Path.GetTempFileName()
                         });
 
-                        previous = currentEnd;
+                        previous = i;
                     }
             else
                 readRanges.Add(new DownloadRange
@@ -301,7 +294,6 @@ namespace ProjBobcat.Class.Helper
                         p =>
                         {
                             using var request = new HttpRequestMessage {RequestUri = new Uri(downloadFile.DownloadUri)};
-                            request.Headers.ConnectionClose = false;
 
                             if (!string.IsNullOrEmpty(downloadFile.Host))
                                 request.Headers.Host = downloadFile.Host;
@@ -365,6 +357,9 @@ namespace ProjBobcat.Class.Helper
 
                     sw.Stop();
 
+                    fileToWriteTo.Close();
+                    stream.Close();
+
                     Interlocked.Add(ref tasksDone, 1);
                     doneRanges.TryTake(out _);
                 }, new ExecutionDataflowBlockOptions
@@ -405,11 +400,12 @@ namespace ProjBobcat.Class.Helper
                     await using var outputStream = File.Create(filePath);
                     foreach (var inputFilePath in readRanges)
                     {
-                        await using (var inputStream = File.OpenRead(inputFilePath.TempFileName))
-                        {
-                            outputStream.Seek(inputFilePath.Start, SeekOrigin.Begin);
-                            await inputStream.CopyToAsync(outputStream);
-                        }
+                        await using var inputStream = File.OpenRead(inputFilePath.TempFileName);
+
+                        outputStream.Seek(inputFilePath.Start, SeekOrigin.Begin);
+                        await inputStream.CopyToAsync(outputStream);
+
+                        inputStream.Close();
 
                         File.Delete(inputFilePath.TempFileName);
                     }
@@ -417,7 +413,7 @@ namespace ProjBobcat.Class.Helper
                     outputStream.Close();
                     downloadFile.Completed?.Invoke(null,
                         new DownloadFileCompletedEventArgs(true, null, downloadFile, aSpeed));
-                }, CancellationToken.None, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Current);
+                });
 
                 #endregion
             }

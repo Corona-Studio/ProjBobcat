@@ -297,8 +297,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                             {
                                 Exception = task.Exception,
                                 ExitCode = launchWrapper.ExitCode
-                            }),
-                        CancellationToken.None, TaskContinuationOptions.DenyChildAttach, TaskScheduler.Default);
+                            }));
                 }).Start();
 
                 if (!string.IsNullOrEmpty(settings.WindowTitle))
