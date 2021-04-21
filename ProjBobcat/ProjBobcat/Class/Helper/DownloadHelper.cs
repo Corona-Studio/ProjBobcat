@@ -20,7 +20,7 @@ namespace ProjBobcat.Class.Helper
     /// </summary>
     public static class DownloadHelper
     {
-        private const int BufferSize = 1024 * 1024 * 10;
+        private const int BufferSize = 1024 * 1024 * 5;
 
         /// <summary>
         ///     获取或设置用户代理信息。

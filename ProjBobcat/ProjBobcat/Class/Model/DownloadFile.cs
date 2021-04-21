@@ -68,7 +68,8 @@ namespace ProjBobcat.Class.Model
                 FileType = FileType,
                 FileSize = FileSize,
                 CheckSum = CheckSum,
-                Host = Host
+                Host = Host,
+                RetryCount = RetryCount
             };
         }
     }

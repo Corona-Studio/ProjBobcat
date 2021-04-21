@@ -34,28 +34,6 @@ namespace ProjBobcat.DefaultComponent
         public DefaultResourceCompleter()
         {
             _retryFiles = new ConcurrentBag<DownloadFile>();
-        }
-
-        public bool CheckAndDownload()
-        {
-            return CheckAndDownloadTaskAsync().Result.Value;
-        }
-
-        public async Task<TaskResult<bool>> CheckAndDownloadTaskAsync()
-        {
-            if (!(ResourceInfoResolvers?.Any() ?? false))
-                return new TaskResult<bool>(TaskResultStatus.Success, value: true);
-
-            var totalLostFiles = new List<IGameResource>();
-            foreach (var resolver in ResourceInfoResolvers)
-            {
-                resolver.GameResourceInfoResolveEvent += GameResourceInfoResolveStatus;
-
-                await foreach (var lostFile in resolver.ResolveResourceAsync())
-                    totalLostFiles.Add(lostFile);
-            }
-
-            if (!totalLostFiles.Any()) return new TaskResult<bool>(TaskResultStatus.Success, value: true);
 
             DownloadFileCompletedEvent += (_, args) =>
             {
@@ -72,6 +50,30 @@ namespace ProjBobcat.DefaultComponent
 
                 Check(args.File, ref _retryFiles);
             };
+        }
+
+        public bool CheckAndDownload()
+        {
+            return CheckAndDownloadTaskAsync().Result.Value;
+        }
+
+        public async Task<TaskResult<bool>> CheckAndDownloadTaskAsync()
+        {
+            _retryFiles.Clear();
+
+            if (!(ResourceInfoResolvers?.Any() ?? false))
+                return new TaskResult<bool>(TaskResultStatus.Success, value: true);
+
+            var totalLostFiles = new List<IGameResource>();
+            foreach (var resolver in ResourceInfoResolvers)
+            {
+                resolver.GameResourceInfoResolveEvent += GameResourceInfoResolveStatus;
+
+                await foreach (var lostFile in resolver.ResolveResourceAsync())
+                    totalLostFiles.Add(lostFile);
+            }
+
+            if (!totalLostFiles.Any()) return new TaskResult<bool>(TaskResultStatus.Success, value: true);
 
             var downloadList = (from f in totalLostFiles
                     select new DownloadFile
@@ -131,32 +133,38 @@ namespace ProjBobcat.DefaultComponent
             var leftRetries = TotalRetry;
             var fileBag = new ConcurrentBag<DownloadFile>(_retryFiles);
 
-            TotalDownloaded = 0;
-            NeedToDownload = fileBag.Count;
-
             while (!fileBag.IsEmpty && leftRetries != 0)
             {
-                var taken = fileBag.TryTake(out var outFile);
-                if(!taken) continue;
+                TotalDownloaded = 0;
+                NeedToDownload = fileBag.Count;
 
-                var file = (DownloadFile) outFile.Clone();
-                file.Completed = (_, args) =>
+                var files = fileBag.Select(f => (DownloadFile)f.Clone()).ToList();
+                fileBag.Clear();
+
+                foreach (var file in files)
                 {
-                    TotalDownloaded++;
-                    InvokeDownloadProgressChangedEvent((double)TotalDownloaded / NeedToDownload, args.AverageSpeed);
+                    file.RetryCount++;
 
-                    if (!args.Success)
+                    file.Completed = (_, args) =>
                     {
-                        fileBag.Add(args.File);
-                        return;
-                    }
+                        TotalDownloaded++;
+                        InvokeDownloadProgressChangedEvent((double)TotalDownloaded / NeedToDownload, args.AverageSpeed);
 
-                    if (!CheckFile) return;
+                        if (!args.Success)
+                        {
+                            fileBag.Add(args.File);
+                            return;
+                        }
 
-                    Check(args.File, ref fileBag);
-                };
+                        if (!CheckFile) return;
 
-                await DownloadHelper.DownloadData(file);
+                        Check(args.File, ref fileBag);
+                    };
+                    file.Completed += DownloadFileCompletedEvent;
+                }
+
+                await DownloadHelper.AdvancedDownloadListFile(files);
+
                 leftRetries--;
             }
 
