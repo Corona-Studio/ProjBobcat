@@ -1,14 +1,14 @@
-﻿using System;
+﻿using ProjBobcat.Class.Helper;
+using ProjBobcat.Class.Model;
+using ProjBobcat.Event;
+using ProjBobcat.Interface;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
-using ProjBobcat.Class.Helper;
-using ProjBobcat.Class.Model;
-using ProjBobcat.Event;
-using ProjBobcat.Interface;
 
 namespace ProjBobcat.DefaultComponent
 {
@@ -34,22 +34,6 @@ namespace ProjBobcat.DefaultComponent
         public DefaultResourceCompleter()
         {
             _retryFiles = new ConcurrentBag<DownloadFile>();
-
-            DownloadFileCompletedEvent += (_, args) =>
-            {
-                TotalDownloaded++;
-                InvokeDownloadProgressChangedEvent((double)TotalDownloaded / NeedToDownload, args.AverageSpeed);
-
-                if (!args.Success)
-                {
-                    _retryFiles.Add(args.File);
-                    return;
-                }
-
-                if (!CheckFile) return;
-
-                Check(args.File, ref _retryFiles);
-            };
         }
 
         public bool CheckAndDownload()
@@ -78,7 +62,7 @@ namespace ProjBobcat.DefaultComponent
             var downloadList = (from f in totalLostFiles
                     select new DownloadFile
                     {
-                        Completed = DownloadFileCompletedEvent,
+                        Completed = WhenCompleted,
                         DownloadPath = f.Path,
                         DownloadUri = f.Uri,
                         FileName = f.FileName,
@@ -95,6 +79,23 @@ namespace ProjBobcat.DefaultComponent
             var (item1, item2) = await DownloadFiles(downloadList);
 
             return new TaskResult<bool>(item1, value: item2);
+        }
+
+        private void WhenCompleted(object sender, DownloadFileCompletedEventArgs e)
+        {
+            TotalDownloaded++;
+            InvokeDownloadProgressChangedEvent((double)TotalDownloaded / NeedToDownload, e.AverageSpeed);
+            DownloadFileCompletedEvent?.Invoke(sender, e);
+
+            if (!e.Success)
+            {
+                _retryFiles.Add(e.File);
+                return;
+            }
+
+            if (!CheckFile) return;
+
+            Check(e.File, ref _retryFiles);
         }
 
         private static void Check(DownloadFile file, ref ConcurrentBag<DownloadFile> bag)
@@ -144,23 +145,7 @@ namespace ProjBobcat.DefaultComponent
                 foreach (var file in files)
                 {
                     file.RetryCount++;
-
-                    file.Completed = (_, args) =>
-                    {
-                        TotalDownloaded++;
-                        InvokeDownloadProgressChangedEvent((double)TotalDownloaded / NeedToDownload, args.AverageSpeed);
-
-                        if (!args.Success)
-                        {
-                            fileBag.Add(args.File);
-                            return;
-                        }
-
-                        if (!CheckFile) return;
-
-                        Check(args.File, ref fileBag);
-                    };
-                    file.Completed += DownloadFileCompletedEvent;
+                    file.Completed = WhenCompleted;
                 }
 
                 await DownloadHelper.AdvancedDownloadListFile(files);
