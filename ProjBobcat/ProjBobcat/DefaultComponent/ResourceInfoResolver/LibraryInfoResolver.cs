@@ -12,8 +12,8 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
 {
     public class LibraryInfoResolver : IResourceInfoResolver
     {
-        public string LibraryUriRoot { get; set; } = "https://libraries.minecraft.net/";
-        public string ForgeUriRoot { get; set; } = "https://files.minecraftforge.net/";
+        public string LibraryUriRoot { get; init; } = "https://libraries.minecraft.net/";
+        public string ForgeUriRoot { get; init; } = "https://files.minecraftforge.net/";
         public string BasePath { get; set; }
         public VersionInfo VersionInfo { get; set; }
 

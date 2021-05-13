@@ -84,10 +84,9 @@ namespace ProjBobcat.Class.Helper
         /// </summary>
         /// <param name="address">Post 地址</param>
         /// <param name="data">数据</param>
-        /// <param name="contentType">类型</param>
         /// <returns>服务器返回数据</returns>
         public static async Task<HttpResponseMessage> PostFormData(string address,
-            IEnumerable<KeyValuePair<string, string>> data, string contentType = "application/json")
+            IEnumerable<KeyValuePair<string, string>> data)
         {
             using var req = new HttpRequestMessage(HttpMethod.Post, address)
             {
