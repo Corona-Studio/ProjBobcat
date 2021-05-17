@@ -106,10 +106,13 @@ namespace ProjBobcat.DefaultComponent.Installer
             if (!libDi.Exists)
                 libDi.Create();
 
-            await using var launchWrapperFs = File.OpenWrite(Path.Combine(librariesPath,
-                $"launchwrapper-of-{launchWrapperVersion}.jar"));
-            launchWrapperEntry.WriteTo(launchWrapperFs);
-            launchWrapperFs.Close();
+            var launchWrapperPath = Path.Combine(librariesPath,
+                $"launchwrapper-of-{launchWrapperVersion}.jar");
+            if (!File.Exists(launchWrapperPath))
+            {
+                await using var launchWrapperFs = File.OpenWrite(launchWrapperPath);
+                launchWrapperEntry.WriteTo(launchWrapperFs);
+            }
 
             var gameJarPath = Path.Combine(RootPath,
                 GamePathHelper.GetGameExecutablePath(OptifineDownloadVersion.McVersion));
@@ -117,7 +120,7 @@ namespace ProjBobcat.DefaultComponent.Installer
                 $"{OptifineDownloadVersion.McVersion}_{editionRelease}",
                 $"Optifine-{OptifineDownloadVersion.McVersion}_{editionRelease}.jar");
 
-            var optifineLibPathDi = new DirectoryInfo(Path.GetDirectoryName(optifineLibPath));
+            var optifineLibPathDi = new DirectoryInfo(Path.GetDirectoryName(optifineLibPath)!);
             if (!optifineLibPathDi.Exists)
                 optifineLibPathDi.Create();
 
