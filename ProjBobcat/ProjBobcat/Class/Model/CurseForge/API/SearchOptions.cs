@@ -15,7 +15,7 @@
 
         public override string ToString()
         {
-            var result = 
+            var result =
                 "?" +
                 $"gameId={GameId ?? 432}" +
                 $"&gameVersion={GameVersion ?? string.Empty}" +

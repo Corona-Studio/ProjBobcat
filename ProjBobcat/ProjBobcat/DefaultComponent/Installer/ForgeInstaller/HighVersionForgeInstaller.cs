@@ -360,13 +360,9 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
             _needToDownload = libDownloadInfo.Count;
             // await DownloadHelper.AdvancedDownloadListFile(libDownloadInfo);
 
-            foreach (var libDi in libDownloadInfo)
-            {
-                await DownloadHelper.DownloadData(libDi);
-            }
+            foreach (var libDi in libDownloadInfo) await DownloadHelper.DownloadData(libDi);
 
             if (hasDownloadFailed)
-            {
                 return new ForgeInstallResult
                 {
                     Succeeded = false,
@@ -377,7 +373,6 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                         ErrorMessage = "未能下载全部依赖"
                     }
                 };
-            }
 
             #endregion
 
@@ -454,7 +449,7 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                 _totalProcessed++;
                 await p.WaitForExitAsync();
 
-                
+
                 if (errSb.Length != 0)
                     return new ForgeInstallResult
                     {

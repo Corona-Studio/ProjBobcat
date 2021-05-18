@@ -53,14 +53,14 @@ namespace ProjBobcat.Class.Helper
 
             var filesBlock =
                 new TransformManyBlock<IEnumerable<DownloadFile>, DownloadFile>(d =>
-                    {
-                        var dl = d.ToList();
+                {
+                    var dl = d.ToList();
 
-                        foreach (var df in dl.Where(df => !Directory.Exists(df.DownloadPath)))
-                            Directory.CreateDirectory(df.DownloadPath);
+                    foreach (var df in dl.Where(df => !Directory.Exists(df.DownloadPath)))
+                        Directory.CreateDirectory(df.DownloadPath);
 
-                        return dl;
-                    });
+                    return dl;
+                });
 
             var actionBlock = new ActionBlock<DownloadFile>(async d =>
             {
@@ -390,8 +390,8 @@ namespace ProjBobcat.Class.Helper
 
                         downloadFile.Completed?.Invoke(task,
                             new DownloadFileCompletedEventArgs(false, ex, downloadFile, aSpeed));
-                        
-                        if(File.Exists(filePath))
+
+                        if (File.Exists(filePath))
                             File.Delete(filePath);
 
                         return;
@@ -422,9 +422,7 @@ namespace ProjBobcat.Class.Helper
                 downloadFile.Completed?.Invoke(null,
                     new DownloadFileCompletedEventArgs(false, ex, downloadFile, 0));
                 foreach (var piece in readRanges.Where(piece => File.Exists(piece.TempFileName)))
-                {
                     File.Delete(piece.TempFileName);
-                }
             }
         }
 

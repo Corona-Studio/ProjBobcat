@@ -293,11 +293,11 @@ namespace ProjBobcat.DefaultComponent.Launch
                 new Thread(async () =>
                 {
                     await Task.Run(launchWrapper.Process.WaitForExit).ContinueWith(task =>
-                            GameExit(launchWrapper, new GameExitEventArgs
-                            {
-                                Exception = task.Exception,
-                                ExitCode = launchWrapper.ExitCode
-                            }));
+                        GameExit(launchWrapper, new GameExitEventArgs
+                        {
+                            Exception = task.Exception,
+                            ExitCode = launchWrapper.ExitCode
+                        }));
                 }).Start();
 
                 if (!string.IsNullOrEmpty(settings.WindowTitle))

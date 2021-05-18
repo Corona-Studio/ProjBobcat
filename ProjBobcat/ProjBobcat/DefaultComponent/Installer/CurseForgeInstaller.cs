@@ -103,7 +103,7 @@ namespace ProjBobcat.DefaultComponent.Installer
                 if (!entry.Key.StartsWith(manifest.Overrides, StringComparison.OrdinalIgnoreCase)) continue;
 
                 var subPath = entry.Key[(manifest.Overrides.Length + 1)..].Replace('/', '\\');
-                if(string.IsNullOrEmpty(subPath)) continue;
+                if (string.IsNullOrEmpty(subPath)) continue;
 
                 var path = Path.Combine(Path.GetFullPath(idPath), subPath);
                 if (entry.IsDirectory)
@@ -113,7 +113,7 @@ namespace ProjBobcat.DefaultComponent.Installer
                     continue;
                 }
 
-                InvokeStatusChangedEvent($"解压缩安装文件：{subPath}", (double)_totalDownloaded / _needToDownload * 100);
+                InvokeStatusChangedEvent($"解压缩安装文件：{subPath}", (double) _totalDownloaded / _needToDownload * 100);
 
                 await using var fs = File.OpenWrite(path);
                 entry.WriteTo(fs);

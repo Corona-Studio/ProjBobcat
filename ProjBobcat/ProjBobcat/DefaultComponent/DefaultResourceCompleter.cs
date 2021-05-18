@@ -1,14 +1,14 @@
-﻿using ProjBobcat.Class.Helper;
-using ProjBobcat.Class.Model;
-using ProjBobcat.Event;
-using ProjBobcat.Interface;
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
+using ProjBobcat.Class.Helper;
+using ProjBobcat.Class.Model;
+using ProjBobcat.Event;
+using ProjBobcat.Interface;
 
 namespace ProjBobcat.DefaultComponent
 {
@@ -18,6 +18,12 @@ namespace ProjBobcat.DefaultComponent
     public class DefaultResourceCompleter : IResourceCompleter
     {
         private ConcurrentBag<DownloadFile> _retryFiles;
+
+        public DefaultResourceCompleter()
+        {
+            _retryFiles = new ConcurrentBag<DownloadFile>();
+        }
+
         public int TotalDownloaded { get; set; }
         public int NeedToDownload { get; set; }
 
@@ -30,11 +36,6 @@ namespace ProjBobcat.DefaultComponent
         public event EventHandler<GameResourceInfoResolveEventArgs> GameResourceInfoResolveStatus;
         public event EventHandler<DownloadFileChangedEventArgs> DownloadFileChangedEvent;
         public event EventHandler<DownloadFileCompletedEventArgs> DownloadFileCompletedEvent;
-
-        public DefaultResourceCompleter()
-        {
-            _retryFiles = new ConcurrentBag<DownloadFile>();
-        }
 
         public bool CheckAndDownload()
         {
@@ -81,10 +82,17 @@ namespace ProjBobcat.DefaultComponent
             return new TaskResult<bool>(item1, value: item2);
         }
 
+        /// <summary>
+        ///     IDisposable接口保留字段
+        /// </summary>
+        public void Dispose()
+        {
+        }
+
         private void WhenCompleted(object sender, DownloadFileCompletedEventArgs e)
         {
             TotalDownloaded++;
-            InvokeDownloadProgressChangedEvent((double)TotalDownloaded / NeedToDownload, e.AverageSpeed);
+            InvokeDownloadProgressChangedEvent((double) TotalDownloaded / NeedToDownload, e.AverageSpeed);
             DownloadFileCompletedEvent?.Invoke(sender, e);
 
             if (!e.Success)
@@ -117,14 +125,9 @@ namespace ProjBobcat.DefaultComponent
                 bag.Add(file);
                 File.Delete(filePath);
             }
-            catch (Exception) { }
-        }
-
-        /// <summary>
-        ///     IDisposable接口保留字段
-        /// </summary>
-        public void Dispose()
-        {
+            catch (Exception)
+            {
+            }
         }
 
         private async Task<ValueTuple<TaskResultStatus, bool>> DownloadFiles(IEnumerable<DownloadFile> downloadList)
@@ -139,7 +142,7 @@ namespace ProjBobcat.DefaultComponent
                 TotalDownloaded = 0;
                 NeedToDownload = fileBag.Count;
 
-                var files = fileBag.Select(f => (DownloadFile)f.Clone()).ToList();
+                var files = fileBag.Select(f => (DownloadFile) f.Clone()).ToList();
                 fileBag.Clear();
 
                 foreach (var file in files)
@@ -156,10 +159,7 @@ namespace ProjBobcat.DefaultComponent
             var isLibraryFailed = fileBag.Any(f => f.FileType.Equals("Library/Native", StringComparison.Ordinal));
 
             var resultType = fileBag.IsEmpty ? TaskResultStatus.Success : TaskResultStatus.PartialSuccess;
-            if (isLibraryFailed)
-            {
-                resultType = TaskResultStatus.Error;
-            }
+            if (isLibraryFailed) resultType = TaskResultStatus.Error;
 
             return (resultType, isLibraryFailed);
         }
