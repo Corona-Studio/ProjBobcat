@@ -11,6 +11,7 @@ using ProjBobcat.Class.Model.YggdrasilAuth;
 using ProjBobcat.DefaultComponent.Authenticator;
 using ProjBobcat.Event;
 using ProjBobcat.Interface;
+using SharpCompress.Archives;
 using SharpCompress.Common;
 using SharpCompress.Readers;
 
@@ -237,21 +238,33 @@ namespace ProjBobcat.DefaultComponent.Launch
                         Directory.CreateDirectory(nativeRootPath);
 
                     DirectoryHelper.CleanDirectory(nativeRootPath);
-                    version.Natives.ForEach(n =>
+
+                    foreach (var n in version.Natives)
                     {
                         var path =
                             Path.Combine(RootPath, GamePathHelper.GetLibraryPath(n.FileInfo.Path.Replace('/', '\\')));
-                        using var stream = File.OpenRead(path);
-                        using var reader = ReaderFactory.Open(stream);
-                        while (reader.MoveToNextEntry())
-                            if (!(n.Extract?.Exclude?.Contains(reader.Entry.Key) ?? false))
-                                reader.WriteEntryToDirectory(nativeRootPath,
-                                    new ExtractionOptions
-                                    {
-                                        ExtractFullPath = true,
-                                        Overwrite = true
-                                    });
-                    });
+                        
+                        // await using var stream = File.OpenRead(path);
+                        // using var reader =  ReaderFactory.Open(stream);
+
+                        using var archive = ArchiveFactory.Open(path);
+                        foreach (var entry in archive.Entries)
+                        {
+                            if(n.Extract?.Exclude?.Contains(entry.Key) ?? false) continue;
+
+                            var extractPath = Path.Combine(nativeRootPath, entry.Key);
+                            if (entry.IsDirectory)
+                            {
+                                if (!Directory.Exists(extractPath))
+                                    Directory.CreateDirectory(extractPath);
+
+                                continue;
+                            }
+
+                            await using var fs = File.OpenWrite(extractPath);
+                            entry.WriteTo(fs);
+                        }
+                    }
                 }
                 catch (Exception e)
                 {
