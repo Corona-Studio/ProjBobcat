@@ -7,6 +7,15 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
 {
     public static class ForgeInstallerFactory
     {
+        public static string GetForgeArtifactVersion(string mcVersion, string forgeVersion)
+        {
+            var mcVer = new Version(mcVersion);
+
+            return mcVer.Minor is >= 7 and <= 8
+                ? $"{mcVersion}-{forgeVersion}-{mcVersion}"
+                : $"{mcVersion}-{forgeVersion}";
+        }
+
         public static bool IsLegacyForgeInstaller(string forgeExecutable, string forgeVersion)
         {
             if (string.IsNullOrEmpty(forgeExecutable))

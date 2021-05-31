@@ -24,7 +24,7 @@ namespace ProjBobcat.Class.Model.CurseForge
 
         [JsonProperty("downloadCount")] public double DownloadCount { get; set; }
 
-        // latestFiles
+        [JsonProperty("latestFiles")] public List<CurseForgeLatestFileModel> LatestFiles { get; set; }
 
         [JsonProperty("categories")] public List<CurseForgeCategoryInfo> Categories { get; set; }
 
@@ -36,7 +36,7 @@ namespace ProjBobcat.Class.Model.CurseForge
 
         [JsonProperty("slug")] public string Slug { get; set; }
 
-        // gameVersionLatestFiles
+        [JsonProperty("gameVersionLatestFiles")] public List<CurseForgeGameVersionLatestFiles> GameVersionLatestFiles { get; set; }
 
         [JsonProperty("isFeatured")] public bool IsFeatured { get; set; }
 

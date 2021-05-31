@@ -42,15 +42,15 @@ namespace ProjBobcat.DefaultComponent.Installer
 
             _needToDownload = manifest.Files.Count;
 
-            var urlBlock = new TransformManyBlock<IEnumerable<CurseForgeFileModel>, string>(urls =>
+            var urlBlock = new TransformManyBlock<IEnumerable<CurseForgeFileModel>, ValueTuple<long, long>>(urls =>
             {
-                return urls.Select(file => CurseForgeModRequestUrl(file.ProjectId, file.FileId));
+                return urls.Select(file => (file.ProjectId, file.FileId));
             });
 
-            var actionBlock = new ActionBlock<string>(async url =>
+            var actionBlock = new ActionBlock<ValueTuple<long, long>>(async t =>
             {
-                var downloadUrlRes = await HttpHelper.Get(url);
-                var d = (await downloadUrlRes.Content.ReadAsStringAsync()).Trim('"');
+                var downloadUrlRes = await CurseForgeAPIHelper.GetAddonDownloadUrl(t.Item1, t.Item2);
+                var d = downloadUrlRes.Trim('"');
                 var fn = Path.GetFileName(d);
 
                 var downloadFile = new DownloadFile

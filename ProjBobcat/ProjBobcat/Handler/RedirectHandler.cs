@@ -48,14 +48,20 @@ namespace ProjBobcat.Handler
             CancellationToken cancellationToken)
         {
             var response = await base.SendAsync(request, cancellationToken);
-
             var statusCode = (int) response?.StatusCode;
-            if (statusCode == 0) return null;
 
-            return statusCode >= 300 && statusCode <= 399
-                ? _currentRetries == _maxRetries ? response :
-                await CreateRedirectResponse(request, response, cancellationToken)
-                : response;
+            switch (statusCode)
+            {
+                case 0:
+                    return null;
+                case < 300 or > 399:
+                    return response;
+            }
+
+            // if (_currentRetries == _maxRetries)
+            return await CreateRedirectResponse(request, response, cancellationToken);
+
+            // return response;
         }
     }
 }
