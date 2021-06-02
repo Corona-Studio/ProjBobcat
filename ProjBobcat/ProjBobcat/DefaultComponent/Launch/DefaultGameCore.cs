@@ -1,10 +1,4 @@
-﻿using System;
-using System.Diagnostics;
-using System.IO;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using ProjBobcat.Class;
+﻿using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.YggdrasilAuth;
@@ -12,8 +6,13 @@ using ProjBobcat.DefaultComponent.Authenticator;
 using ProjBobcat.Event;
 using ProjBobcat.Interface;
 using SharpCompress.Archives;
-using SharpCompress.Common;
-using SharpCompress.Readers;
+using System;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace ProjBobcat.DefaultComponent.Launch
 {
@@ -250,7 +249,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                         using var archive = ArchiveFactory.Open(path);
                         foreach (var entry in archive.Entries)
                         {
-                            if(n.Extract?.Exclude?.Contains(entry.Key) ?? false) continue;
+                            if(n.Extract?.Exclude?.Any(e => entry.Key.StartsWith(e)) ?? false) continue;
 
                             var extractPath = Path.Combine(nativeRootPath, entry.Key);
                             if (entry.IsDirectory)
@@ -261,7 +260,13 @@ namespace ProjBobcat.DefaultComponent.Launch
                                 continue;
                             }
 
-                            await using var fs = File.OpenWrite(extractPath);
+                            var fi = new System.IO.FileInfo(extractPath);
+                            var di = fi.Directory ?? new DirectoryInfo(Path.GetDirectoryName(extractPath)!);
+
+                            if(!di.Exists)
+                                di.Create();
+
+                            await using var fs = fi.OpenWrite();
                             entry.WriteTo(fs);
                         }
                     }
