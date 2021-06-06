@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Management;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Win32;
@@ -51,7 +52,7 @@ namespace ProjBobcat.Class.Helper
         {
             try
             {
-                IConfiguration configuration = new ConfigurationBuilder()
+                var configuration = new ConfigurationBuilder()
                     .AddEnvironmentVariables()
                     .Build();
                 var javaHome = configuration["JAVA_HOME"];
@@ -117,72 +118,44 @@ namespace ProjBobcat.Class.Helper
         /// <returns></returns>
         public static Task<MemoryInfo> GetWindowsMemoryStatus()
         {
-            return Task.Run(() =>
+            var wmiObject = new ManagementObjectSearcher("select * from Win32_OperatingSystem");
+
+            var memoryValue = wmiObject.Get().Cast<ManagementObject>().Select(mo => new {
+                Free = double.Parse(mo["FreePhysicalMemory"].ToString()) / 1024,
+                Total = double.Parse(mo["TotalVisibleMemorySize"].ToString()) / 1024
+            }).FirstOrDefault();
+
+            if (memoryValue == default) return Task.FromResult(new MemoryInfo());
+
+            var percent = (memoryValue.Total - memoryValue.Free) / memoryValue.Total;
+            var result = new MemoryInfo
             {
-                var info = new ProcessStartInfo
-                {
-                    FileName = "wmic",
-                    Arguments = "OS get FreePhysicalMemory,TotalVisibleMemorySize /Value",
-                    RedirectStandardOutput = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
+                Free = memoryValue.Free,
+                Percentage = percent,
+                Total = memoryValue.Total,
+                Used = memoryValue.Total - memoryValue.Free
+            };
 
-                var process = Process.Start(info);
-                var output = process.StandardOutput.ReadToEnd();
-
-                var lines = output.Trim().Split("\n");
-                var freeMemoryParts = lines[0].Split("=", StringSplitOptions.RemoveEmptyEntries);
-                var totalMemoryParts = lines[1].Split("=", StringSplitOptions.RemoveEmptyEntries);
-
-                var total = Math.Round(double.Parse(totalMemoryParts[1]) / 1024, 0);
-                var free = Math.Round(double.Parse(freeMemoryParts[1]) / 1024, 0);
-
-                var memoryInfo = new MemoryInfo
-                {
-                    Total = total,
-                    Free = free,
-                    Used = total - free,
-                    Percentage = (total - free) / total
-                };
-
-                return memoryInfo;
-            });
+            return Task.FromResult(result);
         }
 
         /// <summary>
         ///     获取系统 Cpu 信息
         /// </summary>
         /// <returns></returns>
-        public static Task<CPUInfo> GetWindowsCpuUsageTask()
+        public static Task<IEnumerable<CPUInfo>> GetWindowsCpuUsageTask()
         {
-            return Task.Run(() =>
-            {
-                var info = new ProcessStartInfo
+            using var searcher = new ManagementObjectSearcher("select * from Win32_PerfFormattedData_PerfOS_Processor");
+            var cpuTimes = searcher.Get()
+                .Cast<ManagementObject>()
+                .ToDictionary(k => k["Name"].ToString(), v => Convert.ToDouble(v["PercentProcessorTime"]))
+                .Select(p => new CPUInfo
                 {
-                    FileName = "wmic",
-                    Arguments = "CPU get Name,LoadPercentage /Value",
-                    RedirectStandardOutput = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
+                    Name = p.Key,
+                    Usage = p.Value
+                });
 
-                var process = Process.Start(info);
-                var output = process.StandardOutput.ReadToEnd();
-
-                var lines = output.Trim().Split("\n");
-                var loadPercentageParts = lines[0].Split("=", StringSplitOptions.RemoveEmptyEntries);
-                var nameParts = lines[1].Split("=", StringSplitOptions.RemoveEmptyEntries);
-
-                var usage = double.TryParse(loadPercentageParts[1], out var u) ? u : 0;
-                var name = nameParts[1];
-
-                return new CPUInfo
-                {
-                    Name = name,
-                    Usage = usage / 100
-                };
-            });
+            return Task.FromResult(cpuTimes);
         }
     }
 }

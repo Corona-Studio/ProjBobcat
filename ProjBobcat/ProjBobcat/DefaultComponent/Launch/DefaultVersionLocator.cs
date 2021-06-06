@@ -336,7 +336,8 @@ namespace ProjBobcat.DefaultComponent.Launch
                 Libraries = new List<FileInfo>(),
                 Natives = new List<NativeFileInfo>(),
                 Id = rawVersion.Id,
-                Name = randomName
+                Name = randomName,
+                JavaVersion = rawVersion.JavaVersion
             };
 
             // 检查游戏是否存在继承关系。
