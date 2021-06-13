@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Auth;
 using ProjBobcat.Event;
 using ProjBobcat.Interface;
@@ -9,7 +10,7 @@ namespace ProjBobcat.Class
     /// <summary>
     ///     启动包装类
     /// </summary>
-    public class LaunchWrapper
+    public class LaunchWrapper : IDisposable
     {
         /// <summary>
         ///     构造函数
@@ -59,26 +60,35 @@ namespace ProjBobcat.Class
 
         private void ProcessOnErrorDataReceived(object sender, DataReceivedEventArgs e)
         {
-            if (e.Data == null)
-                Process.ErrorDataReceived -= ProcessOnErrorDataReceived;
-            else
-                GameCore.LogGameData(sender, new GameLogEventArgs
-                {
-                    LogType = "error",
-                    Content = e.Data
-                });
+            if (string.IsNullOrEmpty(e.Data)) return;
+
+            GameCore.LogGameData(sender, new GameLogEventArgs
+            {
+                LogType = GameLogType.Unknown,
+                RawContent = e.Data
+            });
         }
 
         private void ProcessOnOutputDataReceived(object sender, DataReceivedEventArgs e)
         {
-            if (e.Data == null)
-                Process.OutputDataReceived -= ProcessOnOutputDataReceived;
-            else
-                GameCore.LogGameData(sender, new GameLogEventArgs
-                {
-                    LogType = "log",
-                    Content = e.Data
-                });
+            if (string.IsNullOrEmpty(e.Data)) return;
+
+            var totalPrefix = GameCore.GameLogResolver.ResolveTotalPrefix(e.Data);
+            var type = GameCore.GameLogResolver.ResolveLogType(totalPrefix);
+            var time = GameCore.GameLogResolver.ResolveTime(totalPrefix);
+            var source = GameCore.GameLogResolver.ResolveSource(totalPrefix);
+            
+            GameCore.LogGameData(sender, new GameLogEventArgs
+            {
+                LogType = type,
+                RawContent = e.Data,
+                Source = source,
+                Time = time
+            });
+        }
+
+        public void Dispose()
+        {
         }
     }
 }

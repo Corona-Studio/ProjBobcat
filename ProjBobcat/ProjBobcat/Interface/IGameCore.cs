@@ -77,5 +77,7 @@ namespace ProjBobcat.Interface
         /// <param name="sender"></param>
         /// <param name="e"></param>
         void GameExit(object sender, GameExitEventArgs e);
+
+        IGameLogResolver GameLogResolver { get; set; }
     }
 }

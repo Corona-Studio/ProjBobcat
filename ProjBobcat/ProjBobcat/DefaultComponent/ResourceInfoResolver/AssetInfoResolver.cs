@@ -61,7 +61,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                 var assetIndexDownloadUri = VersionInfo.AssetInfo.Url;
                 if (!string.IsNullOrEmpty(AssetIndexUriRoot))
                 {
-                    var assetIndexUriRoot = HttpHelper.RegexMatchUri(VersionInfo.AssetInfo.Url).TrimEnd('/');
+                    var assetIndexUriRoot = HttpHelper.RegexMatchUri(VersionInfo.AssetInfo.Url);
                     assetIndexDownloadUri =
                         $"{AssetIndexUriRoot}{assetIndexDownloadUri[assetIndexUriRoot.Length..]}";
                 }

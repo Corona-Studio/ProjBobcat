@@ -53,6 +53,8 @@ namespace ProjBobcat.DefaultComponent.Launch
         /// </summary>
         public Guid ClientToken { get; set; }
 
+        public IGameLogResolver GameLogResolver { get; set; }
+
         /// <summary>
         ///     游戏退出事件
         /// </summary>

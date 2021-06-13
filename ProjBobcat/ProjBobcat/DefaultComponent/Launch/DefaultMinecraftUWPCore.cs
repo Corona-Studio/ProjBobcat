@@ -48,6 +48,15 @@ namespace ProjBobcat.DefaultComponent.Launch
         ///     无用字段
         /// </summary>
         [Obsolete("UWP 版本的Minecraft不需要该字段。")]
+        public IGameLogResolver GameLogResolver
+        {
+            get => throw new NotImplementedException();
+            set => throw new NotImplementedException(); }
+
+        /// <summary>
+        ///     无用字段
+        /// </summary>
+        [Obsolete("UWP 版本的Minecraft不需要该字段。")]
         public event EventHandler<GameExitEventArgs> GameExitEventDelegate;
 
         /// <summary>
