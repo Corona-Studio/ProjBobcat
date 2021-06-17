@@ -26,6 +26,8 @@ namespace ProjBobcat.Interface
         /// </summary>
         VersionLocatorBase VersionLocator { get; set; }
 
+        IGameLogResolver GameLogResolver { get; set; }
+
         /// <summary>
         ///     启动游戏。
         ///     若启动成功，其返回值会包含消耗的时间；失败则包含异常信息。
@@ -77,7 +79,5 @@ namespace ProjBobcat.Interface
         /// <param name="sender"></param>
         /// <param name="e"></param>
         void GameExit(object sender, GameExitEventArgs e);
-
-        IGameLogResolver GameLogResolver { get; set; }
     }
 }

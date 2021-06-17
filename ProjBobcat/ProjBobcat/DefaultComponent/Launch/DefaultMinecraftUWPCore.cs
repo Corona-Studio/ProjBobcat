@@ -51,7 +51,8 @@ namespace ProjBobcat.DefaultComponent.Launch
         public IGameLogResolver GameLogResolver
         {
             get => throw new NotImplementedException();
-            set => throw new NotImplementedException(); }
+            set => throw new NotImplementedException();
+        }
 
         /// <summary>
         ///     无用字段

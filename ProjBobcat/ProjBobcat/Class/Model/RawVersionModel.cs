@@ -160,8 +160,7 @@ namespace ProjBobcat.Class.Model
         [JsonProperty("id")]
         public string Id { get; set; }
 
-        [JsonProperty("javaVersion")]
-        public JavaVersionModel JavaVersion { get; set; }
+        [JsonProperty("javaVersion")] public JavaVersionModel JavaVersion { get; set; }
 
         /// <summary>
         ///     继承于...（对于有些游戏版本如forge，其JSON配置会直接从另一个版本中继承，并且在继承基础上进行优先级更高的修改）

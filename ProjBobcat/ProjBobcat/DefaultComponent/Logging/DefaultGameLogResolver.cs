@@ -10,10 +10,8 @@ namespace ProjBobcat.DefaultComponent.Logging
         private const string LogTypeRegex = "FATAL|ERROR|WARN|INFO|DEBUG";
         private const string LogTimeRegex = "(20|21|22|23|[0-1]\\d):[0-5]\\d:[0-5]\\d";
 
-        private string LogSourceAndTypeRegex => $"[a-zA-Z# _-]{{2,}}[0-9]?/({LogTypeRegex})";
-        private string LogTotalPrefixRegex => $"\\[{LogTimeRegex}\\] \\[{LogSourceAndTypeRegex}\\]";
-
         private readonly Regex _sourceAndTypeRegex, _totalPrefixRegex, _typeRegex, _timeRegex;
+
         public DefaultGameLogResolver()
         {
             _typeRegex = new Regex(LogTypeRegex);
@@ -22,6 +20,9 @@ namespace ProjBobcat.DefaultComponent.Logging
             _sourceAndTypeRegex = new Regex(LogSourceAndTypeRegex);
             _totalPrefixRegex = new Regex(LogTotalPrefixRegex);
         }
+
+        private string LogSourceAndTypeRegex => $"[0-9a-zA-Z# _-]{{2,}}/({LogTypeRegex})";
+        private string LogTotalPrefixRegex => $"\\[{LogTimeRegex}\\] \\[{LogSourceAndTypeRegex}\\]";
 
         public GameLogType ResolveLogType(string log)
         {

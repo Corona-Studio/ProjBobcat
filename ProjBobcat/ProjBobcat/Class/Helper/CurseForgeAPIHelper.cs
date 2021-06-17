@@ -75,7 +75,7 @@ namespace ProjBobcat.Class.Helper
 
         public static async Task<string> GetAddonDownloadUrl(long addonId, long fileId)
         {
-            var reqUrl = $"{BaseUrl}/api/v2/addon/{addonId}/file/${fileId}/download-url";
+            var reqUrl = $"{BaseUrl}/api/v2/addon/{addonId}/file/{fileId}/download-url";
 
             var resContent = await Get(reqUrl);
 

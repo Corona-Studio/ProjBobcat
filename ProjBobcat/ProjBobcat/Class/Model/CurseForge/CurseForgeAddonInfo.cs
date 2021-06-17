@@ -36,7 +36,8 @@ namespace ProjBobcat.Class.Model.CurseForge
 
         [JsonProperty("slug")] public string Slug { get; set; }
 
-        [JsonProperty("gameVersionLatestFiles")] public List<CurseForgeGameVersionLatestFiles> GameVersionLatestFiles { get; set; }
+        [JsonProperty("gameVersionLatestFiles")]
+        public List<CurseForgeGameVersionLatestFiles> GameVersionLatestFiles { get; set; }
 
         [JsonProperty("isFeatured")] public bool IsFeatured { get; set; }
 

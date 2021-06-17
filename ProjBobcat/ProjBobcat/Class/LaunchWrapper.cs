@@ -41,6 +41,10 @@ namespace ProjBobcat.Class
         /// </summary>
         public Process Process { get; init; }
 
+        public void Dispose()
+        {
+        }
+
         /// <summary>
         ///     执行过程
         /// </summary>
@@ -77,18 +81,15 @@ namespace ProjBobcat.Class
             var type = GameCore.GameLogResolver.ResolveLogType(totalPrefix);
             var time = GameCore.GameLogResolver.ResolveTime(totalPrefix);
             var source = GameCore.GameLogResolver.ResolveSource(totalPrefix);
-            
+
             GameCore.LogGameData(sender, new GameLogEventArgs
             {
                 LogType = type,
                 RawContent = e.Data,
+                Content = e.Data[totalPrefix.Length..],
                 Source = source,
                 Time = time
             });
-        }
-
-        public void Dispose()
-        {
         }
     }
 }

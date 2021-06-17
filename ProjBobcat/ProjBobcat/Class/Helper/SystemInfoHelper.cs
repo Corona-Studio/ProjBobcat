@@ -25,20 +25,17 @@ namespace ProjBobcat.Class.Helper
             try
             {
                 using var rootReg = Registry.LocalMachine.OpenSubKey("SOFTWARE");
-                var javas = (
-                    rootReg == null
-                        ? Array.Empty<string>()
-                        : FindJavaInternal(rootReg)
-                            .Union(FindJavaInternal(rootReg.OpenSubKey("Wow6432Node")))
-                ).ToList();
+                var javas = (rootReg == null ? Array.Empty<string>() : FindJavaInternal(rootReg))
+                    .Union(FindJavaInternal(rootReg.OpenSubKey("Wow6432Node")))
+                    .Union(FindJavaInOfficialGamePath())
+                    .ToHashSet();
 
                 var evJava = FindJavaUsingEnvironmentVariable();
 
                 if (string.IsNullOrEmpty(evJava))
                     return javas;
 
-                if (!javas.Exists(x => x.Equals(evJava, StringComparison.OrdinalIgnoreCase)))
-                    javas.Add(Path.Combine(evJava, "bin", "javaw.exe"));
+                javas.Add(Path.Combine(evJava, "bin", "javaw.exe"));
 
                 return javas;
             }
@@ -46,6 +43,17 @@ namespace ProjBobcat.Class.Helper
             {
                 return Array.Empty<string>();
             }
+        }
+
+        private static IEnumerable<string> FindJavaInOfficialGamePath()
+        {
+            var basePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                ".minecraft", "runtime");
+
+            var paths = new[] {"java-runtime-alpha", "jre-legacy"};
+
+            return paths.Select(path => Path.Combine(basePath, path, "bin", "javaw.exe"))
+                .Where(File.Exists);
         }
 
         private static string FindJavaUsingEnvironmentVariable()
@@ -95,7 +103,7 @@ namespace ProjBobcat.Class.Helper
         /// <returns>判断结果。</returns>
         public static bool IsMinecraftUWPInstalled()
         {
-            var process = new Process
+            using var process = new Process
             {
                 StartInfo = new ProcessStartInfo("C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe")
                 {
@@ -118,9 +126,10 @@ namespace ProjBobcat.Class.Helper
         /// <returns></returns>
         public static Task<MemoryInfo> GetWindowsMemoryStatus()
         {
-            var wmiObject = new ManagementObjectSearcher("select * from Win32_OperatingSystem");
+            using var wmiObject = new ManagementObjectSearcher("select * from Win32_OperatingSystem");
 
-            var memoryValue = wmiObject.Get().Cast<ManagementObject>().Select(mo => new {
+            var memoryValue = wmiObject.Get().Cast<ManagementObject>().Select(mo => new
+            {
                 Free = double.Parse(mo["FreePhysicalMemory"].ToString()) / 1024,
                 Total = double.Parse(mo["TotalVisibleMemorySize"].ToString()) / 1024
             }).FirstOrDefault();
