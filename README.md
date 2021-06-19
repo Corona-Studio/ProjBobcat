@@ -8,7 +8,7 @@
 ![Nuget](https://img.shields.io/nuget/dt/projbobcat?logo=nuget&style=for-the-badge)
 ![GitHub](https://img.shields.io/github/license/corona-studio/projbobcat?logo=github&style=for-the-badge)
 ![Maintenance](https://img.shields.io/maintenance/yes/2021?logo=diaspora&style=for-the-badge)
-![GitHub commit activity](https://img.shields.io/github/commit-activity/m/corona-studio/projbobcat?logo=github&style=for-the-badge)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/m/Corona-Studio/ProjBobcat?style=for-the-badge)
 ![GitHub closed pull requests](https://img.shields.io/github/issues-pr-closed/corona-studio/projbobcat?logo=github&style=for-the-badge)
 ![GitHub repo size](https://img.shields.io/github/repo-size/corona-studio/projbobcat?logo=github&style=for-the-badge)
 ![GitHub stars](https://img.shields.io/github/stars/corona-studio/projbobcat?logo=github&style=for-the-badge)
