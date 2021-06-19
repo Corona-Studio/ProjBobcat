@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -30,7 +28,6 @@ namespace ProjBobcat.Handler
         private async Task<HttpResponseMessage> CreateRedirectResponse(HttpRequestMessage request,
             HttpResponseMessage response, CancellationToken cancellationToken)
         {
-            // _currentRetries++;
             var redirectUri = response.Headers.Location;
             if (!redirectUri.IsAbsoluteUri)
                 redirectUri = new Uri(request.RequestUri.GetLeftPart(UriPartial.Authority) + redirectUri);
@@ -55,7 +52,7 @@ namespace ProjBobcat.Handler
                 case < 300 or > 399:
                     return response;
             }
-            
+
             return await CreateRedirectResponse(request, response, cancellationToken);
         }
     }

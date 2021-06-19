@@ -35,15 +35,18 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
 
             if (!libDi.Exists) libDi.Create();
 
-            var lostLibrary = (from lib in VersionInfo.Libraries
-                where !File.Exists(Path.Combine(BasePath,
-                    GamePathHelper.GetLibraryPath(lib.Path.Replace('/', '\\'))))
-                select lib).ToList();
+            var lostLibrary = 
+                from lib in VersionInfo.Libraries
+                let libPath = GamePathHelper.GetLibraryPath(lib.Path.Replace('/', '\\'))
+                where !File.Exists(Path.Combine(BasePath, libPath))
+                select lib;
 
-            lostLibrary.AddRange(from native in VersionInfo.Natives
-                where !File.Exists(Path.Combine(BasePath,
-                    GamePathHelper.GetLibraryPath(native.FileInfo.Path.Replace('/', '\\'))))
-                select native.FileInfo);
+            lostLibrary = lostLibrary.Union(
+                from native in VersionInfo.Natives
+                let nativePath = GamePathHelper.GetLibraryPath(native.FileInfo.Path.Replace('/', '\\'))
+                where !File.Exists(Path.Combine(BasePath, nativePath))
+                select native.FileInfo
+            );
 
             foreach (var lL in lostLibrary)
             {

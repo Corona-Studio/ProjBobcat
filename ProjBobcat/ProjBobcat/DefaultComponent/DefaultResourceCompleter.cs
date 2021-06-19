@@ -60,22 +60,21 @@ namespace ProjBobcat.DefaultComponent
 
             if (!totalLostFiles.Any()) return new TaskResult<bool>(TaskResultStatus.Success, value: true);
 
-            var downloadList = (from f in totalLostFiles
-                    select new DownloadFile
-                    {
-                        Completed = WhenCompleted,
-                        DownloadPath = f.Path,
-                        DownloadUri = f.Uri,
-                        FileName = f.FileName,
-                        FileSize = f.FileSize,
-                        CheckSum = f.CheckSum,
-                        FileType = f.Type
-                    }
-                ).ToList();
+            totalLostFiles.Shuffle();
+            NeedToDownload = totalLostFiles.Count;
 
-            downloadList.Shuffle();
-
-            NeedToDownload = downloadList.Count;
+            var downloadList =
+                from f in totalLostFiles
+                select new DownloadFile
+                {
+                    Completed = WhenCompleted,
+                    DownloadPath = f.Path,
+                    DownloadUri = f.Uri,
+                    FileName = f.FileName,
+                    FileSize = f.FileSize,
+                    CheckSum = f.CheckSum,
+                    FileType = f.Type
+                };
 
             var (item1, item2) = await DownloadFiles(downloadList);
 

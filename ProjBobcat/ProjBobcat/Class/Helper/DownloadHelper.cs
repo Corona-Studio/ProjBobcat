@@ -210,21 +210,21 @@ namespace ProjBobcat.Class.Helper
             #region Get file size
 
             using var message = new HttpRequestMessage(HttpMethod.Head, new Uri(downloadFile.DownloadUri));
+            message.Headers.Range = new RangeHeaderValue(0, 1);
             if (!string.IsNullOrEmpty(downloadFile.Host))
                 message.Headers.Host = downloadFile.Host;
-            using var res1 = await HeadClient.SendAsync(message);
 
-            using var message2 = new HttpRequestMessage(HttpMethod.Head, new Uri(downloadFile.DownloadUri));
-            message2.Headers.Range =
-                new RangeHeaderValue(0, Math.Max(res1.Content.Headers.ContentLength / 2 ?? 0, 1));
-            if (!string.IsNullOrEmpty(downloadFile.Host))
-                message2.Headers.Host = downloadFile.Host;
+            using var headRes = await HeadClient.SendAsync(message);
 
-            using var res2 = await HeadClient.SendAsync(message2);
-
-            var responseLength = res1.Content.Headers.ContentLength ?? 0;
-            var parallelDownloadSupported = res2.StatusCode == HttpStatusCode.PartialContent &&
-                                            responseLength != 0;
+            var hasAcceptRanges = headRes.Headers.AcceptRanges.Any();
+            var hasRightStatusCode = headRes.StatusCode == HttpStatusCode.PartialContent;
+            var responseLength = headRes.Content.Headers.ContentRange?.Length ?? 0;
+            var contentLength = headRes.Content.Headers.ContentLength ?? 0;
+            var parallelDownloadSupported =
+                hasAcceptRanges &&
+                hasRightStatusCode &&
+                contentLength == 2 &&
+                responseLength != 0;
 
             if (!parallelDownloadSupported)
             {
@@ -244,7 +244,7 @@ namespace ProjBobcat.Class.Helper
             var previous = 0L;
 
             if (responseLength > numberOfParts)
-                for (var i = (int) partSize; i <= responseLength; i += (int) partSize)
+                for (var i = partSize; i <= responseLength; i += partSize)
                     if (i + partSize < responseLength)
                     {
                         var start = previous;

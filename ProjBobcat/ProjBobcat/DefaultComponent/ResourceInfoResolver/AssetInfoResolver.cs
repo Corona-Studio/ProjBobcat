@@ -12,17 +12,17 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
 {
     public class AssetInfoResolver : IResourceInfoResolver
     {
-        private string _assetIndexUrlRoot;
+        private readonly string _assetIndexUrlRoot;
 
         private string _basePath;
 
         public string AssetIndexUriRoot
         {
             get => _assetIndexUrlRoot;
-            set => _assetIndexUrlRoot = value.TrimEnd('/');
+            init => _assetIndexUrlRoot = value.TrimEnd('/');
         }
 
-        public string AssetUriRoot { get; set; } = "https://resources.download.minecraft.net/";
+        public string AssetUriRoot { get; init; } = "https://resources.download.minecraft.net/";
 
         public string BasePath
         {

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Sockets;
 using System.Threading;
@@ -38,9 +37,6 @@ namespace ProjBobcat.Handler
                 }
                 catch (Exception e) when (IsNetworkError(e))
                 {
-                    Trace.WriteLine($"重试 <{i}>");
-                    Trace.WriteLine(e);
-
                     continue;
                 }
 
