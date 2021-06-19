@@ -11,7 +11,7 @@
 ![Nuget](https://img.shields.io/nuget/dt/projbobcat?logo=nuget&label=NUGET下载量&style=for-the-badge)
 ![GitHub](https://img.shields.io/github/license/corona-studio/projbobcat?logo=github&label=开源协议&style=for-the-badge)
 ![Maintenance](https://img.shields.io/maintenance/yes/2021?logo=diaspora&label=已维护&style=for-the-badge)
-![GitHub commit activity](https://img.shields.io/github/commit-activity/m/corona-studio/projbobcat?label=COMMIT统计&logo=github&style=for-the-badge)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/m/Corona-Studio/ProjBobcat?label=COMMIT%E7%BB%9F%E8%AE%A1&style=for-the-badge)
 ![GitHub closed pull requests](https://img.shields.io/github/issues-pr-closed/corona-studio/projbobcat?logo=github&label=已关闭PR&style=for-the-badge)
 ![GitHub repo size](https://img.shields.io/github/repo-size/corona-studio/projbobcat?logo=github&label=仓库大小&style=for-the-badge)
 ![GitHub stars](https://img.shields.io/github/stars/corona-studio/projbobcat?logo=github&label=GITHUB星星！&style=for-the-badge)
