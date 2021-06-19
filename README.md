@@ -62,6 +62,7 @@ All you need for minecraft launcher in typescript. https://voxelum.github.io/min
 | LiteLoader Installation Model | ✅ |
 | Resource Auto Completion (Multi-thread downloader) | ✅ |
 | Minecraft: Windows 10 Edition Support (Detector and launcher) | ✅ |
+| Game log resolver | ✅ |
 | Game crashing detector | WIP |
 
 ## Instruction
