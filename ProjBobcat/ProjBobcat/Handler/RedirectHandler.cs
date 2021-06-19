@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net.Http;
 using System.Threading;
@@ -12,7 +13,6 @@ namespace ProjBobcat.Handler
     public class RedirectHandler : DelegatingHandler
     {
         private readonly int _maxRetries = 20;
-        private int _currentRetries;
 
         public RedirectHandler()
         {
@@ -35,8 +35,6 @@ namespace ProjBobcat.Handler
             if (!redirectUri.IsAbsoluteUri)
                 redirectUri = new Uri(request.RequestUri.GetLeftPart(UriPartial.Authority) + redirectUri);
 
-            Trace.WriteLine($"302: {redirectUri}");
-
             using var newRequest = new HttpRequestMessage(request.Method, redirectUri);
             newRequest.Headers.Host = request.Headers.Host;
 
@@ -57,11 +55,8 @@ namespace ProjBobcat.Handler
                 case < 300 or > 399:
                     return response;
             }
-
-            // if (_currentRetries == _maxRetries)
+            
             return await CreateRedirectResponse(request, response, cancellationToken);
-
-            // return response;
         }
     }
 }
