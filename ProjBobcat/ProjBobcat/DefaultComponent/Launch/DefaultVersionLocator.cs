@@ -357,6 +357,8 @@ namespace ProjBobcat.DefaultComponent.Launch
                 // Go through all inherits
                 for (var i = inherits.Count - 1; i >= 0; i--)
                 {
+                    if (result.JavaVersion == null && inherits[i].JavaVersion != null)
+                        result.JavaVersion = inherits[i].JavaVersion;
                     if (result.AssetInfo == null && inherits[i].AssetIndex != null)
                         result.AssetInfo = inherits[i].AssetIndex;
 
