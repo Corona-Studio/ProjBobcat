@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Security.Cryptography;
+using System.Threading.Tasks;
 
 namespace ProjBobcat.Class.Helper
 {
@@ -9,6 +10,20 @@ namespace ProjBobcat.Class.Helper
     /// </summary>
     public static class CryptoHelper
     {
+        /// <summary>
+        ///     计算文件 Hash 值
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="hashAlgorithm"></param>
+        /// <returns></returns>
+        public static async Task<string> ComputeFileHashAsync(string path, HashAlgorithm hashAlgorithm)
+        {
+            await using var fs = File.OpenRead(path);
+            var retVal = await hashAlgorithm.ComputeHashAsync(fs);
+
+            return BitConverter.ToString(retVal).Replace("-", string.Empty);
+        }
+
         /// <summary>
         ///     计算文件 Hash 值
         /// </summary>

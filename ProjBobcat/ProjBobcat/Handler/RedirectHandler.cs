@@ -45,15 +45,12 @@ namespace ProjBobcat.Handler
             var response = await base.SendAsync(request, cancellationToken);
             var statusCode = (int) response?.StatusCode;
 
-            switch (statusCode)
+            return statusCode switch
             {
-                case 0:
-                    return null;
-                case < 300 or > 399:
-                    return response;
-            }
-
-            return await CreateRedirectResponse(request, response, cancellationToken);
+                0 => null,
+                < 300 or > 399 => response,
+                _ => await CreateRedirectResponse(request, response, cancellationToken)
+            };
         }
     }
 }

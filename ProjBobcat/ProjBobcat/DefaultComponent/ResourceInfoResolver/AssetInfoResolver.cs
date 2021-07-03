@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Security.Cryptography;
 using Newtonsoft.Json;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
@@ -108,21 +109,37 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                 yield break;
             }
 
-            foreach (var asset in assetObject.Objects)
+#pragma warning disable CA5350 // 不要使用弱加密算法
+            using var hA = SHA1.Create();
+#pragma warning restore CA5350 // 不要使用弱加密算法
+            foreach (var (_, fi) in assetObject.Objects)
             {
-                var hash = asset.Value.Hash;
+                var hash = fi.Hash;
                 var twoDigitsHash = hash[..2];
                 var path = Path.Combine(assetObjectsDi.FullName, twoDigitsHash);
+                var filePath = Path.Combine(path, fi.Hash);
 
-                if (File.Exists(Path.Combine(path, asset.Value.Hash))) continue;
+                if (File.Exists(filePath))
+                {
+                    try
+                    {
+                        var computedHash = await CryptoHelper.ComputeFileHashAsync(filePath, hA);
+                        if(computedHash.Equals(fi.Hash, StringComparison.OrdinalIgnoreCase)) continue;
+
+                        File.Delete(filePath);
+                    }
+                    catch (Exception)
+                    {
+                    }
+                }
 
                 yield return new AssetDownloadInfo
                 {
                     Title = hash,
                     Path = path,
                     Type = "Asset",
-                    Uri = $"{AssetUriRoot}{twoDigitsHash}/{asset.Value.Hash}",
-                    FileSize = asset.Value.Size,
+                    Uri = $"{AssetUriRoot}{twoDigitsHash}/{fi.Hash}",
+                    FileSize = fi.Size,
                     CheckSum = hash,
                     FileName = hash
                 };

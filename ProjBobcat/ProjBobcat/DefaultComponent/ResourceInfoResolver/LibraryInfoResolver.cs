@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.GameResource;
 using ProjBobcat.Event;
 using ProjBobcat.Interface;
+using FileInfo = ProjBobcat.Class.Model.FileInfo;
 
 namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
 {
@@ -35,18 +37,59 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
 
             if (!libDi.Exists) libDi.Create();
 
-            var lostLibrary = 
-                from lib in VersionInfo.Libraries
-                let libPath = GamePathHelper.GetLibraryPath(lib.Path.Replace('/', '\\'))
-                where !File.Exists(Path.Combine(BasePath, libPath))
-                select lib;
+            var lostLibrary = new List<FileInfo>();
 
-            lostLibrary = lostLibrary.Union(
-                from native in VersionInfo.Natives
-                let nativePath = GamePathHelper.GetLibraryPath(native.FileInfo.Path.Replace('/', '\\'))
-                where !File.Exists(Path.Combine(BasePath, nativePath))
-                select native.FileInfo
-            );
+#pragma warning disable CA5350 // 不要使用弱加密算法
+            using var hA = SHA1.Create();
+#pragma warning restore CA5350 // 不要使用弱加密算法
+
+            foreach (var lib in VersionInfo.Libraries)
+            {
+                var libPath = GamePathHelper.GetLibraryPath(lib.Path.Replace('/', '\\'));
+                var filePath = Path.Combine(BasePath, libPath);
+
+                if (File.Exists(filePath))
+                {
+                    if(string.IsNullOrEmpty(lib.Sha1)) continue;
+
+                    try
+                    {
+                        var computedHash = await CryptoHelper.ComputeFileHashAsync(filePath, hA);
+                        if (computedHash.Equals(lib.Sha1, StringComparison.OrdinalIgnoreCase)) continue;
+
+                        File.Delete(filePath);
+                    }
+                    catch (Exception)
+                    {
+                    }
+                }
+
+                lostLibrary.Add(lib);
+            }
+
+            foreach (var native in VersionInfo.Natives)
+            {
+                var nativePath = GamePathHelper.GetLibraryPath(native.FileInfo.Path.Replace('/', '\\'));
+                var filePath = Path.Combine(BasePath, nativePath);
+
+                if (File.Exists(filePath))
+                {
+                    if (string.IsNullOrEmpty(native.FileInfo.Sha1)) continue;
+
+                    try
+                    {
+                        var computedHash = await CryptoHelper.ComputeFileHashAsync(filePath, hA);
+                        if (computedHash.Equals(native.FileInfo.Sha1, StringComparison.OrdinalIgnoreCase)) continue;
+
+                        File.Delete(filePath);
+                    }
+                    catch (Exception)
+                    {
+                    }
+                }
+
+                lostLibrary.Add(native.FileInfo);
+            }
 
             foreach (var lL in lostLibrary)
             {
