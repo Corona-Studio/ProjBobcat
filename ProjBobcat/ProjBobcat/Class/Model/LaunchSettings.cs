@@ -52,7 +52,9 @@ namespace ProjBobcat.Class.Model
 
         public bool VersionInsulation { get; set; }
         public string LauncherName { get; set; }
-        public GameArguments FallBackGameArguments { get; set; }
-        public GameArguments GameArguments { get; set; }
+#nullable enable
+        public GameArguments? FallBackGameArguments { get; set; }
+        public GameArguments? GameArguments { get; set; }
+#nullable restore
     }
 }

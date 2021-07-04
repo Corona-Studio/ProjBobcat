@@ -37,16 +37,17 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
 
             if (!libDi.Exists) libDi.Create();
 
-            var lostLibrary = new List<FileInfo>();
-
 #pragma warning disable CA5350 // 不要使用弱加密算法
             using var hA = SHA1.Create();
 #pragma warning restore CA5350 // 不要使用弱加密算法
 
+            var libraries = new List<FileInfo>();
             foreach (var lib in VersionInfo.Libraries)
             {
                 var libPath = GamePathHelper.GetLibraryPath(lib.Path.Replace('/', '\\'));
                 var filePath = Path.Combine(BasePath, libPath);
+
+                LogGameResourceInfoResolveStatus($"检索并验证 Library：{libPath}");
 
                 if (File.Exists(filePath))
                 {
@@ -64,13 +65,16 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                     }
                 }
 
-                lostLibrary.Add(lib);
+                libraries.Add(lib);
             }
 
+            var natives = new List<FileInfo>();
             foreach (var native in VersionInfo.Natives)
             {
                 var nativePath = GamePathHelper.GetLibraryPath(native.FileInfo.Path.Replace('/', '\\'));
                 var filePath = Path.Combine(BasePath, nativePath);
+
+                LogGameResourceInfoResolveStatus($"检索并验证 Native：{nativePath}");
 
                 if (File.Exists(filePath))
                 {
@@ -88,10 +92,10 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                     }
                 }
 
-                lostLibrary.Add(native.FileInfo);
+                natives.Add(native.FileInfo);
             }
 
-            foreach (var lL in lostLibrary)
+            foreach (var lL in libraries.Union(natives))
             {
                 string uri;
                 if (lL.Name.StartsWith("forge", StringComparison.Ordinal) ||

@@ -53,22 +53,34 @@ namespace ProjBobcat.DefaultComponent.Launch
                 LaunchSettings.GameArguments == null && LaunchSettings.FallBackGameArguments == null)
                 throw new ArgumentNullException("重要参数为Null!");
 
-            if (!string.IsNullOrEmpty(LaunchSettings.GameArguments?.AgentPath))
+            var gameArgs = LaunchSettings.GameArguments ?? LaunchSettings.FallBackGameArguments;
+            /*
+            var fallBack = LaunchSettings.FallBackGameArguments;
+            var major = LaunchSettings.GameArguments;
+            var gameSettings = new GameArguments {
+                JavaExecutable = string.IsNullOrEmpty(fallBack?.JavaExecutable) ? major.JavaExecutable : fallBack.JavaExecutable,
+                MinMemory = fallBack?.MinMemory > major?.MinMemory ? fallBack?.MinMemory : major?.MinMemory,
+                MaxMemory = 
+
+            };
+            */
+
+            if (!string.IsNullOrEmpty(gameArgs.AgentPath))
             {
-                sb.AppendFormat("-javaagent:\"{0}\"", LaunchSettings.GameArguments.AgentPath);
-                if (!string.IsNullOrEmpty(LaunchSettings.GameArguments.JavaAgentAdditionPara))
-                    sb.AppendFormat("={0}", LaunchSettings.GameArguments.JavaAgentAdditionPara);
+                sb.AppendFormat("-javaagent:\"{0}\"", gameArgs.AgentPath);
+                if (!string.IsNullOrEmpty(gameArgs.JavaAgentAdditionPara))
+                    sb.AppendFormat("={0}", gameArgs.JavaAgentAdditionPara);
 
                 sb.Append(' ');
             }
             else
             {
-                if (!string.IsNullOrEmpty(LaunchSettings.FallBackGameArguments.AgentPath))
+                if (!string.IsNullOrEmpty(gameArgs.AgentPath))
                 {
-                    sb.AppendFormat("-javaagent:\"{0}\"", LaunchSettings.FallBackGameArguments.AgentPath);
+                    sb.AppendFormat("-javaagent:\"{0}\"", gameArgs.AgentPath);
 
-                    if (!string.IsNullOrEmpty(LaunchSettings.FallBackGameArguments.JavaAgentAdditionPara))
-                        sb.AppendFormat("={0}", LaunchSettings.FallBackGameArguments.JavaAgentAdditionPara);
+                    if (!string.IsNullOrEmpty(gameArgs.JavaAgentAdditionPara))
+                        sb.AppendFormat("={0}", gameArgs.JavaAgentAdditionPara);
 
                     sb.Append(' ');
                 }
@@ -77,12 +89,12 @@ namespace ProjBobcat.DefaultComponent.Launch
 
             if (string.IsNullOrEmpty(GameProfile?.JavaArgs))
             {
-                if (LaunchSettings.GameArguments?.MaxMemory > 0)
+                if (gameArgs.MaxMemory > 0)
                 {
-                    if (LaunchSettings.GameArguments.MinMemory < LaunchSettings.GameArguments.MaxMemory)
+                    if (gameArgs.MinMemory < gameArgs.MaxMemory)
                     {
-                        sb.AppendFormat("-Xms{0}m ", LaunchSettings.GameArguments.MinMemory);
-                        sb.AppendFormat("-Xmx{0}m ", LaunchSettings.GameArguments.MaxMemory);
+                        sb.AppendFormat("-Xms{0}m ", gameArgs.MinMemory);
+                        sb.AppendFormat("-Xmx{0}m ", gameArgs.MaxMemory);
                     }
                     else
                     {
@@ -91,15 +103,14 @@ namespace ProjBobcat.DefaultComponent.Launch
                 }
                 else
                 {
-                    sb.AppendFormat("-Xms{0}m ", LaunchSettings.FallBackGameArguments.MinMemory);
-                    sb.AppendFormat("-Xmx{0}m ", LaunchSettings.FallBackGameArguments.MaxMemory);
+                    sb.Append("-Xmx2G ");
                 }
 
 
-                if (LaunchSettings.GameArguments?.GcType == GcType.Disable)
+                if (gameArgs.GcType == GcType.Disable)
                     return sb.ToString();
 
-                var gcArg = LaunchSettings.GameArguments?.GcType switch
+                var gcArg = gameArgs.GcType switch
                 {
                     GcType.CmsGc => "-XX:+UseConcMarkSweepGC",
                     GcType.G1Gc => "-XX:+UseG1GC",
@@ -169,7 +180,7 @@ namespace ProjBobcat.DefaultComponent.Launch
             var arguments = new List<string>
             {
                 (string.IsNullOrEmpty(GameProfile?.JavaDir)
-                    ? LaunchSettings.FallBackGameArguments?.JavaExecutable
+                    ? LaunchSettings.FallBackGameArguments?.JavaExecutable ?? LaunchSettings.GameArguments.JavaExecutable
                     : GameProfile.JavaDir)?.Trim(),
                 ParseJvmHeadArguments().Trim(),
                 ParseJvmArguments().Trim(),

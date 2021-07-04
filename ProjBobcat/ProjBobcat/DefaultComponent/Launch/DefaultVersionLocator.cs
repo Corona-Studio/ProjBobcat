@@ -136,13 +136,11 @@ namespace ProjBobcat.DefaultComponent.Launch
 
             foreach (var gameRule in item2)
             {
-                if (!(gameRule is JObject))
+                if (gameRule is not JObject gameRuleObj)
                 {
                     sb.Append(' ').Append(gameRule);
                     continue;
                 }
-
-                var gameRuleObj = (JObject) gameRule;
 
                 if (!gameRuleObj.ContainsKey("rules")) continue;
 
@@ -216,17 +214,22 @@ namespace ProjBobcat.DefaultComponent.Launch
                     if (lib.Downloads.Artifact.Name == null)
                     {
                         lib.Downloads.Artifact.Name = lib.Name;
-                        result.Item2.Add(lib.Downloads.Artifact);
+
+                        if(!result.Item2.Any(l => l.Name.Equals(lib.Name, StringComparison.OrdinalIgnoreCase)))
+                            result.Item2.Add(lib.Downloads.Artifact);
                     }
                 }
                 else
                 {
                     if (!(lib.Natives?.Any() ?? false))
                     {
-                        result.Item2.Add(new FileInfo
+                        if (!result.Item2.Any(l => l.Name.Equals(lib.Name, StringComparison.OrdinalIgnoreCase)))
                         {
-                            Name = lib.Name
-                        });
+                            result.Item2.Add(new FileInfo
+                            {
+                                Name = lib.Name
+                            });
+                        }
                         continue;
                     }
                 }
