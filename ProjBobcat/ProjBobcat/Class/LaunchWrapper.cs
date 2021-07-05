@@ -78,15 +78,35 @@ namespace ProjBobcat.Class
             if (string.IsNullOrEmpty(e.Data)) return;
 
             var totalPrefix = GameCore.GameLogResolver.ResolveTotalPrefix(e.Data);
-            var type = GameCore.GameLogResolver.ResolveLogType(totalPrefix);
+            var type = GameCore.GameLogResolver.ResolveLogType(string.IsNullOrEmpty(totalPrefix)
+                ? e.Data
+                : totalPrefix);
+
+            if (type is GameLogType.ExceptionMessage or GameLogType.StackTrace)
+            {
+                var exceptionMsg = GameCore.GameLogResolver.ResolveExceptionMsg(e.Data);
+                var stackTrace = GameCore.GameLogResolver.ResolveStackTrace(e.Data);
+
+                GameCore.LogGameData(sender, new GameLogEventArgs
+                {
+                    LogType = type,
+                    RawContent = e.Data,
+                    StackTrace = stackTrace,
+                    ExceptionMsg = exceptionMsg
+                });
+
+                return;
+            }
+
             var time = GameCore.GameLogResolver.ResolveTime(totalPrefix);
             var source = GameCore.GameLogResolver.ResolveSource(totalPrefix);
+            
 
             GameCore.LogGameData(sender, new GameLogEventArgs
             {
                 LogType = type,
                 RawContent = e.Data,
-                Content = e.Data[totalPrefix.Length..],
+                Content = e.Data[(totalPrefix?.Length ?? 0)..],
                 Source = source,
                 Time = time
             });

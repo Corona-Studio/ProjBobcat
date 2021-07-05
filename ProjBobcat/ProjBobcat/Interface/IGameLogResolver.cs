@@ -8,5 +8,8 @@ namespace ProjBobcat.Interface
         string ResolveSource(string log);
         string ResolveTime(string log);
         string ResolveTotalPrefix(string log);
+
+        string ResolveStackTrace(string log);
+        string ResolveExceptionMsg(string log);
     }
 }

@@ -311,18 +311,18 @@ namespace ProjBobcat.DefaultComponent.Launch
 
                 //绑定游戏退出事件。
                 //Bind the exit event.
-                new Thread(async () =>
-                {
-                    await Task.Run(launchWrapper.Process.WaitForExit).ContinueWith(task =>
+#pragma warning disable CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
+                Task.Run(launchWrapper.Process.WaitForExit)
+                    .ContinueWith(task =>
+                    {
                         GameExit(launchWrapper, new GameExitEventArgs
                         {
                             Exception = task.Exception,
                             ExitCode = launchWrapper.ExitCode
-                        }));
-                }).Start();
+                        });
+                    });
 
                 if (!string.IsNullOrEmpty(settings.WindowTitle))
-#pragma warning disable CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
                     Task.Run(() =>
                     {
                         while (string.IsNullOrEmpty(launchWrapper.Process.MainWindowTitle))

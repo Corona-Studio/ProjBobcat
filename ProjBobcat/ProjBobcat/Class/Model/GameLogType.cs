@@ -7,6 +7,8 @@
         Warning,
         Info,
         Debug,
+        ExceptionMessage,
+        StackTrace,
         Unknown
     }
 }
