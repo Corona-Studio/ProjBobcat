@@ -35,9 +35,12 @@ namespace ProjBobcat.Handler
                 {
                     response = await base.SendAsync(request, cancellationToken);
                 }
-                catch (Exception e) when (IsNetworkError(e))
+                catch (Exception e)
                 {
-                    continue;
+                    if(IsNetworkError(e))
+                        continue;
+
+                    throw;
                 }
 
                 return response;

@@ -49,6 +49,11 @@ namespace ProjBobcat.Class.Model
         public string Host { get; set; }
 
         /// <summary>
+        /// 超时（毫秒）
+        /// </summary>
+        public int TimeOut { get; set; } = 4000;
+
+        /// <summary>
         ///     下载完成事件
         /// </summary>
         public EventHandler<DownloadFileCompletedEventArgs> Completed { get; set; }
@@ -69,7 +74,8 @@ namespace ProjBobcat.Class.Model
                 FileSize = FileSize,
                 CheckSum = CheckSum,
                 Host = Host,
-                RetryCount = RetryCount
+                RetryCount = RetryCount,
+                TimeOut = TimeOut
             };
         }
     }

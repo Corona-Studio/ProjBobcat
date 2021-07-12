@@ -35,7 +35,7 @@ namespace ProjBobcat.Interface
         ///     检查并下载（同步）
         /// </summary>
         /// <returns>任务是否成功完成</returns>
-        bool CheckAndDownload();
+        TaskResult<bool> CheckAndDownload();
 
         /// <summary>
         ///     检查并下载（异步）

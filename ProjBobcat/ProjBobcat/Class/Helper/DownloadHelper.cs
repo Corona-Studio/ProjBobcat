@@ -61,13 +61,16 @@ namespace ProjBobcat.Class.Helper
 
                     return dl;
                 });
-
+            
             var actionBlock = new ActionBlock<DownloadFile>(async d =>
             {
                 if (d.FileSize is >= 1048576 or 0)
                     await MultiPartDownloadTaskAsync(d, downloadParts);
                 else
-                    await DownloadData(d);
+                {
+                    using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(d.TimeOut * 2));
+                    await DownloadData(d, cts.Token);
+                }
             }, new ExecutionDataflowBlockOptions
             {
                 BoundedCapacity = DownloadThread,
@@ -80,6 +83,9 @@ namespace ProjBobcat.Class.Helper
             filesBlock.Complete();
 
             await actionBlock.Completion;
+            actionBlock.Complete();
+
+            GC.Collect();
         }
 
         #endregion
@@ -90,8 +96,9 @@ namespace ProjBobcat.Class.Helper
         ///     下载文件（通过线程池）
         /// </summary>
         /// <param name="downloadProperty"></param>
-        public static async Task DownloadData(DownloadFile downloadProperty)
+        public static async Task DownloadData(DownloadFile downloadProperty, CancellationToken? cto = null)
         {
+            var ct = cto ?? CancellationToken.None;
             var filePath = Path.Combine(downloadProperty.DownloadPath, downloadProperty.FileName);
 
             try
@@ -101,10 +108,9 @@ namespace ProjBobcat.Class.Helper
                 if (!string.IsNullOrEmpty(downloadProperty.Host))
                     request.Headers.Host = downloadProperty.Host;
 
-                using var res = await DataClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead,
-                    CancellationToken.None);
+                using var res = await DataClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
 
-                await using var stream = await res.Content.ReadAsStreamAsync();
+                await using var stream = await res.Content.ReadAsStreamAsync(ct);
                 await using var fileToWriteTo = File.Create(filePath);
 
                 var responseLength = res.Content.Headers.ContentLength ?? 0;
@@ -118,13 +124,13 @@ namespace ProjBobcat.Class.Helper
                 while (true)
                 {
                     sw.Restart();
-                    var bytesRead = await stream.ReadAsync(buffer.AsMemory(0, BufferSize));
+                    var bytesRead = await stream.ReadAsync(buffer.AsMemory(0, BufferSize), ct);
                     sw.Stop();
 
                     if (bytesRead == 0)
                         break;
 
-                    await fileToWriteTo.WriteAsync(buffer.AsMemory(0, bytesRead));
+                    await fileToWriteTo.WriteAsync(buffer.AsMemory(0, bytesRead), ct);
 
                     Interlocked.Add(ref downloadedBytesCount, bytesRead);
 
@@ -206,6 +212,7 @@ namespace ProjBobcat.Class.Helper
             if (numberOfParts <= 0) numberOfParts = Environment.ProcessorCount;
 
             var filePath = Path.Combine(downloadFile.DownloadPath, downloadFile.FileName);
+            using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(downloadFile.TimeOut * 2));
 
             #region Get file size
 
@@ -228,7 +235,7 @@ namespace ProjBobcat.Class.Helper
 
             if (!parallelDownloadSupported)
             {
-                await DownloadData(downloadFile);
+                await DownloadData(downloadFile, cts.Token);
                 return;
             }
 
@@ -320,7 +327,7 @@ namespace ProjBobcat.Class.Helper
                 {
                     using var res = await t.Item1;
 
-                    await using var stream = await res.Content.ReadAsStreamAsync();
+                    await using var stream = await res.Content.ReadAsStreamAsync(cts.Token);
                     await using var fileToWriteTo = File.OpenWrite(t.Item2.TempFileName);
 
                     var buffer = new byte[BufferSize];
@@ -329,13 +336,13 @@ namespace ProjBobcat.Class.Helper
                     while (true)
                     {
                         sw.Restart();
-                        var bytesRead = await stream.ReadAsync(buffer.AsMemory(0, BufferSize));
+                        var bytesRead = await stream.ReadAsync(buffer.AsMemory(0, BufferSize), cts.Token);
                         sw.Stop();
 
                         if (bytesRead == 0)
                             break;
 
-                        await fileToWriteTo.WriteAsync(buffer.AsMemory(0, bytesRead));
+                        await fileToWriteTo.WriteAsync(buffer.AsMemory(0, bytesRead), cts.Token);
 
                         Interlocked.Add(ref downloadedBytesCount, bytesRead);
 
@@ -362,10 +369,13 @@ namespace ProjBobcat.Class.Helper
 
                     Interlocked.Add(ref tasksDone, 1);
                     doneRanges.TryTake(out _);
+
+                    GC.Collect();
                 }, new ExecutionDataflowBlockOptions
                 {
                     BoundedCapacity = numberOfParts,
-                    MaxDegreeOfParallelism = numberOfParts
+                    MaxDegreeOfParallelism = numberOfParts,
+                    CancellationToken = cts.Token
                 });
 
                 var linkOptions = new DataflowLinkOptions {PropagateCompletion = true};
@@ -379,9 +389,12 @@ namespace ProjBobcat.Class.Helper
 
                 filesBlock.Post(readRanges);
                 filesBlock.Complete();
-
+                
                 await writeActionBlock.Completion.ContinueWith(async task =>
                 {
+                    if (!task.IsCompletedSuccessfully)
+                        throw task.Exception?.Flatten() ?? new Exception("xxx!");
+
                     var aSpeed = tSpeed / cSpeed;
 
                     if (!doneRanges.IsEmpty)
@@ -403,7 +416,7 @@ namespace ProjBobcat.Class.Helper
                         await using var inputStream = File.OpenRead(inputFilePath.TempFileName);
 
                         outputStream.Seek(inputFilePath.Start, SeekOrigin.Begin);
-                        await inputStream.CopyToAsync(outputStream);
+                        await inputStream.CopyToAsync(outputStream, cts.Token);
 
                         inputStream.Close();
 
@@ -413,9 +426,13 @@ namespace ProjBobcat.Class.Helper
                     outputStream.Close();
                     downloadFile.Completed?.Invoke(null,
                         new DownloadFileCompletedEventArgs(true, null, downloadFile, aSpeed));
-                });
+                }, cts.Token);
 
+                streamBlock.Complete();
+                writeActionBlock.Complete();
                 #endregion
+
+                GC.Collect();
             }
             catch (Exception ex)
             {

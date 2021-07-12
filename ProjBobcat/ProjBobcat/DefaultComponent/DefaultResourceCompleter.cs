@@ -37,9 +37,9 @@ namespace ProjBobcat.DefaultComponent
         public event EventHandler<DownloadFileChangedEventArgs> DownloadFileChangedEvent;
         public event EventHandler<DownloadFileCompletedEventArgs> DownloadFileCompletedEvent;
 
-        public bool CheckAndDownload()
+        public TaskResult<bool> CheckAndDownload()
         {
-            return CheckAndDownloadTaskAsync().Result.Value;
+            return CheckAndDownloadTaskAsync().Result;
         }
 
         public async Task<TaskResult<bool>> CheckAndDownloadTaskAsync()
@@ -73,7 +73,8 @@ namespace ProjBobcat.DefaultComponent
                     FileName = f.FileName,
                     FileSize = f.FileSize,
                     CheckSum = f.CheckSum,
-                    FileType = f.Type
+                    FileType = f.Type,
+                    TimeOut = 10000
                 };
 
             var (item1, item2) = await DownloadFiles(downloadList);
@@ -136,8 +137,9 @@ namespace ProjBobcat.DefaultComponent
             var leftRetries = TotalRetry;
             var fileBag = new ConcurrentBag<DownloadFile>(_retryFiles);
 
-            while (!fileBag.IsEmpty && leftRetries != 0)
+            while (!fileBag.IsEmpty && leftRetries >= 0)
             {
+                _retryFiles.Clear();
                 TotalDownloaded = 0;
                 NeedToDownload = fileBag.Count;
 
@@ -152,11 +154,11 @@ namespace ProjBobcat.DefaultComponent
 
                 await DownloadHelper.AdvancedDownloadListFile(files);
 
+                fileBag = new ConcurrentBag<DownloadFile>(_retryFiles);
                 leftRetries--;
             }
 
-            var isLibraryFailed = fileBag.Any(f => f.FileType.Equals("Library/Native", StringComparison.Ordinal));
-
+            var isLibraryFailed = fileBag.Any(f => f.FileType.Equals("Library/Native", StringComparison.OrdinalIgnoreCase));
             var resultType = fileBag.IsEmpty ? TaskResultStatus.Success : TaskResultStatus.PartialSuccess;
             if (isLibraryFailed) resultType = TaskResultStatus.Error;
 

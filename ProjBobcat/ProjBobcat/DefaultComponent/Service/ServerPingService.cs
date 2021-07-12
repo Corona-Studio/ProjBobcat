@@ -41,17 +41,18 @@ namespace ProjBobcat.DefaultComponent.Service
             };
             var sw = new Stopwatch();
             var timeOut = TimeSpan.FromSeconds(3);
-            var cancellationCompletionSource = new TaskCompletionSource<bool>();
             using var cts = new CancellationTokenSource(timeOut);
 
             sw.Start();
-            var connectTask = client.ConnectAsync(Address, Port);
-            await using (cts.Token.Register(() => cancellationCompletionSource.TrySetResult(true)))
+            cts.CancelAfter(timeOut);
+            
+            try
             {
-                if (connectTask != await Task.WhenAny(connectTask, cancellationCompletionSource.Task))
-                    throw new OperationCanceledException($"服务器 {this} 连接失败，连接超时 ({timeOut.Seconds}s)。", cts.Token);
-
-                if (connectTask.Exception?.InnerException != null) throw connectTask.Exception.InnerException;
+                await client.ConnectAsync(Address, Port, cts.Token);
+            }
+            catch (TaskCanceledException)
+            {
+                throw new OperationCanceledException($"服务器 {this} 连接失败，连接超时 ({timeOut.Seconds}s)。", cts.Token);
             }
 
             sw.Stop();
