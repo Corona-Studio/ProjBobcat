@@ -6,6 +6,7 @@ using ProjBobcat.Event;
 
 namespace ProjBobcat.Interface
 {
+#nullable enable
     public interface IResourceCompleter : IDisposable
     {
         /// <summary>
@@ -35,13 +36,13 @@ namespace ProjBobcat.Interface
         ///     检查并下载（同步）
         /// </summary>
         /// <returns>任务是否成功完成</returns>
-        TaskResult<bool> CheckAndDownload();
+        TaskResult<ResourceCompleterCheckResult?> CheckAndDownload();
 
         /// <summary>
         ///     检查并下载（异步）
         /// </summary>
         /// <returns>任务是否成功完成</returns>
-        Task<TaskResult<bool>> CheckAndDownloadTaskAsync();
+        Task<TaskResult<ResourceCompleterCheckResult?>> CheckAndDownloadTaskAsync();
 
         /// <summary>
         ///     解析状态事件
@@ -58,4 +59,5 @@ namespace ProjBobcat.Interface
         /// </summary>
         event EventHandler<DownloadFileCompletedEventArgs> DownloadFileCompletedEvent;
     }
+#nullable restore
 }

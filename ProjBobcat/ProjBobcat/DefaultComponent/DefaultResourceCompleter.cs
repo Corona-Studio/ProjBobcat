@@ -12,6 +12,7 @@ using ProjBobcat.Interface;
 
 namespace ProjBobcat.DefaultComponent
 {
+#nullable enable
     /// <summary>
     ///     默认的资源补全器
     /// </summary>
@@ -37,17 +38,17 @@ namespace ProjBobcat.DefaultComponent
         public event EventHandler<DownloadFileChangedEventArgs> DownloadFileChangedEvent;
         public event EventHandler<DownloadFileCompletedEventArgs> DownloadFileCompletedEvent;
 
-        public TaskResult<bool> CheckAndDownload()
+        public TaskResult<ResourceCompleterCheckResult?> CheckAndDownload()
         {
             return CheckAndDownloadTaskAsync().Result;
         }
 
-        public async Task<TaskResult<bool>> CheckAndDownloadTaskAsync()
+        public async Task<TaskResult<ResourceCompleterCheckResult?>> CheckAndDownloadTaskAsync()
         {
             _retryFiles.Clear();
 
             if (!(ResourceInfoResolvers?.Any() ?? false))
-                return new TaskResult<bool>(TaskResultStatus.Success, value: true);
+                return new TaskResult<ResourceCompleterCheckResult?>(TaskResultStatus.Success, value: null);
 
             var totalLostFiles = new List<IGameResource>();
             foreach (var resolver in ResourceInfoResolvers)
@@ -58,7 +59,7 @@ namespace ProjBobcat.DefaultComponent
                     totalLostFiles.Add(lostFile);
             }
 
-            if (!totalLostFiles.Any()) return new TaskResult<bool>(TaskResultStatus.Success, value: true);
+            if (!totalLostFiles.Any()) return new TaskResult<ResourceCompleterCheckResult?>(TaskResultStatus.Success, value: null);
 
             totalLostFiles.Shuffle();
             NeedToDownload = totalLostFiles.Count;
@@ -79,7 +80,7 @@ namespace ProjBobcat.DefaultComponent
 
             var (item1, item2) = await DownloadFiles(downloadList);
 
-            return new TaskResult<bool>(item1, value: item2);
+            return new TaskResult<ResourceCompleterCheckResult?>(item1, value: item2);
         }
 
         /// <summary>
@@ -130,7 +131,7 @@ namespace ProjBobcat.DefaultComponent
             }
         }
 
-        private async Task<ValueTuple<TaskResultStatus, bool>> DownloadFiles(IEnumerable<DownloadFile> downloadList)
+        private async Task<ValueTuple<TaskResultStatus, ResourceCompleterCheckResult?>> DownloadFiles(IEnumerable<DownloadFile> downloadList)
         {
             await DownloadHelper.AdvancedDownloadListFile(downloadList, DownloadParts);
 
@@ -162,7 +163,7 @@ namespace ProjBobcat.DefaultComponent
             var resultType = fileBag.IsEmpty ? TaskResultStatus.Success : TaskResultStatus.PartialSuccess;
             if (isLibraryFailed) resultType = TaskResultStatus.Error;
 
-            return (resultType, isLibraryFailed);
+            return (resultType, new ResourceCompleterCheckResult {IsLibDownloadFailed = isLibraryFailed});
         }
 
         private void InvokeDownloadProgressChangedEvent(double progress, double speed)
