@@ -15,6 +15,7 @@ namespace ProjBobcat.Class.Model
         ///     The real id of this version, like 1.14-forge-xxx
         /// </summary>
         public string Id { get; set; }
+        public string DirName { get; set; }
 
         public JavaVersionModel JavaVersion { get; set; }
 
@@ -26,10 +27,12 @@ namespace ProjBobcat.Class.Model
         public string GameArguments { get; set; }
         public Dictionary<string, string> AvailableGameArguments { get; set; }
 
+#nullable enable
         /// <summary>
         ///     在递归式继承中最古老的版本（递归终点）。
         ///     The oldest version inherited (recursive).
         /// </summary>
-        public string RootVersion { get; set; }
+        public string? RootVersion { get; set; }
+#nullable restore
     }
 }

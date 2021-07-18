@@ -65,6 +65,7 @@ namespace ProjBobcat.DefaultComponent
             NeedToDownload = totalLostFiles.Count;
 
             var downloadList =
+            (
                 from f in totalLostFiles
                 select new DownloadFile
                 {
@@ -76,7 +77,16 @@ namespace ProjBobcat.DefaultComponent
                     CheckSum = f.CheckSum,
                     FileType = f.Type,
                     TimeOut = 10000
+                }).ToList();
+
+            if (downloadList.First().FileType.Equals("GameJar", StringComparison.OrdinalIgnoreCase))
+            {
+                downloadList.First().Changed = (_, args) =>
+                {
+                    DownloadFileCompletedEvent?.Invoke(this,
+                        new DownloadFileCompletedEventArgs(null, null, downloadList.First(), args.Speed));
                 };
+            }
 
             var (item1, item2) = await DownloadFiles(downloadList);
 
@@ -90,13 +100,13 @@ namespace ProjBobcat.DefaultComponent
         {
         }
 
-        private void WhenCompleted(object sender, DownloadFileCompletedEventArgs e)
+        private void WhenCompleted(object? sender, DownloadFileCompletedEventArgs e)
         {
             TotalDownloaded++;
             InvokeDownloadProgressChangedEvent((double) TotalDownloaded / NeedToDownload, e.AverageSpeed);
-            DownloadFileCompletedEvent?.Invoke(sender, e);
+            DownloadFileCompletedEvent?.Invoke(this, e);
 
-            if (!e.Success)
+            if (!(e.Success ?? false))
             {
                 _retryFiles.Add(e.File);
                 return;

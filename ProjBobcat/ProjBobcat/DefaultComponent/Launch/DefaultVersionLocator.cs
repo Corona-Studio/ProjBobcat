@@ -328,9 +328,11 @@ namespace ProjBobcat.DefaultComponent.Launch
 
             // 生成一个随机的名字来防止重复。
             // Generates a random name to avoid duplication.
+            /*
             var rs = new RandomStringHelper().UseLower().UseUpper().UseNumbers().Shuffle(1);
             var randomName =
                 $"{id}-{rs.Generate(5)}-{rs.Generate(5)}";
+            */
 
             var result = new VersionInfo
             {
@@ -339,7 +341,8 @@ namespace ProjBobcat.DefaultComponent.Launch
                 Libraries = new List<FileInfo>(),
                 Natives = new List<NativeFileInfo>(),
                 Id = rawVersion.Id,
-                Name = randomName,
+                DirName = id,
+                Name = id, //randomName,
                 JavaVersion = rawVersion.JavaVersion
             };
 
@@ -471,12 +474,12 @@ namespace ProjBobcat.DefaultComponent.Launch
             var gamePath = Path.Combine(RootPath, GamePathHelper.GetGamePath(id));
             if (oldProfile.Equals(default(KeyValuePair<string, GameProfileModel>)))
             {
-                LauncherProfileParser.LauncherProfile.Profiles.Add(randomName.ToGuidHash().ToString("N"),
+                LauncherProfileParser.LauncherProfile.Profiles.Add(id.ToGuidHash().ToString("N"),
                     new GameProfileModel
                     {
                         GameDir = gamePath,
                         LastVersionId = id,
-                        Name = randomName,
+                        Name = id, // randomName,
                         Created = DateTime.Now
                     });
                 LauncherProfileParser.SaveProfile();

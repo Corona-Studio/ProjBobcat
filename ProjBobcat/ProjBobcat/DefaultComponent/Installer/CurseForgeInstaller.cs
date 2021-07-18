@@ -58,7 +58,7 @@ namespace ProjBobcat.DefaultComponent.Installer
                     Completed = (_, args) =>
                     {
                         _totalDownloaded++;
-                        _isModAllDownloaded = _isModAllDownloaded && args.Success;
+                        _isModAllDownloaded = _isModAllDownloaded && (args.Success ?? false);
 
                         // if (!args.Success)
                         //     throw args.Error;

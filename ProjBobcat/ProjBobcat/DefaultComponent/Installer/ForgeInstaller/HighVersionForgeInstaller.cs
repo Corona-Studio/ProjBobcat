@@ -333,7 +333,7 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                             $"下载 Forge Library - {args.File.FileName} ( {_totalDownloaded} / {_needToDownload} )",
                             progress);
 
-                        if (!args.Success)
+                        if (!(args.Success ?? false))
                         {
                             hasDownloadFailed = true;
                             return;
