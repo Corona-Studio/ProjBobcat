@@ -1,13 +1,13 @@
-﻿using ProjBobcat.Class.Model;
-using ProjBobcat.Event;
-using ProjBobcat.Interface;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography;
 using Newtonsoft.Json;
 using ProjBobcat.Class.Helper;
+using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.GameResource;
+using ProjBobcat.Event;
+using ProjBobcat.Interface;
 
 namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
 {
@@ -34,7 +34,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
             var fileContent = await File.ReadAllTextAsync(versionJson);
             var rawVersionModel = JsonConvert.DeserializeObject<RawVersionModel>(fileContent);
 
-            if(rawVersionModel?.Downloads?.Client == null) yield break;
+            if (rawVersionModel?.Downloads?.Client == null) yield break;
 
             var clientDownload = rawVersionModel.Downloads.Client;
             var jarPath = GamePathHelper.GetVersionJar(BasePath, id);
@@ -56,7 +56,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
             }
             else
             {
-                if(string.IsNullOrEmpty(clientDownload.Sha1)) yield break;
+                if (string.IsNullOrEmpty(clientDownload.Sha1)) yield break;
 
                 using var hash = SHA1.Create();
                 var computedHash = await CryptoHelper.ComputeFileHashAsync(jarPath, hash);
@@ -70,6 +70,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                 catch (Exception)
                 {
                 }
+
                 yield return downloadInfo;
             }
         }

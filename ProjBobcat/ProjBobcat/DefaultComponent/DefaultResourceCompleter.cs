@@ -59,7 +59,8 @@ namespace ProjBobcat.DefaultComponent
                     totalLostFiles.Add(lostFile);
             }
 
-            if (!totalLostFiles.Any()) return new TaskResult<ResourceCompleterCheckResult?>(TaskResultStatus.Success, value: null);
+            if (!totalLostFiles.Any())
+                return new TaskResult<ResourceCompleterCheckResult?>(TaskResultStatus.Success, value: null);
 
             totalLostFiles.Shuffle();
             NeedToDownload = totalLostFiles.Count;
@@ -80,13 +81,11 @@ namespace ProjBobcat.DefaultComponent
                 }).ToList();
 
             if (downloadList.First().FileType.Equals("GameJar", StringComparison.OrdinalIgnoreCase))
-            {
                 downloadList.First().Changed = (_, args) =>
                 {
                     DownloadFileCompletedEvent?.Invoke(this,
                         new DownloadFileCompletedEventArgs(null, null, downloadList.First(), args.Speed));
                 };
-            }
 
             var (item1, item2) = await DownloadFiles(downloadList);
 
@@ -141,7 +140,8 @@ namespace ProjBobcat.DefaultComponent
             }
         }
 
-        private async Task<ValueTuple<TaskResultStatus, ResourceCompleterCheckResult?>> DownloadFiles(IEnumerable<DownloadFile> downloadList)
+        private async Task<ValueTuple<TaskResultStatus, ResourceCompleterCheckResult?>> DownloadFiles(
+            IEnumerable<DownloadFile> downloadList)
         {
             await DownloadHelper.AdvancedDownloadListFile(downloadList, DownloadParts);
 
@@ -169,7 +169,8 @@ namespace ProjBobcat.DefaultComponent
                 leftRetries--;
             }
 
-            var isLibraryFailed = fileBag.Any(f => f.FileType.Equals("Library/Native", StringComparison.OrdinalIgnoreCase));
+            var isLibraryFailed =
+                fileBag.Any(f => f.FileType.Equals("Library/Native", StringComparison.OrdinalIgnoreCase));
             var resultType = fileBag.IsEmpty ? TaskResultStatus.Success : TaskResultStatus.PartialSuccess;
             if (isLibraryFailed) resultType = TaskResultStatus.Error;
 

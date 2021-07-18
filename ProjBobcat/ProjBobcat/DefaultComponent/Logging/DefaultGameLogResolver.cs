@@ -12,7 +12,7 @@ namespace ProjBobcat.DefaultComponent.Logging
         private const string StackTraceAt = "(at .*)";
         private const string ExceptionRegex = "(?m)^.*?Exception.*";
 
-        private readonly Regex 
+        private readonly Regex
             _sourceAndTypeRegex,
             _totalPrefixRegex,
             _typeRegex,

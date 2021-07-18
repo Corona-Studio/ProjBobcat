@@ -37,7 +37,7 @@ namespace ProjBobcat.Handler
                 }
                 catch (Exception e)
                 {
-                    if(IsNetworkError(e))
+                    if (IsNetworkError(e))
                         continue;
 
                     throw;

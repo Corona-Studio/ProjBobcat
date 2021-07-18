@@ -51,7 +51,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
 
                 if (File.Exists(filePath))
                 {
-                    if(string.IsNullOrEmpty(lib.Sha1)) continue;
+                    if (string.IsNullOrEmpty(lib.Sha1)) continue;
 
                     try
                     {

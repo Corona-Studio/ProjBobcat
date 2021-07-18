@@ -61,11 +61,13 @@ namespace ProjBobcat.Class.Helper
 
                     return dl;
                 });
-            
+
             var actionBlock = new ActionBlock<DownloadFile>(async d =>
             {
                 if (d.FileSize is >= 1048576 or 0)
+                {
                     await MultiPartDownloadTaskAsync(d, downloadParts);
+                }
                 else
                 {
                     using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(d.TimeOut * 2));
@@ -389,7 +391,7 @@ namespace ProjBobcat.Class.Helper
 
                 filesBlock.Post(readRanges);
                 filesBlock.Complete();
-                
+
                 await writeActionBlock.Completion.ContinueWith(async task =>
                 {
                     if (!task.IsCompletedSuccessfully)
@@ -430,6 +432,7 @@ namespace ProjBobcat.Class.Helper
 
                 streamBlock.Complete();
                 writeActionBlock.Complete();
+
                 #endregion
 
                 GC.Collect();

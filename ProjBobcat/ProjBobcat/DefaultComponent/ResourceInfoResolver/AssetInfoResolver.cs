@@ -122,18 +122,16 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                 LogGameResourceInfoResolveStatus($"检索并验证 Asset 资源：{hash}");
 
                 if (File.Exists(filePath))
-                {
                     try
                     {
                         var computedHash = await CryptoHelper.ComputeFileHashAsync(filePath, hA);
-                        if(computedHash.Equals(fi.Hash, StringComparison.OrdinalIgnoreCase)) continue;
+                        if (computedHash.Equals(fi.Hash, StringComparison.OrdinalIgnoreCase)) continue;
 
                         File.Delete(filePath);
                     }
                     catch (Exception)
                     {
                     }
-                }
 
                 yield return new AssetDownloadInfo
                 {

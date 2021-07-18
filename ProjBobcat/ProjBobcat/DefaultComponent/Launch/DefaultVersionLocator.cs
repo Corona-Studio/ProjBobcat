@@ -215,7 +215,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                     {
                         lib.Downloads.Artifact.Name = lib.Name;
 
-                        if(!result.Item2.Any(l => l.Name.Equals(lib.Name, StringComparison.OrdinalIgnoreCase)))
+                        if (!result.Item2.Any(l => l.Name.Equals(lib.Name, StringComparison.OrdinalIgnoreCase)))
                             result.Item2.Add(lib.Downloads.Artifact);
                     }
                 }
@@ -224,12 +224,10 @@ namespace ProjBobcat.DefaultComponent.Launch
                     if (!(lib.Natives?.Any() ?? false))
                     {
                         if (!result.Item2.Any(l => l.Name.Equals(lib.Name, StringComparison.OrdinalIgnoreCase)))
-                        {
                             result.Item2.Add(new FileInfo
                             {
                                 Name = lib.Name
                             });
-                        }
                         continue;
                     }
                 }

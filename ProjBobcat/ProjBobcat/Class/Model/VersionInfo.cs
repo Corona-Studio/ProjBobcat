@@ -15,6 +15,7 @@ namespace ProjBobcat.Class.Model
         ///     The real id of this version, like 1.14-forge-xxx
         /// </summary>
         public string Id { get; set; }
+
         public string DirName { get; set; }
 
         public JavaVersionModel JavaVersion { get; set; }

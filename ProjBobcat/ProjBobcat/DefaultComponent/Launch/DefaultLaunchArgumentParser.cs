@@ -182,7 +182,8 @@ namespace ProjBobcat.DefaultComponent.Launch
             var arguments = new List<string>
             {
                 (string.IsNullOrEmpty(GameProfile?.JavaDir)
-                    ? LaunchSettings.FallBackGameArguments?.JavaExecutable ?? LaunchSettings.GameArguments.JavaExecutable
+                    ? LaunchSettings.FallBackGameArguments?.JavaExecutable ??
+                      LaunchSettings.GameArguments.JavaExecutable
                     : GameProfile.JavaDir)?.Trim(),
                 ParseJvmHeadArguments().Trim(),
                 ParseJvmArguments().Trim(),

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -42,15 +43,19 @@ namespace ProjBobcat.Handler
             HttpRequestMessage request,
             CancellationToken cancellationToken)
         {
+            var currentRedirect = 0;
             var response = await base.SendAsync(request, cancellationToken);
-            var statusCode = (int) response?.StatusCode;
+            var statusCode = (int?) response?.StatusCode;
 
-            return statusCode switch
+            while (currentRedirect < _maxRetries && statusCode == 302)
             {
-                0 => null,
-                < 300 or > 399 => response,
-                _ => await CreateRedirectResponse(request, response, cancellationToken)
-            };
+                Debug.WriteLine($"第{currentRedirect}次重定向");
+                response = await CreateRedirectResponse(request, response, cancellationToken);
+                statusCode = (int?) response?.StatusCode;
+                currentRedirect++;
+            }
+
+            return response;
         }
     }
 }

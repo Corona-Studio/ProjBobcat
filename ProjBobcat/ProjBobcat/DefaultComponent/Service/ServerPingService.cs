@@ -45,7 +45,7 @@ namespace ProjBobcat.DefaultComponent.Service
 
             sw.Start();
             cts.CancelAfter(timeOut);
-            
+
             try
             {
                 await client.ConnectAsync(Address, Port, cts.Token);

@@ -100,7 +100,7 @@ namespace ProjBobcat.Class
 
             var time = GameCore.GameLogResolver.ResolveTime(totalPrefix);
             var source = GameCore.GameLogResolver.ResolveSource(totalPrefix);
-            
+
 
             GameCore.LogGameData(sender, new GameLogEventArgs
             {

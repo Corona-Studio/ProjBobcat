@@ -49,7 +49,7 @@ namespace ProjBobcat.Class.Model
         public string Host { get; set; }
 
         /// <summary>
-        /// 超时（毫秒）
+        ///     超时（毫秒）
         /// </summary>
         public int TimeOut { get; set; } = 60000;
 

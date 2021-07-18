@@ -106,6 +106,10 @@ namespace ProjBobcat.DefaultComponent.Installer
                 if (string.IsNullOrEmpty(subPath)) continue;
 
                 var path = Path.Combine(Path.GetFullPath(idPath), subPath);
+                var dirPath = Path.GetDirectoryName(path);
+
+                if (!Directory.Exists(dirPath))
+                    Directory.CreateDirectory(dirPath);
                 if (entry.IsDirectory)
                 {
                     if (!Directory.Exists(path))
