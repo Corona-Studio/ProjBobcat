@@ -178,12 +178,13 @@ namespace ProjBobcat.DefaultComponent.Launch
             IEnumerable<Library> libraries)
         {
             var result = (new List<NativeFileInfo>(), new List<FileInfo>());
+            var isForge = libraries.Any(l => l.Name.Contains("minecraftforge", StringComparison.OrdinalIgnoreCase));
 
             // 扫描库数据。
             // Scan the library data.
             foreach (var lib in libraries)
             {
-                if (!lib.ClientRequired) continue;
+                if (!lib.ClientRequired && !isForge) continue;
                 if (!lib.Rules.CheckAllow()) continue;
 
                 // 不同版本的Minecraft有不同的library JSON字符串的结构。

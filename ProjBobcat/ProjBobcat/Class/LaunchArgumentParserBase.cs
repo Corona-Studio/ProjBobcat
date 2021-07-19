@@ -1,4 +1,5 @@
-﻿using ProjBobcat.Class.Helper;
+﻿using System.IO;
+using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Auth;
 using ProjBobcat.Class.Model.LauncherProfile;
@@ -42,13 +43,12 @@ namespace ProjBobcat.Class
         /// <summary>
         ///     Native 根目录
         /// </summary>
-        public virtual string NativeRoot =>
-            GamePathHelper.GetNativeRoot(LaunchSettings.Version);
+        public virtual string NativeRoot => Path.Combine(RootPath, GamePathHelper.GetNativeRoot(LaunchSettings.Version));
 
         /// <summary>
         ///     Asset 根目录
         /// </summary>
-        public virtual string AssetRoot => GamePathHelper.GetAssetsRoot();
+        public virtual string AssetRoot => Path.Combine(RootPath, GamePathHelper.GetAssetsRoot());
 
         /// <summary>
         ///     Class 路径

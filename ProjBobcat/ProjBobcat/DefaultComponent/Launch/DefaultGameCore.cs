@@ -293,13 +293,16 @@ namespace ProjBobcat.DefaultComponent.Launch
 
                 #region 启动游戏 Launch
 
+                var rootPath = settings.VersionInsulation
+                    ? Path.Combine(RootPath, GamePathHelper.GetGamePath(settings.Version))
+                    : RootPath;
                 var launchWrapper = new LaunchWrapper(authResult)
                 {
                     GameCore = this,
                     Process = Process.Start(new ProcessStartInfo(executable, sb.ToString())
                     {
                         UseShellExecute = false,
-                        WorkingDirectory = RootPath,
+                        WorkingDirectory = rootPath,
                         RedirectStandardError = true,
                         RedirectStandardOutput = true
                     })

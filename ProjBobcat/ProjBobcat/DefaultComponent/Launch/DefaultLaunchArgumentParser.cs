@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using Newtonsoft.Json;
@@ -13,6 +14,8 @@ namespace ProjBobcat.DefaultComponent.Launch
 {
     public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentParser
     {
+        private readonly LaunchSettings _launchSettings;
+
         /// <summary>
         ///     构造函数
         /// </summary>
@@ -28,6 +31,8 @@ namespace ProjBobcat.DefaultComponent.Launch
             if (launchSettings == null || launcherProfileParser == null)
                 throw new ArgumentNullException();
 
+            _launchSettings = launchSettings;
+
             AuthResult = authResult;
             VersionLocator = versionLocator;
             RootPath = rootPath;
@@ -36,12 +41,18 @@ namespace ProjBobcat.DefaultComponent.Launch
             VersionInfo = LaunchSettings.VersionLocator.GetGame(LaunchSettings.Version);
             GameProfile = LauncherProfileParser.GetGameProfile(LaunchSettings.GameName);
 
-            ClassPath = string.Join(string.Empty,
-                VersionInfo.Libraries.Select(l =>
-                    $"{GamePathHelper.GetLibraryPath(l.Path.Replace('/', '\\'))};"));
-            ClassPath += string.IsNullOrEmpty(rootVersion)
+            var sb = new StringBuilder();
+            foreach (var lib in VersionInfo.Libraries)
+            {
+                sb.AppendFormat("{0};", Path.Combine(RootPath, GamePathHelper.GetLibraryPath(lib.Path).Replace('/', '\\')));
+            }
+            
+            var rootJarPath = string.IsNullOrEmpty(rootVersion)
                 ? GamePathHelper.GetGameExecutablePath(launchSettings.Version)
                 : GamePathHelper.GetGameExecutablePath(rootVersion);
+            sb.Append(Path.Combine(RootPath, rootJarPath));
+
+            ClassPath = sb.ToString();
             LastAuthResult = LaunchSettings.Authenticator.GetLastAuthResult();
         }
 
@@ -157,16 +168,16 @@ namespace ProjBobcat.DefaultComponent.Launch
 
         public string ParseGameArguments(AuthResultBase authResult)
         {
+            var gameDir = _launchSettings.VersionInsulation
+                ? Path.Combine(RootPath, GamePathHelper.GetGamePath(LaunchSettings.Version))
+                : RootPath;
             var mcArgumentsDic = new Dictionary<string, string>
             {
-                {"${version_name}", LaunchSettings.Version},
+                {"${version_name}", $"\"{LaunchSettings.Version}\""},
                 {"${version_type}", GameProfile?.Type ?? $"\"{LaunchSettings.LauncherName}\""},
                 {"${assets_root}", $"\"{AssetRoot}\""},
                 {"${assets_index_name}", $"\"{VersionInfo.AssetInfo.Id}\""},
-                {
-                    "${game_directory}",
-                    $"\"{GamePathHelper.GetGamePath(LaunchSettings.Version)}\""
-                },
+                {"${game_directory}", $"\"{gameDir}\""},
                 {"${auth_player_name}", authResult?.SelectedProfile?.Name},
                 {"${auth_uuid}", authResult?.SelectedProfile?.UUID.ToString()},
                 {"${auth_access_token}", authResult?.AccessToken},
