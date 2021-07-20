@@ -21,8 +21,8 @@ namespace ProjBobcat.Class.Model.CurseForge.API
             AddonIds = Enumerable.Empty<int>().ToList(),
             FeaturedCount = 15,
             GameId = 432,
-            PopularCount = 15,
-            UpdatedCount = 15
+            PopularCount = 150,
+            UpdatedCount = 150
         };
     }
 }
