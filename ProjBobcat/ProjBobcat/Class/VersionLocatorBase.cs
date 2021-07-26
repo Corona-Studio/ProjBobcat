@@ -14,13 +14,13 @@ namespace ProjBobcat.Class
 
         public abstract IEnumerable<VersionInfo> GetAllGames();
 
-        public abstract string ParseJvmArguments(List<object> arguments);
+        public abstract IEnumerable<string> ParseJvmArguments(List<object> arguments);
         private protected abstract VersionInfo ToVersion(string id);
 
         public abstract ValueTuple<List<NativeFileInfo>, List<FileInfo>> GetNatives(
             IEnumerable<Library> libraries);
 
-        private protected abstract ValueTuple<string, Dictionary<string, string>> ParseGameArguments(
+        private protected abstract ValueTuple<IEnumerable<string>, Dictionary<string, string>> ParseGameArguments(
             ValueTuple<string, List<object>> arguments);
 
         public abstract RawVersionModel ParseRawVersion(string id);

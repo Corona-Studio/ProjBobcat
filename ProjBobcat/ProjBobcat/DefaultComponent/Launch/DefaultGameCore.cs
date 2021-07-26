@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -204,9 +205,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                 var arguments = argumentParser.GenerateLaunchArguments();
                 InvokeLaunchLogThenStart("解析启动参数", ref prevSpan, ref stopwatch);
 
-                var sb = new StringBuilder();
-
-                if (arguments.Count != 6)
+                if (string.IsNullOrEmpty(arguments.First()))
                     return new LaunchResult
                     {
                         ErrorType = LaunchErrorType.IncompleteArguments,
@@ -225,8 +224,8 @@ namespace ProjBobcat.DefaultComponent.Launch
 
                 //通过String Builder格式化参数。（转化成字符串）
                 //Format the arguments using string builder.(Convert to string)
-                arguments.ForEach(arg => sb.Append(arg.Trim()).Append(' '));
-                InvokeLaunchLogThenStart(sb.ToString(), ref prevSpan, ref stopwatch);
+                // arguments.ForEach(arg => sb.Append(arg.Trim()).Append(' '));
+                InvokeLaunchLogThenStart(string.Join(' ', arguments), ref prevSpan, ref stopwatch);
 
                 #endregion
 
@@ -296,16 +295,20 @@ namespace ProjBobcat.DefaultComponent.Launch
                 var rootPath = settings.VersionInsulation
                     ? Path.Combine(RootPath, GamePathHelper.GetGamePath(settings.Version))
                     : RootPath;
+
+                var psi = new ProcessStartInfo(executable)
+                {
+                    UseShellExecute = false,
+                    WorkingDirectory = rootPath,
+                    RedirectStandardError = true,
+                    RedirectStandardOutput = true
+                };
+                arguments.ForEach(psi.ArgumentList.Add);
+
                 var launchWrapper = new LaunchWrapper(authResult)
                 {
                     GameCore = this,
-                    Process = Process.Start(new ProcessStartInfo(executable, sb.ToString())
-                    {
-                        UseShellExecute = false,
-                        WorkingDirectory = rootPath,
-                        RedirectStandardError = true,
-                        RedirectStandardOutput = true
-                    })
+                    Process = Process.Start(psi)
                 };
 
                 launchWrapper.Do();

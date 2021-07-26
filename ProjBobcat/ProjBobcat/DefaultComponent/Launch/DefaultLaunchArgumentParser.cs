@@ -56,10 +56,8 @@ namespace ProjBobcat.DefaultComponent.Launch
             LastAuthResult = LaunchSettings.Authenticator.GetLastAuthResult();
         }
 
-        public string ParseJvmHeadArguments()
+        public IEnumerable<string> ParseJvmHeadArguments()
         {
-            var sb = new StringBuilder();
-
             if (LaunchSettings == null ||
                 LaunchSettings.GameArguments == null && LaunchSettings.FallBackGameArguments == null)
                 throw new ArgumentNullException("重要参数为Null!");
@@ -78,25 +76,10 @@ namespace ProjBobcat.DefaultComponent.Launch
 
             if (!string.IsNullOrEmpty(gameArgs.AgentPath))
             {
-                sb.AppendFormat("-javaagent:\"{0}\"", gameArgs.AgentPath);
+                yield return $"-javaagent:\"{gameArgs.AgentPath}\"";
                 if (!string.IsNullOrEmpty(gameArgs.JavaAgentAdditionPara))
-                    sb.AppendFormat("={0}", gameArgs.JavaAgentAdditionPara);
-
-                sb.Append(' ');
+                    yield return $"={gameArgs.JavaAgentAdditionPara}";
             }
-            else
-            {
-                if (!string.IsNullOrEmpty(gameArgs.AgentPath))
-                {
-                    sb.AppendFormat("-javaagent:\"{0}\"", gameArgs.AgentPath);
-
-                    if (!string.IsNullOrEmpty(gameArgs.JavaAgentAdditionPara))
-                        sb.AppendFormat("={0}", gameArgs.JavaAgentAdditionPara);
-
-                    sb.Append(' ');
-                }
-            }
-
 
             if (string.IsNullOrEmpty(GameProfile?.JavaArgs))
             {
@@ -104,22 +87,22 @@ namespace ProjBobcat.DefaultComponent.Launch
                 {
                     if (gameArgs.MinMemory < gameArgs.MaxMemory)
                     {
-                        sb.AppendFormat("-Xms{0}m ", gameArgs.MinMemory);
-                        sb.AppendFormat("-Xmx{0}m ", gameArgs.MaxMemory);
+                        yield return $"-Xms{gameArgs.MinMemory}m";
+                        yield return $"-Xmx{gameArgs.MaxMemory}m";
                     }
                     else
                     {
-                        sb.Append("-Xmx2G ");
+                        yield return "-Xmx2G";
                     }
                 }
                 else
                 {
-                    sb.Append("-Xmx2G ");
+                    yield return "-Xmx2G";
                 }
 
 
                 if (gameArgs.GcType == GcType.Disable)
-                    return sb.ToString();
+                    yield break;
 
                 var gcArg = gameArgs.GcType switch
                 {
@@ -131,11 +114,11 @@ namespace ProjBobcat.DefaultComponent.Launch
                     _ => "-XX:+UseG1GC"
                 };
 
-                sb.Append(gcArg).Append(' ');
+                yield return gcArg;
             }
             else
             {
-                sb.Append(GameProfile.JavaArgs).Append(' ');
+                yield return GameProfile.JavaArgs;
             }
 
             /*
@@ -143,30 +126,40 @@ namespace ProjBobcat.DefaultComponent.Launch
                     "-XX:+UnlockExperimentalVMOptions -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=50 -XX:G1HeapRegionSize=32M")
                 .Append(' ');
             */
-
-            return sb.ToString();
         }
 
-        public string ParseJvmArguments()
+        public IEnumerable<string> ParseJvmArguments()
         {
             var jvmArgumentsDic = new Dictionary<string, string>
             {
                 {"${natives_directory}", $"\"{NativeRoot}\""},
                 {"${launcher_name}", $"\"{LaunchSettings.LauncherName}\""},
                 {"${launcher_version}", "21"},
-                {"${classpath}", $"\"{ClassPath}\""}
+                {"${classpath}", $"\"{ClassPath}\""},
+                {"${classpath_separator}", ";"},
+                {"${library_directory}", Path.Combine(RootPath, GamePathHelper.GetLibraryRootPath())}
             };
 
-            if (!string.IsNullOrWhiteSpace(VersionInfo.JvmArguments))
-                return StringHelper.ReplaceByDic(VersionInfo.JvmArguments, jvmArgumentsDic);
+            if (VersionInfo.JvmArguments?.Any() ?? false)
+            {
+                foreach (var jvmArg in VersionInfo.JvmArguments)
+                {
+                    yield return StringHelper.ReplaceByDic(jvmArg, jvmArgumentsDic);
+                }
+            }
 
             const string preset =
                 "[{rules: [{action: \"allow\",os:{name: \"osx\"}}],value: [\"-XstartOnFirstThread\"]},{rules: [{action: \"allow\",os:{name: \"windows\"}}],value: \"-XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump\"},{rules: [{action: \"allow\",os:{name: \"windows\",version: \"^10\\\\.\"}}],value: [\"-Dos.name=Windows 10\",\"-Dos.version=10.0\"]},\"-Djava.library.path=${natives_directory}\",\"-Dminecraft.launcher.brand=${launcher_name}\",\"-Dminecraft.launcher.version=${launcher_version}\",\"-cp\",\"${classpath}\"]";
             var preJvmArguments = VersionLocator.ParseJvmArguments(JsonConvert.DeserializeObject<List<object>>(preset));
-            return StringHelper.ReplaceByDic(preJvmArguments, jvmArgumentsDic);
+
+
+            foreach (var preJvmArg in preJvmArguments)
+            {
+                yield return StringHelper.ReplaceByDic(preJvmArg, jvmArgumentsDic);
+            }
         }
 
-        public string ParseGameArguments(AuthResultBase authResult)
+        public IEnumerable<string> ParseGameArguments(AuthResultBase authResult)
         {
             var gameDir = _launchSettings.VersionInsulation
                 ? Path.Combine(RootPath, GamePathHelper.GetGamePath(LaunchSettings.Version))
@@ -185,24 +178,34 @@ namespace ProjBobcat.DefaultComponent.Launch
                 {"${user_type}", "Mojang"} // use default value as placeholder
             };
 
-            return StringHelper.ReplaceByDic(VersionInfo.GameArguments, mcArgumentsDic);
+            foreach (var gameArg in VersionInfo.GameArguments)
+            {
+                yield return StringHelper.ReplaceByDic(gameArg, mcArgumentsDic);
+            }
         }
 
         public List<string> GenerateLaunchArguments()
         {
+            var javaPath = GameProfile?.JavaDir;
+            if (string.IsNullOrEmpty(javaPath))
+            {
+                javaPath = LaunchSettings.FallBackGameArguments?.JavaExecutable ??
+                           LaunchSettings.GameArguments?.JavaExecutable;
+            }
+
             var arguments = new List<string>
             {
-                (string.IsNullOrEmpty(GameProfile?.JavaDir)
-                    ? LaunchSettings.FallBackGameArguments?.JavaExecutable ??
-                      LaunchSettings.GameArguments.JavaExecutable
-                    : GameProfile.JavaDir)?.Trim(),
-                ParseJvmHeadArguments().Trim(),
-                ParseJvmArguments().Trim(),
-                VersionInfo.MainClass,
-                ParseGameArguments(AuthResult).Trim(),
-                ParseAdditionalArguments().Trim()
+                javaPath
             };
 
+            arguments.AddRange(ParseJvmHeadArguments().Select(arg => arg.Trim()));
+            arguments.AddRange(ParseJvmArguments().Select(arg => arg.Trim()));
+
+            arguments.Add(VersionInfo.MainClass);
+
+            arguments.AddRange(ParseGameArguments(AuthResult).Select(arg => arg.Trim()));
+            arguments.AddRange(ParseAdditionalArguments().Select(arg => arg.Trim()));
+            
             return arguments;
         }
 
@@ -210,42 +213,40 @@ namespace ProjBobcat.DefaultComponent.Launch
         ///     解析额外参数（分辨率，服务器地址）
         /// </summary>
         /// <returns></returns>
-        public string ParseAdditionalArguments()
+        public IEnumerable<string> ParseAdditionalArguments()
         {
-            var sb = new StringBuilder();
+            if (!VersionInfo.AvailableGameArguments.Any()) yield break;
+            if (!VersionInfo.AvailableGameArguments.ContainsKey("has_custom_resolution")) yield break;
 
-            if (!VersionInfo.AvailableGameArguments.Any()) return sb.ToString();
-            if (!VersionInfo.AvailableGameArguments.ContainsKey("has_custom_resolution")) return sb.ToString();
-
-            if ((LaunchSettings.GameArguments.Resolution?.Height ?? 0) > 0 &&
-                (LaunchSettings.GameArguments.Resolution?.Width ?? 0) > 0)
+            if ((LaunchSettings.GameArguments?.Resolution?.Height ?? 0) > 0 &&
+                (LaunchSettings.GameArguments?.Resolution?.Width ?? 0) > 0)
             {
-                sb.AppendFormat("--width {0} ",
+                yield return string.Format("--width {0} ",
                     GameProfile.Resolution?.Width ?? LaunchSettings.GameArguments.Resolution.Width);
-                sb.AppendFormat(
+                
+                yield return string.Format(
                     "--height {0} ", GameProfile.Resolution?.Height ?? LaunchSettings.GameArguments.Resolution.Height);
             }
             else if ((LaunchSettings.FallBackGameArguments?.Resolution?.Width ?? 0) > 0
                      && (LaunchSettings.FallBackGameArguments?.Resolution?.Height ?? 0) > 0)
             {
-                sb.AppendFormat(
+                yield return string.Format(
                     "--width {0} ", LaunchSettings.FallBackGameArguments.Resolution.Width);
-                sb.AppendFormat(
+                
+                yield return string.Format(
                     "--height {0} ", LaunchSettings.FallBackGameArguments.Resolution.Height);
             }
 
             if (LaunchSettings.GameArguments.ServerSettings == null &&
-                LaunchSettings.FallBackGameArguments?.ServerSettings == null) return sb.ToString();
+                LaunchSettings.FallBackGameArguments?.ServerSettings == null) yield break;
 
             var serverSettings = LaunchSettings.GameArguments.ServerSettings ??
                                  LaunchSettings.FallBackGameArguments.ServerSettings;
 
-            if (string.IsNullOrEmpty(serverSettings.Address)) return sb.ToString();
+            if (string.IsNullOrEmpty(serverSettings.Address)) yield break;
 
-            sb.AppendFormat("--server {0} ", serverSettings.Address);
-            sb.AppendFormat("--port {0}", serverSettings.Port);
-
-            return sb.ToString();
+            yield return string.Format("--server {0} ", serverSettings.Address);
+            yield return string.Format("--port {0}", serverSettings.Port);
         }
     }
 }

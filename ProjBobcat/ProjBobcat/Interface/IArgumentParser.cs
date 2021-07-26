@@ -9,20 +9,20 @@ namespace ProjBobcat.Interface
         ///     解析JVM核心启动参数（内存大小、Agent等）
         /// </summary>
         /// <returns>解析好的JVM核心启动参数</returns>
-        string ParseJvmHeadArguments();
+        IEnumerable<string> ParseJvmHeadArguments();
 
         /// <summary>
         ///     解析游戏JVM参数
         /// </summary>
         /// <returns>解析好的游戏JVM参数</returns>
-        string ParseJvmArguments();
+        IEnumerable<string> ParseJvmArguments();
 
         /// <summary>
         ///     解析游戏参数
         /// </summary>
         /// <param name="authResult"></param>
         /// <returns>解析好的游戏参数</returns>
-        string ParseGameArguments(AuthResultBase authResult);
+        IEnumerable<string> ParseGameArguments(AuthResultBase authResult);
 
         /// <summary>
         ///     解析部分总成

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -22,6 +23,9 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
     {
         private int _totalDownloaded, _needToDownload, _totalProcessed, _needToProcess;
         public string JavaExecutablePath { get; init; }
+
+        public string MineCraftVersionId { get; set; }
+        public string MineCraftVersion { get; set; }
 
         public string DownloadUrlRoot { get; set; }
         public string ForgeExecutablePath { get; set; }
@@ -179,46 +183,49 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                 e.Key.Equals($"maven/net/minecraftforge/forge/{forgeVersion}/forge-{forgeVersion}-universal.jar",
                     StringComparison.OrdinalIgnoreCase));
 
-            if (forgeUniversalJar != default)
+            if (forgeJar != default)
             {
-                var forgeUniversalSubPath = forgeUniversalJar?.Key[(forgeUniversalJar.Key.IndexOf('/') + 1)..];
-                var forgeUniversalLibPath = Path.Combine(RootPath,
-                    GamePathHelper.GetLibraryPath(forgeUniversalSubPath?.Replace('/', '\\')));
+                if (forgeUniversalJar != default)
+                {
+                    var forgeUniversalSubPath = forgeUniversalJar?.Key[(forgeUniversalJar.Key.IndexOf('/') + 1)..];
+                    var forgeUniversalLibPath = Path.Combine(RootPath,
+                        GamePathHelper.GetLibraryPath(forgeUniversalSubPath?.Replace('/', '\\')));
 
-                if (string.IsNullOrEmpty(forgeUniversalSubPath)
-                    || string.IsNullOrEmpty(forgeUniversalLibPath))
-                    return new ForgeInstallResult
-                    {
-                        Error = new ErrorModel
+                    if (string.IsNullOrEmpty(forgeUniversalSubPath)
+                        || string.IsNullOrEmpty(forgeUniversalLibPath))
+                        return new ForgeInstallResult
                         {
-                            ErrorMessage = "不支持的格式"
-                        },
-                        Succeeded = false
-                    };
+                            Error = new ErrorModel
+                            {
+                                ErrorMessage = "不支持的格式"
+                            },
+                            Succeeded = false
+                        };
 
-                var forgeUniversalLibDir = Path.GetDirectoryName(forgeUniversalLibPath);
-                if (!Directory.Exists(forgeUniversalLibDir))
-                    Directory.CreateDirectory(forgeUniversalLibDir);
+                    var forgeUniversalLibDir = Path.GetDirectoryName(forgeUniversalLibPath);
+                    if (!Directory.Exists(forgeUniversalLibDir))
+                        Directory.CreateDirectory(forgeUniversalLibDir);
 
-                await using var forgeUniversalFs = File.OpenWrite(forgeUniversalLibPath);
-                forgeUniversalJar.WriteTo(forgeUniversalFs);
+                    await using var forgeUniversalFs = File.OpenWrite(forgeUniversalLibPath);
+                    forgeUniversalJar.WriteTo(forgeUniversalFs);
+                }
+
+                var forgeSubPath = forgeJar.Key[(forgeJar.Key.IndexOf('/') + 1)..];
+                var forgeLibPath = Path.Combine(RootPath, GamePathHelper.GetLibraryPath(forgeSubPath.Replace('/', '\\')));
+
+                var forgeLibDir = Path.GetDirectoryName(forgeLibPath);
+                if (!Directory.Exists(forgeLibDir))
+                    Directory.CreateDirectory(forgeLibDir);
+
+                await using var forgeFs = File.OpenWrite(forgeLibPath);
+
+                var fLDi = new DirectoryInfo(Path.GetDirectoryName(forgeLibPath));
+
+                if (!fLDi.Exists)
+                    fLDi.Create();
+
+                forgeJar.WriteTo(forgeFs);
             }
-
-            var forgeSubPath = forgeJar.Key[(forgeJar.Key.IndexOf('/') + 1)..];
-            var forgeLibPath = Path.Combine(RootPath, GamePathHelper.GetLibraryPath(forgeSubPath.Replace('/', '\\')));
-
-            var forgeLibDir = Path.GetDirectoryName(forgeLibPath);
-            if (!Directory.Exists(forgeLibDir))
-                Directory.CreateDirectory(forgeLibDir);
-
-            await using var forgeFs = File.OpenWrite(forgeLibPath);
-
-            var fLDi = new DirectoryInfo(Path.GetDirectoryName(forgeLibPath));
-
-            if (!fLDi.Exists)
-                fLDi.Create();
-
-            forgeJar.WriteTo(forgeFs);
 
             #endregion
 
@@ -268,6 +275,16 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
             }
 
             var procList = new List<ForgeInstallProcessorModel>();
+            var argsReplaceList = new Dictionary<string, string>
+            {
+                {"{SIDE}", "client"},
+                {"{MINECRAFT_JAR}", GamePathHelper.GetVersionJar(RootPath, MineCraftVersionId)},
+                {"{MINECRAFT_VERSION}", MineCraftVersion},
+                {"{ROOT}", RootPath},
+                {"{INSTALLER}", ForgeExecutablePath},
+                {"{LIBRARY_DIR}", Path.Combine(RootPath, GamePathHelper.GetLibraryRootPath())}
+            };
+
             foreach (var proc in ipModel.Processors)
             {
                 var outputs = new Dictionary<string, string>();
@@ -276,10 +293,15 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                     foreach (var (k, v) in proc.Outputs)
                         outputs.TryAdd(ResolveVariableRegex(k), ResolveVariableRegex(v));
 
+                var args = proc.Arguments
+                    .Select(arg => StringHelper.ReplaceByDic(arg, argsReplaceList))
+                    .Select(ResolvePathRegex)
+                    .Select(ResolveVariableRegex)
+                    .ToList();
                 var model = new ForgeInstallProcessorModel
                 {
                     Processor = proc,
-                    Arguments = proc.Arguments.Select(ResolvePathRegex).Select(ResolveVariableRegex).ToList(),
+                    Arguments = args,
                     Outputs = outputs
                 };
 
@@ -298,6 +320,8 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
 
             var hasDownloadFailed = false;
 
+            var retryCount = 0;
+            var failedFiles = new ConcurrentBag<DownloadFile>();
             foreach (var lib in resolvedLibs)
             {
                 if (lib.Name.StartsWith("net.minecraftforge:forge", StringComparison.OrdinalIgnoreCase))
@@ -308,6 +332,7 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                 var path = Path.Combine(RootPath,
                     GamePathHelper.GetLibraryPath(lib.Path[..symbolIndex].Replace('/', '\\')));
 
+                /*
                 if (!string.IsNullOrEmpty(DownloadUrlRoot))
                 {
                     var urlRoot = HttpHelper.RegexMatchUri(lib.Url);
@@ -317,6 +342,7 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
 
                     lib.Url = $"{DownloadUrlRoot}{url}";
                 }
+                */
 
                 var libDi = new DirectoryInfo(path);
 
@@ -335,7 +361,7 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
 
                         if (!(args.Success ?? false))
                         {
-                            hasDownloadFailed = true;
+                            failedFiles.Add(args.File);
                             return;
                         }
 
@@ -345,7 +371,9 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                         var filePath = Path.Combine(path, fileName);
                         var sha1 = CryptoHelper.ComputeFileHash(filePath, new SHA1Managed());
                         if (!sha1.Equals(lib.Sha1, StringComparison.OrdinalIgnoreCase))
-                            hasDownloadFailed = true;
+                        {
+                            failedFiles.Add(args.File);
+                        }
                     },
                     CheckSum = lib.Sha1,
                     DownloadPath = path,
@@ -360,8 +388,25 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
             _needToDownload = libDownloadInfo.Count;
             // await DownloadHelper.AdvancedDownloadListFile(libDownloadInfo);
 
-            foreach (var libDi in libDownloadInfo) await DownloadHelper.DownloadData(libDi);
+            foreach (var libDi in libDownloadInfo)
+            {
+                await DownloadHelper.DownloadData(libDi);
+            }
 
+            while (failedFiles.Any() && retryCount < 3)
+            {
+                var fileList = new List<DownloadFile>(failedFiles);
+                failedFiles.Clear();
+
+                foreach (var libDi in fileList)
+                {
+                    await DownloadHelper.DownloadData(libDi);
+                }
+
+                retryCount++;
+            }
+
+            hasDownloadFailed = failedFiles.Any();
             if (hasDownloadFailed)
                 return new ForgeInstallResult
                 {

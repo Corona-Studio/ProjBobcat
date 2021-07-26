@@ -59,7 +59,7 @@ namespace ProjBobcat.Class.Helper
         }
 
         /// <summary>
-        ///     .minecraft/libraries/{libraryPath}/
+        ///     .minecraft/libraries/
         /// </summary>
         /// <returns></returns>
         public static string GetLibraryRootPath()

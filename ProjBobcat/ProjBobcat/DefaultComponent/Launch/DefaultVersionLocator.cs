@@ -56,22 +56,38 @@ namespace ProjBobcat.DefaultComponent.Launch
             return version;
         }
 
-        public override string ParseJvmArguments(List<object> arguments)
+        public override IEnumerable<string> ParseJvmArguments(List<object> arguments)
         {
             if (!(arguments?.Any() ?? false))
-                return string.Empty;
+                yield break;
 
-            var sb = new StringBuilder();
+            var pArgIndex = arguments.IndexOf("-p");
+            if (pArgIndex != -1)
+            {
+                if (arguments[pArgIndex + 1] is string pArg)
+                {
+                    arguments[pArgIndex + 1] = $"\"{pArg.Replace('/', '\\')}\"";
+                }
+            }
+
+            
+            var legacyLibPathIndex = arguments.IndexOf("-DlibraryDirectory=${library_directory}");
+            if (legacyLibPathIndex != -1)
+            {
+                if (arguments[legacyLibPathIndex] is string pArg)
+                {
+                    arguments[legacyLibPathIndex] = pArg.Replace("${library_directory}", $"\"${{library_directory}}\"");
+                }
+            }
 
             foreach (var jvmRule in arguments)
             {
-                if (!(jvmRule is JObject))
+                if (jvmRule is not JObject jvmRuleObj)
                 {
-                    sb.Append(' ').Append(jvmRule);
+                    yield return jvmRule.ToString();
                     continue;
                 }
 
-                var jvmRuleObj = (JObject) jvmRule;
                 var flag = true;
                 if (jvmRuleObj.ContainsKey("rules"))
                     foreach (var rule in jvmRuleObj["rules"].Select(r => r.ToObject<JvmRules>()))
@@ -100,17 +116,14 @@ namespace ProjBobcat.DefaultComponent.Launch
 
                 if (jvmRuleObj["value"].Type == JTokenType.Array)
                 {
-                    sb.Append(' ');
                     foreach (var arg in jvmRuleObj["value"])
-                        sb.Append(' ').Append(StringHelper.FixArgument(arg.ToString()));
+                        yield return StringHelper.FixArgument(arg.ToString());
                 }
                 else
                 {
-                    sb.Append(' ').Append(StringHelper.FixArgument(jvmRuleObj["value"].ToString()));
+                    yield return StringHelper.FixArgument(jvmRuleObj["value"].ToString());
                 }
             }
-
-            return sb.ToString().Trim();
         }
 
         /// <summary>
@@ -118,27 +131,27 @@ namespace ProjBobcat.DefaultComponent.Launch
         /// </summary>
         /// <param name="arguments"></param>
         /// <returns></returns>
-        private protected override ValueTuple<string, Dictionary<string, string>> ParseGameArguments(
+        private protected override ValueTuple<IEnumerable<string>, Dictionary<string, string>> ParseGameArguments(
             ValueTuple<string, List<object>> arguments)
         {
-            var sb = new StringBuilder();
+            var argList = new List<string>();
             var availableArguments = new Dictionary<string, string>();
 
             var (item1, item2) = arguments;
             if (!string.IsNullOrEmpty(item1))
             {
-                sb.Append(item1);
-                return (sb.ToString(), availableArguments);
+                argList.Add(item1);
+                return (argList, availableArguments);
             }
 
             if (!(item2?.Any() ?? false))
-                return (sb.ToString(), availableArguments);
+                return (argList, availableArguments);
 
             foreach (var gameRule in item2)
             {
                 if (gameRule is not JObject gameRuleObj)
                 {
-                    sb.Append(' ').Append(gameRule);
+                    argList.Add(gameRule.ToString());
                     continue;
                 }
 
@@ -164,7 +177,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                 if (!string.IsNullOrEmpty(ruleValue)) availableArguments.Add(ruleKey, ruleValue);
             }
 
-            return (sb.ToString().Trim(), availableArguments);
+            return (argList, availableArguments);
             ;
         }
 
@@ -353,8 +366,8 @@ namespace ProjBobcat.DefaultComponent.Launch
                 // Inheritance exists.
 
                 var flag = true;
-                var jvmSb = new StringBuilder();
-                var gameArgsSb = new StringBuilder();
+                var jvmArgList = new List<string>();
+                var gameArgList = new List<string>();
 
                 result.RootVersion = inherits.Last().Id;
 
@@ -374,11 +387,11 @@ namespace ProjBobcat.DefaultComponent.Launch
                         result.Libraries = rootLibs.Item2;
                         result.Natives = rootLibs.Item1;
 
-                        jvmSb.Append(ParseJvmArguments(inherits[i].Arguments?.Jvm));
+                        jvmArgList.AddRange(ParseJvmArguments(inherits[i].Arguments?.Jvm));
 
                         var rootArgs = ParseGameArguments((inherits[i].MinecraftArguments,
                             inherits[i].Arguments?.Game));
-                        gameArgsSb.Append(rootArgs.Item1);
+                        gameArgList.AddRange(rootArgs.Item1);
                         result.AvailableGameArguments = rootArgs.Item2;
 
                         flag = false;
@@ -426,8 +439,8 @@ namespace ProjBobcat.DefaultComponent.Launch
 
                     if (string.IsNullOrEmpty(inherits[i].MinecraftArguments))
                     {
-                        jvmSb.Append(' ').Append(jvmArgs);
-                        gameArgsSb.Append(' ').Append(middleGameArgs.Item1);
+                        jvmArgList.AddRange(jvmArgs);
+                        gameArgList.AddRange(middleGameArgs.Item1);
                         result.AvailableGameArguments = result.AvailableGameArguments
                             .Union(middleGameArgs.Item2)
                             .ToDictionary(x => x.Key, y => y.Value);
@@ -443,13 +456,13 @@ namespace ProjBobcat.DefaultComponent.Launch
                     result.MainClass = inherits[i].MainClass ?? result.MainClass;
                 }
 
-                var finalJvmArgs = (result.JvmArguments ?? string.Empty).Split(' ').ToList();
-                finalJvmArgs.AddRange(jvmSb.ToString().Split(' '));
-                result.JvmArguments = string.Join(" ", finalJvmArgs.Distinct());
+                var finalJvmArgs = result.JvmArguments?.ToList() ?? new List<string>();
+                finalJvmArgs.AddRange(jvmArgList);
+                result.JvmArguments = finalJvmArgs.Distinct();
 
-                var finalGameArgs = (result.GameArguments ?? string.Empty).Split(' ').ToList();
-                finalGameArgs.AddRange(gameArgsSb.ToString().Split(' '));
-                result.GameArguments = string.Join(" ", finalGameArgs.Distinct());
+                var finalGameArgs = result.GameArguments?.ToList() ?? new List<string>();
+                finalGameArgs.AddRange(gameArgList);
+                result.GameArguments = finalGameArgs.Distinct();
 
                 goto ProcessProfile;
             }

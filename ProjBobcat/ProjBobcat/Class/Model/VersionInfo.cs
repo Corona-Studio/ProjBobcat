@@ -24,8 +24,8 @@ namespace ProjBobcat.Class.Model
         public Asset AssetInfo { get; set; }
         public List<FileInfo> Libraries { get; set; }
         public List<NativeFileInfo> Natives { get; set; }
-        public string JvmArguments { get; set; }
-        public string GameArguments { get; set; }
+        public IEnumerable<string> JvmArguments { get; set; }
+        public IEnumerable<string> GameArguments { get; set; }
         public Dictionary<string, string> AvailableGameArguments { get; set; }
 
 #nullable enable

@@ -28,6 +28,6 @@ namespace ProjBobcat.Interface
         /// </summary>
         /// <param name="arguments"></param>
         /// <returns></returns>
-        string ParseJvmArguments(List<object> arguments);
+        IEnumerable<string> ParseJvmArguments(List<object> arguments);
     }
 }
