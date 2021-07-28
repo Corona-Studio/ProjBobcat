@@ -12,6 +12,8 @@ namespace ProjBobcat.Class.Model.Forge
 
     public class ForgeInstallProfileProcessor
     {
+        [JsonProperty("sides")] public List<string> Sides { get; set; }
+
         [JsonProperty("jar")] public string Jar { get; set; }
 
         [JsonProperty("classpath")] public List<string> ClassPath { get; set; }

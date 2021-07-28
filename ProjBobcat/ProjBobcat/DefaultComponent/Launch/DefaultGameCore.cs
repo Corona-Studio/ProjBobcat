@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
@@ -222,10 +223,20 @@ namespace ProjBobcat.DefaultComponent.Launch
                 var executable = arguments[0];
                 arguments.RemoveAt(0);
 
+                /*
+                for (var i = 0; i < arguments.Count; i++)
+                {
+                    if (arguments[i].Contains(' '))
+                        arguments[i] = $"\"{arguments[i]}\"";
+                }
+                */
+
+                // var totalArg = string.Join(' ', arguments);
+
                 //通过String Builder格式化参数。（转化成字符串）
                 //Format the arguments using string builder.(Convert to string)
                 // arguments.ForEach(arg => sb.Append(arg.Trim()).Append(' '));
-                InvokeLaunchLogThenStart(string.Join(' ', arguments), ref prevSpan, ref stopwatch);
+                InvokeLaunchLogThenStart(string.Join(Environment.NewLine, arguments), ref prevSpan, ref stopwatch);
 
                 #endregion
 
@@ -303,6 +314,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                     RedirectStandardError = true,
                     RedirectStandardOutput = true
                 };
+
                 arguments.ForEach(psi.ArgumentList.Add);
 
                 var launchWrapper = new LaunchWrapper(authResult)

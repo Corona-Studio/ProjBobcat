@@ -61,6 +61,7 @@ namespace ProjBobcat.DefaultComponent.Launch
             if (!(arguments?.Any() ?? false))
                 yield break;
 
+            /*
             var pArgIndex = arguments.IndexOf("-p");
             if (pArgIndex != -1)
             {
@@ -79,6 +80,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                     arguments[legacyLibPathIndex] = pArg.Replace("${library_directory}", $"\"${{library_directory}}\"");
                 }
             }
+            */
 
             foreach (var jvmRule in arguments)
             {
@@ -117,11 +119,12 @@ namespace ProjBobcat.DefaultComponent.Launch
                 if (jvmRuleObj["value"].Type == JTokenType.Array)
                 {
                     foreach (var arg in jvmRuleObj["value"])
-                        yield return StringHelper.FixArgument(arg.ToString());
+                        yield return arg.ToString(); //StringHelper.FixArgument(arg.ToString());
                 }
                 else
                 {
-                    yield return StringHelper.FixArgument(jvmRuleObj["value"].ToString());
+                    yield return
+                        jvmRuleObj["value"].ToString(); // StringHelper.FixArgument(jvmRuleObj["value"].ToString());
                 }
             }
         }
@@ -400,10 +403,13 @@ namespace ProjBobcat.DefaultComponent.Launch
 
                     var middleLibs = GetNatives(inherits[i].Libraries);
 
+                    result.Libraries.AddRange(middleLibs.Item2);
+                    /*
                     foreach (var mL in middleLibs.Item2)
                     {
                         var mLMaven = mL.Name.ResolveMavenString();
                         var mLFlag = false;
+
                         for (var j = 0; j < result.Libraries.Count; j++)
                         {
                             var lMaven = result.Libraries[j].Name.ResolveMavenString();
@@ -424,6 +430,7 @@ namespace ProjBobcat.DefaultComponent.Launch
 
                         result.Libraries.Add(mL);
                     }
+                    */
 
                     var currentNativesNames = new List<string>();
                     result.Natives.ForEach(n => { currentNativesNames.Add(n.FileInfo.Name); });
@@ -458,11 +465,11 @@ namespace ProjBobcat.DefaultComponent.Launch
 
                 var finalJvmArgs = result.JvmArguments?.ToList() ?? new List<string>();
                 finalJvmArgs.AddRange(jvmArgList);
-                result.JvmArguments = finalJvmArgs.Distinct();
+                result.JvmArguments = finalJvmArgs; //.Distinct();
 
                 var finalGameArgs = result.GameArguments?.ToList() ?? new List<string>();
                 finalGameArgs.AddRange(gameArgList);
-                result.GameArguments = finalGameArgs.Distinct();
+                result.GameArguments = finalGameArgs; //.Distinct();
 
                 goto ProcessProfile;
             }

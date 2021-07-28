@@ -254,7 +254,7 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                     "MINECRAFT_JAR",
                     new ForgeInstallProfileData
                     {
-                        Client = GamePathHelper.GetVersionJar(RootPath, ipModel.MineCraft)
+                        Client = GamePathHelper.GetVersionJar(RootPath, MineCraftVersionId)
                     }
                 }
             };
@@ -287,6 +287,12 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
 
             foreach (var proc in ipModel.Processors)
             {
+                if (proc.Sides != null &&
+                    proc.Sides.Any() &&
+                    !proc.Sides.Any(s => s.Equals("client", StringComparison.OrdinalIgnoreCase))
+                )
+                    continue;
+
                 var outputs = new Dictionary<string, string>();
 
                 if (proc.Outputs?.Any() ?? false)
@@ -324,7 +330,10 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
             var failedFiles = new ConcurrentBag<DownloadFile>();
             foreach (var lib in resolvedLibs)
             {
-                if (lib.Name.StartsWith("net.minecraftforge:forge", StringComparison.OrdinalIgnoreCase))
+                if (
+                    lib.Name.StartsWith("net.minecraftforge:forge", StringComparison.OrdinalIgnoreCase) &&
+                    string.IsNullOrEmpty(lib.Url)
+                )
                     continue;
 
                 var symbolIndex = lib.Path.LastIndexOf('/');
@@ -469,23 +478,29 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                 };
 
                 var p = Process.Start(pi);
+                var logSb = new StringBuilder();
                 var errSb = new StringBuilder();
 
                 p.OutputDataReceived += (_, args) =>
                 {
                     if (string.IsNullOrEmpty(args.Data)) return;
 
+                    logSb.AppendLine(args.Data);
+
+                    var data = args.Data?.Replace(RootPath, ".")?.Trim();
                     var progress = (double) _totalProcessed / _needToProcess;
-                    InvokeStatusChangedEvent($"{args.Data} <安装信息> ( {_totalProcessed} / {_needToProcess} )", progress);
+                    InvokeStatusChangedEvent($"{data} <安装信息> ( {_totalProcessed} / {_needToProcess} )", progress);
                 };
 
                 p.ErrorDataReceived += (_, args) =>
                 {
                     if (string.IsNullOrEmpty(args.Data)) return;
 
-                    errSb.Append(args.Data);
+                    errSb.AppendLine(args.Data);
+
                     var progress = (double) _totalProcessed / _needToProcess;
-                    InvokeStatusChangedEvent($"{args.Data} <错误> ( {_totalProcessed} / {_needToProcess} )", progress);
+                    var data = args.Data?.Replace(RootPath, ".")?.Trim();
+                    InvokeStatusChangedEvent($"{data} <错误> ( {_totalProcessed} / {_needToProcess} )", progress);
                 };
 
                 p.BeginOutputReadLine();
@@ -494,6 +509,12 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                 _totalProcessed++;
                 await p.WaitForExitAsync();
 
+                var installLogPath = Path.Combine(RootPath, GamePathHelper.GetGamePath(id));
+
+                if(logSb.Length != 0)
+                    await File.WriteAllTextAsync(Path.Combine(installLogPath, $"PROCESSOR #{_totalProcessed}_Logs.log"), logSb.ToString());
+                if(errSb.Length != 0)
+                    await File.WriteAllTextAsync(Path.Combine(installLogPath, $"PROCESSOR #{_totalProcessed}_Errors.log"), errSb.ToString());
 
                 if (errSb.Length != 0)
                     return new ForgeInstallResult

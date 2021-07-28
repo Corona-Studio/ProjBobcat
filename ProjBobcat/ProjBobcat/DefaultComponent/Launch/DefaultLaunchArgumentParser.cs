@@ -46,11 +46,15 @@ namespace ProjBobcat.DefaultComponent.Launch
             {
                 sb.AppendFormat("{0};", Path.Combine(RootPath, GamePathHelper.GetLibraryPath(lib.Path).Replace('/', '\\')));
             }
-            
-            var rootJarPath = string.IsNullOrEmpty(rootVersion)
-                ? GamePathHelper.GetGameExecutablePath(launchSettings.Version)
-                : GamePathHelper.GetGameExecutablePath(rootVersion);
-            sb.Append(Path.Combine(RootPath, rootJarPath));
+
+
+            if (!VersionInfo.MainClass.Equals("cpw.mods.bootstraplauncher.BootstrapLauncher", StringComparison.OrdinalIgnoreCase))
+            {
+                var rootJarPath = string.IsNullOrEmpty(rootVersion)
+                    ? GamePathHelper.GetGameExecutablePath(launchSettings.Version)
+                    : GamePathHelper.GetGameExecutablePath(rootVersion);
+                sb.Append(Path.Combine(RootPath, rootJarPath));
+            }
 
             ClassPath = sb.ToString();
             LastAuthResult = LaunchSettings.Authenticator.GetLastAuthResult();
@@ -132,10 +136,10 @@ namespace ProjBobcat.DefaultComponent.Launch
         {
             var jvmArgumentsDic = new Dictionary<string, string>
             {
-                {"${natives_directory}", $"\"{NativeRoot}\""},
-                {"${launcher_name}", $"\"{LaunchSettings.LauncherName}\""},
+                {"${natives_directory}", NativeRoot},
+                {"${launcher_name}", LaunchSettings.LauncherName},
                 {"${launcher_version}", "21"},
-                {"${classpath}", $"\"{ClassPath}\""},
+                {"${classpath}", ClassPath},
                 {"${classpath_separator}", ";"},
                 {"${library_directory}", Path.Combine(RootPath, GamePathHelper.GetLibraryRootPath())}
             };
@@ -146,12 +150,12 @@ namespace ProjBobcat.DefaultComponent.Launch
                 {
                     yield return StringHelper.ReplaceByDic(jvmArg, jvmArgumentsDic);
                 }
+                yield break;
             }
 
             const string preset =
                 "[{rules: [{action: \"allow\",os:{name: \"osx\"}}],value: [\"-XstartOnFirstThread\"]},{rules: [{action: \"allow\",os:{name: \"windows\"}}],value: \"-XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump\"},{rules: [{action: \"allow\",os:{name: \"windows\",version: \"^10\\\\.\"}}],value: [\"-Dos.name=Windows 10\",\"-Dos.version=10.0\"]},\"-Djava.library.path=${natives_directory}\",\"-Dminecraft.launcher.brand=${launcher_name}\",\"-Dminecraft.launcher.version=${launcher_version}\",\"-cp\",\"${classpath}\"]";
             var preJvmArguments = VersionLocator.ParseJvmArguments(JsonConvert.DeserializeObject<List<object>>(preset));
-
 
             foreach (var preJvmArg in preJvmArguments)
             {
@@ -166,11 +170,11 @@ namespace ProjBobcat.DefaultComponent.Launch
                 : RootPath;
             var mcArgumentsDic = new Dictionary<string, string>
             {
-                {"${version_name}", $"\"{LaunchSettings.Version}\""},
-                {"${version_type}", GameProfile?.Type ?? $"\"{LaunchSettings.LauncherName}\""},
-                {"${assets_root}", $"\"{AssetRoot}\""},
-                {"${assets_index_name}", $"\"{VersionInfo.AssetInfo.Id}\""},
-                {"${game_directory}", $"\"{gameDir}\""},
+                {"${version_name}", LaunchSettings.Version},
+                {"${version_type}", GameProfile?.Type ?? LaunchSettings.LauncherName},
+                {"${assets_root}", AssetRoot},
+                {"${assets_index_name}", VersionInfo.AssetInfo.Id},
+                {"${game_directory}", gameDir},
                 {"${auth_player_name}", authResult?.SelectedProfile?.Name},
                 {"${auth_uuid}", authResult?.SelectedProfile?.UUID.ToString()},
                 {"${auth_access_token}", authResult?.AccessToken},
