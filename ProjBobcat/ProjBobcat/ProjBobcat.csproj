@@ -40,10 +40,6 @@
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>
-    <None Include=".nuget\Bobcat.png">
-      <Pack>True</Pack>
-      <PackagePath></PackagePath>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="ConfigureAwait.Fody">
@@ -74,15 +70,5 @@
       <Version>0.28.3</Version>
     </PackageReference>
     <PackageReference Include="System.Management" Version="5.0.0" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Remove="DefaultComponent\ForgeInstaller\HighVersionForgeInstaller.cs" />
-    <Compile Remove="DefaultComponent\ForgeInstaller\LegacyForgeInstaller.cs" />
-    <Compile Remove="Event\ForgeInstallStageChangedEventArgs.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="Microsoft.Win32.Registry">
-      <HintPath>..\..\..\..\..\..\..\Program Files\dotnet\packs\Microsoft.WindowsDesktop.App.Ref\5.0.0\ref\net5.0\Microsoft.Win32.Registry.dll</HintPath>
-    </Reference>
   </ItemGroup>
 </Project>
