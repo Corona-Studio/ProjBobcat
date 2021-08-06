@@ -307,7 +307,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                     ? Path.Combine(RootPath, GamePathHelper.GetGamePath(settings.Version))
                     : RootPath;
 
-                var psi = new ProcessStartInfo(executable)
+                var psi = new ProcessStartInfo(executable, string.Join(' ', arguments))
                 {
                     UseShellExecute = false,
                     WorkingDirectory = rootPath,
@@ -315,7 +315,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                     RedirectStandardOutput = true
                 };
 
-                arguments.ForEach(psi.ArgumentList.Add);
+                // arguments.ForEach(psi.ArgumentList.Add);
 
                 var launchWrapper = new LaunchWrapper(authResult)
                 {

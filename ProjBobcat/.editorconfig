@@ -8,3 +8,6 @@ dotnet_diagnostic.CS1591.severity = suggestion
 dotnet_diagnostic.CA2007.severity = none
 
 dotnet_diagnostic.CA1816.severity = silent
+
+# IDE0040: 添加可访问性修饰符
+dotnet_style_require_accessibility_modifiers = never

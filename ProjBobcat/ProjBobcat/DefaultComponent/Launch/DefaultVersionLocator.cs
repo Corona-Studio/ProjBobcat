@@ -119,12 +119,12 @@ namespace ProjBobcat.DefaultComponent.Launch
                 if (jvmRuleObj["value"].Type == JTokenType.Array)
                 {
                     foreach (var arg in jvmRuleObj["value"])
-                        yield return arg.ToString(); //StringHelper.FixArgument(arg.ToString());
+                        yield return StringHelper.FixArgument(arg.ToString()); // arg.ToString();
                 }
                 else
                 {
                     yield return
-                        jvmRuleObj["value"].ToString(); // StringHelper.FixArgument(jvmRuleObj["value"].ToString());
+                        StringHelper.FixArgument(jvmRuleObj["value"].ToString()); // jvmRuleObj["value"].ToString();
                 }
             }
         }
@@ -181,7 +181,6 @@ namespace ProjBobcat.DefaultComponent.Launch
             }
 
             return (argList, availableArguments);
-            ;
         }
 
         /// <summary>
@@ -206,6 +205,26 @@ namespace ProjBobcat.DefaultComponent.Launch
                 // 不同版本的Minecraft有不同的library JSON字符串的结构。
                 // Different versions of Minecraft have different library JSON's structure.
 
+                var isNative = lib.Natives?.Any() ?? false;
+                if (isNative)
+                {
+                    if (lib.Downloads.Classifiers == null) continue;
+
+                    var key = lib.Natives.ContainsKey("windows")
+                        ? lib.Natives["windows"].Replace("${arch}", SystemArch.CurrentArch.ToString("{0}"))
+                        : "natives-windows";
+
+                    if (lib.Downloads.Classifiers.ContainsKey(key)) lib.Downloads.Classifiers[key].Name = lib.Name;
+
+                    result.Item1.Add(new NativeFileInfo
+                    {
+                        Extract = lib.Extract,
+                        FileInfo = lib.Downloads.Classifiers[key]
+                    });
+
+                    continue;
+                }
+
                 if (lib.Downloads == null)
                 {
                     // 一些Library项不包含下载数据，所以我们直接解析Maven的名称来猜测下载链接。
@@ -225,7 +244,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                     });
                     continue;
                 }
-
+                
                 if (lib.Downloads?.Artifact != null)
                 {
                     if (lib.Downloads.Artifact.Name == null)
@@ -245,24 +264,8 @@ namespace ProjBobcat.DefaultComponent.Launch
                             {
                                 Name = lib.Name
                             });
-                        continue;
                     }
                 }
-
-                if (!(lib.Natives?.Any() ?? false)) continue;
-                if (lib.Downloads.Classifiers == null) continue;
-
-                var key = lib.Natives.ContainsKey("windows")
-                    ? lib.Natives["windows"].Replace("${arch}", SystemArch.CurrentArch.ToString("{0}"))
-                    : "natives-windows";
-
-                if (lib.Downloads.Classifiers.ContainsKey(key)) lib.Downloads.Classifiers[key].Name = lib.Name;
-
-                result.Item1.Add(new NativeFileInfo
-                {
-                    Extract = lib.Extract,
-                    FileInfo = lib.Downloads.Classifiers[key]
-                });
             }
 
             return result;
@@ -394,6 +397,7 @@ namespace ProjBobcat.DefaultComponent.Launch
 
                         var rootArgs = ParseGameArguments((inherits[i].MinecraftArguments,
                             inherits[i].Arguments?.Game));
+
                         gameArgList.AddRange(rootArgs.Item1);
                         result.AvailableGameArguments = rootArgs.Item2;
 
@@ -403,8 +407,8 @@ namespace ProjBobcat.DefaultComponent.Launch
 
                     var middleLibs = GetNatives(inherits[i].Libraries);
 
-                    result.Libraries.AddRange(middleLibs.Item2);
-                    /*
+                    // result.Libraries.AddRange(middleLibs.Item2);
+                    
                     foreach (var mL in middleLibs.Item2)
                     {
                         var mLMaven = mL.Name.ResolveMavenString();
@@ -430,7 +434,7 @@ namespace ProjBobcat.DefaultComponent.Launch
 
                         result.Libraries.Add(mL);
                     }
-                    */
+                    
 
                     var currentNativesNames = new List<string>();
                     result.Natives.ForEach(n => { currentNativesNames.Add(n.FileInfo.Name); });
@@ -469,6 +473,7 @@ namespace ProjBobcat.DefaultComponent.Launch
 
                 var finalGameArgs = result.GameArguments?.ToList() ?? new List<string>();
                 finalGameArgs.AddRange(gameArgList);
+                finalGameArgs = finalGameArgs.Select(arg => arg.Split(' ')).SelectMany(a => a).Distinct().ToList();
                 result.GameArguments = finalGameArgs; //.Distinct();
 
                 goto ProcessProfile;

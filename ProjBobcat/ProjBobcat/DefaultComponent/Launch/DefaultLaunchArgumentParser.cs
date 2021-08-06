@@ -80,9 +80,13 @@ namespace ProjBobcat.DefaultComponent.Launch
 
             if (!string.IsNullOrEmpty(gameArgs.AgentPath))
             {
-                yield return $"-javaagent:\"{gameArgs.AgentPath}\"";
+                var javaAgentStr = $"-javaagent:\"{gameArgs.AgentPath}\"";
+
                 if (!string.IsNullOrEmpty(gameArgs.JavaAgentAdditionPara))
-                    yield return $"={gameArgs.JavaAgentAdditionPara}";
+                    javaAgentStr += $"={gameArgs.JavaAgentAdditionPara}";
+
+                yield return javaAgentStr;
+
             }
 
             if (string.IsNullOrEmpty(GameProfile?.JavaArgs))
@@ -136,13 +140,16 @@ namespace ProjBobcat.DefaultComponent.Launch
         {
             var jvmArgumentsDic = new Dictionary<string, string>
             {
-                {"${natives_directory}", NativeRoot},
-                {"${launcher_name}", LaunchSettings.LauncherName},
-                {"${launcher_version}", "21"},
-                {"${classpath}", ClassPath},
+                {"${natives_directory}", $"\"{NativeRoot}\""},
+                {"${launcher_name}", $"\"{LaunchSettings.LauncherName}\""},
+                {"${launcher_version}", "32"},
+                {"${classpath}", $"\"{ClassPath}\""},
                 {"${classpath_separator}", ";"},
-                {"${library_directory}", Path.Combine(RootPath, GamePathHelper.GetLibraryRootPath())}
+                {"${library_directory}", $"\"{Path.Combine(RootPath, GamePathHelper.GetLibraryRootPath())}\""}
             };
+
+            yield return "-Dfml.ignoreInvalidMinecraftCertificates=true";
+            yield return "-Dfml.ignorePatchDiscrepancies=true";
 
             if (VersionInfo.JvmArguments?.Any() ?? false)
             {
@@ -170,11 +177,11 @@ namespace ProjBobcat.DefaultComponent.Launch
                 : RootPath;
             var mcArgumentsDic = new Dictionary<string, string>
             {
-                {"${version_name}", LaunchSettings.Version},
-                {"${version_type}", GameProfile?.Type ?? LaunchSettings.LauncherName},
-                {"${assets_root}", AssetRoot},
+                {"${version_name}", $"\"{LaunchSettings.Version}\""},
+                {"${version_type}", $"\"{GameProfile?.Type ?? LaunchSettings.LauncherName}\""},
+                {"${assets_root}", $"\"{AssetRoot}\""},
                 {"${assets_index_name}", VersionInfo.AssetInfo.Id},
-                {"${game_directory}", gameDir},
+                {"${game_directory}", $"\"{gameDir}\""},
                 {"${auth_player_name}", authResult?.SelectedProfile?.Name},
                 {"${auth_uuid}", authResult?.SelectedProfile?.UUID.ToString()},
                 {"${auth_access_token}", authResult?.AccessToken},
@@ -225,20 +232,20 @@ namespace ProjBobcat.DefaultComponent.Launch
             if ((LaunchSettings.GameArguments?.Resolution?.Height ?? 0) > 0 &&
                 (LaunchSettings.GameArguments?.Resolution?.Width ?? 0) > 0)
             {
-                yield return string.Format("--width {0} ",
-                    GameProfile.Resolution?.Width ?? LaunchSettings.GameArguments.Resolution.Width);
-                
-                yield return string.Format(
-                    "--height {0} ", GameProfile.Resolution?.Height ?? LaunchSettings.GameArguments.Resolution.Height);
+                yield return "--width";
+                yield return (GameProfile.Resolution?.Width ?? LaunchSettings.GameArguments.Resolution.Width).ToString();
+
+                yield return "--height";
+                yield return (GameProfile.Resolution?.Height ?? LaunchSettings.GameArguments.Resolution.Height).ToString();
             }
             else if ((LaunchSettings.FallBackGameArguments?.Resolution?.Width ?? 0) > 0
                      && (LaunchSettings.FallBackGameArguments?.Resolution?.Height ?? 0) > 0)
             {
-                yield return string.Format(
-                    "--width {0} ", LaunchSettings.FallBackGameArguments.Resolution.Width);
-                
-                yield return string.Format(
-                    "--height {0} ", LaunchSettings.FallBackGameArguments.Resolution.Height);
+                yield return "--width";
+                yield return LaunchSettings.FallBackGameArguments.Resolution.Width.ToString();
+
+                yield return "--height";
+                yield return LaunchSettings.FallBackGameArguments.Resolution.Height.ToString();
             }
 
             if (LaunchSettings.GameArguments.ServerSettings == null &&
@@ -249,8 +256,11 @@ namespace ProjBobcat.DefaultComponent.Launch
 
             if (string.IsNullOrEmpty(serverSettings.Address)) yield break;
 
-            yield return string.Format("--server {0} ", serverSettings.Address);
-            yield return string.Format("--port {0}", serverSettings.Port);
+            yield return "--server";
+            yield return serverSettings.Address;
+
+            yield return "--port";
+            yield return serverSettings.Port.ToString();
         }
     }
 }

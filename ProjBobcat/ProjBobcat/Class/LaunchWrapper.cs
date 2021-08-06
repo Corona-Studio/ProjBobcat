@@ -57,6 +57,13 @@ namespace ProjBobcat.Class
             Process.Exited += ProcessOnExited;
         }
 
+        void DisposeManaged()
+        {
+            Process.OutputDataReceived -= ProcessOnOutputDataReceived;
+            Process.ErrorDataReceived -= ProcessOnErrorDataReceived;
+            Process.Exited -= ProcessOnExited;
+        }
+
         private void ProcessOnExited(object sender, EventArgs e)
         {
             ExitCode = Process.ExitCode;
