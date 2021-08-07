@@ -23,6 +23,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
             init => _assetIndexUrlRoot = value.TrimEnd('/');
         }
 
+        public bool CheckLocalFiles { get; set; }
         public string AssetUriRoot { get; init; } = "https://resources.download.minecraft.net/";
 
         public string BasePath
@@ -119,9 +120,9 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                 var path = Path.Combine(assetObjectsDi.FullName, twoDigitsHash);
                 var filePath = Path.Combine(path, fi.Hash);
 
-                LogGameResourceInfoResolveStatus($"检索并验证 Asset 资源：{hash}");
-
                 if (File.Exists(filePath))
+                {
+                    if (!CheckLocalFiles) continue;
                     try
                     {
                         var computedHash = await CryptoHelper.ComputeFileHashAsync(filePath, hA);
@@ -132,6 +133,9 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                     catch (Exception)
                     {
                     }
+                }
+
+                LogGameResourceInfoResolveStatus($"检索并验证 Asset 资源：{hash}");
 
                 yield return new AssetDownloadInfo
                 {

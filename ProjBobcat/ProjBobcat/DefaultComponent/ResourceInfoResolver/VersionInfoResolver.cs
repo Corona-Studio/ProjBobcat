@@ -14,6 +14,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
     public class VersionInfoResolver : IResourceInfoResolver
     {
         public string BasePath { get; set; }
+        public bool CheckLocalFiles { get; set; }
         public VersionInfo VersionInfo { get; set; }
 
         public event EventHandler<GameResourceInfoResolveEventArgs> GameResourceInfoResolveEvent;
@@ -26,6 +27,8 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
 
         public async IAsyncEnumerable<IGameResource> ResolveResourceAsync()
         {
+            if(!CheckLocalFiles) yield break;
+
             var id = VersionInfo.RootVersion ?? VersionInfo.DirName;
             var versionJson = GamePathHelper.GetGameJsonPath(BasePath, id);
 

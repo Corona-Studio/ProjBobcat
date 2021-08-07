@@ -18,6 +18,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
         public string ForgeUriRoot { get; init; } = "https://files.minecraftforge.net/";
         public string BasePath { get; set; }
         public VersionInfo VersionInfo { get; set; }
+        public bool CheckLocalFiles { get; set; }
 
         public event EventHandler<GameResourceInfoResolveEventArgs> GameResourceInfoResolveEvent;
 
@@ -47,10 +48,9 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                 var libPath = GamePathHelper.GetLibraryPath(lib.Path.Replace('/', '\\'));
                 var filePath = Path.Combine(BasePath, libPath);
 
-                LogGameResourceInfoResolveStatus($"检索并验证 Library：{libPath}");
-
                 if (File.Exists(filePath))
                 {
+                    if (!CheckLocalFiles) continue;
                     if (string.IsNullOrEmpty(lib.Sha1)) continue;
 
                     try
@@ -65,6 +65,8 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                     }
                 }
 
+                LogGameResourceInfoResolveStatus($"检索并验证 Library：{libPath}");
+
                 libraries.Add(lib);
             }
 
@@ -74,10 +76,9 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                 var nativePath = GamePathHelper.GetLibraryPath(native.FileInfo.Path.Replace('/', '\\'));
                 var filePath = Path.Combine(BasePath, nativePath);
 
-                LogGameResourceInfoResolveStatus($"检索并验证 Native：{nativePath}");
-
                 if (File.Exists(filePath))
                 {
+                    if(!CheckLocalFiles) continue;
                     if (string.IsNullOrEmpty(native.FileInfo.Sha1)) continue;
 
                     try
@@ -91,6 +92,8 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                     {
                     }
                 }
+
+                LogGameResourceInfoResolveStatus($"检索并验证 Native：{nativePath}");
 
                 natives.Add(native.FileInfo);
             }
