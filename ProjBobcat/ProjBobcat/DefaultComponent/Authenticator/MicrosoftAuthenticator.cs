@@ -248,7 +248,7 @@ namespace ProjBobcat.DefaultComponent.Authenticator
                                        + $"&redirect_uri={redirectUri}");
         }
 
-        private async Task<T> SendRequest<T>(string url, object model)
+        async Task<T> SendRequest<T>(string url, object model)
         {
             var reqStr = JsonConvert.SerializeObject(model);
 

@@ -7,21 +7,21 @@ namespace ProjBobcat.Class.Helper.SystemInfo
     /// </summary>
     public class SystemArch : IFormattable, IEquatable<SystemArch>
     {
-        private bool _is64BitOperatingSystem;
+        bool _is64BitOperatingSystem;
 
-        private SystemArch()
+        SystemArch()
         {
         }
 
         /// <summary>
         ///     X64 。
         /// </summary>
-        public static SystemArch X64 { get; } = new() {_is64BitOperatingSystem = true};
+        public static SystemArch X64 { get; } = new() { _is64BitOperatingSystem = true };
 
         /// <summary>
         ///     X86 。
         /// </summary>
-        public static SystemArch X86 { get; } = new() {_is64BitOperatingSystem = false};
+        public static SystemArch X86 { get; } = new() { _is64BitOperatingSystem = false };
 
         /// <summary>
         ///     获取当前程序运行所在的系统架构。

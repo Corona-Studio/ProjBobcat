@@ -11,7 +11,7 @@ namespace ProjBobcat.Class.Model
     [TypeConverter(typeof(TypeConverter))]
     public struct PlayerUUID : IFormattable, IComparable<PlayerUUID>, IEquatable<PlayerUUID>
     {
-        private readonly Guid _guid;
+        readonly Guid _guid;
 
         public PlayerUUID(byte[] guidBytes)
         {
@@ -87,7 +87,7 @@ namespace ProjBobcat.Class.Model
             return _guid.ToString("N");
         }
 
-        private class TypeConverter : System.ComponentModel.TypeConverter
+        class TypeConverter : System.ComponentModel.TypeConverter
         {
             public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
             {
@@ -101,7 +101,7 @@ namespace ProjBobcat.Class.Model
             }
         }
 
-        private class JsonConverter : JsonConverter<PlayerUUID>
+        class JsonConverter : JsonConverter<PlayerUUID>
         {
             public override PlayerUUID ReadJson(JsonReader reader, Type objectType,
                 PlayerUUID existingValue, bool hasExistingValue, JsonSerializer serializer)
@@ -118,7 +118,7 @@ namespace ProjBobcat.Class.Model
 
         public static PlayerUUID Random()
         {
-            return new(Guid.NewGuid());
+            return new PlayerUUID(Guid.NewGuid());
         }
     }
 }

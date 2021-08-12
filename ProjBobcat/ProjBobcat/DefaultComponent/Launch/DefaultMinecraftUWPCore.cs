@@ -77,7 +77,7 @@ namespace ProjBobcat.DefaultComponent.Launch
             if (!SystemInfoHelper.IsMinecraftUWPInstalled()) throw new InvalidOperationException();
 
             using var process = new Process
-                {StartInfo = new ProcessStartInfo {UseShellExecute = true, FileName = "minecraft:"}};
+                { StartInfo = new ProcessStartInfo { UseShellExecute = true, FileName = "minecraft:" } };
             process.Start();
 
             return default;
@@ -124,7 +124,7 @@ namespace ProjBobcat.DefaultComponent.Launch
 
         #endregion
 
-        private static void GameExit(object sender, EventArgs e)
+        static void GameExit(object sender, EventArgs e)
         {
             throw new NotImplementedException();
         }

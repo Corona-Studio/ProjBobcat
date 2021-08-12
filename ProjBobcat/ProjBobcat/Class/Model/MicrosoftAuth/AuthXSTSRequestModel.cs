@@ -16,7 +16,7 @@ namespace ProjBobcat.Class.Model.MicrosoftAuth
 
         public static AuthXSTSRequestModel Get(string token)
         {
-            return new()
+            return new AuthXSTSRequestModel
             {
                 Properties = new XSTSProperties
                 {

@@ -8,9 +8,9 @@ namespace ProjBobcat.Class.Helper
 {
     public static class CurseForgeAPIHelper
     {
-        private const string BaseUrl = "https://addons-ecs.forgesvc.net";
+        const string BaseUrl = "https://addons-ecs.forgesvc.net";
 
-        private static async Task<string> Get(string reqUrl)
+        static async Task<string> Get(string reqUrl)
         {
             using var req = await HttpHelper.Get(reqUrl);
             req.EnsureSuccessStatusCode();

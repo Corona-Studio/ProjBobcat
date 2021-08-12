@@ -64,12 +64,12 @@ namespace ProjBobcat.Class
             Process.Exited -= ProcessOnExited;
         }
 
-        private void ProcessOnExited(object sender, EventArgs e)
+        void ProcessOnExited(object sender, EventArgs e)
         {
             ExitCode = Process.ExitCode;
         }
 
-        private void ProcessOnErrorDataReceived(object sender, DataReceivedEventArgs e)
+        void ProcessOnErrorDataReceived(object sender, DataReceivedEventArgs e)
         {
             if (string.IsNullOrEmpty(e.Data)) return;
 
@@ -80,7 +80,7 @@ namespace ProjBobcat.Class
             });
         }
 
-        private void ProcessOnOutputDataReceived(object sender, DataReceivedEventArgs e)
+        void ProcessOnOutputDataReceived(object sender, DataReceivedEventArgs e)
         {
             if (string.IsNullOrEmpty(e.Data)) return;
 

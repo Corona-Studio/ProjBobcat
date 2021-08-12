@@ -13,9 +13,9 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
 {
     public class AssetInfoResolver : IResourceInfoResolver
     {
-        private readonly string _assetIndexUrlRoot;
+        readonly string _assetIndexUrlRoot;
 
-        private string _basePath;
+        string _basePath;
 
         public string AssetIndexUriRoot
         {
@@ -23,8 +23,9 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
             init => _assetIndexUrlRoot = value.TrimEnd('/');
         }
 
-        public bool CheckLocalFiles { get; set; }
         public string AssetUriRoot { get; init; } = "https://resources.download.minecraft.net/";
+
+        public bool CheckLocalFiles { get; set; }
 
         public string BasePath
         {
@@ -152,7 +153,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
             LogGameResourceInfoResolveStatus("Assets 解析完成", LogType.Success);
         }
 
-        private void LogGameResourceInfoResolveStatus(string currentStatus, LogType logType = LogType.Normal)
+        void LogGameResourceInfoResolveStatus(string currentStatus, LogType logType = LogType.Normal)
         {
             GameResourceInfoResolveEvent?.Invoke(this, new GameResourceInfoResolveEventArgs
             {

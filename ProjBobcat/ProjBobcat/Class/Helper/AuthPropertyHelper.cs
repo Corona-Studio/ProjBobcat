@@ -24,7 +24,7 @@ namespace ProjBobcat.Class.Helper
             var keyValues = properties
                 .ToDictionary(
                     item => item.Name,
-                    item => new[] {item.Value});
+                    item => new[] { item.Value });
 
             return JsonConvert.SerializeObject(keyValues);
         }

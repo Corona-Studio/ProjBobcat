@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
@@ -23,7 +20,7 @@ namespace ProjBobcat.DefaultComponent.Launch
     /// </summary>
     public class DefaultGameCore : IGameCore
     {
-        private string _rootPath;
+        string _rootPath;
 
         /// <summary>
         ///     启动参数解析器
@@ -392,7 +389,7 @@ namespace ProjBobcat.DefaultComponent.Launch
         /// <param name="item"></param>
         /// <param name="time"></param>
         /// <param name="sw"></param>
-        private void InvokeLaunchLogThenStart(string item, ref TimeSpan time, ref Stopwatch sw)
+        void InvokeLaunchLogThenStart(string item, ref TimeSpan time, ref Stopwatch sw)
         {
             LogLaunchData(this, new LaunchLogEventArgs
             {

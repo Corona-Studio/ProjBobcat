@@ -78,7 +78,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
 
                 if (File.Exists(filePath))
                 {
-                    if(!CheckLocalFiles) continue;
+                    if (!CheckLocalFiles) continue;
                     if (string.IsNullOrEmpty(native.FileInfo.Sha1)) continue;
 
                     try
@@ -127,7 +127,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
             LogGameResourceInfoResolveStatus("检查Library完成");
         }
 
-        private void LogGameResourceInfoResolveStatus(string currentStatus, LogType logType = LogType.Normal)
+        void LogGameResourceInfoResolveStatus(string currentStatus, LogType logType = LogType.Normal)
         {
             GameResourceInfoResolveEvent?.Invoke(this, new GameResourceInfoResolveEventArgs
             {

@@ -18,7 +18,7 @@ namespace ProjBobcat.DefaultComponent.Launch
     /// </summary>
     public sealed class DefaultLauncherProfileParser : LauncherParserBase, ILauncherProfileParser
     {
-        private readonly string FullLauncherProfilePath;
+        readonly string FullLauncherProfilePath;
 
         /// <summary>
         ///     构造函数

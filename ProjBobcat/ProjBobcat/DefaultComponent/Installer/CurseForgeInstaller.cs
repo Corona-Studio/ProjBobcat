@@ -16,9 +16,9 @@ namespace ProjBobcat.DefaultComponent.Installer
 {
     public class CurseForgeInstaller : InstallerBase, ICurseForgeInstaller
     {
-        private bool _isModAllDownloaded = true;
+        bool _isModAllDownloaded = true;
 
-        private int _totalDownloaded, _needToDownload;
+        int _totalDownloaded, _needToDownload;
         public string ModPackPath { get; set; }
         public string GameId { get; set; }
 
@@ -63,7 +63,7 @@ namespace ProjBobcat.DefaultComponent.Installer
                         // if (!args.Success)
                         //     throw args.Error;
 
-                        var progress = (double) _totalDownloaded / _needToDownload * 100;
+                        var progress = (double)_totalDownloaded / _needToDownload * 100;
 
                         InvokeStatusChangedEvent($"下载整合包中的 Mods - {fn} ({_totalDownloaded} / {_needToDownload})",
                             progress);
@@ -81,7 +81,7 @@ namespace ProjBobcat.DefaultComponent.Installer
                 MaxDegreeOfParallelism = 32
             });
 
-            var linkOptions = new DataflowLinkOptions {PropagateCompletion = true};
+            var linkOptions = new DataflowLinkOptions { PropagateCompletion = true };
             urlBlock.LinkTo(actionBlock, linkOptions);
             urlBlock.Post(manifest.Files);
             urlBlock.Complete();
@@ -117,7 +117,7 @@ namespace ProjBobcat.DefaultComponent.Installer
                     continue;
                 }
 
-                InvokeStatusChangedEvent($"解压缩安装文件：{subPath}", (double) _totalDownloaded / _needToDownload * 100);
+                InvokeStatusChangedEvent($"解压缩安装文件：{subPath}", (double)_totalDownloaded / _needToDownload * 100);
 
                 await using var fs = File.OpenWrite(path);
                 entry.WriteTo(fs);
@@ -146,7 +146,7 @@ namespace ProjBobcat.DefaultComponent.Installer
             return manifestModel;
         }
 
-        private static string CurseForgeModRequestUrl(long projectId, long fileId)
+        static string CurseForgeModRequestUrl(long projectId, long fileId)
         {
             return $"https://addons-ecs.forgesvc.net/api/v2/addon/{projectId}/file/{fileId}/download-url";
         }

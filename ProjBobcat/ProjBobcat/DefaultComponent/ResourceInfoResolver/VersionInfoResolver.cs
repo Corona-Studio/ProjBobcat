@@ -27,7 +27,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
 
         public async IAsyncEnumerable<IGameResource> ResolveResourceAsync()
         {
-            if(!CheckLocalFiles) yield break;
+            if (!CheckLocalFiles) yield break;
 
             var id = VersionInfo.RootVersion ?? VersionInfo.DirName;
             var versionJson = GamePathHelper.GetGameJsonPath(BasePath, id);

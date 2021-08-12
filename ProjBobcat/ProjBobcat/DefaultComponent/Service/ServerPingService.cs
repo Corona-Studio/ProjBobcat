@@ -14,9 +14,9 @@ namespace ProjBobcat.DefaultComponent.Service
 {
     public class ServerPingService : ProgressReportBase
     {
-        private List<byte> _buffer;
-        private int _offset;
-        private NetworkStream _stream;
+        List<byte> _buffer;
+        int _offset;
+        NetworkStream _stream;
 
         public string Address { get; init; }
         public ushort Port { get; init; }
@@ -135,14 +135,14 @@ namespace ProjBobcat.DefaultComponent.Service
 
         #region Read/Write methods
 
-        private byte ReadByte(IReadOnlyList<byte> buffer)
+        byte ReadByte(IReadOnlyList<byte> buffer)
         {
             var b = buffer[_offset];
             _offset += 1;
             return b;
         }
 
-        private byte[] Read(byte[] buffer, int length)
+        byte[] Read(byte[] buffer, int length)
         {
             var data = new byte[length];
             Array.Copy(buffer, _offset, data, 0, length);
@@ -150,7 +150,7 @@ namespace ProjBobcat.DefaultComponent.Service
             return data;
         }
 
-        private int ReadVarInt(IReadOnlyList<byte> buffer)
+        int ReadVarInt(IReadOnlyList<byte> buffer)
         {
             var value = 0;
             var size = 0;
@@ -164,42 +164,42 @@ namespace ProjBobcat.DefaultComponent.Service
             return value | ((b & 0x7F) << (size * 7));
         }
 
-        private string ReadString(byte[] buffer, int length)
+        string ReadString(byte[] buffer, int length)
         {
             var data = Read(buffer, length);
             return Encoding.UTF8.GetString(data);
         }
 
-        private void WriteVarInt(int value)
+        void WriteVarInt(int value)
         {
             while ((value & 128) != 0)
             {
-                _buffer.Add((byte) ((value & 127) | 128));
-                value = (int) (uint) value >> 7;
+                _buffer.Add((byte)((value & 127) | 128));
+                value = (int)(uint)value >> 7;
             }
 
-            _buffer.Add((byte) value);
+            _buffer.Add((byte)value);
         }
 
-        private void WriteShort(ushort value)
+        void WriteShort(ushort value)
         {
             _buffer.AddRange(BitConverter.GetBytes(value));
         }
 
-        private void WriteString(string data)
+        void WriteString(string data)
         {
             var buffer = Encoding.UTF8.GetBytes(data);
             WriteVarInt(buffer.Length);
             _buffer.AddRange(buffer);
         }
 
-        private async Task Flush(int id = -1)
+        async Task Flush(int id = -1)
         {
             var buffer = _buffer.ToArray();
             _buffer.Clear();
 
             var add = 0;
-            var packetData = new[] {(byte) 0x00};
+            var packetData = new[] { (byte)0x00 };
             if (id >= 0)
             {
                 WriteVarInt(id);

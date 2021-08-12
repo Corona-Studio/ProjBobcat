@@ -15,7 +15,7 @@
 
         public static AuthXBLRequestModel Get(string accessToken)
         {
-            return new()
+            return new AuthXBLRequestModel
             {
                 Properties = new XBLProperties
                 {

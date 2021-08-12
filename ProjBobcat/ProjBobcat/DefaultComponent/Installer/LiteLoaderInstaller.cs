@@ -15,8 +15,8 @@ namespace ProjBobcat.DefaultComponent.Installer
 {
     public class LiteLoaderInstaller : InstallerBase, ILiteLoaderInstaller
     {
-        private const string SnapshotRoot = "http://dl.liteloader.com/versions/";
-        private const string ReleaseRoot = "http://repo.mumfrey.com/content/repositories/liteloader/";
+        const string SnapshotRoot = "http://dl.liteloader.com/versions/";
+        const string ReleaseRoot = "http://repo.mumfrey.com/content/repositories/liteloader/";
 
         public RawVersionModel InheritVersion { get; init; }
         public LiteLoaderDownloadVersionModel VersionModel { get; init; }

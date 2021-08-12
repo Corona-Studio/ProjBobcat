@@ -7,9 +7,9 @@ namespace ProjBobcat.Class.Helper.SystemInfo
     /// </summary>
     public class WindowsSystemVersion : IFormattable, IEquatable<WindowsSystemVersion>
     {
-        private byte version;
+        byte version;
 
-        private WindowsSystemVersion()
+        WindowsSystemVersion()
         {
         }
 
@@ -17,49 +17,49 @@ namespace ProjBobcat.Class.Helper.SystemInfo
         ///     未知。
         /// </summary>
         public static WindowsSystemVersion Unknown { get; }
-            = new() {version = 0};
+            = new() { version = 0 };
 
         /// <summary>
         ///     XP 。
         /// </summary>
         public static WindowsSystemVersion WindowsXP { get; }
-            = new() {version = 1};
+            = new() { version = 1 };
 
         /// <summary>
         ///     2003 。
         /// </summary>
         public static WindowsSystemVersion Windows2003 { get; }
-            = new() {version = 2};
+            = new() { version = 2 };
 
         /// <summary>
         ///     2008 。
         /// </summary>
         public static WindowsSystemVersion Windows2008 { get; }
-            = new() {version = 3};
+            = new() { version = 3 };
 
         /// <summary>
         ///     7 。
         /// </summary>
         public static WindowsSystemVersion Windows7 { get; }
-            = new() {version = 4};
+            = new() { version = 4 };
 
         /// <summary>
         ///     8 。
         /// </summary>
         public static WindowsSystemVersion Windows8 { get; }
-            = new() {version = 5};
+            = new() { version = 5 };
 
         /// <summary>
         ///     8.1 。
         /// </summary>
         public static WindowsSystemVersion Windows8Dot1 { get; }
-            = new() {version = 6};
+            = new() { version = 6 };
 
         /// <summary>
         ///     10 。
         /// </summary>
         public static WindowsSystemVersion Windows10 { get; }
-            = new() {version = 7};
+            = new() { version = 7 };
 
         /// <summary>
         ///     获取当前程序运行所在的系统版本。

@@ -6,7 +6,7 @@ namespace ProjBobcat.Class.Model.MicrosoftAuth
     {
         public static Dictionary<string, string> GetRefresh(string token, string clientId, string redirect)
         {
-            return new()
+            return new Dictionary<string, string>
             {
                 {
                     "client_id",
@@ -34,7 +34,7 @@ namespace ProjBobcat.Class.Model.MicrosoftAuth
         /// <returns></returns>
         public static Dictionary<string, string> Get(string authCode, string clientId, string redirect)
         {
-            return new()
+            return new Dictionary<string, string>
             {
                 {
                     "client_id",

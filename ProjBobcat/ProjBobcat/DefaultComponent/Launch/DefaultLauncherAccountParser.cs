@@ -13,7 +13,7 @@ namespace ProjBobcat.DefaultComponent.Launch
 {
     public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccountParser
     {
-        private readonly string FullLauncherAccountPath;
+        readonly string FullLauncherAccountPath;
 
         /// <summary>
         ///     构造函数

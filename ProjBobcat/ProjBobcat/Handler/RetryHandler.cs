@@ -8,7 +8,7 @@ namespace ProjBobcat.Handler
 {
     public class RetryHandler : DelegatingHandler
     {
-        private readonly int _maxRetries = 5;
+        readonly int _maxRetries = 5;
 
         public RetryHandler()
         {
@@ -49,7 +49,7 @@ namespace ProjBobcat.Handler
             return response;
         }
 
-        private static bool IsNetworkError(Exception ex)
+        static bool IsNetworkError(Exception ex)
         {
             while (true)
             {

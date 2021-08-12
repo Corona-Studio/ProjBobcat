@@ -22,7 +22,7 @@ namespace ProjBobcat.DefaultComponent.Authenticator
         /// <summary>
         ///     Mojang官方验证服务器地址。
         /// </summary>
-        private const string OfficialAuthServer = "https://authserver.mojang.com";
+        const string OfficialAuthServer = "https://authserver.mojang.com";
 
         /// <summary>
         ///     获取或设置邮箱。
@@ -43,31 +43,31 @@ namespace ProjBobcat.DefaultComponent.Authenticator
         /// <summary>
         ///     获取登录Api地址。
         /// </summary>
-        private string LoginAddress =>
+        string LoginAddress =>
             $"{AuthServer}{(string.IsNullOrEmpty(AuthServer) ? OfficialAuthServer : "/authserver")}/authenticate";
 
         /// <summary>
         ///     获取令牌刷新Api地址。
         /// </summary>
-        private string RefreshAddress =>
+        string RefreshAddress =>
             $"{AuthServer}{(string.IsNullOrEmpty(AuthServer) ? OfficialAuthServer : "/authserver")}/refresh";
 
         /// <summary>
         ///     获取令牌验证Api地址。
         /// </summary>
-        private string ValidateAddress =>
+        string ValidateAddress =>
             $"{AuthServer}{(string.IsNullOrEmpty(AuthServer) ? OfficialAuthServer : "/authserver")}/validate";
 
         /// <summary>
         ///     获取令牌吊销Api地址。
         /// </summary>
-        private string RevokeAddress =>
+        string RevokeAddress =>
             $"{AuthServer}{(string.IsNullOrEmpty(AuthServer) ? OfficialAuthServer : "/authserver")}/invalidate";
 
         /// <summary>
         ///     获取登出Api地址。
         /// </summary>
-        private string SignOutAddress =>
+        string SignOutAddress =>
             $"{AuthServer}{(string.IsNullOrEmpty(AuthServer) ? OfficialAuthServer : "/authserver")}/signout";
 
         public ILauncherAccountParser LauncherAccountParser { get; set; }
@@ -144,7 +144,7 @@ namespace ProjBobcat.DefaultComponent.Authenticator
                 };
 
             var profiles = result.AvailableProfiles.ToDictionary(profile => profile.UUID,
-                profile => new AuthProfileModel {DisplayName = profile.Name});
+                profile => new AuthProfileModel { DisplayName = profile.Name });
 
             foreach (var (playerUuid, authProfileModel) in profiles)
                 LauncherAccountParser.RemoveAccount(playerUuid.ToString(), authProfileModel.DisplayName);
@@ -279,7 +279,7 @@ namespace ProjBobcat.DefaultComponent.Authenticator
                         };
 
                     var profiles = authResponse.AvailableProfiles.ToDictionary(profile => profile.UUID,
-                        profile => new AuthProfileModel {DisplayName = profile.Name});
+                        profile => new AuthProfileModel { DisplayName = profile.Name });
 
                     var uuid = authResponse.User.UUID.ToString();
                     LauncherAccountParser.RemoveAccount(uuid, authResponse.User.UserName);

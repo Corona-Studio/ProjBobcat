@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using ProjBobcat.Class;
@@ -117,15 +116,11 @@ namespace ProjBobcat.DefaultComponent.Launch
                 if (!jvmRuleObj.ContainsKey("value")) continue;
 
                 if (jvmRuleObj["value"].Type == JTokenType.Array)
-                {
                     foreach (var arg in jvmRuleObj["value"])
                         yield return StringHelper.FixArgument(arg.ToString()); // arg.ToString();
-                }
                 else
-                {
                     yield return
                         StringHelper.FixArgument(jvmRuleObj["value"].ToString()); // jvmRuleObj["value"].ToString();
-                }
             }
         }
 
@@ -244,7 +239,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                     });
                     continue;
                 }
-                
+
                 if (lib.Downloads?.Artifact != null)
                 {
                     if (lib.Downloads.Artifact.Name == null)
@@ -258,13 +253,11 @@ namespace ProjBobcat.DefaultComponent.Launch
                 else
                 {
                     if (!(lib.Natives?.Any() ?? false))
-                    {
                         if (!result.Item2.Any(l => l.Name.Equals(lib.Name, StringComparison.OrdinalIgnoreCase)))
                             result.Item2.Add(new FileInfo
                             {
                                 Name = lib.Name
                             });
-                    }
                 }
             }
 
@@ -408,7 +401,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                     var middleLibs = GetNatives(inherits[i].Libraries);
 
                     // result.Libraries.AddRange(middleLibs.Item2);
-                    
+
                     foreach (var mL in middleLibs.Item2)
                     {
                         var mLMaven = mL.Name.ResolveMavenString();
@@ -434,7 +427,7 @@ namespace ProjBobcat.DefaultComponent.Launch
 
                         result.Libraries.Add(mL);
                     }
-                    
+
 
                     var currentNativesNames = new List<string>();
                     result.Natives.ForEach(n => { currentNativesNames.Add(n.FileInfo.Name); });

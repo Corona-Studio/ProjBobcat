@@ -21,7 +21,7 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
 {
     public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
     {
-        private int _totalDownloaded, _needToDownload, _totalProcessed, _needToProcess;
+        int _totalDownloaded, _needToDownload, _totalProcessed, _needToProcess;
         public string JavaExecutablePath { get; init; }
 
         public string MineCraftVersionId { get; set; }
@@ -211,7 +211,8 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                 }
 
                 var forgeSubPath = forgeJar.Key[(forgeJar.Key.IndexOf('/') + 1)..];
-                var forgeLibPath = Path.Combine(RootPath, GamePathHelper.GetLibraryPath(forgeSubPath.Replace('/', '\\')));
+                var forgeLibPath =
+                    Path.Combine(RootPath, GamePathHelper.GetLibraryPath(forgeSubPath.Replace('/', '\\')));
 
                 var forgeLibDir = Path.GetDirectoryName(forgeLibPath);
                 if (!Directory.Exists(forgeLibDir))
@@ -277,12 +278,12 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
             var procList = new List<ForgeInstallProcessorModel>();
             var argsReplaceList = new Dictionary<string, string>
             {
-                {"{SIDE}", "client"},
-                {"{MINECRAFT_JAR}", GamePathHelper.GetVersionJar(RootPath, MineCraftVersionId)},
-                {"{MINECRAFT_VERSION}", MineCraftVersion},
-                {"{ROOT}", RootPath},
-                {"{INSTALLER}", ForgeExecutablePath},
-                {"{LIBRARY_DIR}", Path.Combine(RootPath, GamePathHelper.GetLibraryRootPath())}
+                { "{SIDE}", "client" },
+                { "{MINECRAFT_JAR}", GamePathHelper.GetVersionJar(RootPath, MineCraftVersionId) },
+                { "{MINECRAFT_VERSION}", MineCraftVersion },
+                { "{ROOT}", RootPath },
+                { "{INSTALLER}", ForgeExecutablePath },
+                { "{LIBRARY_DIR}", Path.Combine(RootPath, GamePathHelper.GetLibraryRootPath()) }
             };
 
             foreach (var proc in ipModel.Processors)
@@ -363,7 +364,7 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                     Completed = (_, args) =>
                     {
                         _totalDownloaded++;
-                        var progress = (double) _totalDownloaded / _needToDownload;
+                        var progress = (double)_totalDownloaded / _needToDownload;
                         InvokeStatusChangedEvent(
                             $"下载 Forge Library - {args.File.FileName} ( {_totalDownloaded} / {_needToDownload} )",
                             progress);
@@ -379,10 +380,7 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
 
                         var filePath = Path.Combine(path, fileName);
                         var sha1 = CryptoHelper.ComputeFileHash(filePath, new SHA1Managed());
-                        if (!sha1.Equals(lib.Sha1, StringComparison.OrdinalIgnoreCase))
-                        {
-                            failedFiles.Add(args.File);
-                        }
+                        if (!sha1.Equals(lib.Sha1, StringComparison.OrdinalIgnoreCase)) failedFiles.Add(args.File);
                     },
                     CheckSum = lib.Sha1,
                     DownloadPath = path,
@@ -397,20 +395,14 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
             _needToDownload = libDownloadInfo.Count;
             // await DownloadHelper.AdvancedDownloadListFile(libDownloadInfo);
 
-            foreach (var libDi in libDownloadInfo)
-            {
-                await DownloadHelper.DownloadData(libDi);
-            }
+            foreach (var libDi in libDownloadInfo) await DownloadHelper.DownloadData(libDi);
 
             while (failedFiles.Any() && retryCount < 3)
             {
                 var fileList = new List<DownloadFile>(failedFiles);
                 failedFiles.Clear();
 
-                foreach (var libDi in fileList)
-                {
-                    await DownloadHelper.DownloadData(libDi);
-                }
+                foreach (var libDi in fileList) await DownloadHelper.DownloadData(libDi);
 
                 retryCount++;
             }
@@ -488,7 +480,7 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                     logSb.AppendLine(args.Data);
 
                     var data = args.Data?.Replace(RootPath, ".")?.Trim();
-                    var progress = (double) _totalProcessed / _needToProcess;
+                    var progress = (double)_totalProcessed / _needToProcess;
                     InvokeStatusChangedEvent($"{data} <安装信息> ( {_totalProcessed} / {_needToProcess} )", progress);
                 };
 
@@ -498,7 +490,7 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
 
                     errSb.AppendLine(args.Data);
 
-                    var progress = (double) _totalProcessed / _needToProcess;
+                    var progress = (double)_totalProcessed / _needToProcess;
                     var data = args.Data?.Replace(RootPath, ".")?.Trim();
                     InvokeStatusChangedEvent($"{data} <错误> ( {_totalProcessed} / {_needToProcess} )", progress);
                 };
@@ -511,10 +503,12 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
 
                 var installLogPath = Path.Combine(RootPath, GamePathHelper.GetGamePath(id));
 
-                if(logSb.Length != 0)
-                    await File.WriteAllTextAsync(Path.Combine(installLogPath, $"PROCESSOR #{_totalProcessed}_Logs.log"), logSb.ToString());
-                if(errSb.Length != 0)
-                    await File.WriteAllTextAsync(Path.Combine(installLogPath, $"PROCESSOR #{_totalProcessed}_Errors.log"), errSb.ToString());
+                if (logSb.Length != 0)
+                    await File.WriteAllTextAsync(Path.Combine(installLogPath, $"PROCESSOR #{_totalProcessed}_Logs.log"),
+                        logSb.ToString());
+                if (errSb.Length != 0)
+                    await File.WriteAllTextAsync(
+                        Path.Combine(installLogPath, $"PROCESSOR #{_totalProcessed}_Errors.log"), errSb.ToString());
 
                 if (errSb.Length != 0)
                     return new ForgeInstallResult

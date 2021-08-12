@@ -20,7 +20,7 @@ namespace ProjBobcat.Class.Helper
     /// </summary>
     public static class DownloadHelper
     {
-        private const int BufferSize = 1024 * 1024 * 5;
+        const int BufferSize = 1024 * 1024 * 5;
 
         /// <summary>
         ///     获取或设置用户代理信息。
@@ -37,7 +37,7 @@ namespace ProjBobcat.Class.Helper
         /// </summary>
         public static int RetryCount { get; set; } = 10;
 
-        private static HttpClient DataClient => HttpClientHelper.GetNewClient(HttpClientHelper.DataClientName);
+        static HttpClient DataClient => HttpClientHelper.GetNewClient(HttpClientHelper.DataClientName);
 
         #region 下载一个列表中的文件（自动确定是否使用分片下载）
 
@@ -79,7 +79,7 @@ namespace ProjBobcat.Class.Helper
                 MaxDegreeOfParallelism = DownloadThread
             });
 
-            var linkOptions = new DataflowLinkOptions {PropagateCompletion = true};
+            var linkOptions = new DataflowLinkOptions { PropagateCompletion = true };
             filesBlock.LinkTo(actionBlock, linkOptions);
             filesBlock.Post(fileEnumerable);
             filesBlock.Complete();
@@ -105,7 +105,7 @@ namespace ProjBobcat.Class.Helper
 
             try
             {
-                using var request = new HttpRequestMessage {RequestUri = new Uri(downloadProperty.DownloadUri)};
+                using var request = new HttpRequestMessage { RequestUri = new Uri(downloadProperty.DownloadUri) };
 
                 if (!string.IsNullOrEmpty(downloadProperty.Host))
                     request.Headers.Host = downloadProperty.Host;
@@ -145,7 +145,7 @@ namespace ProjBobcat.Class.Helper
                     downloadProperty.Changed?.Invoke(null,
                         new DownloadFileChangedEventArgs
                         {
-                            ProgressPercentage = (double) downloadedBytesCount / responseLength,
+                            ProgressPercentage = (double)downloadedBytesCount / responseLength,
                             BytesReceived = downloadedBytesCount,
                             TotalBytes = responseLength,
                             Speed = speed
@@ -197,9 +197,9 @@ namespace ProjBobcat.Class.Helper
             MultiPartDownloadTaskAsync(downloadFile, numberOfParts).Wait();
         }
 
-        private static HttpClient HeadClient => HttpClientHelper.GetNewClient(HttpClientHelper.HeadClientName);
+        static HttpClient HeadClient => HttpClientHelper.GetNewClient(HttpClientHelper.HeadClientName);
 
-        private static HttpClient MultiPartClient =>
+        static HttpClient MultiPartClient =>
             HttpClientHelper.GetNewClient(HttpClientHelper.MultiPartClientName);
 
         /// <summary>
@@ -249,7 +249,7 @@ namespace ProjBobcat.Class.Helper
             #region Calculate ranges
 
             var readRanges = new List<DownloadRange>();
-            var partSize = (long) Math.Round((double) responseLength / numberOfParts);
+            var partSize = (long)Math.Round((double)responseLength / numberOfParts);
             var previous = 0L;
 
             if (responseLength > numberOfParts)
@@ -302,7 +302,8 @@ namespace ProjBobcat.Class.Helper
                     new TransformBlock<DownloadRange, ValueTuple<Task<HttpResponseMessage>, DownloadRange>>(
                         p =>
                         {
-                            using var request = new HttpRequestMessage {RequestUri = new Uri(downloadFile.DownloadUri)};
+                            using var request = new HttpRequestMessage
+                                { RequestUri = new Uri(downloadFile.DownloadUri) };
 
                             if (!string.IsNullOrEmpty(downloadFile.Host))
                                 request.Headers.Host = downloadFile.Host;
@@ -357,7 +358,7 @@ namespace ProjBobcat.Class.Helper
                         downloadFile.Changed?.Invoke(t,
                             new DownloadFileChangedEventArgs
                             {
-                                ProgressPercentage = (double) downloadedBytesCount / responseLength,
+                                ProgressPercentage = (double)downloadedBytesCount / responseLength,
                                 BytesReceived = downloadedBytesCount,
                                 TotalBytes = responseLength,
                                 Speed = speed
@@ -380,7 +381,7 @@ namespace ProjBobcat.Class.Helper
                     CancellationToken = cts.Token
                 });
 
-                var linkOptions = new DataflowLinkOptions {PropagateCompletion = true};
+                var linkOptions = new DataflowLinkOptions { PropagateCompletion = true };
 
                 var filesBlock =
                     new TransformManyBlock<IEnumerable<DownloadRange>, DownloadRange>(chunk => chunk,

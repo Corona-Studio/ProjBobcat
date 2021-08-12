@@ -45,18 +45,18 @@ namespace ProjBobcat.Class.Helper
             }
         }
 
-        private static IEnumerable<string> FindJavaInOfficialGamePath()
+        static IEnumerable<string> FindJavaInOfficialGamePath()
         {
             var basePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                 ".minecraft", "runtime");
 
-            var paths = new[] {"java-runtime-alpha", "jre-legacy"};
+            var paths = new[] { "java-runtime-alpha", "jre-legacy" };
 
             return paths.Select(path => Path.Combine(basePath, path, "bin", "javaw.exe"))
                 .Where(File.Exists);
         }
 
-        private static string FindJavaUsingEnvironmentVariable()
+        static string FindJavaUsingEnvironmentVariable()
         {
             try
             {
@@ -72,7 +72,7 @@ namespace ProjBobcat.Class.Helper
             }
         }
 
-        private static IEnumerable<string> FindJavaInternal(RegistryKey registry)
+        static IEnumerable<string> FindJavaInternal(RegistryKey registry)
         {
             try
             {

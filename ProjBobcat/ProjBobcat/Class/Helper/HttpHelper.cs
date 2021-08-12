@@ -14,10 +14,10 @@ namespace ProjBobcat.Class.Helper
     /// </summary>
     public static class HttpHelper
     {
-        private const string UriRegex =
+        const string UriRegex =
             "((([A-Za-z]{3,9}:(?:\\/\\/)?)(?:[-;:&=\\+$,\\w]+@)?[A-Za-z0-9.-]+(:[0-9]+)?|(?:ww‌​w.|[-;:&=\\+$,\\w]+@)[A-Za-z0-9.-]+)((?:\\/[\\+~%\\/.\\w-_]*)?\\??(?:[-\\+=&;%@.\\w_]*)#?‌​(?:[\\w]*))?)";
 
-        private static HttpClient Client => HttpClientHelper.GetNewClient(HttpClientHelper.DefaultClientName);
+        static HttpClient Client => HttpClientHelper.GetNewClient(HttpClientHelper.DefaultClientName);
 
         /// <summary>
         ///     正则匹配Uri

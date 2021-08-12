@@ -11,7 +11,7 @@ namespace ProjBobcat.Handler
     /// </summary>
     public class RedirectHandler : DelegatingHandler
     {
-        private readonly int _maxRetries = 20;
+        readonly int _maxRetries = 20;
 
         public RedirectHandler()
         {
@@ -26,7 +26,7 @@ namespace ProjBobcat.Handler
             _maxRetries = maxRetries;
         }
 
-        private async Task<HttpResponseMessage> CreateRedirectResponse(HttpRequestMessage request,
+        async Task<HttpResponseMessage> CreateRedirectResponse(HttpRequestMessage request,
             HttpResponseMessage response, CancellationToken cancellationToken)
         {
             var redirectUri = response.Headers.Location;
@@ -45,13 +45,13 @@ namespace ProjBobcat.Handler
         {
             var currentRedirect = 0;
             var response = await base.SendAsync(request, cancellationToken);
-            var statusCode = (int?) response?.StatusCode;
+            var statusCode = (int?)response?.StatusCode;
 
             while (currentRedirect < _maxRetries && statusCode == 302)
             {
                 Debug.WriteLine($"第{currentRedirect}次重定向");
                 response = await CreateRedirectResponse(request, response, cancellationToken);
-                statusCode = (int?) response?.StatusCode;
+                statusCode = (int?)response?.StatusCode;
                 currentRedirect++;
             }
 

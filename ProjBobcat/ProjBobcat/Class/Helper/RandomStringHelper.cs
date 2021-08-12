@@ -28,9 +28,9 @@ namespace ProjBobcat.Class.Helper
         /// </summary>
         public const string Symbols = "~!@#$%^&*()_+=-`,./<>?;':[]{}\\|";
 
-        private const int TotalLength = 93;
+        const int TotalLength = 93;
 
-        private readonly List<char> _enabled;
+        readonly List<char> _enabled;
 
         /// <summary>
         ///     创建一个新的随机字符串帮助器的实例。

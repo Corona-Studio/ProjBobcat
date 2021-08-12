@@ -43,7 +43,8 @@ namespace ProjBobcat.Class
         /// <summary>
         ///     Native 根目录
         /// </summary>
-        public virtual string NativeRoot => Path.Combine(RootPath, GamePathHelper.GetNativeRoot(LaunchSettings.Version));
+        public virtual string NativeRoot =>
+            Path.Combine(RootPath, GamePathHelper.GetNativeRoot(LaunchSettings.Version));
 
         /// <summary>
         ///     Asset 根目录

@@ -18,7 +18,7 @@ namespace ProjBobcat.DefaultComponent
     /// </summary>
     public class DefaultResourceCompleter : IResourceCompleter
     {
-        private ConcurrentBag<DownloadFile> _retryFiles;
+        ConcurrentBag<DownloadFile> _retryFiles;
 
         public DefaultResourceCompleter()
         {
@@ -99,10 +99,10 @@ namespace ProjBobcat.DefaultComponent
         {
         }
 
-        private void WhenCompleted(object? sender, DownloadFileCompletedEventArgs e)
+        void WhenCompleted(object? sender, DownloadFileCompletedEventArgs e)
         {
             TotalDownloaded++;
-            InvokeDownloadProgressChangedEvent((double) TotalDownloaded / NeedToDownload, e.AverageSpeed);
+            InvokeDownloadProgressChangedEvent((double)TotalDownloaded / NeedToDownload, e.AverageSpeed);
             DownloadFileCompletedEvent?.Invoke(this, e);
 
             if (!(e.Success ?? false))
@@ -116,7 +116,7 @@ namespace ProjBobcat.DefaultComponent
             Check(e.File, ref _retryFiles);
         }
 
-        private static void Check(DownloadFile file, ref ConcurrentBag<DownloadFile> bag)
+        static void Check(DownloadFile file, ref ConcurrentBag<DownloadFile> bag)
         {
             var filePath = Path.Combine(file.DownloadPath, file.FileName);
             if (!File.Exists(filePath)) return;
@@ -140,7 +140,7 @@ namespace ProjBobcat.DefaultComponent
             }
         }
 
-        private async Task<ValueTuple<TaskResultStatus, ResourceCompleterCheckResult?>> DownloadFiles(
+        async Task<ValueTuple<TaskResultStatus, ResourceCompleterCheckResult?>> DownloadFiles(
             IEnumerable<DownloadFile> downloadList)
         {
             await DownloadHelper.AdvancedDownloadListFile(downloadList, DownloadParts);
@@ -154,7 +154,7 @@ namespace ProjBobcat.DefaultComponent
                 TotalDownloaded = 0;
                 NeedToDownload = fileBag.Count;
 
-                var files = fileBag.Select(f => (DownloadFile) f.Clone()).ToList();
+                var files = fileBag.Select(f => (DownloadFile)f.Clone()).ToList();
                 fileBag.Clear();
 
                 foreach (var file in files)
@@ -174,10 +174,10 @@ namespace ProjBobcat.DefaultComponent
             var resultType = fileBag.IsEmpty ? TaskResultStatus.Success : TaskResultStatus.PartialSuccess;
             if (isLibraryFailed) resultType = TaskResultStatus.Error;
 
-            return (resultType, new ResourceCompleterCheckResult {IsLibDownloadFailed = isLibraryFailed});
+            return (resultType, new ResourceCompleterCheckResult { IsLibDownloadFailed = isLibraryFailed });
         }
 
-        private void InvokeDownloadProgressChangedEvent(double progress, double speed)
+        void InvokeDownloadProgressChangedEvent(double progress, double speed)
         {
             DownloadFileChangedEvent?.Invoke(this, new DownloadFileChangedEventArgs
             {

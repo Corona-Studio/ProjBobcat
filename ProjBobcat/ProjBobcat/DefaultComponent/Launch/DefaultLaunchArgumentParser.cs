@@ -14,7 +14,7 @@ namespace ProjBobcat.DefaultComponent.Launch
 {
     public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentParser
     {
-        private readonly LaunchSettings _launchSettings;
+        readonly LaunchSettings _launchSettings;
 
         /// <summary>
         ///     构造函数
@@ -43,12 +43,12 @@ namespace ProjBobcat.DefaultComponent.Launch
 
             var sb = new StringBuilder();
             foreach (var lib in VersionInfo.Libraries)
-            {
-                sb.AppendFormat("{0};", Path.Combine(RootPath, GamePathHelper.GetLibraryPath(lib.Path).Replace('/', '\\')));
-            }
+                sb.AppendFormat("{0};",
+                    Path.Combine(RootPath, GamePathHelper.GetLibraryPath(lib.Path).Replace('/', '\\')));
 
 
-            if (!VersionInfo.MainClass.Equals("cpw.mods.bootstraplauncher.BootstrapLauncher", StringComparison.OrdinalIgnoreCase))
+            if (!VersionInfo.MainClass.Equals("cpw.mods.bootstraplauncher.BootstrapLauncher",
+                StringComparison.OrdinalIgnoreCase))
             {
                 var rootJarPath = string.IsNullOrEmpty(rootVersion)
                     ? GamePathHelper.GetGameExecutablePath(launchSettings.Version)
@@ -86,7 +86,6 @@ namespace ProjBobcat.DefaultComponent.Launch
                     javaAgentStr += $"={gameArgs.JavaAgentAdditionPara}";
 
                 yield return javaAgentStr;
-
             }
 
             if (string.IsNullOrEmpty(GameProfile?.JavaArgs))
@@ -140,12 +139,12 @@ namespace ProjBobcat.DefaultComponent.Launch
         {
             var jvmArgumentsDic = new Dictionary<string, string>
             {
-                {"${natives_directory}", $"\"{NativeRoot}\""},
-                {"${launcher_name}", $"\"{LaunchSettings.LauncherName}\""},
-                {"${launcher_version}", "32"},
-                {"${classpath}", $"\"{ClassPath}\""},
-                {"${classpath_separator}", ";"},
-                {"${library_directory}", $"\"{Path.Combine(RootPath, GamePathHelper.GetLibraryRootPath())}\""}
+                { "${natives_directory}", $"\"{NativeRoot}\"" },
+                { "${launcher_name}", $"\"{LaunchSettings.LauncherName}\"" },
+                { "${launcher_version}", "32" },
+                { "${classpath}", $"\"{ClassPath}\"" },
+                { "${classpath_separator}", ";" },
+                { "${library_directory}", $"\"{Path.Combine(RootPath, GamePathHelper.GetLibraryRootPath())}\"" }
             };
 
             yield return "-Dfml.ignoreInvalidMinecraftCertificates=true";
@@ -154,9 +153,7 @@ namespace ProjBobcat.DefaultComponent.Launch
             if (VersionInfo.JvmArguments?.Any() ?? false)
             {
                 foreach (var jvmArg in VersionInfo.JvmArguments)
-                {
                     yield return StringHelper.ReplaceByDic(jvmArg, jvmArgumentsDic);
-                }
                 yield break;
             }
 
@@ -165,9 +162,7 @@ namespace ProjBobcat.DefaultComponent.Launch
             var preJvmArguments = VersionLocator.ParseJvmArguments(JsonConvert.DeserializeObject<List<object>>(preset));
 
             foreach (var preJvmArg in preJvmArguments)
-            {
                 yield return StringHelper.ReplaceByDic(preJvmArg, jvmArgumentsDic);
-            }
         }
 
         public IEnumerable<string> ParseGameArguments(AuthResultBase authResult)
@@ -177,32 +172,28 @@ namespace ProjBobcat.DefaultComponent.Launch
                 : RootPath;
             var mcArgumentsDic = new Dictionary<string, string>
             {
-                {"${version_name}", $"\"{LaunchSettings.Version}\""},
-                {"${version_type}", $"\"{GameProfile?.Type ?? LaunchSettings.LauncherName}\""},
-                {"${assets_root}", $"\"{AssetRoot}\""},
-                {"${assets_index_name}", VersionInfo.AssetInfo.Id},
-                {"${game_directory}", $"\"{gameDir}\""},
-                {"${auth_player_name}", authResult?.SelectedProfile?.Name},
-                {"${auth_uuid}", authResult?.SelectedProfile?.UUID.ToString()},
-                {"${auth_access_token}", authResult?.AccessToken},
-                {"${user_properties}", authResult?.User?.Properties.ResolveUserProperties()},
-                {"${user_type}", "Mojang"} // use default value as placeholder
+                { "${version_name}", $"\"{LaunchSettings.Version}\"" },
+                { "${version_type}", $"\"{GameProfile?.Type ?? LaunchSettings.LauncherName}\"" },
+                { "${assets_root}", $"\"{AssetRoot}\"" },
+                { "${assets_index_name}", VersionInfo.AssetInfo.Id },
+                { "${game_directory}", $"\"{gameDir}\"" },
+                { "${auth_player_name}", authResult?.SelectedProfile?.Name },
+                { "${auth_uuid}", authResult?.SelectedProfile?.UUID.ToString() },
+                { "${auth_access_token}", authResult?.AccessToken },
+                { "${user_properties}", authResult?.User?.Properties.ResolveUserProperties() },
+                { "${user_type}", "Mojang" } // use default value as placeholder
             };
 
             foreach (var gameArg in VersionInfo.GameArguments)
-            {
                 yield return StringHelper.ReplaceByDic(gameArg, mcArgumentsDic);
-            }
         }
 
         public List<string> GenerateLaunchArguments()
         {
             var javaPath = GameProfile?.JavaDir;
             if (string.IsNullOrEmpty(javaPath))
-            {
                 javaPath = LaunchSettings.FallBackGameArguments?.JavaExecutable ??
                            LaunchSettings.GameArguments?.JavaExecutable;
-            }
 
             var arguments = new List<string>
             {
@@ -216,7 +207,7 @@ namespace ProjBobcat.DefaultComponent.Launch
 
             arguments.AddRange(ParseGameArguments(AuthResult).Select(arg => arg.Trim()));
             arguments.AddRange(ParseAdditionalArguments().Select(arg => arg.Trim()));
-            
+
             return arguments;
         }
 
@@ -233,10 +224,12 @@ namespace ProjBobcat.DefaultComponent.Launch
                 (LaunchSettings.GameArguments?.Resolution?.Width ?? 0) > 0)
             {
                 yield return "--width";
-                yield return (GameProfile.Resolution?.Width ?? LaunchSettings.GameArguments.Resolution.Width).ToString();
+                yield return (GameProfile.Resolution?.Width ?? LaunchSettings.GameArguments.Resolution.Width)
+                    .ToString();
 
                 yield return "--height";
-                yield return (GameProfile.Resolution?.Height ?? LaunchSettings.GameArguments.Resolution.Height).ToString();
+                yield return (GameProfile.Resolution?.Height ?? LaunchSettings.GameArguments.Resolution.Height)
+                    .ToString();
             }
             else if ((LaunchSettings.FallBackGameArguments?.Resolution?.Width ?? 0) > 0
                      && (LaunchSettings.FallBackGameArguments?.Resolution?.Height ?? 0) > 0)
