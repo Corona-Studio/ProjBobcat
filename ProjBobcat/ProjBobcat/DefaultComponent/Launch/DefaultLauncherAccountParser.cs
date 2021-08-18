@@ -79,20 +79,23 @@ namespace ProjBobcat.DefaultComponent.Launch
             return true;
         }
 
-        public KeyValuePair<string, AccountModel> Find(string uuid, string name)
+        public KeyValuePair<string, AccountModel>? Find(string uuid, string name)
         {
             var account =
                 LauncherAccount?.Accounts?
                     .FirstOrDefault(a =>
-                        a.Value.MinecraftProfile.Name.Equals(name, StringComparison.OrdinalIgnoreCase) &&
-                        a.Value.MinecraftProfile.Id.Equals(uuid, StringComparison.OrdinalIgnoreCase)) ?? default;
+                        (a.Value.MinecraftProfile?.Name?.Equals(name, StringComparison.OrdinalIgnoreCase) ?? false) &&
+                        (a.Value.MinecraftProfile?.Id?.Equals(uuid, StringComparison.OrdinalIgnoreCase) ?? false));
 
             return account;
         }
 
         public bool RemoveAccount(string uuid, string name)
         {
-            var (key, value) = Find(uuid, name);
+            var result = Find(uuid, name);
+            if (!result.HasValue) return false;
+
+            var (key, value) = result.Value;
             if (value == default)
                 return false;
 
