@@ -1,6 +1,7 @@
 ﻿using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.YggdrasilAuth;
 using ProjBobcat.Interface;
+using System.Collections.Generic;
 
 namespace ProjBobcat.Class.Model
 {
@@ -15,8 +16,7 @@ namespace ProjBobcat.Class.Model
         public int MaxMemory { get; set; }
         public ResolutionModel Resolution { get; set; }
         public GcType GcType { get; set; }
-        public string AgentPath { get; set; }
-        public string JavaAgentAdditionPara { get; set; }
+        public IEnumerable<string> AddtionalJvmArguments { get; set; }
         public ServerSettings ServerSettings { get; set; }
         public string AdvanceArguments { get; set; }
     }

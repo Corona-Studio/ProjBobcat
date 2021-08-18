@@ -78,6 +78,13 @@ namespace ProjBobcat.DefaultComponent.Launch
             };
             */
 
+            if(gameArgs.AddtionalJvmArguments?.Any() ?? false)
+            {
+                foreach (var jvmArg in gameArgs.AddtionalJvmArguments)
+                    yield return jvmArg;
+            }
+
+            /*
             if (!string.IsNullOrEmpty(gameArgs.AgentPath))
             {
                 var javaAgentStr = $"-javaagent:\"{gameArgs.AgentPath}\"";
@@ -87,6 +94,7 @@ namespace ProjBobcat.DefaultComponent.Launch
 
                 yield return javaAgentStr;
             }
+            */
 
             if (string.IsNullOrEmpty(GameProfile?.JavaArgs))
             {
