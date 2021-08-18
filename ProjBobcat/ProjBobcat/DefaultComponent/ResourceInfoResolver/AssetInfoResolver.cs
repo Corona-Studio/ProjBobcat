@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
 using Newtonsoft.Json;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.GameResource;
+using ProjBobcat.Class.Model.Mojang;
 using ProjBobcat.Event;
 using ProjBobcat.Interface;
 
@@ -34,6 +36,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
         }
 
         public VersionInfo VersionInfo { get; set; }
+        public List<VersionManifestVersionsModel> Versions { get; set; }
 
         public event EventHandler<GameResourceInfoResolveEventArgs> GameResourceInfoResolveEvent;
 
@@ -46,8 +49,15 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
         public async IAsyncEnumerable<IGameResource> ResolveResourceAsync()
         {
             LogGameResourceInfoResolveStatus("开始进行游戏资源(Asset)检查");
-            if (string.IsNullOrEmpty(VersionInfo?.AssetInfo.Url)) yield break;
-            if (string.IsNullOrEmpty(VersionInfo?.AssetInfo.Id)) yield break;
+
+            if (!(Versions?.Any() ?? false) && VersionInfo?.AssetInfo == null) yield break;
+
+            var isAssetInfoNotExists = 
+                string.IsNullOrEmpty(VersionInfo?.AssetInfo?.Url) &&
+                string.IsNullOrEmpty(VersionInfo?.AssetInfo?.Id);
+            if (isAssetInfoNotExists &&
+                string.IsNullOrEmpty(VersionInfo?.Assets))
+                yield break;
 
             var assetIndexesDi =
                 new DirectoryInfo(Path.Combine(BasePath, GamePathHelper.GetAssetsRoot(), "indexes"));
@@ -57,14 +67,33 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
             if (!assetIndexesDi.Exists) assetIndexesDi.Create();
             if (!assetObjectsDi.Exists) assetObjectsDi.Create();
 
-            var assetIndexesPath = Path.Combine(assetIndexesDi.FullName, $"{VersionInfo.AssetInfo.Id}.json");
+            var id = VersionInfo?.AssetInfo?.Id ?? VersionInfo.Assets;
+            var assetIndexesPath = Path.Combine(assetIndexesDi.FullName, $"{id}.json");
             if (!File.Exists(assetIndexesPath))
             {
                 LogGameResourceInfoResolveStatus("没有发现Asset Indexes 文件， 开始下载");
-                var assetIndexDownloadUri = VersionInfo.AssetInfo.Url;
+
+                var assetIndexDownloadUri = VersionInfo?.AssetInfo?.Url;
+
+                if (isAssetInfoNotExists)
+                {
+                    var versionObject = Versions?.FirstOrDefault(v => v.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+                    if (versionObject == default) yield break;
+
+                    var jsonRes = await HttpHelper.Get(versionObject.Url);
+                    var jsonStr = await jsonRes.Content.ReadAsStringAsync();
+                    var versionModel = JsonConvert.DeserializeObject<RawVersionModel>(jsonStr);
+
+                    if (versionModel == default) yield break;
+
+                    assetIndexDownloadUri = versionModel.AssetIndex?.Url;
+                }
+
+                if (string.IsNullOrEmpty(assetIndexDownloadUri)) yield break;
+
                 if (!string.IsNullOrEmpty(AssetIndexUriRoot))
                 {
-                    var assetIndexUriRoot = HttpHelper.RegexMatchUri(VersionInfo.AssetInfo.Url);
+                    var assetIndexUriRoot = HttpHelper.RegexMatchUri(assetIndexDownloadUri);
                     assetIndexDownloadUri =
                         $"{AssetIndexUriRoot}{assetIndexDownloadUri[assetIndexUriRoot.Length..]}";
                 }
@@ -72,7 +101,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                 var dp = new DownloadFile
                 {
                     DownloadPath = assetIndexesDi.FullName,
-                    FileName = $"{VersionInfo.AssetInfo.Id}.json",
+                    FileName = $"{id}.json",
                     DownloadUri = assetIndexDownloadUri
                 };
 

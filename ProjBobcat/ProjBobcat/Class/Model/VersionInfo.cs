@@ -21,6 +21,7 @@ namespace ProjBobcat.Class.Model
         public JavaVersionModel JavaVersion { get; set; }
 
         public string MainClass { get; set; }
+        public string Assets { get; set; }
         public Asset AssetInfo { get; set; }
         public List<FileInfo> Libraries { get; set; }
         public List<NativeFileInfo> Natives { get; set; }

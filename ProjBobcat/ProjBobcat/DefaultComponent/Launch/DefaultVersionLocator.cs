@@ -203,18 +203,44 @@ namespace ProjBobcat.DefaultComponent.Launch
                 var isNative = lib.Natives?.Any() ?? false;
                 if (isNative)
                 {
-                    if (lib.Downloads.Classifiers == null) continue;
-
                     var key = lib.Natives.ContainsKey("windows")
                         ? lib.Natives["windows"].Replace("${arch}", SystemArch.CurrentArch.ToString("{0}"))
                         : "natives-windows";
 
-                    if (lib.Downloads.Classifiers.ContainsKey(key)) lib.Downloads.Classifiers[key].Name = lib.Name;
+                    FileInfo libFi;
+                    if (lib.Downloads?.Classifiers?.ContainsKey(key) ?? false)
+                    {
+                        lib.Downloads.Classifiers[key].Name = lib.Name;
+                        libFi = lib.Downloads.Classifiers[key];
+                    }
+                    else
+                    {
+                        var libName = lib.Name;
+
+                        if (!lib.Name.EndsWith($":{key}", StringComparison.OrdinalIgnoreCase))
+                        {
+                            libName += $":{key}";
+                        }
+
+                        var mavenInfo = libName.ResolveMavenString();
+                        var downloadUrl = string.IsNullOrEmpty(lib.Url)
+                            ? mavenInfo.OrganizationName.Equals("net.minecraftforge", StringComparison.Ordinal)
+                                ? "https://files.minecraftforge.net/maven/"
+                                : "https://libraries.minecraft.net/"
+                            : lib.Url;
+
+                        libFi = new FileInfo
+                        {
+                            Name = lib.Name,
+                            Url = $"{downloadUrl}{mavenInfo.Path}",
+                            Path = mavenInfo.Path
+                        };
+                    }
 
                     result.Item1.Add(new NativeFileInfo
                     {
                         Extract = lib.Extract,
-                        FileInfo = lib.Downloads.Classifiers[key]
+                        FileInfo = libFi
                     });
 
                     continue;
@@ -347,6 +373,7 @@ namespace ProjBobcat.DefaultComponent.Launch
 
             var result = new VersionInfo
             {
+                Assets = rawVersion.AssetsVersion,
                 AssetInfo = rawVersion.AssetIndex,
                 MainClass = rawVersion.MainClass,
                 Libraries = new List<FileInfo>(),

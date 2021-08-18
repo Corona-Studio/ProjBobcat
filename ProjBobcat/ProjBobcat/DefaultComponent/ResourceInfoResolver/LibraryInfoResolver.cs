@@ -31,8 +31,9 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
         public async IAsyncEnumerable<IGameResource> ResolveResourceAsync()
         {
             LogGameResourceInfoResolveStatus("开始进行游戏资源(Library)检查");
-            if (!(VersionInfo?.Natives?.Any() ?? false)) yield break;
-            if (!(VersionInfo?.Libraries?.Any() ?? false)) yield break;
+            if (!(VersionInfo?.Natives?.Any() ?? false) &&
+                !(VersionInfo?.Libraries?.Any() ?? false)) 
+                yield break;
 
             var libDi = new DirectoryInfo(Path.Combine(BasePath, GamePathHelper.GetLibraryRootPath()));
 

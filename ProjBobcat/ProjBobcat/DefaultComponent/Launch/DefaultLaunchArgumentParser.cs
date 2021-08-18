@@ -175,12 +175,12 @@ namespace ProjBobcat.DefaultComponent.Launch
                 { "${version_name}", $"\"{LaunchSettings.Version}\"" },
                 { "${version_type}", $"\"{GameProfile?.Type ?? LaunchSettings.LauncherName}\"" },
                 { "${assets_root}", $"\"{AssetRoot}\"" },
-                { "${assets_index_name}", VersionInfo.AssetInfo.Id },
+                { "${assets_index_name}", VersionInfo.AssetInfo?.Id ?? VersionInfo.Assets },
                 { "${game_directory}", $"\"{gameDir}\"" },
                 { "${auth_player_name}", authResult?.SelectedProfile?.Name },
                 { "${auth_uuid}", authResult?.SelectedProfile?.UUID.ToString() },
                 { "${auth_access_token}", authResult?.AccessToken },
-                { "${user_properties}", authResult?.User?.Properties.ResolveUserProperties() },
+                { "${user_properties}", "{}" },//authResult?.User?.Properties.ResolveUserProperties() },
                 { "${user_type}", "Mojang" } // use default value as placeholder
             };
 

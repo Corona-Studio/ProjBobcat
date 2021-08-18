@@ -39,6 +39,30 @@ namespace ProjBobcat.Class.Helper
             return resContent;
         }
 
+        public static async Task<CurseForgeAddonInfo> GetAddon(int addonId)
+        {
+            var reqUrl = $"{BaseUrl}/api/v2/addon/{addonId}";
+
+            var resContent = await Get(reqUrl);
+            var resModel = JsonConvert.DeserializeObject<CurseForgeAddonInfo>(resContent);
+
+            return resModel;
+        }
+
+        public static async Task<List<CurseForgeAddonInfo>> GetAddons(IEnumerable<int> addonIds)
+        {
+            var reqUrl = $"{BaseUrl}/api/v2/addon";
+            var data = JsonConvert.SerializeObject(addonIds);
+            var resContent = await HttpHelper.Post(reqUrl, data);
+
+            resContent.EnsureSuccessStatusCode();
+
+            var resultStr = await resContent.Content.ReadAsStringAsync();
+            var resModel = JsonConvert.DeserializeObject<List<CurseForgeAddonInfo>>(resultStr);
+
+            return resModel;
+        }
+
         public static async Task<List<CurseForgeLatestFileModel>> GetAddonFiles(int addonId)
         {
             var reqUrl = $"{BaseUrl}/api/v2/addon/{addonId}/files";
