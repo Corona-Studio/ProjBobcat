@@ -73,7 +73,21 @@ namespace ProjBobcat.DefaultComponent.Launch
                 return false;
 
             LauncherAccount.Accounts ??= new Dictionary<string, AccountModel>();
-            LauncherAccount.Accounts.Add(uuid, account);
+
+            /*
+            var existsAccount = LauncherAccount.Accounts
+                .FirstOrDefault(p => p.Value?.RemoteId?.Equals(account.RemoteId, StringComparison.OrdinalIgnoreCase) ?? false);
+            var (key, value) = existsAccount;
+
+            if(!string.IsNullOrEmpty(key) && value != null)
+            {
+                LauncherAccount.Accounts[key] = value;
+            }
+            else
+            */
+            {
+                LauncherAccount.Accounts.Add(uuid, account);
+            }
 
             Save();
             return true;

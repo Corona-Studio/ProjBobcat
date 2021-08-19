@@ -12,5 +12,7 @@ namespace ProjBobcat.Class.Model.Auth
         ///     可用的Profiles
         /// </summary>
         public List<ProfileInfoModel> Profiles { get; set; }
+        public string LocalId { get; set; }
+        public string RemoteId { get; set; }
     }
 }

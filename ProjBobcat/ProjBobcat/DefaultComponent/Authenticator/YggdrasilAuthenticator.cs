@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using System.Timers;
 using Newtonsoft.Json;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
@@ -19,6 +21,22 @@ namespace ProjBobcat.DefaultComponent.Authenticator
     /// </summary>
     public class YggdrasilAuthenticator : IAuthenticator
     {
+        private static readonly ConcurrentQueue<string> _loginHistoryQueue = new ConcurrentQueue<string>();
+        private static readonly Timer _loginTimer = new Timer(5000)
+        {
+            AutoReset = true,
+            Enabled = true
+        };
+
+        static YggdrasilAuthenticator()
+        {
+            _loginTimer.Elapsed += (_, _) =>
+            {
+                if (_loginHistoryQueue.IsEmpty) return;
+                _loginHistoryQueue.TryDequeue(out _);
+            };
+        }
+
         /// <summary>
         ///     Mojang官方验证服务器地址。
         /// </summary>
@@ -98,21 +116,31 @@ namespace ProjBobcat.DefaultComponent.Authenticator
             };
             var requestJson = JsonConvert.SerializeObject(requestModel, JsonHelper.CamelCasePropertyNamesSettings);
 
+            if (!_loginHistoryQueue.IsEmpty)
+            {
+                var authInfo = _loginHistoryQueue.FirstOrDefault();
+                if (!string.IsNullOrEmpty(authInfo))
+                {
+                    if (authInfo.Equals($"{Email}_{Password}", StringComparison.OrdinalIgnoreCase))
+                        await Task.Delay(5500);
+                }
+            }
+
             using var resultJson = await HttpHelper.Post(LoginAddress, requestJson).ConfigureAwait(true);
             var content = await resultJson.Content.ReadAsStringAsync().ConfigureAwait(true);
             var result = JsonConvert.DeserializeObject<AuthResponseModel>(content);
 
-            if (result is null)
+            if (result == default || string.IsNullOrEmpty(result.AccessToken))
             {
                 var error = JsonConvert.DeserializeObject<ErrorModel>(content);
 
                 if (error is null)
-                    return new AuthResultBase
+                    return new YggdrasilAuthResult
                     {
                         AuthStatus = AuthStatus.Unknown
                     };
 
-                return new AuthResultBase
+                return new YggdrasilAuthResult
                 {
                     AuthStatus = AuthStatus.Failed,
                     Error = error
@@ -120,7 +148,7 @@ namespace ProjBobcat.DefaultComponent.Authenticator
             }
 
             if (result.SelectedProfile == null && !(result.AvailableProfiles?.Any() ?? false))
-                return new AuthResultBase
+                return new YggdrasilAuthResult
                 {
                     AuthStatus = AuthStatus.Failed,
                     Error = new ErrorModel
@@ -132,7 +160,7 @@ namespace ProjBobcat.DefaultComponent.Authenticator
                 };
 
             if (string.IsNullOrEmpty(AuthServer) && result.SelectedProfile == null)
-                return new AuthResultBase
+                return new YggdrasilAuthResult
                 {
                     AuthStatus = AuthStatus.Failed,
                     Error = new ErrorModel
@@ -167,13 +195,35 @@ namespace ProjBobcat.DefaultComponent.Authenticator
             };
 
             if (result.SelectedProfile != null)
+            {
                 profile.MinecraftProfile = new AccountProfileModel
                 {
                     Id = result.SelectedProfile.UUID.ToString(),
                     Name = result.SelectedProfile.Name
                 };
+            }
+            /*
+            else
+            {
+                var existsAccount = LauncherAccountParser.Find(result.SelectedProfile.UUID.ToString(), result.SelectedProfile.Name);
+
+                if (existsAccount.HasValue)
+                {
+                    var (_, value) = existsAccount.Value;
+
+                    if (value != null)
+                    {
+                        if (value.MinecraftProfile != null)
+                        {
+                            profile.MinecraftProfile = value.MinecraftProfile;
+                        }
+                    }
+                }
+            }
+            */
 
             LauncherAccountParser.AddNewAccount(rUuid, profile);
+            _loginHistoryQueue.Enqueue($"{Email}_{Password}");
 
             return new YggdrasilAuthResult
             {
@@ -181,7 +231,9 @@ namespace ProjBobcat.DefaultComponent.Authenticator
                 AuthStatus = AuthStatus.Succeeded,
                 Profiles = result.AvailableProfiles,
                 SelectedProfile = result.SelectedProfile,
-                User = result.User
+                User = result.User,
+                LocalId = rUuid,
+                RemoteId = profile.RemoteId
             };
         }
 
