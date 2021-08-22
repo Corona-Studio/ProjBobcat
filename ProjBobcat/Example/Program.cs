@@ -61,7 +61,7 @@ namespace Example
                 Authenticator = new OfflineAuthenticator
                 {
                     Username = "test",
-                    LauncherProfileParser = core.VersionLocator.LauncherProfileParser // launcher_profiles.json解析组件
+                    // LauncherProfileParser = core.VersionLocator.LauncherProfileParser // launcher_profiles.json解析组件
                 }
             };
 
