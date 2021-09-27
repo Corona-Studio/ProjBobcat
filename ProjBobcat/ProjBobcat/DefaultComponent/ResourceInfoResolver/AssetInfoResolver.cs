@@ -165,7 +165,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                     }
                 }
 
-                LogGameResourceInfoResolveStatus($"检索并验证 Asset 资源：{hash}");
+                LogGameResourceInfoResolveStatus($"检索并验证 Asset 资源：{hash.AsSpan().Slice(0, 10).ToString()}");
 
                 yield return new AssetDownloadInfo
                 {

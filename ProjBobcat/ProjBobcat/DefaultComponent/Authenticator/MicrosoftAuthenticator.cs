@@ -24,7 +24,7 @@ namespace ProjBobcat.DefaultComponent.Authenticator
         public const string MojangProfileUrl = "https://api.minecraftservices.com/minecraft/profile";
 
         public string Email { get; init; }
-        public Func<Task<ValueTuple<string, string, int>>> AccessTokenProvider { get; init; }
+        public Func<Task<ValueTuple<string, string, int>>> XBLTokenProvider { get; init; }
 
         public ILauncherAccountParser LauncherAccountParser { get; set; }
 
@@ -37,7 +37,7 @@ namespace ProjBobcat.DefaultComponent.Authenticator
         {
             #region STAGE 1
 
-            var provider = await AccessTokenProvider();
+            var provider = await XBLTokenProvider();
 
             if (provider == default)
                 return new MicrosoftAuthResult
@@ -46,7 +46,7 @@ namespace ProjBobcat.DefaultComponent.Authenticator
                     Error = new ErrorModel
                     {
                         Cause = "缺少重要凭据",
-                        Error = $"{nameof(AccessTokenProvider)} 未提供有效的数据",
+                        Error = $"{nameof(XBLTokenProvider)} 未提供有效的数据",
                         ErrorMessage = "缺失重要的登陆参数"
                     }
                 };
@@ -167,7 +167,7 @@ namespace ProjBobcat.DefaultComponent.Authenticator
             LauncherAccountParser.AddNewAccount(uuid, new AccountModel
             {
                 AccessToken = mcRes.AccessToken,
-                AccessTokenExpiresAt = DateTime.Now.AddSeconds(mcRes.ExpiresIn),
+                AccessTokenExpiresAt = DateTime.Now.AddSeconds(expiresIn > 0 ? expiresIn : mcRes.ExpiresIn),
                 Avatar = profileRes.GetActiveSkin()?.Url,
                 EligibleForMigration = false,
                 HasMultipleProfiles = false,
@@ -179,10 +179,10 @@ namespace ProjBobcat.DefaultComponent.Authenticator
                     Name = profileRes.Name
                 },
                 Persistent = true,
-                RemoteId = mcRes.UserName,
+                RemoteId = profileRes.Name,
                 Type = "XBox",
                 UserProperites = new List<AuthPropertyModel>(),
-                Username = mcRes.UserName
+                Username = profileRes.Name
             });
 
             var sPUuid = new PlayerUUID(profileRes.Id);
