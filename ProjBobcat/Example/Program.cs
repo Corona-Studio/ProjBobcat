@@ -7,6 +7,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using ProjBobcat.DefaultComponent.Authenticator;
+using ProjBobcat.DefaultComponent.Logging;
 
 namespace Example
 {
@@ -17,34 +18,35 @@ namespace Example
         private static async Task Main(string[] args)
         {
             var jl = SystemInfoHelper.FindJava();
-            foreach (var java in jl) Console.WriteLine(java);
-            InitLauncherCore();
-            Console.WriteLine(core.VersionLocator.GetAllGames().Count());
-            var gameList = core.VersionLocator.GetAllGames().ToList();
-            foreach (var game in gameList) Console.WriteLine(game.Name);
-            Console.WriteLine(core.VersionLocator.GetGame(gameList[0].Id).JvmArguments);
 
-            var javaPath = jl.ToList()[0];
-            Console.WriteLine(javaPath);
-            var versionId = gameList[0].Id;
-            Console.WriteLine(versionId);
+            foreach (var java in jl)
+            {
+                Console.WriteLine($"搜索到的 Java - {java}");
+            }
+
+            InitLauncherCore(); //初始化核心
+
+            Console.WriteLine($"在目录中扫描到了 {core.VersionLocator.GetAllGames().Count()} 个游戏：");
+            var gameList = core.VersionLocator.GetAllGames().ToList();
+            foreach (var game in gameList)
+            {
+                Console.WriteLine($"\t - {game.Name}");
+            }
+
+            var firstGame = gameList.First(); //获取搜索到的第一个游戏
+            Console.WriteLine(
+                string.Format("第一个游戏的信息：{0}游戏 ID：{1}{0}游戏底层版本：{2}{0}游戏名称：{3}", 
+                $"{Environment.NewLine}\t", 
+                firstGame.Id, 
+                firstGame.RootVersion, 
+                firstGame.Name));
+
+            var javaPath = jl.ToList().First(); //获取搜索到的第一个Java
+            Console.WriteLine($"列表中的第一个 Java 所在的路径：{javaPath}");
 
             var launchSettings = new LaunchSettings
             {
-                FallBackGameArguments =
-                    new GameArguments // 游戏启动参数缺省值，适用于以该启动设置启动的所有游戏，对于具体的某个游戏，可以设置（见下）具体的启动参数，如果所设置的具体参数出现缺失，将使用这个补全
-                    {
-                        GcType = GcType.G1Gc, // GC类型
-                        JavaExecutable = javaPath, // Java路径
-                        Resolution = new ResolutionModel // 游戏窗口分辨率
-                        {
-                            Height = 600, // 高度
-                            Width = 800 // 宽度
-                        },
-                        MinMemory = 512, // 最小内存
-                        MaxMemory = 1024 // 最大内存
-                    },
-                Version = versionId, // 需要启动的游戏ID
+                Version = firstGame.Id, // 需要启动的游戏ID
                 VersionInsulation = false, // 版本隔离
                 GameResourcePath = core.RootPath, // 资源根目录
                 GamePath = core.RootPath, // 游戏根目录，如果有版本隔离则应该改为GamePathHelper.GetGamePath(Core.RootPath, versionId)
@@ -56,12 +58,13 @@ namespace Example
                     JavaExecutable = javaPath, // JAVA路径
                     Resolution = new ResolutionModel {Height = 600, Width = 800}, // 游戏窗口分辨率
                     MinMemory = 512, // 最小内存
-                    MaxMemory = 1024 // 最大内存
+                    MaxMemory = 1024, // 最大内存
+                    GcType = GcType.G1Gc, // GC类型
                 },
-                Authenticator = new OfflineAuthenticator
+                Authenticator = new OfflineAuthenticator //离线认证
                 {
-                    Username = "test",
-                    // LauncherProfileParser = core.VersionLocator.LauncherProfileParser // launcher_profiles.json解析组件
+                    Username = "test", //离线用户名
+                    LauncherAccountParser = core.VersionLocator.LauncherAccountParser
                 }
             };
 
@@ -81,12 +84,12 @@ namespace Example
 
         private static void Core_LaunchLogEventDelegate(object sender, LaunchLogEventArgs e)
         {
-            Console.WriteLine(e.Item);
+            Console.WriteLine($"[启动 LOG] - {e.Item}");
         }
 
         private static void Core_GameLogEventDelegate(object sender, GameLogEventArgs e)
         {
-            Console.WriteLine(e.Content);
+            Console.WriteLine($"[游戏 LOG] - {e.Content}");
         }
 
         public static void InitLauncherCore()
@@ -100,8 +103,10 @@ namespace Example
                 RootPath = rootPath,
                 VersionLocator = new DefaultVersionLocator(rootPath, clientToken)
                 {
-                    LauncherProfileParser = new DefaultLauncherProfileParser(rootPath, clientToken)
-                }
+                    LauncherProfileParser = new DefaultLauncherProfileParser(rootPath, clientToken),
+                    LauncherAccountParser = new DefaultLauncherAccountParser(rootPath, clientToken)
+                },
+                GameLogResolver = new DefaultGameLogResolver()
             };
         }
     }
