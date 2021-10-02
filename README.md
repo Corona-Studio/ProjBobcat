@@ -102,12 +102,14 @@ var javaList = ProjBobcat.Class.Helper.SystemInfoHelper.FindJava(); // Returns a
 
 var core = new DefaultGameCore
 {
-    ClientToken = clientToken, // Game's identifier, set it to any GUID you like, such as 88888888-8888-8888-8888-888888888888 or a randomly generated one.
-    RootPath = rootPath, // Path of .minecraft\, you had better use absolute path.
-    VersionLocator = new DefaultVersionLocator(rootPath, clientToken)
-    {
-        LauncherProfileParser = new DefaultLauncherProfileParser(rootPath, clientToken)
-    }
+  ClientToken = clientToken,
+  RootPath = rootPath,
+  VersionLocator = new DefaultVersionLocator(rootPath, clientToken)
+  {
+    LauncherProfileParser = new DefaultLauncherProfileParser(rootPath, clientToken),
+    LauncherAccountParser = new DefaultLauncherAccountParser(rootPath, clientToken)
+  },
+  GameLogResolver = new DefaultGameLogResolver()
 };
 
 ```
@@ -207,7 +209,7 @@ Offline:
 launchSettings.Authenticator = new OfflineAuthenticator
 {
     Username = "Username"
-    LauncherProfileParser = Core.VersionLocator.LauncherProfileParser // launcher_profiles.json parser
+    LauncherAccountParser = core.VersionLocator.LauncherAccountParser // launcher_profiles.json parser
 },
 
 ```
@@ -217,7 +219,7 @@ Online:
 ```csharp
 launchSettings.Authenticator = new YggdrasilAuthenticator
 {
-    LauncherProfileParser = core.VersionLocator.LauncherProfileParser,
+    LauncherAccountParser = core.VersionLocator.LauncherAccountParser
     Email = "example@example.com", // Registered E-mail address on Mojang authentication server.
     Password = "password"
 };
