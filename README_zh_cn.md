@@ -111,12 +111,14 @@ var javaList = ProjBobcat.Class.Helper.SystemInfoHelper.FindJava(); // 返回一
 
 var core = new DefaultGameCore
 {
-    ClientToken = clientToken, // 游戏客户端识别码，你可以设置成你喜欢的任何GUID，例如88888888-8888-8888-8888-888888888888，或者自己随机生成一个！
-    RootPath = rootPath, // .minecraft\的路径
-    VersionLocator = new DefaultVersionLocator(rootPath, clientToken)
-    {
-        LauncherProfileParser = new DefaultLauncherProfileParser(rootPath, clientToken)
-    }
+  ClientToken = clientToken, // 游戏客户端识别码，你可以设置成你喜欢的任何GUID，例如88888888-8888-8888-8888-888888888888，或者自己随机生成一个！
+  RootPath = rootPath, // .minecraft\的路径
+  VersionLocator = new DefaultVersionLocator(rootPath, clientToken)
+  {
+    LauncherProfileParser = new DefaultLauncherProfileParser(rootPath, clientToken),
+    LauncherAccountParser = new DefaultLauncherAccountParser(rootPath, clientToken)
+  },
+  GameLogResolver = new DefaultGameLogResolver()
 };
 
 ```
@@ -217,7 +219,7 @@ launchSettings.GameArguments = new GameArguments // （可选）具体游戏启�
 launchSettings.Authenticator = new OfflineAuthenticator
 {
     Username = "您的游戏名"
-    LauncherProfileParser = Core.VersionLocator.LauncherProfileParser // launcher_profiles.json解析组件
+    LauncherAccountParser = core.VersionLocator.LauncherAccountParser // launcher_profiles.json解析组件
 };
 
 ```
@@ -227,7 +229,7 @@ launchSettings.Authenticator = new OfflineAuthenticator
 ```csharp
 launchSettings.Authenticator = new YggdrasilAuthenticator
 {
-    LauncherProfileParser = core.VersionLocator.LauncherProfileParser,
+    LauncherAccountParser = core.VersionLocator.LauncherAccountParser
     Email = "example@example.com", // 在膜江验证服务器上注册的正版账号邮箱地址。
     Password = "password" // 填写明文密码。
 };
