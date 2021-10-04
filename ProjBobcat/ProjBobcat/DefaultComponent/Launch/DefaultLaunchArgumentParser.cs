@@ -53,7 +53,10 @@ namespace ProjBobcat.DefaultComponent.Launch
                 var rootJarPath = string.IsNullOrEmpty(rootVersion)
                     ? GamePathHelper.GetGameExecutablePath(launchSettings.Version)
                     : GamePathHelper.GetGameExecutablePath(rootVersion);
-                sb.Append(Path.Combine(RootPath, rootJarPath));
+                var rootJarFullPath = Path.Combine(RootPath, rootJarPath);
+                
+                if(File.Exists(rootJarFullPath))
+                    sb.Append(rootJarFullPath);
             }
 
             ClassPath = sb.ToString();

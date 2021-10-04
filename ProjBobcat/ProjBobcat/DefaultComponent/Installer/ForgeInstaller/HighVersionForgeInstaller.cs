@@ -366,7 +366,7 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                         _totalDownloaded++;
                         var progress = (double)_totalDownloaded / _needToDownload;
                         InvokeStatusChangedEvent(
-                            $"下载 Forge Library - {args.File.FileName} ( {_totalDownloaded} / {_needToDownload} )",
+                            $"下载模组 - {args.File.FileName} ( {_totalDownloaded} / {_needToDownload} )",
                             progress);
 
                         if (!(args.Success ?? false))
@@ -397,8 +397,11 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
 
             foreach (var libDi in libDownloadInfo) await DownloadHelper.DownloadData(libDi);
 
-            while (failedFiles.Any() && retryCount < 3)
+            while (!failedFiles.IsEmpty && retryCount < 3)
             {
+                _needToDownload = failedFiles.Count;
+                _totalDownloaded = 0;
+
                 var fileList = new List<DownloadFile>(failedFiles);
                 failedFiles.Clear();
 
@@ -407,7 +410,7 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                 retryCount++;
             }
 
-            hasDownloadFailed = failedFiles.Any();
+            hasDownloadFailed = !failedFiles.IsEmpty;
             if (hasDownloadFailed)
                 return new ForgeInstallResult
                 {

@@ -18,7 +18,7 @@ namespace ProjBobcat.DefaultComponent
     /// </summary>
     public class DefaultResourceCompleter : IResourceCompleter
     {
-        ConcurrentBag<DownloadFile> _retryFiles;
+        private ConcurrentBag<DownloadFile> _retryFiles;
 
         public DefaultResourceCompleter()
         {

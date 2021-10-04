@@ -12,7 +12,6 @@ namespace ProjBobcat.DefaultComponent.Installer
     public class FabricInstaller : InstallerBase, IFabricInstaller
     {
         public FabricLoaderArtifactModel LoaderArtifact { get; set; }
-        public FabricArtifactModel YarnArtifact { get; set; }
 
         public string Install()
         {
@@ -104,19 +103,19 @@ namespace ProjBobcat.DefaultComponent.Installer
         {
             InvokeStatusChangedEvent("开始安装", 0);
 
-            var jsonUrl = "https://fabricmc.net/download/technic/?yarn="
-                          + Uri.EscapeDataString(YarnArtifact.Version)
+            var jsonUrl = "https://fabricmc.net/download/technic/?intermediary="
+                          + Uri.EscapeDataString(LoaderArtifact.Intermediary.Version)
                           + "&loader="
                           + Uri.EscapeDataString(LoaderArtifact.Loader.Version);
             var jsonContentRes = await HttpHelper.Get(jsonUrl);
             var jsonContent = await jsonContentRes.Content.ReadAsStringAsync();
             var versionModel = JsonConvert.DeserializeObject<RawVersionModel>(jsonContent);
             var id = string.IsNullOrEmpty(CustomId)
-                ? $"{YarnArtifact.GameVersion}-fabric{YarnArtifact.Version}-{LoaderArtifact.Loader.Version}"
+                ? $"{LoaderArtifact.Loader.GameVersion}-fabric-{LoaderArtifact.Loader.Version}-{LoaderArtifact.Intermediary.Version}"
                 : CustomId;
 
             versionModel.Id = id;
-            versionModel.InheritsFrom = YarnArtifact.GameVersion;
+            versionModel.InheritsFrom = LoaderArtifact.Loader.GameVersion;
 
             InvokeStatusChangedEvent("解析 Libraries 完成", 23.3333);
 

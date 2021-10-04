@@ -1,22 +1,29 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using ProjBobcat.Class.Helper;
+using ProjBobcat.Class.Model;
+using ProjBobcat.Class.Model.CurseForge;
+using ProjBobcat.Event;
+using ProjBobcat.Interface;
+using SharpCompress.Archives;
+using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using Newtonsoft.Json;
-using ProjBobcat.Class.Helper;
-using ProjBobcat.Class.Model;
-using ProjBobcat.Class.Model.CurseForge;
-using ProjBobcat.Interface;
-using SharpCompress.Archives;
 
 namespace ProjBobcat.DefaultComponent.Installer
 {
     public class CurseForgeInstaller : InstallerBase, ICurseForgeInstaller
     {
-        bool _isModAllDownloaded = true;
+        private ConcurrentBag<DownloadFile> _retryFiles;
+
+        public CurseForgeInstaller()
+        {
+            _retryFiles = new ConcurrentBag<DownloadFile>();
+        }
 
         int _totalDownloaded, _needToDownload;
         public string ModPackPath { get; set; }
@@ -47,34 +54,27 @@ namespace ProjBobcat.DefaultComponent.Installer
                 return urls.Select(file => (file.ProjectId, file.FileId));
             });
 
+            var urlBags = new ConcurrentBag<DownloadFile>();
             var actionBlock = new ActionBlock<ValueTuple<long, long>>(async t =>
             {
                 var downloadUrlRes = await CurseForgeAPIHelper.GetAddonDownloadUrl(t.Item1, t.Item2);
                 var d = downloadUrlRes.Trim('"');
                 var fn = Path.GetFileName(d);
 
-                var downloadFile = new DownloadFile
+                urlBags.Add(new DownloadFile
                 {
-                    Completed = (_, args) =>
-                    {
-                        _totalDownloaded++;
-                        _isModAllDownloaded = _isModAllDownloaded && (args.Success ?? false);
-
-                        // if (!args.Success)
-                        //     throw args.Error;
-
-                        var progress = (double)_totalDownloaded / _needToDownload * 100;
-
-                        InvokeStatusChangedEvent($"下载整合包中的 Mods - {fn} ({_totalDownloaded} / {_needToDownload})",
-                            progress);
-                    },
+                    Completed = WhenCompleted,
                     DownloadPath = di.FullName,
                     DownloadUri = d,
                     FileName = fn
-                    // Host = "proxy.freecdn.workers.dev"
-                };
+                });
 
-                await DownloadHelper.DownloadData(downloadFile);
+                _totalDownloaded++;
+
+                var progress = (double)_totalDownloaded / _needToDownload * 100;
+
+                InvokeStatusChangedEvent($"成功解析 MOD [{t.Item1}] 的下载地址",
+                    progress);
             }, new ExecutionDataflowBlockOptions
             {
                 BoundedCapacity = 32,
@@ -89,8 +89,9 @@ namespace ProjBobcat.DefaultComponent.Installer
             await actionBlock.Completion;
 
             _totalDownloaded = 0;
+            var isModAllDownloaded = await DownloadFiles(urlBags);
 
-            if (!_isModAllDownloaded)
+            if (!isModAllDownloaded)
                 throw new NullReferenceException("未能下载全部的 Mods");
 
             using var archive = ArchiveFactory.Open(Path.GetFullPath(ModPackPath));
@@ -117,7 +118,12 @@ namespace ProjBobcat.DefaultComponent.Installer
                     continue;
                 }
 
-                InvokeStatusChangedEvent($"解压缩安装文件：{subPath}", (double)_totalDownloaded / _needToDownload * 100);
+                var subPathLength = subPath.Length;
+                var subPathName = subPathLength > 35
+                ? $"...{subPath[(subPathLength - 15)..]}"
+                : subPath;
+
+                InvokeStatusChangedEvent($"解压缩安装文件：{subPathName}", (double)_totalDownloaded / _needToDownload * 100);
 
                 await using var fs = File.OpenWrite(path);
                 entry.WriteTo(fs);
@@ -126,6 +132,81 @@ namespace ProjBobcat.DefaultComponent.Installer
             }
 
             InvokeStatusChangedEvent("安装完成", 100);
+        }
+
+        async Task<bool> DownloadFiles(IEnumerable<DownloadFile> downloadList)
+        {
+            await DownloadHelper.AdvancedDownloadListFile(downloadList, 4);
+
+            var leftRetries = 3;
+            var fileBag = new ConcurrentBag<DownloadFile>(_retryFiles);
+
+            while (!fileBag.IsEmpty && leftRetries >= 0)
+            {
+                _retryFiles.Clear();
+                
+                var files = fileBag.Select(f => (DownloadFile)f.Clone()).ToList();
+                fileBag.Clear();
+
+                foreach (var file in files)
+                {
+                    file.RetryCount++;
+                    file.Completed = WhenCompleted;
+                }
+
+                await DownloadHelper.AdvancedDownloadListFile(files);
+
+                fileBag = new ConcurrentBag<DownloadFile>(_retryFiles);
+                leftRetries--;
+            }
+
+            return fileBag.IsEmpty;
+        }
+
+        private void WhenCompleted(object? sender, DownloadFileCompletedEventArgs e)
+        {
+            _totalDownloaded++;
+
+            var progress = (double)_totalDownloaded / _needToDownload * 100;
+            var retryStr = e.File.RetryCount > 0 ? $"[重试 - {e.File.RetryCount}] " : string.Empty;
+            var fileName = e.File.FileName.Length > 20
+                ? $"{e.File.FileName[..20]}..."
+                : e.File.FileName;
+
+            InvokeStatusChangedEvent($"{retryStr}下载整合包中的 Mods - {fileName} ({_totalDownloaded} / {_needToDownload})",
+                progress);
+
+            if (!(e.Success ?? false))
+            {
+                _retryFiles.Add(e.File);
+                return;
+            }
+
+            Check(e.File, ref _retryFiles);
+        }
+
+        private static void Check(DownloadFile file, ref ConcurrentBag<DownloadFile> bag)
+        {
+            var filePath = Path.Combine(file.DownloadPath, file.FileName);
+            if (!File.Exists(filePath)) bag.Add(file);
+
+//#pragma warning disable CA5350 // 不要使用弱加密算法
+//            using var hA = SHA1.Create();
+//#pragma warning restore CA5350 // 不要使用弱加密算法
+
+//            try
+//            {
+//                var hash = CryptoHelper.ComputeFileHash(filePath, hA);
+
+//                if (string.IsNullOrEmpty(file.CheckSum)) return;
+//                if (hash.Equals(file.CheckSum, StringComparison.OrdinalIgnoreCase)) return;
+
+//                bag.Add(file);
+//                File.Delete(filePath);
+//            }
+//            catch (Exception)
+//            {
+//            }
         }
 
         public async Task<CurseForgeManifestModel> ReadManifestTask()
