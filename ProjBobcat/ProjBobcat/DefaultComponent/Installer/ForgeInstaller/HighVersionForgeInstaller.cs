@@ -14,6 +14,7 @@ using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Forge;
 using ProjBobcat.Class.Model.YggdrasilAuth;
+using ProjBobcat.Event;
 using ProjBobcat.Interface;
 using SharpCompress.Archives;
 
@@ -21,7 +22,13 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
 {
     public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
     {
-        int _totalDownloaded, _needToDownload, _totalProcessed, _needToProcess;
+        public HighVersionForgeInstaller()
+        {
+            _retryFiles = new ConcurrentBag<DownloadFile>();
+        }
+
+        private ConcurrentBag<DownloadFile> _retryFiles;
+        private int _totalDownloaded, _needToDownload, _totalProcessed, _needToProcess;
         public string JavaExecutablePath { get; init; }
 
         public string MineCraftVersionId { get; set; }
@@ -361,27 +368,7 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
 
                 var df = new DownloadFile
                 {
-                    Completed = (_, args) =>
-                    {
-                        _totalDownloaded++;
-                        var progress = (double)_totalDownloaded / _needToDownload;
-                        InvokeStatusChangedEvent(
-                            $"下载模组 - {args.File.FileName} ( {_totalDownloaded} / {_needToDownload} )",
-                            progress);
-
-                        if (!(args.Success ?? false))
-                        {
-                            failedFiles.Add(args.File);
-                            return;
-                        }
-
-                        if (string.IsNullOrEmpty(lib.Sha1))
-                            return;
-
-                        var filePath = Path.Combine(path, fileName);
-                        var sha1 = CryptoHelper.ComputeFileHash(filePath, new SHA1Managed());
-                        if (!sha1.Equals(lib.Sha1, StringComparison.OrdinalIgnoreCase)) failedFiles.Add(args.File);
-                    },
+                    Completed = WhenCompleted,
                     CheckSum = lib.Sha1,
                     DownloadPath = path,
                     FileName = fileName,
@@ -393,22 +380,8 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
             }
 
             _needToDownload = libDownloadInfo.Count;
-            // await DownloadHelper.AdvancedDownloadListFile(libDownloadInfo);
 
-            foreach (var libDi in libDownloadInfo) await DownloadHelper.DownloadData(libDi);
-
-            while (!failedFiles.IsEmpty && retryCount < 3)
-            {
-                _needToDownload = failedFiles.Count;
-                _totalDownloaded = 0;
-
-                var fileList = new List<DownloadFile>(failedFiles);
-                failedFiles.Clear();
-
-                foreach (var libDi in fileList) await DownloadHelper.DownloadData(libDi);
-
-                retryCount++;
-            }
+            await DownloadFiles(libDownloadInfo);
 
             hasDownloadFailed = !failedFiles.IsEmpty;
             if (hasDownloadFailed)
@@ -472,7 +445,7 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                     RedirectStandardOutput = true
                 };
 
-                var p = Process.Start(pi);
+                using var p = Process.Start(pi);
                 var logSb = new StringBuilder();
                 var errSb = new StringBuilder();
 
@@ -482,9 +455,14 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
 
                     logSb.AppendLine(args.Data);
 
-                    var data = args.Data?.Replace(RootPath, ".")?.Trim();
+                    var data = args.Data ?? string.Empty;
                     var progress = (double)_totalProcessed / _needToProcess;
-                    InvokeStatusChangedEvent($"{data} <安装信息> ( {_totalProcessed} / {_needToProcess} )", progress);
+                    var dataLength = data.Length;
+                    var dataStr = dataLength > 30
+                                    ? $"..{data[(dataLength - 30)..]}"
+                                    : data;
+
+                    InvokeStatusChangedEvent($"{dataStr} <安装信息> ( {_totalProcessed} / {_needToProcess} )", progress);
                 };
 
                 p.ErrorDataReceived += (_, args) =>
@@ -493,8 +471,14 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
 
                     errSb.AppendLine(args.Data);
 
+                    var data = args.Data ?? string.Empty;
                     var progress = (double)_totalProcessed / _needToProcess;
-                    var data = args.Data?.Replace(RootPath, ".")?.Trim();
+                    var dataLength = data.Length;
+                    var dataStr = dataLength > 30
+                                    ? $"{data[(dataLength - 30)..]}"
+                                    : data;
+
+
                     InvokeStatusChangedEvent($"{data} <错误> ( {_totalProcessed} / {_needToProcess} )", progress);
                 };
 
@@ -532,6 +516,81 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
             {
                 Succeeded = true
             };
+        }
+
+        async Task<bool> DownloadFiles(IEnumerable<DownloadFile> downloadList)
+        {
+            await DownloadHelper.AdvancedDownloadListFile(downloadList, 4);
+
+            var leftRetries = 3;
+            var fileBag = new ConcurrentBag<DownloadFile>(_retryFiles);
+
+            while (!fileBag.IsEmpty && leftRetries >= 0)
+            {
+                _retryFiles.Clear();
+
+                var files = fileBag.Select(f => (DownloadFile)f.Clone()).ToList();
+
+                _needToDownload = files.Count;
+                fileBag.Clear();
+
+                foreach (var file in files)
+                {
+                    file.RetryCount++;
+                    file.Completed = WhenCompleted;
+                }
+
+                await DownloadHelper.AdvancedDownloadListFile(files);
+
+                fileBag = new ConcurrentBag<DownloadFile>(_retryFiles);
+                leftRetries--;
+            }
+
+            return fileBag.IsEmpty;
+        }
+
+        private void WhenCompleted(object? sender, DownloadFileCompletedEventArgs e)
+        {
+            _totalDownloaded++;
+
+            var progress = (double)_totalDownloaded / _needToDownload;
+            var retryStr = e.File.RetryCount > 0 ? $"[重试 - {e.File.RetryCount}] " : string.Empty;
+
+            InvokeStatusChangedEvent(
+                $"{retryStr}下载模组 - {e.File.FileName} ( {_totalDownloaded} / {_needToDownload} )",
+                progress);
+
+            if (!(e.Success ?? false))
+            {
+                _retryFiles.Add(e.File);
+                return;
+            }
+
+            Check(e.File, ref _retryFiles);
+        }
+
+        private static void Check(DownloadFile file, ref ConcurrentBag<DownloadFile> bag)
+        {
+            var filePath = Path.Combine(file.DownloadPath, file.FileName);
+            if (!File.Exists(filePath)) bag.Add(file);
+
+#pragma warning disable CA5350 // 不要使用弱加密算法
+            using var hA = SHA1.Create();
+#pragma warning restore CA5350 // 不要使用弱加密算法
+
+            try
+            {
+                var hash = CryptoHelper.ComputeFileHash(filePath, hA);
+
+                if (string.IsNullOrEmpty(file.CheckSum)) return;
+                if (hash.Equals(file.CheckSum, StringComparison.OrdinalIgnoreCase)) return;
+
+                bag.Add(file);
+                File.Delete(filePath);
+            }
+            catch (Exception)
+            {
+            }
         }
     }
 }
