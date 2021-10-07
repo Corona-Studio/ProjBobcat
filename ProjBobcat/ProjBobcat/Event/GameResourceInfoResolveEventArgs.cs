@@ -5,7 +5,8 @@ namespace ProjBobcat.Event
 {
     public class GameResourceInfoResolveEventArgs : EventArgs
     {
-        public string CurrentProgress { get; set; }
-        public LogType LogType { get; set; }
+        public double Progress { get; init; }
+        public string Status { get; init; }
+        public LogType LogType { get; init; }
     }
 }

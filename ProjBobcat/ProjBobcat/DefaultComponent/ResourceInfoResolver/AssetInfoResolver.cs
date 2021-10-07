@@ -111,11 +111,11 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                 }
                 catch (Exception e)
                 {
-                    LogGameResourceInfoResolveStatus($"解析Asset Indexes 文件失败！原因：{e.Message}", LogType.Error);
+                    LogGameResourceInfoResolveStatus($"解析Asset Indexes 文件失败！原因：{e.Message}", logType: LogType.Error);
                     yield break;
                 }
 
-                LogGameResourceInfoResolveStatus("Asset Indexes 文件下载完成", LogType.Success);
+                LogGameResourceInfoResolveStatus("Asset Indexes 文件下载完成", 100, LogType.Success);
             }
 
             LogGameResourceInfoResolveStatus("开始解析Asset Indexes 文件...");
@@ -128,14 +128,14 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
             }
             catch (Exception ex)
             {
-                LogGameResourceInfoResolveStatus($"解析Asset Indexes 文件失败！原因：{ex.Message}", LogType.Error);
+                LogGameResourceInfoResolveStatus($"解析Asset Indexes 文件失败！原因：{ex.Message}", logType: LogType.Error);
                 File.Delete(assetIndexesPath);
                 yield break;
             }
 
             if (assetObject == null)
             {
-                LogGameResourceInfoResolveStatus("解析Asset Indexes 文件失败！原因：文件可能损坏或为空", LogType.Error);
+                LogGameResourceInfoResolveStatus("解析Asset Indexes 文件失败！原因：文件可能损坏或为空", logType: LogType.Error);
                 File.Delete(assetIndexesPath);
                 yield break;
             }
@@ -143,12 +143,19 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
 #pragma warning disable CA5350 // 不要使用弱加密算法
             using var hA = SHA1.Create();
 #pragma warning restore CA5350 // 不要使用弱加密算法
+
+            var checkedObject = 0;
+            var objectCount = assetObject.Objects.Count;
             foreach (var (_, fi) in assetObject.Objects)
             {
                 var hash = fi.Hash;
                 var twoDigitsHash = hash[..2];
                 var path = Path.Combine(assetObjectsDi.FullName, twoDigitsHash);
                 var filePath = Path.Combine(path, fi.Hash);
+
+                checkedObject++;
+                var progress = checkedObject / objectCount * 100;
+                LogGameResourceInfoResolveStatus($"检索并验证 Asset 资源：{hash.AsSpan().Slice(0, 10).ToString()}", progress);
 
                 if (File.Exists(filePath))
                 {
@@ -165,8 +172,6 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                     }
                 }
 
-                LogGameResourceInfoResolveStatus($"检索并验证 Asset 资源：{hash.AsSpan().Slice(0, 10).ToString()}");
-
                 yield return new AssetDownloadInfo
                 {
                     Title = hash,
@@ -179,14 +184,15 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                 };
             }
 
-            LogGameResourceInfoResolveStatus("Assets 解析完成", LogType.Success);
+            LogGameResourceInfoResolveStatus("Assets 解析完成", 100, logType: LogType.Success);
         }
 
-        void LogGameResourceInfoResolveStatus(string currentStatus, LogType logType = LogType.Normal)
+        void LogGameResourceInfoResolveStatus(string currentStatus, double progress = 0, LogType logType = LogType.Normal)
         {
             GameResourceInfoResolveEvent?.Invoke(this, new GameResourceInfoResolveEventArgs
             {
-                CurrentProgress = currentStatus,
+                Status = currentStatus,
+                Progress = progress,
                 LogType = logType
             });
         }

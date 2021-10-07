@@ -44,10 +44,18 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
 #pragma warning restore CA5350 // 不要使用弱加密算法
 
             var libraries = new List<FileInfo>();
+            var checkedLib = 0;
+            var libCount = VersionInfo.Libraries.Count;
+
             foreach (var lib in VersionInfo.Libraries)
             {
                 var libPath = GamePathHelper.GetLibraryPath(lib.Path.Replace('/', '\\'));
                 var filePath = Path.Combine(BasePath, libPath);
+
+                checkedLib++;
+                var progress = checkedLib / libCount * 100;
+
+                LogGameResourceInfoResolveStatus($"检索并验证 Library：{libPath}", progress);
 
                 if (File.Exists(filePath))
                 {
@@ -66,11 +74,11 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                     }
                 }
 
-                LogGameResourceInfoResolveStatus($"检索并验证 Library：{libPath}");
-
                 libraries.Add(lib);
             }
 
+            checkedLib = 0;
+            libCount = VersionInfo.Natives.Count;
             var natives = new List<FileInfo>();
             foreach (var native in VersionInfo.Natives)
             {
@@ -81,6 +89,10 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                 {
                     if (!CheckLocalFiles) continue;
                     if (string.IsNullOrEmpty(native.FileInfo.Sha1)) continue;
+
+                    checkedLib++;
+                    var progress = checkedLib / libCount * 100;
+                    LogGameResourceInfoResolveStatus($"检索并验证 Native：{nativePath}", progress);
 
                     try
                     {
@@ -93,8 +105,6 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                     {
                     }
                 }
-
-                LogGameResourceInfoResolveStatus($"检索并验证 Native：{nativePath}");
 
                 natives.Add(native.FileInfo);
             }
@@ -125,14 +135,15 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                 };
             }
 
-            LogGameResourceInfoResolveStatus("检查Library完成");
+            LogGameResourceInfoResolveStatus("检查Library完成", 100);
         }
 
-        void LogGameResourceInfoResolveStatus(string currentStatus, LogType logType = LogType.Normal)
+        void LogGameResourceInfoResolveStatus(string currentStatus, double progress = 0, LogType logType = LogType.Normal)
         {
             GameResourceInfoResolveEvent?.Invoke(this, new GameResourceInfoResolveEventArgs
             {
-                CurrentProgress = currentStatus,
+                Status = currentStatus,
+                Progress = progress,
                 LogType = logType
             });
         }
