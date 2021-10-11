@@ -53,9 +53,9 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                 var filePath = Path.Combine(BasePath, libPath);
 
                 checkedLib++;
-                var progress = checkedLib / libCount * 100;
+                var progress = (double) checkedLib / libCount * 100;
 
-                LogGameResourceInfoResolveStatus($"检索并验证 Library：{libPath}", progress);
+                LogGameResourceInfoResolveStatus("检索并验证 Library", progress);
 
                 if (File.Exists(filePath))
                 {
@@ -91,8 +91,8 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                     if (string.IsNullOrEmpty(native.FileInfo.Sha1)) continue;
 
                     checkedLib++;
-                    var progress = checkedLib / libCount * 100;
-                    LogGameResourceInfoResolveStatus($"检索并验证 Native：{nativePath}", progress);
+                    var progress = (double) checkedLib / libCount * 100;
+                    LogGameResourceInfoResolveStatus("检索并验证 Native", progress);
 
                     try
                     {

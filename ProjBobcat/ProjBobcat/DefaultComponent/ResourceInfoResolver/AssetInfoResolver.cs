@@ -154,8 +154,8 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                 var filePath = Path.Combine(path, fi.Hash);
 
                 checkedObject++;
-                var progress = checkedObject / objectCount * 100;
-                LogGameResourceInfoResolveStatus($"检索并验证 Asset 资源：{hash.AsSpan().Slice(0, 10).ToString()}", progress);
+                var progress = (double) checkedObject / objectCount * 100;
+                LogGameResourceInfoResolveStatus("检索并验证 Asset 资源", progress);
 
                 if (File.Exists(filePath))
                 {
