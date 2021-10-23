@@ -34,6 +34,10 @@
     <PackageProjectUrl>https://github.com/Corona-Studio/ProjBobcat</PackageProjectUrl>
   </PropertyGroup>
   <ItemGroup>
+    <None Remove="FodyWeavers.xml" />
+    <None Remove="ProjBobcat.GeneratedMSBuildEditorConfig.editorconfig" />
+  </ItemGroup>
+  <ItemGroup>
     <None Include="..\.editorconfig">
       <Link>.editorconfig</Link>
     </None>
@@ -48,7 +52,7 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Fody">
-      <Version>6.5.3</Version>
+      <Version>6.5.5</Version>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
