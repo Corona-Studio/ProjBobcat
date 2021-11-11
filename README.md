@@ -17,6 +17,9 @@ The next-generation Minecraft launcher core written in C# providing the freest, 
 
 Developed and maintained by Corona Studio.
 
+## Stats
+![Alt](https://repobeats.axiom.co/api/embed/d8d56d4c2023d90ea067d5b3ca83ed5da4979289.svg "Repobeats analytics image")
+
 ## [Ad] An Awesome Typescript Launcher Core
 [Repo Link](https://github.com/Voxelum/minecraft-launcher-core-node)
 
