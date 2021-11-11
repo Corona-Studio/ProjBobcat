@@ -20,6 +20,9 @@
 
 由日冕工作室开发和维护。
 
+## Stats
+![Alt](https://repobeats.axiom.co/api/embed/d8d56d4c2023d90ea067d5b3ca83ed5da4979289.svg "Repobeats analytics image")
+
 ## [广告] 一个超牛逼的Typescript启动核心
 [仓库链接](https://github.com/Voxelum/minecraft-launcher-core-node)
 
