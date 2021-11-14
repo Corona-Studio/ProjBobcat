@@ -23,5 +23,7 @@ namespace ProjBobcat.Class.Model.Auth
         ///     Token 失效时间
         /// </summary>
         public int ExpiresIn { get; set; }
+
+        public string Email { get; set; }
     }
 }

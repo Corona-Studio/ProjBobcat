@@ -146,6 +146,8 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
 
             var checkedObject = 0;
             var objectCount = assetObject.Objects.Count;
+
+            LogGameResourceInfoResolveStatus("检索并验证 Asset 资源", 0);
             foreach (var (_, fi) in assetObject.Objects)
             {
                 var hash = fi.Hash;
@@ -155,7 +157,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
 
                 checkedObject++;
                 var progress = (double) checkedObject / objectCount * 100;
-                LogGameResourceInfoResolveStatus("检索并验证 Asset 资源", progress);
+                LogGameResourceInfoResolveStatus(string.Empty, progress);
 
                 if (File.Exists(filePath))
                 {
@@ -189,6 +191,15 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
 
         void LogGameResourceInfoResolveStatus(string currentStatus, double progress = 0, LogType logType = LogType.Normal)
         {
+            if(string.IsNullOrEmpty(currentStatus))
+            {
+                GameResourceInfoResolveEvent?.Invoke(this, new GameResourceInfoResolveEventArgs
+                {
+                    Progress = progress,
+                    LogType = logType
+                });
+            }
+
             GameResourceInfoResolveEvent?.Invoke(this, new GameResourceInfoResolveEventArgs
             {
                 Status = currentStatus,

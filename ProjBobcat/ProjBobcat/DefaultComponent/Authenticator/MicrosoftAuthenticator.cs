@@ -1,16 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Auth;
 using ProjBobcat.Class.Model.LauncherAccount;
 using ProjBobcat.Class.Model.LauncherProfile;
+using ProjBobcat.Class.Model.Microsoft.Graph;
 using ProjBobcat.Class.Model.MicrosoftAuth;
 using ProjBobcat.Class.Model.YggdrasilAuth;
 using ProjBobcat.Interface;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
+using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace ProjBobcat.DefaultComponent.Authenticator
 {
@@ -23,35 +26,159 @@ namespace ProjBobcat.DefaultComponent.Authenticator
         public const string MojangOwnershipUrl = "https://api.minecraftservices.com/entitlements/mcstore";
         public const string MojangProfileUrl = "https://api.minecraftservices.com/minecraft/profile";
 
-        public string Email { get; init; }
-        public Func<Task<ValueTuple<string, string, int>>> XBLTokenProvider { get; init; }
+        public static MicrosoftAuthenticatorAPISettings ApiSettings { get; private set; }
+        public static string MSDeviceTokenRequestUrl => $"https://login.microsoftonline.com/{ApiSettings.TenentId}/oauth2/v2.0/devicecode";
+        public static string MSDeviceTokenStatusUrl => $"https://login.microsoftonline.com/{ApiSettings.TenentId}/oauth2/v2.0/token";
+        public static string MSRefreshTokenRequestUrl => $"https://login.microsoftonline.com/{ApiSettings.TenentId}/oauth2/v2.0/token";
+        public const string MSGrantType = "urn:ietf:params:oauth:grant-type:device_code";
+
+        private static HttpClient DefaultClient => HttpClientHelper.GetNewClient(HttpClientHelper.DefaultClientName);
+
+        public string Email { get; set; }
+        public Func<Task<(bool, GraphAuthResultModel)>> CacheTokenProvider { get; init; }
 
         public ILauncherAccountParser LauncherAccountParser { get; set; }
+
+        public MicrosoftAuthenticator()
+        {
+            if (ApiSettings == null)
+                throw new ArgumentNullException("请使用 Configure(MicrosoftAuthenticatorAPISettings apiSettings) 方法来配置验证器基础设置！");
+        }
+
+        public static void Configure(MicrosoftAuthenticatorAPISettings apiSettings)
+        {
+            ApiSettings = apiSettings;
+        }
 
         public AuthResultBase Auth(bool userField = false)
         {
             return AuthTaskAsync(userField).Result;
         }
 
+        public static object ResolveMSGraphResult<T>(string content)
+        {
+            var jsonObj = JsonDocument.Parse(content).RootElement;
+
+            if(jsonObj.TryGetProperty("error", out _) && jsonObj.TryGetProperty("error_description", out _))
+            {
+                return JsonConvert.DeserializeObject<GraphResponseErrorModel>(content);
+            }
+
+            return JsonConvert.DeserializeObject<T>(content);
+        }
+
+        public async Task<GraphAuthResultModel?> GetMSAuthResult(Action<DeviceIdResponseModel> deviceTokenNotifier)
+        {
+            #region SEND DEVICE TOKEN REQUEST
+
+            var deviceTokenRequestDic = new List<KeyValuePair<string, string>>
+                {
+                    new ("client_id", ApiSettings.ClientId),
+                    new ("scope", string.Join(' ', ApiSettings.Scopes))
+                };
+
+            using var deviceTokenReq = new HttpRequestMessage(HttpMethod.Post, MSDeviceTokenRequestUrl)
+            {
+                Content = new FormUrlEncodedContent(deviceTokenRequestDic)
+            };
+
+            using var deviceTokenRes = await DefaultClient.SendAsync(deviceTokenReq);
+            var deviceTokenContent = await deviceTokenRes.Content.ReadAsStringAsync();
+            var deviceTokenModel = ResolveMSGraphResult<DeviceIdResponseModel>(deviceTokenContent);
+
+            if (deviceTokenModel is not DeviceIdResponseModel deviceTokenResModel)
+            {
+                return null;
+            }
+
+            #endregion
+
+            deviceTokenNotifier.Invoke(deviceTokenResModel);
+
+            #region FETCH USER AUTH RESULT
+
+            var userAuthResultDic = new List<KeyValuePair<string, string>>
+                {
+                    new ("grant_type", MSGrantType),
+                    new ("client_id", ApiSettings.ClientId),
+                    new ("device_code", deviceTokenResModel.DeviceCode)
+                };
+
+            GraphAuthResultModel result;
+            while (true)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(deviceTokenResModel.Interval));
+
+                using var userAuthResultReq = new HttpRequestMessage(HttpMethod.Post, MSDeviceTokenStatusUrl)
+                {
+                    Content = new FormUrlEncodedContent(userAuthResultDic)
+                };
+
+                using var userAuthResultRes = await DefaultClient.SendAsync(userAuthResultReq);
+                var userAuthResultContent = await userAuthResultRes.Content.ReadAsStringAsync();
+                var userAuthResultModel = ResolveMSGraphResult<GraphAuthResultModel>(userAuthResultContent);
+
+                if (userAuthResultModel is not GraphAuthResultModel)
+                {
+                    if(userAuthResultModel is GraphResponseErrorModel error)
+                    {
+                        switch (error.ErrorType)
+                        {
+                            case "authorization_pending":
+                                continue;
+                            case "authorization_declined":
+                            case "expired_token":
+                            case "bad_verification_code":
+                                return null;
+                        }
+                    }
+                }
+
+                result = (GraphAuthResultModel) userAuthResultModel;
+                break;
+            }
+
+            #endregion
+
+            return result;
+        }
+
         public async Task<AuthResultBase> AuthTaskAsync(bool userField = false)
         {
-            #region STAGE 1
-
-            var provider = await XBLTokenProvider();
-
-            if (provider == default)
+            if (CacheTokenProvider == null)
                 return new MicrosoftAuthResult
                 {
                     AuthStatus = AuthStatus.Failed,
                     Error = new ErrorModel
                     {
                         Cause = "缺少重要凭据",
-                        Error = $"{nameof(XBLTokenProvider)} 未提供有效的数据",
+                        Error = "未提供有效的数据",
                         ErrorMessage = "缺失重要的登陆参数"
                     }
                 };
 
-            var (accessToken, refreshToken, expiresIn) = provider;
+            var (isCredentialValid, cacheAuthResult) = await CacheTokenProvider();
+
+            if (!isCredentialValid)
+            {
+                return new MicrosoftAuthResult
+                {
+                    AuthStatus = AuthStatus.Failed,
+                    Error = new ErrorModel
+                    {
+                        Cause = "无法获取认证 Token",
+                        Error = "XBox Live 验证失败",
+                        ErrorMessage = "XBox Live 验证失败"
+                    }
+                };
+            }
+
+            var accessToken = cacheAuthResult.AccessToken;
+            var refreshToken = cacheAuthResult.RefreshToken;
+            var idToken = cacheAuthResult.IdToken;
+            var expiresIn = cacheAuthResult.ExpiresIn;
+
+            #region STAGE 1
 
             var xBoxLiveToken =
                 await SendRequest<AuthXSTSResponseModel>(MSAuthXBLUrl, AuthXBLRequestModel.Get(accessToken));
@@ -192,6 +319,28 @@ namespace ProjBobcat.DefaultComponent.Authenticator
                 UUID = sPUuid
             };
 
+            if (!string.IsNullOrEmpty(idToken))
+            {
+                var claims = JwtTokenHelper.GetTokenInfo(idToken);
+                if(claims.TryGetValue("email", out var email))
+                {
+                    Email = email;
+                }
+                else
+                {
+                    return new MicrosoftAuthResult
+                    {
+                        AuthStatus = AuthStatus.Failed,
+                        Error = new ErrorModel
+                        {
+                            Cause = "您需要在 scope 中添加：openid，email 和 profile 字段",
+                            Error = "Azure应用配置错误",
+                            ErrorMessage = "您需要在 scope 中添加：openid，email 和 profile 字段"
+                        }
+                    };
+                }
+            }
+
             return new MicrosoftAuthResult
             {
                 AccessToken = mcRes.AccessToken,
@@ -205,7 +354,8 @@ namespace ProjBobcat.DefaultComponent.Authenticator
                 {
                     UUID = sPUuid,
                     UserName = profileRes.Name
-                }
+                },
+                Email = Email
             };
         }
 
