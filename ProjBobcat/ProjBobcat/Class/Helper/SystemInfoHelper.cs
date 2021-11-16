@@ -124,7 +124,7 @@ namespace ProjBobcat.Class.Helper
         ///     获取 系统的内存信息
         /// </summary>
         /// <returns></returns>
-        public static Task<MemoryInfo> GetWindowsMemoryStatus()
+        public static MemoryInfo GetWindowsMemoryStatus()
         {
             using var wmiObject = new ManagementObjectSearcher("select * from Win32_OperatingSystem");
 
@@ -134,7 +134,7 @@ namespace ProjBobcat.Class.Helper
                 Total = double.Parse(mo["TotalVisibleMemorySize"].ToString()) / 1024
             }).FirstOrDefault();
 
-            if (memoryValue == default) return Task.FromResult(new MemoryInfo());
+            if (memoryValue == default) return null;
 
             var percent = (memoryValue.Total - memoryValue.Free) / memoryValue.Total;
             var result = new MemoryInfo
@@ -145,14 +145,14 @@ namespace ProjBobcat.Class.Helper
                 Used = memoryValue.Total - memoryValue.Free
             };
 
-            return Task.FromResult(result);
+            return result;
         }
 
         /// <summary>
         ///     获取系统 Cpu 信息
         /// </summary>
         /// <returns></returns>
-        public static Task<IEnumerable<CPUInfo>> GetWindowsCpuUsageTask()
+        public static IEnumerable<CPUInfo> GetWindowsCpuUsageTask()
         {
             using var searcher = new ManagementObjectSearcher("select * from Win32_PerfFormattedData_PerfOS_Processor");
             var cpuTimes = searcher.Get()
@@ -164,7 +164,7 @@ namespace ProjBobcat.Class.Helper
                     Usage = p.Value
                 });
 
-            return Task.FromResult(cpuTimes);
+            return cpuTimes;
         }
     }
 }
