@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Event;
+using System.Threading.Tasks;
 
 namespace ProjBobcat.Interface
 {
@@ -10,7 +11,7 @@ namespace ProjBobcat.Interface
         string BasePath { get; set; }
         bool CheckLocalFiles { get; set; }
         VersionInfo VersionInfo { get; set; }
-        IAsyncEnumerable<IGameResource> ResolveResourceAsync();
+        Task<IEnumerable<IGameResource>> ResolveResourceAsync();
         IEnumerable<IGameResource> ResolveResource();
 
         event EventHandler<GameResourceInfoResolveEventArgs> GameResourceInfoResolveEvent;

@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Threading;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
@@ -42,22 +45,22 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
 
         public IEnumerable<IGameResource> ResolveResource()
         {
-            var itr = ResolveResourceAsync().GetAsyncEnumerator();
-            while (itr.MoveNextAsync().Result) yield return itr.Current;
+            var result = ResolveResourceAsync().Result;
+            return result;
         }
 
-        public async IAsyncEnumerable<IGameResource> ResolveResourceAsync()
+        public async Task<IEnumerable<IGameResource>> ResolveResourceAsync()
         {
             LogGameResourceInfoResolveStatus("开始进行游戏资源(Asset)检查");
 
-            if (!(Versions?.Any() ?? false) && VersionInfo?.AssetInfo == null) yield break;
+            if (!(Versions?.Any() ?? false) && VersionInfo?.AssetInfo == null) return Enumerable.Empty<IGameResource>();
 
             var isAssetInfoNotExists = 
                 string.IsNullOrEmpty(VersionInfo?.AssetInfo?.Url) &&
                 string.IsNullOrEmpty(VersionInfo?.AssetInfo?.Id);
             if (isAssetInfoNotExists &&
                 string.IsNullOrEmpty(VersionInfo?.Assets))
-                yield break;
+                return Enumerable.Empty<IGameResource>();
 
             var assetIndexesDi =
                 new DirectoryInfo(Path.Combine(BasePath, GamePathHelper.GetAssetsRoot(), "indexes"));
@@ -78,18 +81,18 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                 if (isAssetInfoNotExists)
                 {
                     var versionObject = Versions?.FirstOrDefault(v => v.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
-                    if (versionObject == default) yield break;
+                    if (versionObject == default) return Enumerable.Empty<IGameResource>();
 
                     var jsonRes = await HttpHelper.Get(versionObject.Url);
                     var jsonStr = await jsonRes.Content.ReadAsStringAsync();
                     var versionModel = JsonConvert.DeserializeObject<RawVersionModel>(jsonStr);
 
-                    if (versionModel == default) yield break;
+                    if (versionModel == default) return Enumerable.Empty<IGameResource>();
 
                     assetIndexDownloadUri = versionModel.AssetIndex?.Url;
                 }
 
-                if (string.IsNullOrEmpty(assetIndexDownloadUri)) yield break;
+                if (string.IsNullOrEmpty(assetIndexDownloadUri)) return Enumerable.Empty<IGameResource>();
 
                 if (!string.IsNullOrEmpty(AssetIndexUriRoot))
                 {
@@ -112,7 +115,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                 catch (Exception e)
                 {
                     LogGameResourceInfoResolveStatus($"解析Asset Indexes 文件失败！原因：{e.Message}", logType: LogType.Error);
-                    yield break;
+                    return Enumerable.Empty<IGameResource>();
                 }
 
                 LogGameResourceInfoResolveStatus("Asset Indexes 文件下载完成", 100, LogType.Success);
@@ -130,14 +133,14 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
             {
                 LogGameResourceInfoResolveStatus($"解析Asset Indexes 文件失败！原因：{ex.Message}", logType: LogType.Error);
                 File.Delete(assetIndexesPath);
-                yield break;
+                return Enumerable.Empty<IGameResource>();
             }
 
             if (assetObject == null)
             {
                 LogGameResourceInfoResolveStatus("解析Asset Indexes 文件失败！原因：文件可能损坏或为空", logType: LogType.Error);
                 File.Delete(assetIndexesPath);
-                yield break;
+                return Enumerable.Empty<IGameResource>();
             }
 
 #pragma warning disable CA5350 // 不要使用弱加密算法
@@ -146,47 +149,55 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
 
             var checkedObject = 0;
             var objectCount = assetObject.Objects.Count;
+            var result = new ConcurrentBag<IGameResource>();
 
             LogGameResourceInfoResolveStatus("检索并验证 Asset 资源", 0);
-            foreach (var (_, fi) in assetObject.Objects)
-            {
-                var hash = fi.Hash;
-                var twoDigitsHash = hash[..2];
-                var path = Path.Combine(assetObjectsDi.FullName, twoDigitsHash);
-                var filePath = Path.Combine(path, fi.Hash);
-
-                checkedObject++;
-                var progress = (double) checkedObject / objectCount * 100;
-                LogGameResourceInfoResolveStatus(string.Empty, progress);
-
-                if (File.Exists(filePath))
+            Parallel.ForEach(assetObject.Objects,
+                new ParallelOptions
                 {
-                    if (!CheckLocalFiles) continue;
-                    try
-                    {
-                        var computedHash = await CryptoHelper.ComputeFileHashAsync(filePath, hA);
-                        if (computedHash.Equals(fi.Hash, StringComparison.OrdinalIgnoreCase)) continue;
-
-                        File.Delete(filePath);
-                    }
-                    catch (Exception)
-                    {
-                    }
-                }
-
-                yield return new AssetDownloadInfo
+                    MaxDegreeOfParallelism = 2
+                }, async obj =>
                 {
-                    Title = hash,
-                    Path = path,
-                    Type = "Asset",
-                    Uri = $"{AssetUriRoot}{twoDigitsHash}/{fi.Hash}",
-                    FileSize = fi.Size,
-                    CheckSum = hash,
-                    FileName = hash
-                };
-            }
+                    var (_, fi) = obj;
+                    var hash = fi.Hash;
+                    var twoDigitsHash = hash[..2];
+                    var path = Path.Combine(assetObjectsDi.FullName, twoDigitsHash);
+                    var filePath = Path.Combine(path, fi.Hash);
+
+                    Interlocked.Increment(ref checkedObject);
+                    var progress = (double) checkedObject / objectCount * 100;
+                    LogGameResourceInfoResolveStatus(string.Empty, progress);
+
+                    if (File.Exists(filePath))
+                    {
+                        if (!CheckLocalFiles) return;
+                        try
+                        {
+                            var computedHash = await CryptoHelper.ComputeFileHashAsync(filePath, hA);
+                            if (computedHash.Equals(fi.Hash, StringComparison.OrdinalIgnoreCase)) return;
+
+                            File.Delete(filePath);
+                        }
+                        catch (Exception)
+                        {
+                        }
+                    }
+
+                    result.Add(new AssetDownloadInfo
+                    {
+                        Title = hash,
+                        Path = path,
+                        Type = "Asset",
+                        Uri = $"{AssetUriRoot}{twoDigitsHash}/{fi.Hash}",
+                        FileSize = fi.Size,
+                        CheckSum = hash,
+                        FileName = hash
+                    });
+                });
 
             LogGameResourceInfoResolveStatus("Assets 解析完成", 100, logType: LogType.Success);
+
+            return result;
         }
 
         void LogGameResourceInfoResolveStatus(string currentStatus, double progress = 0, LogType logType = LogType.Normal)

@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Threading;
+using System.Threading.Tasks;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.GameResource;
@@ -24,16 +27,16 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
 
         public IEnumerable<IGameResource> ResolveResource()
         {
-            var itr = ResolveResourceAsync().GetAsyncEnumerator();
-            while (itr.MoveNextAsync().Result) yield return itr.Current;
+            var result = ResolveResourceAsync().Result;
+            return result;
         }
 
-        public async IAsyncEnumerable<IGameResource> ResolveResourceAsync()
+        public async Task<IEnumerable<IGameResource>> ResolveResourceAsync()
         {
             LogGameResourceInfoResolveStatus("开始进行游戏资源(Library)检查");
             if (!(VersionInfo?.Natives?.Any() ?? false) &&
-                !(VersionInfo?.Libraries?.Any() ?? false)) 
-                yield break;
+                !(VersionInfo?.Libraries?.Any() ?? false))
+                return Enumerable.Empty<IGameResource>();
 
             var libDi = new DirectoryInfo(Path.Combine(BasePath, GamePathHelper.GetLibraryRootPath()));
 
@@ -43,73 +46,84 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
             using var hA = SHA1.Create();
 #pragma warning restore CA5350 // 不要使用弱加密算法
 
-            var libraries = new List<FileInfo>();
             var checkedLib = 0;
             var libCount = VersionInfo.Libraries.Count;
+            var checkedResult = new ConcurrentBag<FileInfo>();
 
-            foreach (var lib in VersionInfo.Libraries)
-            {
-                var libPath = GamePathHelper.GetLibraryPath(lib.Path.Replace('/', '\\'));
-                var filePath = Path.Combine(BasePath, libPath);
-
-                checkedLib++;
-                var progress = (double) checkedLib / libCount * 100;
-
-                LogGameResourceInfoResolveStatus("检索并验证 Library", progress);
-
-                if (File.Exists(filePath))
+            Parallel.ForEach(VersionInfo.Libraries,
+                new ParallelOptions
                 {
-                    if (!CheckLocalFiles) continue;
-                    if (string.IsNullOrEmpty(lib.Sha1)) continue;
+                    MaxDegreeOfParallelism = 2
+                },
+                async lib =>
+                {
+                    var libPath = GamePathHelper.GetLibraryPath(lib.Path.Replace('/', '\\'));
+                    var filePath = Path.Combine(BasePath, libPath);
 
-                    try
+                    Interlocked.Increment(ref checkedLib);
+                    var progress = (double)checkedLib / libCount * 100;
+
+                    LogGameResourceInfoResolveStatus("检索并验证 Library", progress);
+
+                    if (File.Exists(filePath))
                     {
-                        var computedHash = await CryptoHelper.ComputeFileHashAsync(filePath, hA);
-                        if (computedHash.Equals(lib.Sha1, StringComparison.OrdinalIgnoreCase)) continue;
+                        if (!CheckLocalFiles) return;
+                        if (string.IsNullOrEmpty(lib.Sha1)) return;
 
-                        File.Delete(filePath);
-                    }
-                    catch (Exception)
-                    {
-                    }
-                }
+                        try
+                        {
+                            var computedHash = await CryptoHelper.ComputeFileHashAsync(filePath, hA);
+                            if (computedHash.Equals(lib.Sha1, StringComparison.OrdinalIgnoreCase)) return;
 
-                libraries.Add(lib);
-            }
+                            File.Delete(filePath);
+                        }
+                        catch (Exception)
+                        {
+                        }
+                    }
+
+                    checkedResult.Add(lib);
+                });
 
             checkedLib = 0;
             libCount = VersionInfo.Natives.Count;
-            var natives = new List<FileInfo>();
-            foreach (var native in VersionInfo.Natives)
-            {
-                var nativePath = GamePathHelper.GetLibraryPath(native.FileInfo.Path.Replace('/', '\\'));
-                var filePath = Path.Combine(BasePath, nativePath);
 
-                if (File.Exists(filePath))
+            Parallel.ForEach(VersionInfo.Natives,
+                new ParallelOptions
                 {
-                    if (!CheckLocalFiles) continue;
-                    if (string.IsNullOrEmpty(native.FileInfo.Sha1)) continue;
+                    MaxDegreeOfParallelism = 2
+                },
+                async native =>
+                {
+                    var nativePath = GamePathHelper.GetLibraryPath(native.FileInfo.Path.Replace('/', '\\'));
+                    var filePath = Path.Combine(BasePath, nativePath);
 
-                    checkedLib++;
-                    var progress = (double) checkedLib / libCount * 100;
-                    LogGameResourceInfoResolveStatus("检索并验证 Native", progress);
-
-                    try
+                    if (File.Exists(filePath))
                     {
-                        var computedHash = await CryptoHelper.ComputeFileHashAsync(filePath, hA);
-                        if (computedHash.Equals(native.FileInfo.Sha1, StringComparison.OrdinalIgnoreCase)) continue;
+                        if (!CheckLocalFiles) return;
+                        if (string.IsNullOrEmpty(native.FileInfo.Sha1)) return;
 
-                        File.Delete(filePath);
+                        Interlocked.Increment(ref checkedLib);
+                        var progress = (double)checkedLib / libCount * 100;
+                        LogGameResourceInfoResolveStatus("检索并验证 Native", progress);
+
+                        try
+                        {
+                            var computedHash = await CryptoHelper.ComputeFileHashAsync(filePath, hA);
+                            if (computedHash.Equals(native.FileInfo.Sha1, StringComparison.OrdinalIgnoreCase)) return;
+
+                            File.Delete(filePath);
+                        }
+                        catch (Exception)
+                        {
+                        }
                     }
-                    catch (Exception)
-                    {
-                    }
-                }
 
-                natives.Add(native.FileInfo);
-            }
+                    checkedResult.Add(native.FileInfo);
+                });
 
-            foreach (var lL in libraries.Union(natives))
+            var result = new List<IGameResource>();
+            foreach (var lL in checkedResult)
             {
                 string uri;
                 if (lL.Name.StartsWith("forge", StringComparison.Ordinal) ||
@@ -123,19 +137,24 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                 var path = Path.Combine(BasePath,
                     GamePathHelper.GetLibraryPath(lL.Path[..symbolIndex].Replace('/', '\\')));
 
-                yield return new LibraryDownloadInfo
-                {
-                    Path = path,
-                    Title = lL.Name.Split(':')[1],
-                    Type = "Library/Native",
-                    Uri = uri,
-                    FileSize = lL.Size,
-                    CheckSum = lL.Sha1,
-                    FileName = fileName
-                };
+                result.Add(
+                    new LibraryDownloadInfo
+                    {
+                        Path = path,
+                        Title = lL.Name.Split(':')[1],
+                        Type = "Library/Native",
+                        Uri = uri,
+                        FileSize = lL.Size,
+                        CheckSum = lL.Sha1,
+                        FileName = fileName
+                    });
             }
 
+            await Task.Delay(1);
+
             LogGameResourceInfoResolveStatus("检查Library完成", 100);
+
+            return result;
         }
 
         void LogGameResourceInfoResolveStatus(string currentStatus, double progress = 0, LogType logType = LogType.Normal)

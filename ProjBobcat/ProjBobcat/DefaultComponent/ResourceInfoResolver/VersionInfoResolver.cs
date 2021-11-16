@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
@@ -21,23 +23,23 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
 
         public IEnumerable<IGameResource> ResolveResource()
         {
-            var itr = ResolveResourceAsync().GetAsyncEnumerator();
-            while (itr.MoveNextAsync().Result) yield return itr.Current;
+            var result = ResolveResourceAsync().Result;
+            return result;
         }
 
-        public async IAsyncEnumerable<IGameResource> ResolveResourceAsync()
+        public async Task<IEnumerable<IGameResource>> ResolveResourceAsync()
         {
-            if (!CheckLocalFiles) yield break;
+            if (!CheckLocalFiles) return Enumerable.Empty<IGameResource>();
 
             var id = VersionInfo.RootVersion ?? VersionInfo.DirName;
             var versionJson = GamePathHelper.GetGameJsonPath(BasePath, id);
 
-            if (!File.Exists(versionJson)) yield break;
+            if (!File.Exists(versionJson)) return Enumerable.Empty<IGameResource>();
 
             var fileContent = await File.ReadAllTextAsync(versionJson);
             var rawVersionModel = JsonConvert.DeserializeObject<RawVersionModel>(fileContent);
 
-            if (rawVersionModel?.Downloads?.Client == null) yield break;
+            if (rawVersionModel?.Downloads?.Client == null) return Enumerable.Empty<IGameResource>();
 
             var clientDownload = rawVersionModel.Downloads.Client;
             var jarPath = GamePathHelper.GetVersionJar(BasePath, id);
@@ -53,18 +55,20 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                 Uri = clientDownload.Url
             };
 
+            var result = new List<IGameResource>();
+
             if (!File.Exists(jarPath))
             {
-                yield return downloadInfo;
+                result.Add(downloadInfo);
             }
             else
             {
-                if (string.IsNullOrEmpty(clientDownload.Sha1)) yield break;
+                if (string.IsNullOrEmpty(clientDownload.Sha1)) return Enumerable.Empty<IGameResource>();
 
                 using var hash = SHA1.Create();
                 var computedHash = await CryptoHelper.ComputeFileHashAsync(jarPath, hash);
 
-                if (computedHash.Equals(clientDownload.Sha1, StringComparison.OrdinalIgnoreCase)) yield break;
+                if (computedHash.Equals(clientDownload.Sha1, StringComparison.OrdinalIgnoreCase)) return Enumerable.Empty<IGameResource>();
 
                 try
                 {
@@ -74,8 +78,10 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                 {
                 }
 
-                yield return downloadInfo;
+                result.Add(downloadInfo);
             }
+
+            return result;
         }
     }
 }
