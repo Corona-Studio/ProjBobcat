@@ -13,6 +13,7 @@ namespace ProjBobcat.Interface
         VersionInfo VersionInfo { get; set; }
         Task<IEnumerable<IGameResource>> ResolveResourceAsync();
         IEnumerable<IGameResource> ResolveResource();
+        int MaxDegreeOfParallelism { get; }
 
         event EventHandler<GameResourceInfoResolveEventArgs> GameResourceInfoResolveEvent;
     }

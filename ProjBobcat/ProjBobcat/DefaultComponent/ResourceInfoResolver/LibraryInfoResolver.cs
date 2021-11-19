@@ -22,6 +22,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
         public string BasePath { get; set; }
         public VersionInfo VersionInfo { get; set; }
         public bool CheckLocalFiles { get; set; }
+        public int MaxDegreeOfParallelism { get; init; } = 2;
 
         public event EventHandler<GameResourceInfoResolveEventArgs> GameResourceInfoResolveEvent;
 
@@ -53,7 +54,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
             Parallel.ForEach(VersionInfo.Libraries,
                 new ParallelOptions
                 {
-                    MaxDegreeOfParallelism = 2
+                    MaxDegreeOfParallelism = MaxDegreeOfParallelism
                 },
                 async lib =>
                 {
@@ -91,7 +92,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
             Parallel.ForEach(VersionInfo.Natives,
                 new ParallelOptions
                 {
-                    MaxDegreeOfParallelism = 2
+                    MaxDegreeOfParallelism = MaxDegreeOfParallelism
                 },
                 async native =>
                 {

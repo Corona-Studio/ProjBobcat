@@ -25,8 +25,10 @@ namespace ProjBobcat.Class.Helper
             try
             {
                 using var rootReg = Registry.LocalMachine.OpenSubKey("SOFTWARE");
+                using var wow64Reg = rootReg.OpenSubKey("Wow6432Node");
+
                 var javas = (rootReg == null ? Array.Empty<string>() : FindJavaInternal(rootReg))
-                    .Union(FindJavaInternal(rootReg.OpenSubKey("Wow6432Node")))
+                    .Union(FindJavaInternal(wow64Reg))
                     .Union(FindJavaInOfficialGamePath())
                     .ToHashSet();
 
@@ -50,7 +52,7 @@ namespace ProjBobcat.Class.Helper
             var basePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                 ".minecraft", "runtime");
 
-            var paths = new[] { "java-runtime-alpha", "jre-legacy" };
+            var paths = new[] { "java-runtime-alpha", "java-runtime-beta", "jre-legacy" };
 
             return paths.Select(path => Path.Combine(basePath, path, "bin", "javaw.exe"))
                 .Where(File.Exists);
@@ -77,10 +79,13 @@ namespace ProjBobcat.Class.Helper
             try
             {
                 using var registryKey = registry.OpenSubKey("JavaSoft");
-                if (registryKey == null || (registry = registryKey.OpenSubKey("Java Runtime Environment")) == null)
+                using var javaRuntimeReg = registryKey.OpenSubKey("Java Runtime Environment");
+
+                if (registryKey == null || javaRuntimeReg == null)
                     return Array.Empty<string>();
-                return from ver in registry.GetSubKeyNames()
-                    select registry.OpenSubKey(ver)
+
+                return from ver in javaRuntimeReg.GetSubKeyNames()
+                    select javaRuntimeReg.OpenSubKey(ver)
                     into command
                     where command != null
                     select command.GetValue("JavaHome")

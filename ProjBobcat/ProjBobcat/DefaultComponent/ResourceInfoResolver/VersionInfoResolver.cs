@@ -18,7 +18,8 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
         public string BasePath { get; set; }
         public bool CheckLocalFiles { get; set; }
         public VersionInfo VersionInfo { get; set; }
-
+        [Obsolete("不需要此字段")]
+        public int MaxDegreeOfParallelism { get; init; }
         public event EventHandler<GameResourceInfoResolveEventArgs> GameResourceInfoResolveEvent;
 
         public IEnumerable<IGameResource> ResolveResource()

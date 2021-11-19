@@ -40,6 +40,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
 
         public VersionInfo VersionInfo { get; set; }
         public List<VersionManifestVersionsModel> Versions { get; set; }
+        public int MaxDegreeOfParallelism { get; init; } = 2;
 
         public event EventHandler<GameResourceInfoResolveEventArgs> GameResourceInfoResolveEvent;
 
@@ -155,7 +156,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
             Parallel.ForEach(assetObject.Objects,
                 new ParallelOptions
                 {
-                    MaxDegreeOfParallelism = 2
+                    MaxDegreeOfParallelism = MaxDegreeOfParallelism
                 }, async obj =>
                 {
                     var (_, fi) = obj;
