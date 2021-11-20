@@ -88,6 +88,7 @@ namespace ProjBobcat.Class.Helper
             actionBlock.Complete();
 
             GC.Collect();
+            GC.WaitForPendingFinalizers();
         }
 
         #endregion
@@ -303,7 +304,7 @@ namespace ProjBobcat.Class.Helper
                         p =>
                         {
                             using var request = new HttpRequestMessage
-                                { RequestUri = new Uri(downloadFile.DownloadUri) };
+                            { RequestUri = new Uri(downloadFile.DownloadUri) };
 
                             if (!string.IsNullOrEmpty(downloadFile.Host))
                                 request.Headers.Host = downloadFile.Host;
@@ -372,8 +373,6 @@ namespace ProjBobcat.Class.Helper
 
                     Interlocked.Add(ref tasksDone, 1);
                     doneRanges.TryTake(out _);
-
-                    GC.Collect();
                 }, new ExecutionDataflowBlockOptions
                 {
                     BoundedCapacity = numberOfParts,
@@ -435,15 +434,15 @@ namespace ProjBobcat.Class.Helper
                 writeActionBlock.Complete();
 
                 #endregion
-
-                GC.Collect();
             }
             catch (Exception ex)
             {
-                downloadFile.Completed?.Invoke(null,
-                    new DownloadFileCompletedEventArgs(false, ex, downloadFile, 0));
                 foreach (var piece in readRanges.Where(piece => File.Exists(piece.TempFileName)))
                     File.Delete(piece.TempFileName);
+
+                downloadFile.Completed?.Invoke(null,
+                    new DownloadFileCompletedEventArgs(false, ex, downloadFile, 0));
+                
             }
         }
 
