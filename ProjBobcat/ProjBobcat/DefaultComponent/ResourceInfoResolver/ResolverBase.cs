@@ -29,8 +29,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
         public string BasePath { get; set; }
         public bool CheckLocalFiles { get; set; }
         public VersionInfo VersionInfo { get; set; }
-
-        public int MaxDegreeOfParallelism { get; init; }
+        public int MaxDegreeOfParallelism { get; init; } = 1;
 
         public virtual void OnResolve(string currentStatus, double progress = 0)
         {

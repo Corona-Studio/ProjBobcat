@@ -320,7 +320,7 @@ namespace ProjBobcat.Class.Helper
                 var tSpeed = 0D;
                 var cSpeed = 0;
 
-                var writeActionBlock = new ActionBlock<ValueTuple<Task<HttpResponseMessage>, DownloadRange>>(async t =>
+                var writeActionBlock = new ActionBlock<(Task<HttpResponseMessage>, DownloadRange)>(async t =>
                 {
                     using var res = await t.Item1;
 

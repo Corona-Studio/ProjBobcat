@@ -12,16 +12,12 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 
 namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
 {
     public class AssetInfoResolver : ResolverBase
     {
-        public AssetInfoResolver()
-        {
-            MaxDegreeOfParallelism = 2;
-        }
-
         readonly string _assetIndexUrlRoot;
 
         public string AssetIndexUriRoot
@@ -137,48 +133,74 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
             var result = new ConcurrentBag<IGameResource>();
 
             OnResolve("检索并验证 Asset 资源", 0);
+
+            var filesBlock =
+                    new TransformManyBlock<Dictionary<string, AssetFileInfo>, KeyValuePair<string, AssetFileInfo>>(chunk => chunk,
+                        new ExecutionDataflowBlockOptions());
+
+            var resolveActionBlock = new ActionBlock<KeyValuePair<string, AssetFileInfo>>(async obj =>
+            {
+                var (_, fi) = obj;
+                var hash = fi.Hash;
+                var twoDigitsHash = hash[..2];
+                var path = Path.Combine(assetObjectsDi.FullName, twoDigitsHash);
+                var filePath = Path.Combine(path, fi.Hash);
+
+                Interlocked.Increment(ref checkedObject);
+                var progress = (double)checkedObject / objectCount * 100;
+                OnResolve(string.Empty, progress);
+
+                if (File.Exists(filePath))
+                {
+                    if (!CheckLocalFiles) return;
+                    try
+                    {
+                        var computedHash = await CryptoHelper.ComputeFileHashAsync(filePath, hA);
+                        if (computedHash.Equals(fi.Hash, StringComparison.OrdinalIgnoreCase)) return;
+
+                        File.Delete(filePath);
+                    }
+                    catch (Exception)
+                    {
+                    }
+                }
+
+                result.Add(new AssetDownloadInfo
+                {
+                    Title = hash,
+                    Path = path,
+                    Type = "Asset",
+                    Uri = $"{AssetUriRoot}{twoDigitsHash}/{fi.Hash}",
+                    FileSize = fi.Size,
+                    CheckSum = hash,
+                    FileName = hash
+                });
+            }, new ExecutionDataflowBlockOptions
+            {
+                MaxDegreeOfParallelism = MaxDegreeOfParallelism,
+                BoundedCapacity = MaxDegreeOfParallelism
+            });
+
+            var linkOptions = new DataflowLinkOptions { PropagateCompletion = true };
+
+            filesBlock.LinkTo(resolveActionBlock, linkOptions);
+
+            filesBlock.Post(assetObject.Objects);
+            filesBlock.Complete();
+
+            await resolveActionBlock.Completion;
+            resolveActionBlock.Complete();
+
+            /*
             Parallel.ForEach(assetObject.Objects,
                 new ParallelOptions
                 {
                     MaxDegreeOfParallelism = MaxDegreeOfParallelism
                 }, async obj =>
                 {
-                    var (_, fi) = obj;
-                    var hash = fi.Hash;
-                    var twoDigitsHash = hash[..2];
-                    var path = Path.Combine(assetObjectsDi.FullName, twoDigitsHash);
-                    var filePath = Path.Combine(path, fi.Hash);
-
-                    Interlocked.Increment(ref checkedObject);
-                    var progress = (double) checkedObject / objectCount * 100;
-                    OnResolve(string.Empty, progress);
-
-                    if (File.Exists(filePath))
-                    {
-                        if (!CheckLocalFiles) return;
-                        try
-                        {
-                            var computedHash = await CryptoHelper.ComputeFileHashAsync(filePath, hA);
-                            if (computedHash.Equals(fi.Hash, StringComparison.OrdinalIgnoreCase)) return;
-
-                            File.Delete(filePath);
-                        }
-                        catch (Exception)
-                        {
-                        }
-                    }
-
-                    result.Add(new AssetDownloadInfo
-                    {
-                        Title = hash,
-                        Path = path,
-                        Type = "Asset",
-                        Uri = $"{AssetUriRoot}{twoDigitsHash}/{fi.Hash}",
-                        FileSize = fi.Size,
-                        CheckSum = hash,
-                        FileName = hash
-                    });
+                    
                 });
+            */
 
             OnResolve("Assets 解析完成", 100);
 
