@@ -72,7 +72,7 @@
       <Version>13.0.1</Version>
     </PackageReference>
     <PackageReference Include="SharpCompress">
-      <Version>0.30.0</Version>
+      <Version>0.30.1</Version>
     </PackageReference>
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.14.1" />
     <PackageReference Include="System.Management" Version="6.0.0" />
