@@ -25,7 +25,15 @@
     <RepositoryUrl>https://github.com/Corona-Studio/ProjBobcat</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>minecraft-launcher minecraft launcher csharp</PackageTags>
-    <PackageReleaseNotes>rewrote whole Microsoft auth process and fix bugs in MavenHelper.</PackageReleaseNotes>
+    <PackageReleaseNotes>
+      fix multiple memory leaks in the DownloadHelper.cs
+      implement Dispose() for serval classes
+      reduce memory usage
+      increase download speed
+      optimize code
+      remove unused Nuget packages
+      update version field
+    </PackageReleaseNotes>
   </PropertyGroup>
   <PropertyGroup>
     <IncludeSymbols>true</IncludeSymbols>
