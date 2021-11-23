@@ -61,13 +61,15 @@ namespace ProjBobcat.DefaultComponent.Installer
                 var d = downloadUrlRes.Trim('"');
                 var fn = Path.GetFileName(d);
 
-                urlBags.Add(new DownloadFile
+                var downloadFile = new DownloadFile
                 {
-                    Completed = WhenCompleted,
                     DownloadPath = di.FullName,
                     DownloadUri = d,
                     FileName = fn
-                });
+                };
+                downloadFile.Completed += WhenCompleted;
+
+                urlBags.Add(downloadFile);
 
                 _totalDownloaded++;
 
@@ -151,7 +153,7 @@ namespace ProjBobcat.DefaultComponent.Installer
                 foreach (var file in files)
                 {
                     file.RetryCount++;
-                    file.Completed = WhenCompleted;
+                    file.Completed += WhenCompleted;
                 }
 
                 await DownloadHelper.AdvancedDownloadListFile(files);
@@ -165,24 +167,26 @@ namespace ProjBobcat.DefaultComponent.Installer
 
         private void WhenCompleted(object? sender, DownloadFileCompletedEventArgs e)
         {
+            if (sender is not DownloadFile file) return;
+
             _totalDownloaded++;
 
             var progress = (double)_totalDownloaded / _needToDownload * 100;
-            var retryStr = e.File.RetryCount > 0 ? $"[重试 - {e.File.RetryCount}] " : string.Empty;
-            var fileName = e.File.FileName.Length > 20
-                ? $"{e.File.FileName[..20]}..."
-                : e.File.FileName;
+            var retryStr = file.RetryCount > 0 ? $"[重试 - {file.RetryCount}] " : string.Empty;
+            var fileName = file.FileName.Length > 20
+                ? $"{file.FileName[..20]}..."
+                : file.FileName;
 
             InvokeStatusChangedEvent($"{retryStr}下载整合包中的 Mods - {fileName} ({_totalDownloaded} / {_needToDownload})",
                 progress);
 
             if (!(e.Success ?? false))
             {
-                _retryFiles.Add(e.File);
+                _retryFiles.Add(file);
                 return;
             }
 
-            Check(e.File, ref _retryFiles);
+            Check(file, ref _retryFiles);
         }
 
         private static void Check(DownloadFile file, ref ConcurrentBag<DownloadFile> bag)

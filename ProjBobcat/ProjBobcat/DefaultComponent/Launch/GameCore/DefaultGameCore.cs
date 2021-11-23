@@ -13,12 +13,12 @@ using ProjBobcat.Interface;
 using SharpCompress.Archives;
 using FileInfo = System.IO.FileInfo;
 
-namespace ProjBobcat.DefaultComponent.Launch
+namespace ProjBobcat.DefaultComponent.Launch.GameCore
 {
     /// <summary>
     ///     表示一个默认的游戏核心。
     /// </summary>
-    public class DefaultGameCore : IGameCore
+    public class DefaultGameCore : GameCoreBase
     {
         string _rootPath;
 
@@ -30,7 +30,7 @@ namespace ProjBobcat.DefaultComponent.Launch
         /// <summary>
         ///     .minecraft 目录
         /// </summary>
-        public string RootPath
+        public override string RootPath
         {
             get => _rootPath;
             set
@@ -42,49 +42,7 @@ namespace ProjBobcat.DefaultComponent.Launch
             }
         }
 
-        /// <summary>
-        ///     游戏版本查找器
-        /// </summary>
-        public VersionLocatorBase VersionLocator { get; set; }
-
-        /// <summary>
-        ///     客户端识别码
-        /// </summary>
-        public Guid ClientToken { get; set; }
-
-        public IGameLogResolver GameLogResolver { get; set; }
-
-        /// <summary>
-        ///     游戏退出事件
-        /// </summary>
-        public event EventHandler<GameExitEventArgs> GameExitEventDelegate;
-
-        /// <summary>
-        ///     游戏日志输出事件
-        /// </summary>
-        public event EventHandler<GameLogEventArgs> GameLogEventDelegate;
-
-        /// <summary>
-        ///     启动日志输出事件
-        /// </summary>
-        public event EventHandler<LaunchLogEventArgs> LaunchLogEventDelegate;
-
-        /// <summary>
-        ///     启动 （同步方法）
-        /// </summary>
-        /// <param name="settings"></param>
-        /// <returns></returns>
-        public LaunchResult Launch(LaunchSettings settings)
-        {
-            return LaunchTaskAsync(settings).Result;
-        }
-
-        /// <summary>
-        ///     启动 （异步方法）
-        /// </summary>
-        /// <param name="settings"></param>
-        /// <returns></returns>
-        public async Task<LaunchResult> LaunchTaskAsync(LaunchSettings settings)
+        public override async Task<LaunchResult> LaunchTaskAsync(LaunchSettings settings)
         {
             try
             {
@@ -329,7 +287,7 @@ namespace ProjBobcat.DefaultComponent.Launch
                 Task.Run(launchWrapper.Process.WaitForExit)
                     .ContinueWith(task =>
                     {
-                        GameExit(launchWrapper, new GameExitEventArgs
+                        OnGameExit(launchWrapper, new GameExitEventArgs
                         {
                             Exception = task.Exception,
                             ExitCode = launchWrapper.ExitCode
@@ -369,17 +327,6 @@ namespace ProjBobcat.DefaultComponent.Launch
             }
         }
 
-        #region IDisposable Support
-
-        /// <summary>
-        ///     释放资源。
-        /// </summary>
-        public void Dispose()
-        {
-        }
-
-        #endregion
-
         #region 内部方法 Internal Methods
 
         /// <summary>
@@ -391,46 +338,13 @@ namespace ProjBobcat.DefaultComponent.Launch
         /// <param name="sw"></param>
         void InvokeLaunchLogThenStart(string item, ref TimeSpan time, ref Stopwatch sw)
         {
-            LogLaunchData(this, new LaunchLogEventArgs
+            OnLogLaunchData(this, new LaunchLogEventArgs
             {
                 Item = item,
                 ItemRunTime = sw.Elapsed - time
             });
             time = sw.Elapsed;
             sw.Start();
-        }
-
-        /// <summary>
-        ///     指示需要记录游戏日志。
-        ///     此方法将引发事件 <seealso cref="GameLogEventDelegate" /> 。
-        /// </summary>
-        /// <param name="sender">sender</param>
-        /// <param name="e">e</param>
-        public void LogGameData(object sender, GameLogEventArgs e)
-        {
-            GameLogEventDelegate?.Invoke(sender, e);
-        }
-
-        /// <summary>
-        ///     指示游戏已经结束。
-        ///     此方法将引发事件 <seealso cref="GameLogEventDelegate" /> 。
-        /// </summary>
-        /// <param name="sender">sender</param>
-        /// <param name="e">e</param>
-        public void GameExit(object sender, GameExitEventArgs e)
-        {
-            GameExitEventDelegate?.Invoke(sender, e);
-        }
-
-        /// <summary>
-        ///     指示需要记录启动日志。
-        ///     此方法将引发事件 <seealso cref="GameLogEventDelegate" /> 。
-        /// </summary>
-        /// <param name="sender">sender</param>
-        /// <param name="e">e</param>
-        public void LogLaunchData(object sender, LaunchLogEventArgs e)
-        {
-            LaunchLogEventDelegate?.Invoke(sender, e);
         }
 
         #endregion

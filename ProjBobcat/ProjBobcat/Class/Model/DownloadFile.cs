@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using ProjBobcat.Event;
 
 namespace ProjBobcat.Class.Model
@@ -6,7 +7,7 @@ namespace ProjBobcat.Class.Model
     /// <summary>
     ///     下载文件信息类
     /// </summary>
-    public class DownloadFile : ICloneable
+    public class DownloadFile : ICloneable, IDisposable
     {
         /// <summary>
         ///     下载Uri
@@ -56,12 +57,59 @@ namespace ProjBobcat.Class.Model
         /// <summary>
         ///     下载完成事件
         /// </summary>
-        public EventHandler<DownloadFileCompletedEventArgs> Completed { get; set; }
+        public event EventHandler<DownloadFileCompletedEventArgs> Completed
+        {
+            add
+            {
+                listEventDelegates.AddHandler(CompletedEventKey, value);
+            }
+            remove
+            {
+                listEventDelegates.RemoveHandler(CompletedEventKey, value);
+            }
+        }
 
         /// <summary>
         ///     下载改变事件
         /// </summary>
-        public EventHandler<DownloadFileChangedEventArgs> Changed { get; set; }
+        public event EventHandler<DownloadFileChangedEventArgs> Changed
+        {
+            add
+            {
+                listEventDelegates.AddHandler(ChangedEventKey, value);
+            }
+            remove
+            {
+                listEventDelegates.RemoveHandler(ChangedEventKey, value);
+            }
+        }
+
+        protected EventHandlerList listEventDelegates = new ();
+
+        bool disposedValue;
+        static readonly object CompletedEventKey = new ();
+        static readonly object ChangedEventKey = new();
+
+        public void OnChanged(double speed, double progress, long bytesReceived, long totalBytes)
+        {
+            var eventList = listEventDelegates;
+            var @event = (EventHandler<DownloadFileChangedEventArgs>)eventList[ChangedEventKey];
+            @event?.Invoke(this, new DownloadFileChangedEventArgs
+            {
+                Speed = speed,
+                ProgressPercentage = progress,
+                BytesReceived = bytesReceived,
+                TotalBytes = totalBytes
+            });
+        }
+
+        public void OnCompleted(bool? success, Exception ex, double averageSpeed)
+        {
+            var eventList = listEventDelegates;
+            var test = eventList[CompletedEventKey];
+            var @event = (EventHandler<DownloadFileCompletedEventArgs>)eventList[CompletedEventKey];
+            @event?.Invoke(this, new DownloadFileCompletedEventArgs(success, ex, averageSpeed));
+        }
 
         public object Clone()
         {
@@ -77,6 +125,36 @@ namespace ProjBobcat.Class.Model
                 RetryCount = RetryCount,
                 TimeOut = TimeOut
             };
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    // TODO: 释放托管状态(托管对象)
+                    listEventDelegates.Dispose();
+                }
+
+                // TODO: 释放未托管的资源(未托管的对象)并重写终结器
+                // TODO: 将大型字段设置为 null
+                disposedValue = true;
+            }
+        }
+
+        // // TODO: 仅当“Dispose(bool disposing)”拥有用于释放未托管资源的代码时才替代终结器
+        // ~DownloadFile()
+        // {
+        //     // 不要更改此代码。请将清理代码放入“Dispose(bool disposing)”方法中
+        //     Dispose(disposing: false);
+        // }
+
+        public void Dispose()
+        {
+            // 不要更改此代码。请将清理代码放入“Dispose(bool disposing)”方法中
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }

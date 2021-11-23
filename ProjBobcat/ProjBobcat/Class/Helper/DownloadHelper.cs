@@ -54,12 +54,10 @@ namespace ProjBobcat.Class.Helper
             var filesBlock =
                 new TransformManyBlock<IEnumerable<DownloadFile>, DownloadFile>(d =>
                 {
-                    var dl = d.ToList();
-
-                    foreach (var df in dl.Where(df => !Directory.Exists(df.DownloadPath)))
+                    foreach (var df in d.Where(df => !Directory.Exists(df.DownloadPath)))
                         Directory.CreateDirectory(df.DownloadPath);
 
-                    return dl;
+                    return d;
                 });
 
             var actionBlock = new ActionBlock<DownloadFile>(async d =>
@@ -143,14 +141,11 @@ namespace ProjBobcat.Class.Helper
                     tSpeed += speed;
                     cSpeed++;
 
-                    downloadProperty.Changed?.Invoke(null,
-                        new DownloadFileChangedEventArgs
-                        {
-                            ProgressPercentage = (double)downloadedBytesCount / responseLength,
-                            BytesReceived = downloadedBytesCount,
-                            TotalBytes = responseLength,
-                            Speed = speed
-                        });
+                    downloadProperty.OnChanged(
+                        speed,
+                        (double)downloadedBytesCount / responseLength,
+                        downloadedBytesCount,
+                        responseLength);
                 }
 
                 sw.Stop();
@@ -158,13 +153,11 @@ namespace ProjBobcat.Class.Helper
                 stream.Close();
 
                 var aSpeed = tSpeed / cSpeed;
-                downloadProperty.Completed?.Invoke(null,
-                    new DownloadFileCompletedEventArgs(true, null, downloadProperty, aSpeed));
+                downloadProperty.OnCompleted(true, null, aSpeed);
             }
             catch (Exception e)
             {
-                downloadProperty.Completed?.Invoke(null,
-                    new DownloadFileCompletedEventArgs(false, e, downloadProperty, 0));
+                downloadProperty.OnCompleted(false, e, 0);
             }
         }
 
@@ -356,14 +349,11 @@ namespace ProjBobcat.Class.Helper
                         tSpeed += speed;
                         cSpeed++;
 
-                        downloadFile.Changed?.Invoke(t,
-                            new DownloadFileChangedEventArgs
-                            {
-                                ProgressPercentage = (double)downloadedBytesCount / responseLength,
-                                BytesReceived = downloadedBytesCount,
-                                TotalBytes = responseLength,
-                                Speed = speed
-                            });
+                        downloadFile.OnChanged(
+                            speed,
+                            (double)downloadedBytesCount / responseLength,
+                            downloadedBytesCount,
+                            responseLength);
                     }
 
                     sw.Stop();
@@ -403,8 +393,7 @@ namespace ProjBobcat.Class.Helper
                     {
                         var ex = task.Exception ?? new AggregateException(new Exception("没有完全下载所有的分片"));
 
-                        downloadFile.Completed?.Invoke(task,
-                            new DownloadFileCompletedEventArgs(false, ex, downloadFile, aSpeed));
+                        downloadFile.OnCompleted(false, ex, aSpeed);
 
                         if (File.Exists(filePath))
                             File.Delete(filePath);
@@ -426,8 +415,7 @@ namespace ProjBobcat.Class.Helper
                     }
 
                     outputStream.Close();
-                    downloadFile.Completed?.Invoke(null,
-                        new DownloadFileCompletedEventArgs(true, null, downloadFile, aSpeed));
+                    downloadFile.OnCompleted(true, null, aSpeed);
                 }, cts.Token);
 
                 streamBlock.Complete();
@@ -440,9 +428,7 @@ namespace ProjBobcat.Class.Helper
                 foreach (var piece in readRanges.Where(piece => File.Exists(piece.TempFileName)))
                     File.Delete(piece.TempFileName);
 
-                downloadFile.Completed?.Invoke(null,
-                    new DownloadFileCompletedEventArgs(false, ex, downloadFile, 0));
-                
+                downloadFile.OnCompleted(false, ex, 0);
             }
         }
 

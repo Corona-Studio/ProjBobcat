@@ -1,14 +1,15 @@
-﻿using System;
+﻿using ProjBobcat.Class.Helper;
+using ProjBobcat.Class.Model;
+using ProjBobcat.Event;
+using ProjBobcat.Interface;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
-using ProjBobcat.Class.Helper;
-using ProjBobcat.Class.Model;
-using ProjBobcat.Event;
-using ProjBobcat.Interface;
 
 namespace ProjBobcat.DefaultComponent
 {
@@ -33,10 +34,49 @@ namespace ProjBobcat.DefaultComponent
         public bool CheckFile { get; set; }
         public IEnumerable<IResourceInfoResolver> ResourceInfoResolvers { get; set; }
 
+        protected EventHandlerList listEventDelegates = new();
 
-        public event EventHandler<GameResourceInfoResolveEventArgs> GameResourceInfoResolveStatus;
-        public event EventHandler<DownloadFileChangedEventArgs> DownloadFileChangedEvent;
-        public event EventHandler<DownloadFileCompletedEventArgs> DownloadFileCompletedEvent;
+        bool disposedValue;
+
+        static readonly object ResolveEventKey = new();
+        static readonly object ChangedEventKey = new();
+        static readonly object CompletedEventKey = new();
+
+        public event EventHandler<GameResourceInfoResolveEventArgs> GameResourceInfoResolveStatus
+        {
+            add
+            {
+                listEventDelegates.AddHandler(ResolveEventKey, value);
+            }
+            remove
+            {
+                listEventDelegates.RemoveHandler(ResolveEventKey, value);
+            }
+        }
+
+        public event EventHandler<DownloadFileChangedEventArgs> DownloadFileChangedEvent
+        {
+            add
+            {
+                listEventDelegates.AddHandler(ChangedEventKey, value);
+            }
+            remove
+            {
+                listEventDelegates.RemoveHandler(ChangedEventKey, value);
+            }
+        }
+
+        public event EventHandler<DownloadFileCompletedEventArgs> DownloadFileCompletedEvent
+        {
+            add
+            {
+                listEventDelegates.AddHandler(CompletedEventKey, value);
+            }
+            remove
+            {
+                listEventDelegates.RemoveHandler(CompletedEventKey, value);
+            }
+        }
 
         public TaskResult<ResourceCompleterCheckResult?> CheckAndDownload()
         {
@@ -53,7 +93,9 @@ namespace ProjBobcat.DefaultComponent
             var totalLostFiles = new List<IGameResource>();
             foreach (var resolver in ResourceInfoResolvers)
             {
-                resolver.GameResourceInfoResolveEvent += GameResourceInfoResolveStatus;
+                var handler = (EventHandler<GameResourceInfoResolveEventArgs>)listEventDelegates[ResolveEventKey]!;
+                if(handler != null)
+                    resolver.GameResourceInfoResolveEvent += handler;
 
                 var lostFiles = await resolver.ResolveResourceAsync();
                 totalLostFiles.AddRange(lostFiles);
@@ -65,12 +107,11 @@ namespace ProjBobcat.DefaultComponent
             totalLostFiles.Shuffle();
             NeedToDownload = totalLostFiles.Count;
 
-            var downloadList =
-            (
-                from f in totalLostFiles
-                select new DownloadFile
+            var downloadList = new List<DownloadFile>();
+            foreach (var f in totalLostFiles)
+            {
+                var dF = new DownloadFile
                 {
-                    Completed = WhenCompleted,
                     DownloadPath = f.Path,
                     DownloadUri = f.Uri,
                     FileName = f.FileName,
@@ -78,13 +119,16 @@ namespace ProjBobcat.DefaultComponent
                     CheckSum = f.CheckSum,
                     FileType = f.Type,
                     TimeOut = 10000
-                }).ToList();
+                };
+                dF.Completed += WhenCompleted;
+
+                downloadList.Add(dF);
+            }
 
             if (downloadList.First().FileType.Equals("GameJar", StringComparison.OrdinalIgnoreCase))
-                downloadList.First().Changed = (_, args) =>
+                downloadList.First().Changed += (_, args) =>
                 {
-                    DownloadFileCompletedEvent?.Invoke(this,
-                        new DownloadFileCompletedEventArgs(null, null, downloadList.First(), args.Speed));
+                    OnCompleted(downloadList.First(), new DownloadFileCompletedEventArgs(null, null, args.Speed));
                 };
 
             var (item1, item2) = await DownloadFiles(downloadList);
@@ -92,28 +136,42 @@ namespace ProjBobcat.DefaultComponent
             return new TaskResult<ResourceCompleterCheckResult?>(item1, value: item2);
         }
 
-        /// <summary>
-        ///     IDisposable接口保留字段
-        /// </summary>
-        public void Dispose()
+        void OnCompleted(object? sender, DownloadFileCompletedEventArgs e)
         {
+            var eventList = listEventDelegates;
+            var @event = (EventHandler<DownloadFileCompletedEventArgs>)eventList[CompletedEventKey]!;
+            @event?.Invoke(sender, e);
+        }
+
+        void OnChanged(double progress, double speed)
+        {
+            var eventList = listEventDelegates;
+            var @event = (EventHandler<DownloadFileChangedEventArgs>)eventList[ChangedEventKey]!;
+
+            @event?.Invoke(this, new DownloadFileChangedEventArgs
+            {
+                ProgressPercentage = progress,
+                Speed = speed
+            });
         }
 
         void WhenCompleted(object? sender, DownloadFileCompletedEventArgs e)
         {
+            if (sender is not DownloadFile file) return;
+
             TotalDownloaded++;
-            InvokeDownloadProgressChangedEvent((double)TotalDownloaded / NeedToDownload, e.AverageSpeed);
-            DownloadFileCompletedEvent?.Invoke(this, e);
+            OnChanged((double)TotalDownloaded / NeedToDownload, e.AverageSpeed);
+            OnCompleted(sender, e);
 
             if (!(e.Success ?? false))
             {
-                _retryFiles.Add(e.File);
+                _retryFiles.Add(file);
                 return;
             }
 
             if (!CheckFile) return;
 
-            Check(e.File, ref _retryFiles);
+            Check(file, ref _retryFiles);
         }
 
         static void Check(DownloadFile file, ref ConcurrentBag<DownloadFile> bag)
@@ -160,7 +218,7 @@ namespace ProjBobcat.DefaultComponent
                 foreach (var file in files)
                 {
                     file.RetryCount++;
-                    file.Completed = WhenCompleted;
+                    file.Completed += WhenCompleted;
                 }
 
                 await DownloadHelper.AdvancedDownloadListFile(files);
@@ -177,13 +235,33 @@ namespace ProjBobcat.DefaultComponent
             return (resultType, new ResourceCompleterCheckResult { IsLibDownloadFailed = isLibraryFailed });
         }
 
-        void InvokeDownloadProgressChangedEvent(double progress, double speed)
+        protected virtual void Dispose(bool disposing)
         {
-            DownloadFileChangedEvent?.Invoke(this, new DownloadFileChangedEventArgs
+            if (!disposedValue)
             {
-                ProgressPercentage = progress,
-                Speed = speed
-            });
+                if (disposing)
+                {
+                    listEventDelegates.Dispose();
+                }
+
+                // TODO: 释放未托管的资源(未托管的对象)并重写终结器
+                // TODO: 将大型字段设置为 null
+                disposedValue = true;
+            }
+        }
+
+        // // TODO: 仅当“Dispose(bool disposing)”拥有用于释放未托管资源的代码时才替代终结器
+        // ~DefaultResourceCompleter()
+        // {
+        //     // 不要更改此代码。请将清理代码放入“Dispose(bool disposing)”方法中
+        //     Dispose(disposing: false);
+        // }
+
+        public void Dispose()
+        {
+            // 不要更改此代码。请将清理代码放入“Dispose(bool disposing)”方法中
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }

@@ -58,26 +58,5 @@ namespace ProjBobcat.Interface
         ///     启动日志输出事件
         /// </summary>
         event EventHandler<LaunchLogEventArgs> LaunchLogEventDelegate;
-
-        /// <summary>
-        ///     记录游戏日志调用方法
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        void LogGameData(object sender, GameLogEventArgs e);
-
-        /// <summary>
-        ///     记录启动器日志调用方法
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        void LogLaunchData(object sender, LaunchLogEventArgs e);
-
-        /// <summary>
-        ///     游戏退出调用方法
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        void GameExit(object sender, GameExitEventArgs e);
     }
 }

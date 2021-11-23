@@ -47,19 +47,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="ConfigureAwait.Fody">
-      <Version>3.3.1</Version>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
-    <PackageReference Include="Fody">
-      <Version>6.6.0</Version>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
-    <PackageReference Include="Janitor.Fody">
-      <Version>1.9.0</Version>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
     <PackageReference Include="Microsoft.DotNet.Analyzers.Compatibility" Version="0.2.12-alpha">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -72,7 +59,7 @@
       <Version>13.0.1</Version>
     </PackageReference>
     <PackageReference Include="SharpCompress">
-      <Version>0.30.0</Version>
+      <Version>0.30.1</Version>
     </PackageReference>
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.14.1" />
     <PackageReference Include="System.Management" Version="6.0.0" />

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ProjBobcat.Interface
 {
-    public interface IResourceInfoResolver
+    public interface IResourceInfoResolver : IDisposable
     {
         string BasePath { get; set; }
         bool CheckLocalFiles { get; set; }

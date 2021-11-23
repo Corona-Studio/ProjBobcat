@@ -7,6 +7,5 @@ namespace ProjBobcat.Event
     {
         public double Progress { get; init; }
         public string Status { get; init; }
-        public LogType LogType { get; init; }
     }
 }

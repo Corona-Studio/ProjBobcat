@@ -368,13 +368,13 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
 
                 var df = new DownloadFile
                 {
-                    Completed = WhenCompleted,
                     CheckSum = lib.Sha1,
                     DownloadPath = path,
                     FileName = fileName,
                     DownloadUri = lib.Url,
                     FileSize = lib.Size
                 };
+                df.Completed += WhenCompleted;
 
                 libDownloadInfo.Add(df);
             }
@@ -537,7 +537,7 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
                 foreach (var file in files)
                 {
                     file.RetryCount++;
-                    file.Completed = WhenCompleted;
+                    file.Completed += WhenCompleted;
                 }
 
                 await DownloadHelper.AdvancedDownloadListFile(files);
@@ -551,22 +551,24 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
 
         private void WhenCompleted(object? sender, DownloadFileCompletedEventArgs e)
         {
+            if (sender is not DownloadFile file) return;
+
             _totalDownloaded++;
 
             var progress = (double)_totalDownloaded / _needToDownload;
-            var retryStr = e.File.RetryCount > 0 ? $"[重试 - {e.File.RetryCount}] " : string.Empty;
+            var retryStr = file.RetryCount > 0 ? $"[重试 - {file.RetryCount}] " : string.Empty;
 
             InvokeStatusChangedEvent(
-                $"{retryStr}下载模组 - {e.File.FileName} ( {_totalDownloaded} / {_needToDownload} )",
+                $"{retryStr}下载模组 - {file.FileName} ( {_totalDownloaded} / {_needToDownload} )",
                 progress);
 
             if (!(e.Success ?? false))
             {
-                _retryFiles.Add(e.File);
+                _retryFiles.Add(file);
                 return;
             }
 
-            Check(e.File, ref _retryFiles);
+            Check(file, ref _retryFiles);
         }
 
         private static void Check(DownloadFile file, ref ConcurrentBag<DownloadFile> bag)

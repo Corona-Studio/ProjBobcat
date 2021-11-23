@@ -126,8 +126,8 @@ namespace ProjBobcat.DefaultComponent.Authenticator
                 }
             }
 
-            using var resultJson = await HttpHelper.Post(LoginAddress, requestJson).ConfigureAwait(true);
-            var content = await resultJson.Content.ReadAsStringAsync().ConfigureAwait(true);
+            using var resultJson = await HttpHelper.Post(LoginAddress, requestJson);
+            var content = await resultJson.Content.ReadAsStringAsync();
             var result = JsonConvert.DeserializeObject<AuthResponseModel>(content);
 
             if (result == default || string.IsNullOrEmpty(result.AccessToken))
@@ -305,8 +305,8 @@ namespace ProjBobcat.DefaultComponent.Authenticator
             };
             var requestJson = JsonConvert.SerializeObject(requestModel, JsonHelper.CamelCasePropertyNamesSettings);
 
-            using var resultJson = await HttpHelper.Post(RefreshAddress, requestJson).ConfigureAwait(true);
-            var content = await resultJson.Content.ReadAsStringAsync().ConfigureAwait(true);
+            using var resultJson = await HttpHelper.Post(RefreshAddress, requestJson);
+            var content = await resultJson.Content.ReadAsStringAsync();
             var result = JsonConvert.DeserializeObject<object>(content);
 
             switch (result)
@@ -388,7 +388,7 @@ namespace ProjBobcat.DefaultComponent.Authenticator
             };
             var requestJson = JsonConvert.SerializeObject(requestModel, JsonHelper.CamelCasePropertyNamesSettings);
 
-            using var result = await HttpHelper.Post(ValidateAddress, requestJson).ConfigureAwait(true);
+            using var result = await HttpHelper.Post(ValidateAddress, requestJson);
             return result.StatusCode.Equals(HttpStatusCode.NoContent);
         }
 
@@ -401,7 +401,7 @@ namespace ProjBobcat.DefaultComponent.Authenticator
             };
             var requestJson = JsonConvert.SerializeObject(requestModel, JsonHelper.CamelCasePropertyNamesSettings);
 
-            using var x = await HttpHelper.Post(RevokeAddress, requestJson).ConfigureAwait(true);
+            using var x = await HttpHelper.Post(RevokeAddress, requestJson);
         }
 
         /// <summary>
@@ -418,7 +418,7 @@ namespace ProjBobcat.DefaultComponent.Authenticator
             };
             var requestJson = JsonConvert.SerializeObject(requestModel, JsonHelper.CamelCasePropertyNamesSettings);
 
-            using var result = await HttpHelper.Post(SignOutAddress, requestJson).ConfigureAwait(true);
+            using var result = await HttpHelper.Post(SignOutAddress, requestJson);
             return result.StatusCode.Equals(HttpStatusCode.NoContent);
         }
     }

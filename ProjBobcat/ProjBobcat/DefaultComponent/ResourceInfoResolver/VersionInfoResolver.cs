@@ -1,34 +1,20 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using ProjBobcat.Class.Helper;
+using ProjBobcat.Class.Model;
+using ProjBobcat.Class.Model.GameResource;
+using ProjBobcat.Interface;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
-using ProjBobcat.Class.Helper;
-using ProjBobcat.Class.Model;
-using ProjBobcat.Class.Model.GameResource;
-using ProjBobcat.Event;
-using ProjBobcat.Interface;
 
 namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
 {
-    public class VersionInfoResolver : IResourceInfoResolver
+    public class VersionInfoResolver : ResolverBase
     {
-        public string BasePath { get; set; }
-        public bool CheckLocalFiles { get; set; }
-        public VersionInfo VersionInfo { get; set; }
-        [Obsolete("不需要此字段")]
-        public int MaxDegreeOfParallelism { get; init; }
-        public event EventHandler<GameResourceInfoResolveEventArgs> GameResourceInfoResolveEvent;
-
-        public IEnumerable<IGameResource> ResolveResource()
-        {
-            var result = ResolveResourceAsync().Result;
-            return result;
-        }
-
-        public async Task<IEnumerable<IGameResource>> ResolveResourceAsync()
+        public override async Task<IEnumerable<IGameResource>> ResolveResourceAsync()
         {
             if (!CheckLocalFiles) return Enumerable.Empty<IGameResource>();
 

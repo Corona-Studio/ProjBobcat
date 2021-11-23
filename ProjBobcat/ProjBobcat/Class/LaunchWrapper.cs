@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Auth;
+using ProjBobcat.DefaultComponent.Launch.GameCore;
 using ProjBobcat.Event;
 using ProjBobcat.Interface;
 
@@ -12,6 +13,8 @@ namespace ProjBobcat.Class
     /// </summary>
     public class LaunchWrapper : IDisposable
     {
+        bool disposedValue;
+
         /// <summary>
         ///     构造函数
         /// </summary>
@@ -41,10 +44,6 @@ namespace ProjBobcat.Class
         /// </summary>
         public Process Process { get; init; }
 
-        public void Dispose()
-        {
-        }
-
         /// <summary>
         ///     执行过程
         /// </summary>
@@ -73,11 +72,14 @@ namespace ProjBobcat.Class
         {
             if (string.IsNullOrEmpty(e.Data)) return;
 
-            GameCore.LogGameData(sender, new GameLogEventArgs
+            if (GameCore is GameCoreBase coreBase)
             {
-                LogType = GameLogType.Unknown,
-                RawContent = e.Data
-            });
+                coreBase.OnLogGameData(sender, new GameLogEventArgs
+                {
+                    LogType = GameLogType.Unknown,
+                    RawContent = e.Data
+                });
+            }
         }
 
         void ProcessOnOutputDataReceived(object sender, DataReceivedEventArgs e)
@@ -94,13 +96,16 @@ namespace ProjBobcat.Class
                 var exceptionMsg = GameCore.GameLogResolver.ResolveExceptionMsg(e.Data);
                 var stackTrace = GameCore.GameLogResolver.ResolveStackTrace(e.Data);
 
-                GameCore.LogGameData(sender, new GameLogEventArgs
+                if(GameCore is GameCoreBase gameCoreBase)
                 {
-                    LogType = type,
-                    RawContent = e.Data,
-                    StackTrace = stackTrace,
-                    ExceptionMsg = exceptionMsg
-                });
+                    gameCoreBase.OnLogGameData(sender, new GameLogEventArgs
+                    {
+                        LogType = type,
+                        RawContent = e.Data,
+                        StackTrace = stackTrace,
+                        ExceptionMsg = exceptionMsg
+                    });
+                }
 
                 return;
             }
@@ -109,14 +114,46 @@ namespace ProjBobcat.Class
             var source = GameCore.GameLogResolver.ResolveSource(totalPrefix);
 
 
-            GameCore.LogGameData(sender, new GameLogEventArgs
+            if (GameCore is GameCoreBase coreBase)
             {
-                LogType = type,
-                RawContent = e.Data,
-                Content = e.Data[(totalPrefix?.Length ?? 0)..],
-                Source = source,
-                Time = time
-            });
+                coreBase.OnLogGameData(sender, new GameLogEventArgs
+                {
+                    LogType = type,
+                    RawContent = e.Data,
+                    Content = e.Data[(totalPrefix?.Length ?? 0)..],
+                    Source = source,
+                    Time = time
+                });
+            }
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    Process?.Dispose();
+                }
+
+                // TODO: 释放未托管的资源(未托管的对象)并重写终结器
+                // TODO: 将大型字段设置为 null
+                disposedValue = true;
+            }
+        }
+
+        // // TODO: 仅当“Dispose(bool disposing)”拥有用于释放未托管资源的代码时才替代终结器
+        // ~LaunchWrapper()
+        // {
+        //     // 不要更改此代码。请将清理代码放入“Dispose(bool disposing)”方法中
+        //     Dispose(disposing: false);
+        // }
+
+        public void Dispose()
+        {
+            // 不要更改此代码。请将清理代码放入“Dispose(bool disposing)”方法中
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }

@@ -1,4 +1,8 @@
-﻿using System;
+﻿using ProjBobcat.Class.Helper;
+using ProjBobcat.Class.Model;
+using ProjBobcat.Class.Model.GameResource;
+using ProjBobcat.Interface;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
@@ -6,35 +10,23 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
-using ProjBobcat.Class.Helper;
-using ProjBobcat.Class.Model;
-using ProjBobcat.Class.Model.GameResource;
-using ProjBobcat.Event;
-using ProjBobcat.Interface;
 using FileInfo = ProjBobcat.Class.Model.FileInfo;
 
 namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
 {
-    public class LibraryInfoResolver : IResourceInfoResolver
+    public class LibraryInfoResolver : ResolverBase
     {
-        public string LibraryUriRoot { get; init; } = "https://libraries.minecraft.net/";
-        public string ForgeUriRoot { get; init; } = "https://files.minecraftforge.net/";
-        public string BasePath { get; set; }
-        public VersionInfo VersionInfo { get; set; }
-        public bool CheckLocalFiles { get; set; }
-        public int MaxDegreeOfParallelism { get; init; } = 2;
-
-        public event EventHandler<GameResourceInfoResolveEventArgs> GameResourceInfoResolveEvent;
-
-        public IEnumerable<IGameResource> ResolveResource()
+        public LibraryInfoResolver()
         {
-            var result = ResolveResourceAsync().Result;
-            return result;
+            MaxDegreeOfParallelism = 2;
         }
 
-        public async Task<IEnumerable<IGameResource>> ResolveResourceAsync()
+        public string LibraryUriRoot { get; init; } = "https://libraries.minecraft.net/";
+        public string ForgeUriRoot { get; init; } = "https://files.minecraftforge.net/";
+
+        public override async Task<IEnumerable<IGameResource>> ResolveResourceAsync()
         {
-            LogGameResourceInfoResolveStatus("开始进行游戏资源(Library)检查");
+            OnResolve("开始进行游戏资源(Library)检查");
             if (!(VersionInfo?.Natives?.Any() ?? false) &&
                 !(VersionInfo?.Libraries?.Any() ?? false))
                 return Enumerable.Empty<IGameResource>();
@@ -64,7 +56,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                     Interlocked.Increment(ref checkedLib);
                     var progress = (double)checkedLib / libCount * 100;
 
-                    LogGameResourceInfoResolveStatus("检索并验证 Library", progress);
+                    OnResolve("检索并验证 Library", progress);
 
                     if (File.Exists(filePath))
                     {
@@ -106,7 +98,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
 
                         Interlocked.Increment(ref checkedLib);
                         var progress = (double)checkedLib / libCount * 100;
-                        LogGameResourceInfoResolveStatus("检索并验证 Native", progress);
+                        OnResolve("检索并验证 Native", progress);
 
                         try
                         {
@@ -153,19 +145,9 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
 
             await Task.Delay(1);
 
-            LogGameResourceInfoResolveStatus("检查Library完成", 100);
+            OnResolve("检查Library完成", 100);
 
             return result;
-        }
-
-        void LogGameResourceInfoResolveStatus(string currentStatus, double progress = 0, LogType logType = LogType.Normal)
-        {
-            GameResourceInfoResolveEvent?.Invoke(this, new GameResourceInfoResolveEventArgs
-            {
-                Status = currentStatus,
-                Progress = progress,
-                LogType = logType
-            });
         }
     }
 }

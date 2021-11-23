@@ -1,4 +1,10 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using ProjBobcat.Class.Helper;
+using ProjBobcat.Class.Model;
+using ProjBobcat.Class.Model.GameResource;
+using ProjBobcat.Class.Model.Mojang;
+using ProjBobcat.Interface;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
@@ -6,21 +12,17 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
-using ProjBobcat.Class.Helper;
-using ProjBobcat.Class.Model;
-using ProjBobcat.Class.Model.GameResource;
-using ProjBobcat.Class.Model.Mojang;
-using ProjBobcat.Event;
-using ProjBobcat.Interface;
 
 namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
 {
-    public class AssetInfoResolver : IResourceInfoResolver
+    public class AssetInfoResolver : ResolverBase
     {
-        readonly string _assetIndexUrlRoot;
+        public AssetInfoResolver()
+        {
+            MaxDegreeOfParallelism = 2;
+        }
 
-        string _basePath;
+        readonly string _assetIndexUrlRoot;
 
         public string AssetIndexUriRoot
         {
@@ -30,29 +32,11 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
 
         public string AssetUriRoot { get; init; } = "https://resources.download.minecraft.net/";
 
-        public bool CheckLocalFiles { get; set; }
-
-        public string BasePath
-        {
-            get => _basePath.TrimEnd('\\');
-            set => _basePath = value;
-        }
-
-        public VersionInfo VersionInfo { get; set; }
         public List<VersionManifestVersionsModel> Versions { get; set; }
-        public int MaxDegreeOfParallelism { get; init; } = 2;
 
-        public event EventHandler<GameResourceInfoResolveEventArgs> GameResourceInfoResolveEvent;
-
-        public IEnumerable<IGameResource> ResolveResource()
+        public override async Task<IEnumerable<IGameResource>> ResolveResourceAsync()
         {
-            var result = ResolveResourceAsync().Result;
-            return result;
-        }
-
-        public async Task<IEnumerable<IGameResource>> ResolveResourceAsync()
-        {
-            LogGameResourceInfoResolveStatus("开始进行游戏资源(Asset)检查");
+            OnResolve("开始进行游戏资源(Asset)检查");
 
             if (!(Versions?.Any() ?? false) && VersionInfo?.AssetInfo == null) return Enumerable.Empty<IGameResource>();
 
@@ -75,7 +59,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
             var assetIndexesPath = Path.Combine(assetIndexesDi.FullName, $"{id}.json");
             if (!File.Exists(assetIndexesPath))
             {
-                LogGameResourceInfoResolveStatus("没有发现Asset Indexes 文件， 开始下载");
+                OnResolve("没有发现Asset Indexes 文件， 开始下载");
 
                 var assetIndexDownloadUri = VersionInfo?.AssetInfo?.Url;
 
@@ -115,14 +99,14 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                 }
                 catch (Exception e)
                 {
-                    LogGameResourceInfoResolveStatus($"解析Asset Indexes 文件失败！原因：{e.Message}", logType: LogType.Error);
+                    OnResolve($"解析Asset Indexes 文件失败！原因：{e.Message}");
                     return Enumerable.Empty<IGameResource>();
                 }
 
-                LogGameResourceInfoResolveStatus("Asset Indexes 文件下载完成", 100, LogType.Success);
+                OnResolve("Asset Indexes 文件下载完成", 100);
             }
 
-            LogGameResourceInfoResolveStatus("开始解析Asset Indexes 文件...");
+            OnResolve("开始解析Asset Indexes 文件...");
 
             AssetObjectModel assetObject;
             try
@@ -132,14 +116,14 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
             }
             catch (Exception ex)
             {
-                LogGameResourceInfoResolveStatus($"解析Asset Indexes 文件失败！原因：{ex.Message}", logType: LogType.Error);
+                OnResolve($"解析Asset Indexes 文件失败！原因：{ex.Message}");
                 File.Delete(assetIndexesPath);
                 return Enumerable.Empty<IGameResource>();
             }
 
             if (assetObject == null)
             {
-                LogGameResourceInfoResolveStatus("解析Asset Indexes 文件失败！原因：文件可能损坏或为空", logType: LogType.Error);
+                OnResolve("解析Asset Indexes 文件失败！原因：文件可能损坏或为空");
                 File.Delete(assetIndexesPath);
                 return Enumerable.Empty<IGameResource>();
             }
@@ -152,7 +136,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
             var objectCount = assetObject.Objects.Count;
             var result = new ConcurrentBag<IGameResource>();
 
-            LogGameResourceInfoResolveStatus("检索并验证 Asset 资源", 0);
+            OnResolve("检索并验证 Asset 资源", 0);
             Parallel.ForEach(assetObject.Objects,
                 new ParallelOptions
                 {
@@ -167,7 +151,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
 
                     Interlocked.Increment(ref checkedObject);
                     var progress = (double) checkedObject / objectCount * 100;
-                    LogGameResourceInfoResolveStatus(string.Empty, progress);
+                    OnResolve(string.Empty, progress);
 
                     if (File.Exists(filePath))
                     {
@@ -196,28 +180,9 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
                     });
                 });
 
-            LogGameResourceInfoResolveStatus("Assets 解析完成", 100, logType: LogType.Success);
+            OnResolve("Assets 解析完成", 100);
 
             return result;
-        }
-
-        void LogGameResourceInfoResolveStatus(string currentStatus, double progress = 0, LogType logType = LogType.Normal)
-        {
-            if(string.IsNullOrEmpty(currentStatus))
-            {
-                GameResourceInfoResolveEvent?.Invoke(this, new GameResourceInfoResolveEventArgs
-                {
-                    Progress = progress,
-                    LogType = logType
-                });
-            }
-
-            GameResourceInfoResolveEvent?.Invoke(this, new GameResourceInfoResolveEventArgs
-            {
-                Status = currentStatus,
-                Progress = progress,
-                LogType = logType
-            });
         }
     }
 }
