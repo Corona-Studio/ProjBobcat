@@ -69,7 +69,7 @@ update version field
     <PackageReference Include="SharpCompress">
       <Version>0.30.1</Version>
     </PackageReference>
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.14.1" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.15.0" />
     <PackageReference Include="System.Management" Version="6.0.0" />
   </ItemGroup>
 </Project>
