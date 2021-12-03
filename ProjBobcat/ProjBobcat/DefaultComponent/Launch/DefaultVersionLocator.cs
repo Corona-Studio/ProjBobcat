@@ -9,6 +9,7 @@ using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Helper.SystemInfo;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.LauncherProfile;
+using ProjBobcat.Class.Model.Version;
 using FileInfo = ProjBobcat.Class.Model.FileInfo;
 
 namespace ProjBobcat.DefaultComponent.Launch
@@ -440,8 +441,8 @@ namespace ProjBobcat.DefaultComponent.Launch
                             if (!lMaven.GetMavenFullName().Equals(mLMaven.GetMavenFullName(), StringComparison.Ordinal))
                                 continue;
 
-                            var v1 = new Version(lMaven.Version);
-                            var v2 = new Version(mLMaven.Version);
+                            var v1 = new ComparableVersion(lMaven.Version);
+                            var v2 = new ComparableVersion(mLMaven.Version);
 
                             if (v2 > v1)
                                 result.Libraries[j] = mL;

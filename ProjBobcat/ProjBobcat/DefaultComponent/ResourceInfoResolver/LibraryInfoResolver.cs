@@ -19,6 +19,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
     {
         public string LibraryUriRoot { get; init; } = "https://libraries.minecraft.net/";
         public string ForgeUriRoot { get; init; } = "https://files.minecraftforge.net/";
+        public string ForgeMavenUriRoot { get; init; } = "https://maven.minecraftforge.net/";
 
         public override async Task<IEnumerable<IGameResource>> ResolveResourceAsync()
         {
@@ -164,11 +165,22 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
             foreach (var lL in checkedResult)
             {
                 string uri;
-                if (lL.Name.StartsWith("forge", StringComparison.Ordinal) ||
-                    lL.Name.StartsWith("net.minecraftforge", StringComparison.Ordinal))
-                    uri = $"{ForgeUriRoot}{lL.Path.Replace('\\', '/')}";
+                if (IsForgeLib(lL))
+                {
+                    
+                    if (lL.Url?.StartsWith("https://maven.minecraftforge.net", StringComparison.OrdinalIgnoreCase) ?? false)
+                    {
+                        uri = $"{ForgeMavenUriRoot}{lL.Path.Replace('\\', '/')}";
+                    }
+                    else
+                    {
+                        uri = $"{ForgeUriRoot}{lL.Path.Replace('\\', '/')}";
+                    }
+                }
                 else
+                {
                     uri = $"{LibraryUriRoot}{lL.Path.Replace('\\', '/')}";
+                }
 
                 var symbolIndex = lL.Path.LastIndexOf('/');
                 var fileName = lL.Path[(symbolIndex + 1)..];
@@ -193,6 +205,15 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver
             OnResolve("检查Library完成", 100);
 
             return result;
+        }
+
+        private bool IsForgeLib(FileInfo fi)
+        {
+            if (fi.Name.StartsWith("forge", StringComparison.Ordinal)) return true;
+            if (fi.Name.StartsWith("net.minecraftforge", StringComparison.Ordinal)) return true;
+            if (fi.Url.StartsWith("https://maven.minecraftforge.net", StringComparison.OrdinalIgnoreCase)) return true;
+
+            return false;
         }
     }
 }

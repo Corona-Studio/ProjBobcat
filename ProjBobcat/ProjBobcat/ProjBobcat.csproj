@@ -15,7 +15,7 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageIcon>Bobcat.png</PackageIcon>
     <RepositoryUrl>https://github.com/Corona-Studio/ProjBobcat</RepositoryUrl>
-    <Version>1.7.0.0</Version>
+    <Version>1.7.1.0</Version>
     <Authors>Corona Studio</Authors>
     <Company>Corona Studio</Company>
     <Product>ProjBobcat</Product>
@@ -25,14 +25,14 @@
     <RepositoryUrl>https://github.com/Corona-Studio/ProjBobcat</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>minecraft-launcher minecraft launcher csharp</PackageTags>
-    <PackageReleaseNotes>
-      fix multiple memory leaks in the DownloadHelper.cs
-      implement Dispose() for serval classes
-      reduce memory usage
-      increase download speed
-      optimize code
-      remove unused Nuget packages
-      update version field
+    <PackageReleaseNotes>fix potential stuck issue
+fix multiple memory leaks in the DownloadHelper.cs
+implement Dispose() for serval classes
+reduce memory usage
+increase download speed
+optimize code
+remove unused Nuget packages
+update version field
     </PackageReleaseNotes>
   </PropertyGroup>
   <PropertyGroup>
