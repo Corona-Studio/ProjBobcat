@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using ProjBobcat.DefaultComponent.Authenticator;
 using ProjBobcat.DefaultComponent.Logging;
+using ProjBobcat.DefaultComponent.Launch.GameCore;
 
 namespace Example
 {
