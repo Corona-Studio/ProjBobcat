@@ -30,7 +30,7 @@ namespace ProjBobcat.Interface
         /// <summary>
         ///     游戏资源解析器集合
         /// </summary>
-        IEnumerable<IResourceInfoResolver> ResourceInfoResolvers { get; set; }
+        IEnumerable<IResourceInfoResolver>? ResourceInfoResolvers { get; set; }
 
         /// <summary>
         ///     检查并下载（同步）

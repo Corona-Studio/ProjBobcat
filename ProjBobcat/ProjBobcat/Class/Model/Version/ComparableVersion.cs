@@ -78,7 +78,7 @@ namespace ProjBobcat.Class.Model.Version
                     }
                     else
                     {
-                        list.Add(ParseItem(isDigit, version.Substring(startIndex, i)));
+                        list.Add(ParseItem(isDigit, version.Substring(startIndex, i - startIndex)));
                     }
                     startIndex = i + 1;
                 }
@@ -90,7 +90,7 @@ namespace ProjBobcat.Class.Model.Version
                     }
                     else
                     {
-                        list.Add(ParseItem(isDigit, version.Substring(startIndex, i)));
+                        list.Add(ParseItem(isDigit, version.Substring(startIndex, i - startIndex)));
                     }
                     startIndex = i + 1;
 
@@ -101,7 +101,7 @@ namespace ProjBobcat.Class.Model.Version
                 {
                     if (!isDigit && i > startIndex)
                     {
-                        list.Add(new StringItem(version.Substring(startIndex, i), true));
+                        list.Add(new StringItem(version.Substring(startIndex, i - startIndex), true));
                         startIndex = i;
 
                         list.Add(list = new ListItem());
@@ -114,7 +114,7 @@ namespace ProjBobcat.Class.Model.Version
                 {
                     if (isDigit && i > startIndex)
                     {
-                        list.Add(ParseItem(true, version.Substring(startIndex, i)));
+                        list.Add(ParseItem(true, version.Substring(startIndex, i - startIndex)));
                         startIndex = i;
 
                         list.Add(list = new ListItem());

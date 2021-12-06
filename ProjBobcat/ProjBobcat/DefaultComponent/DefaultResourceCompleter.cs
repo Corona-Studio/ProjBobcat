@@ -32,7 +32,7 @@ namespace ProjBobcat.DefaultComponent
         public int DownloadParts { get; set; } = 16;
         public int TotalRetry { get; set; }
         public bool CheckFile { get; set; }
-        public IEnumerable<IResourceInfoResolver> ResourceInfoResolvers { get; set; }
+        public IEnumerable<IResourceInfoResolver>? ResourceInfoResolvers { get; set; }
 
         protected EventHandlerList listEventDelegates = new();
 
