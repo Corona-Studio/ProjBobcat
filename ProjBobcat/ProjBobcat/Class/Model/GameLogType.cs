@@ -1,14 +1,13 @@
-﻿namespace ProjBobcat.Class.Model
+﻿namespace ProjBobcat.Class.Model;
+
+public enum GameLogType
 {
-    public enum GameLogType
-    {
-        Fatal,
-        Error,
-        Warning,
-        Info,
-        Debug,
-        ExceptionMessage,
-        StackTrace,
-        Unknown
-    }
+    Fatal,
+    Error,
+    Warning,
+    Info,
+    Debug,
+    ExceptionMessage,
+    StackTrace,
+    Unknown
 }

@@ -9,107 +9,124 @@ using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.YggdrasilAuth;
 using ProjBobcat.Interface;
 
-namespace ProjBobcat.DefaultComponent.Authenticator
+namespace ProjBobcat.DefaultComponent.Authenticator;
+
+/// <summary>
+///     表示一个离线凭据验证器。
+/// </summary>
+public class OfflineAuthenticator : IAuthenticator
 {
     /// <summary>
-    ///     表示一个离线凭据验证器。
+    ///     获取或设置用户名。
     /// </summary>
-    public class OfflineAuthenticator : IAuthenticator
+    public string Username { get; init; }
+    public Guid AccountId { get; set; }
+
+    /// <summary>
+    ///     获取或设置启动程序配置文件分析器。
+    /// </summary>
+    public ILauncherAccountParser LauncherAccountParser { get; set; }
+
+    /// <summary>
+    ///     验证凭据。
+    /// </summary>
+    /// <param name="userField">该参数将被忽略。</param>
+    /// <returns>身份验证结果。</returns>
+    public AuthResultBase Auth(bool userField = false)
     {
-        /// <summary>
-        ///     获取或设置用户名。
-        /// </summary>
-        public string Username { get; init; }
-
-        /// <summary>
-        ///     获取或设置启动程序配置文件分析器。
-        /// </summary>
-        public ILauncherAccountParser LauncherAccountParser { get; set; }
-
-        /// <summary>
-        ///     验证凭据。
-        /// </summary>
-        /// <param name="userField">该参数将被忽略。</param>
-        /// <returns>身份验证结果。</returns>
-        public AuthResultBase Auth(bool userField = false)
+        var authProperty = new AuthPropertyModel
         {
-            var authProperty = new AuthPropertyModel
-            {
-                Name = "preferredLanguage",
-                ProfileId = string.Empty,
-                UserId = PlayerUUID.Random(),
-                Value = "zh-cn"
-            };
+            Name = "preferredLanguage",
+            ProfileId = string.Empty,
+            UserId = PlayerUUID.Random(),
+            Value = "zh-cn"
+        };
 
-            var uuid = PlayerUUID.FromOfflinePlayerName(Username);
-            var result = new AuthResultBase
+        var uuid = PlayerUUID.FromOfflinePlayerName(Username);
+
+        var localUuid = GuidHelper.NewGuidString();
+        var accountModel = new AccountModel
+        {
+            Id = AccountId,
+            AccessToken = GuidHelper.NewGuidString(),
+            AccessTokenExpiresAt = DateTime.Now,
+            EligibleForMigration = false,
+            HasMultipleProfiles = false,
+            Legacy = false,
+            LocalId = localUuid,
+            MinecraftProfile = new AccountProfileModel
             {
-                AccessToken = GuidHelper.NewGuidString(),
-                AuthStatus = AuthStatus.Succeeded,
-                SelectedProfile = new ProfileInfoModel
+                Id = uuid.ToString(),
+                Name = Username
+            },
+            Persistent = true,
+            RemoteId = GuidHelper.NewGuidString(),
+            Type = "Mojang",
+            UserProperites = new List<AuthPropertyModel>
+            {
+                authProperty
+            },
+            Username = Username
+        };
+
+        if (!LauncherAccountParser.AddNewAccount(localUuid, accountModel, out var id))
+        {
+            return new AuthResultBase
+            {
+                AuthStatus = AuthStatus.Failed,
+                Error = new ErrorModel
                 {
-                    Name = Username,
-                    UUID = uuid
-                },
-                User = new UserInfoModel
-                {
-                    UUID = uuid,
-                    Properties = new List<PropertyModel>
-                    {
-                        new()
-                        {
-                            Name = authProperty.Name,
-                            Value = authProperty.Value
-                        }
-                    }
+                    Cause = "添加记录时出现错误",
+                    Error = "无法添加账户",
+                    ErrorMessage = "请检查 launcher_accounts.json 的权限"
                 }
             };
+        }
 
-            var localUuid = GuidHelper.NewGuidString();
-            LauncherAccountParser.AddNewAccount(localUuid, new AccountModel
+        var result = new AuthResultBase
+        {
+            Id = id ?? Guid.Empty,
+            AccessToken = GuidHelper.NewGuidString(),
+            AuthStatus = AuthStatus.Succeeded,
+            SelectedProfile = new ProfileInfoModel
             {
-                AccessToken = GuidHelper.NewGuidString(),
-                AccessTokenExpiresAt = DateTime.Now,
-                EligibleForMigration = false,
-                HasMultipleProfiles = false,
-                Legacy = false,
-                LocalId = localUuid,
-                MinecraftProfile = new AccountProfileModel
+                Name = Username,
+                UUID = uuid
+            },
+            User = new UserInfoModel
+            {
+                UUID = uuid,
+                Properties = new List<PropertyModel>
                 {
-                    Id = uuid.ToString(),
-                    Name = Username
-                },
-                Persistent = true,
-                RemoteId = GuidHelper.NewGuidString(),
-                Type = "Mojang",
-                UserProperites = new List<AuthPropertyModel>
-                {
-                    authProperty
-                },
-                Username = Username
-            });
+                    new()
+                    {
+                        Name = authProperty.Name,
+                        Value = authProperty.Value
+                    }
+                }
+            }
+        };
 
-            return result;
-        }
+        return result;
+    }
 
-        /// <summary>
-        ///     异步验证凭据。
-        /// </summary>
-        /// <param name="userField">改参数将被忽略。</param>
-        /// <returns></returns>
-        public Task<AuthResultBase> AuthTaskAsync(bool userField)
-        {
-            return Task.Run(() => Auth());
-        }
+    /// <summary>
+    ///     异步验证凭据。
+    /// </summary>
+    /// <param name="userField">改参数将被忽略。</param>
+    /// <returns></returns>
+    public Task<AuthResultBase> AuthTaskAsync(bool userField)
+    {
+        return Task.Run(() => Auth());
+    }
 
-        /// <summary>
-        ///     验证凭据。
-        /// </summary>
-        /// <returns>验证结果。</returns>
-        [Obsolete("此方法已过时，请使用 Auth(bool) 代替。")]
-        public AuthResultBase GetLastAuthResult()
-        {
-            return Auth();
-        }
+    /// <summary>
+    ///     验证凭据。
+    /// </summary>
+    /// <returns>验证结果。</returns>
+    [Obsolete("此方法已过时，请使用 Auth(bool) 代替。")]
+    public AuthResultBase GetLastAuthResult()
+    {
+        return Auth();
     }
 }

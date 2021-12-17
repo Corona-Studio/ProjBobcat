@@ -1,16 +1,15 @@
 ﻿using System;
 using Newtonsoft.Json;
 
-namespace ProjBobcat.Class.Model.YggdrasilAuth
+namespace ProjBobcat.Class.Model.YggdrasilAuth;
+
+public class ErrorModel
 {
-    public class ErrorModel
-    {
-        [JsonProperty("error")] public string Error { get; set; }
+    [JsonProperty("error")] public string Error { get; set; }
 
-        [JsonProperty("errorMessage")] public string ErrorMessage { get; set; }
+    [JsonProperty("errorMessage")] public string ErrorMessage { get; set; }
 
-        [JsonProperty("cause")] public string Cause { get; set; }
+    [JsonProperty("cause")] public string Cause { get; set; }
 
-        [JsonIgnore] public Exception Exception { get; set; }
-    }
+    [JsonIgnore] public Exception Exception { get; set; }
 }

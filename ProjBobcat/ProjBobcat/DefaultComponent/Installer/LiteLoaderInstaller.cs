@@ -11,112 +11,111 @@ using ProjBobcat.DefaultComponent.Launch;
 using ProjBobcat.Exceptions;
 using ProjBobcat.Interface;
 
-namespace ProjBobcat.DefaultComponent.Installer
+namespace ProjBobcat.DefaultComponent.Installer;
+
+public class LiteLoaderInstaller : InstallerBase, ILiteLoaderInstaller
 {
-    public class LiteLoaderInstaller : InstallerBase, ILiteLoaderInstaller
+    const string SnapshotRoot = "http://dl.liteloader.com/versions/";
+    const string ReleaseRoot = "http://repo.mumfrey.com/content/repositories/liteloader/";
+
+    public RawVersionModel InheritVersion { get; init; }
+    public LiteLoaderDownloadVersionModel VersionModel { get; init; }
+
+    public string Install()
     {
-        const string SnapshotRoot = "http://dl.liteloader.com/versions/";
-        const string ReleaseRoot = "http://repo.mumfrey.com/content/repositories/liteloader/";
+        return InstallTaskAsync().Result;
+    }
 
-        public RawVersionModel InheritVersion { get; init; }
-        public LiteLoaderDownloadVersionModel VersionModel { get; init; }
+    public async Task<string> InstallTaskAsync()
+    {
+        if (InheritVersion == null)
+            throw new NullReferenceException("InheritVersion 不能为 null");
+        if (VersionModel == null)
+            throw new NullReferenceException("VersionModel 不能为 null");
 
-        public string Install()
+        InvokeStatusChangedEvent("开始安装 LiteLoader", 0);
+
+        var vl = new DefaultVersionLocator(RootPath, Guid.Empty);
+        var rawVersion = vl.ParseRawVersion(VersionModel.McVersion);
+
+        InvokeStatusChangedEvent("解析版本", 10);
+
+        if (rawVersion == null)
+            throw new UnknownGameNameException(VersionModel.McVersion);
+
+        if (rawVersion.Id != VersionModel.McVersion)
+            throw new NotSupportedException("LiteLoader 并不支持这个 MineCraft 版本");
+
+        var id = string.IsNullOrEmpty(CustomId)
+            ? $"{VersionModel.McVersion}-LiteLoader{VersionModel.McVersion}-{VersionModel.Version}"
+            : CustomId;
+
+        var timeStamp = long.TryParse(VersionModel.Build.Timestamp, out var timeResult) ? timeResult : 0;
+        var time = TimeHelper.Unix11ToDateTime(timeStamp);
+
+        InvokeStatusChangedEvent("解析 Libraries", 30);
+
+        var libraries = new List<Library>
         {
-            return InstallTaskAsync().Result;
-        }
-
-        public async Task<string> InstallTaskAsync()
-        {
-            if (InheritVersion == null)
-                throw new NullReferenceException("InheritVersion 不能为 null");
-            if (VersionModel == null)
-                throw new NullReferenceException("VersionModel 不能为 null");
-
-            InvokeStatusChangedEvent("开始安装 LiteLoader", 0);
-
-            var vl = new DefaultVersionLocator(RootPath, Guid.Empty);
-            var rawVersion = vl.ParseRawVersion(VersionModel.McVersion);
-
-            InvokeStatusChangedEvent("解析版本", 10);
-
-            if (rawVersion == null)
-                throw new UnknownGameNameException(VersionModel.McVersion);
-
-            if (rawVersion.Id != VersionModel.McVersion)
-                throw new NotSupportedException("LiteLoader 并不支持这个 MineCraft 版本");
-
-            var id = string.IsNullOrEmpty(CustomId)
-                ? $"{VersionModel.McVersion}-LiteLoader{VersionModel.McVersion}-{VersionModel.Version}"
-                : CustomId;
-
-            var timeStamp = long.TryParse(VersionModel.Build.Timestamp, out var timeResult) ? timeResult : 0;
-            var time = TimeHelper.Unix11ToDateTime(timeStamp);
-
-            InvokeStatusChangedEvent("解析 Libraries", 30);
-
-            var libraries = new List<Library>
+            new()
             {
-                new()
+                Name = $"com.mumfrey:liteloader:{VersionModel.Version}",
+                Url = VersionModel.Type.Equals("SNAPSHOT", StringComparison.OrdinalIgnoreCase)
+                    ? SnapshotRoot
+                    : ReleaseRoot
+            }
+        };
+
+        foreach (var lib in VersionModel.Build.Libraries
+                     .Where(lib => !string.IsNullOrEmpty(lib.Name) && string.IsNullOrEmpty(lib.Url)).Where(lib =>
+                         lib.Name.StartsWith("org.ow2.asm", StringComparison.OrdinalIgnoreCase)))
+            lib.Url = "https://files.minecraftforge.net/maven/";
+
+        libraries.AddRange(VersionModel.Build.Libraries);
+
+        InvokeStatusChangedEvent("Libraries 解析完成", 60);
+
+        const string mainClass = "net.minecraft.launchwrapper.Launch";
+        var resultModel = new RawVersionModel
+        {
+            Id = id,
+            Time = time,
+            ReleaseTime = time,
+            Libraries = libraries,
+            MainClass = mainClass,
+            InheritsFrom = VersionModel.McVersion,
+            BuildType = VersionModel.Type,
+            JarFile = InheritVersion.JarFile ?? InheritVersion.Id
+        };
+
+        if (InheritVersion.Arguments != null)
+            resultModel.Arguments = new Arguments
+            {
+                Game = new List<object>
                 {
-                    Name = $"com.mumfrey:liteloader:{VersionModel.Version}",
-                    Url = VersionModel.Type.Equals("SNAPSHOT", StringComparison.OrdinalIgnoreCase)
-                        ? SnapshotRoot
-                        : ReleaseRoot
+                    "--tweakClass",
+                    VersionModel.Build.TweakClass
                 }
             };
+        else
+            resultModel.MinecraftArguments =
+                $"{InheritVersion.MinecraftArguments} --tweakClass {VersionModel.Build.TweakClass}";
 
-            foreach (var lib in VersionModel.Build.Libraries
-                .Where(lib => !string.IsNullOrEmpty(lib.Name) && string.IsNullOrEmpty(lib.Url)).Where(lib =>
-                    lib.Name.StartsWith("org.ow2.asm", StringComparison.OrdinalIgnoreCase)))
-                lib.Url = "https://files.minecraftforge.net/maven/";
+        var gamePath = Path.Combine(RootPath, GamePathHelper.GetGamePath(id));
+        var di = new DirectoryInfo(gamePath);
 
-            libraries.AddRange(VersionModel.Build.Libraries);
+        if (!di.Exists)
+            di.Create();
+        else
+            DirectoryHelper.CleanDirectory(di.FullName);
 
-            InvokeStatusChangedEvent("Libraries 解析完成", 60);
+        var jsonPath = GamePathHelper.GetGameJsonPath(RootPath, id);
+        var jsonContent = JsonConvert.SerializeObject(resultModel, JsonHelper.CamelCasePropertyNamesSettings);
 
-            const string mainClass = "net.minecraft.launchwrapper.Launch";
-            var resultModel = new RawVersionModel
-            {
-                Id = id,
-                Time = time,
-                ReleaseTime = time,
-                Libraries = libraries,
-                MainClass = mainClass,
-                InheritsFrom = VersionModel.McVersion,
-                BuildType = VersionModel.Type,
-                JarFile = InheritVersion.JarFile ?? InheritVersion.Id
-            };
+        await File.WriteAllTextAsync(jsonPath, jsonContent);
 
-            if (InheritVersion.Arguments != null)
-                resultModel.Arguments = new Arguments
-                {
-                    Game = new List<object>
-                    {
-                        "--tweakClass",
-                        VersionModel.Build.TweakClass
-                    }
-                };
-            else
-                resultModel.MinecraftArguments =
-                    $"{InheritVersion.MinecraftArguments} --tweakClass {VersionModel.Build.TweakClass}";
+        InvokeStatusChangedEvent("LiteLoader 安装完成", 100);
 
-            var gamePath = Path.Combine(RootPath, GamePathHelper.GetGamePath(id));
-            var di = new DirectoryInfo(gamePath);
-
-            if (!di.Exists)
-                di.Create();
-            else
-                DirectoryHelper.CleanDirectory(di.FullName);
-
-            var jsonPath = GamePathHelper.GetGameJsonPath(RootPath, id);
-            var jsonContent = JsonConvert.SerializeObject(resultModel, JsonHelper.CamelCasePropertyNamesSettings);
-
-            await File.WriteAllTextAsync(jsonPath, jsonContent);
-
-            InvokeStatusChangedEvent("LiteLoader 安装完成", 100);
-
-            return id;
-        }
+        return id;
     }
 }

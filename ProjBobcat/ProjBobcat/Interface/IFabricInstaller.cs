@@ -1,12 +1,11 @@
 ﻿using System.Threading.Tasks;
 using ProjBobcat.Class.Model.Fabric;
 
-namespace ProjBobcat.Interface
+namespace ProjBobcat.Interface;
+
+public interface IFabricInstaller : IInstaller
 {
-    public interface IFabricInstaller : IInstaller
-    {
-        FabricLoaderArtifactModel LoaderArtifact { get; set; }
-        string Install();
-        Task<string> InstallTaskAsync();
-    }
+    FabricLoaderArtifactModel LoaderArtifact { get; set; }
+    string Install();
+    Task<string> InstallTaskAsync();
 }

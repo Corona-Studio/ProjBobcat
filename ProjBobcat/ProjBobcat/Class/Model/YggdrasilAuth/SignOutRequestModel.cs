@@ -1,11 +1,10 @@
 ﻿using Newtonsoft.Json;
 
-namespace ProjBobcat.Class.Model.YggdrasilAuth
-{
-    public class SignOutRequestModel
-    {
-        [JsonProperty("username")] public string Username { get; set; }
+namespace ProjBobcat.Class.Model.YggdrasilAuth;
 
-        [JsonProperty("password")] public string Password { get; set; }
-    }
+public class SignOutRequestModel
+{
+    [JsonProperty("username")] public string Username { get; set; }
+
+    [JsonProperty("password")] public string Password { get; set; }
 }

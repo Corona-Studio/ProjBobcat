@@ -1,11 +1,10 @@
-﻿namespace ProjBobcat.Class.Model
+﻿namespace ProjBobcat.Class.Model;
+
+public enum TaskResultStatus
 {
-    public enum TaskResultStatus
-    {
-        Unknown,
-        Error,
-        Success,
-        Warning,
-        PartialSuccess
-    }
+    Unknown,
+    Error,
+    Success,
+    Warning,
+    PartialSuccess
 }

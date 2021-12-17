@@ -1,39 +1,38 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace ProjBobcat.Class.Helper
+namespace ProjBobcat.Class.Helper;
+
+/// <summary>
+///     字符串工具类
+/// </summary>
+public static class StringHelper
 {
     /// <summary>
-    ///     字符串工具类
+    ///     修复+转义参数字符串
     /// </summary>
-    public static class StringHelper
+    /// <param name="arg"></param>
+    /// <returns></returns>
+    public static string FixArgument(string arg)
     {
-        /// <summary>
-        ///     修复+转义参数字符串
-        /// </summary>
-        /// <param name="arg"></param>
-        /// <returns></returns>
-        public static string FixArgument(string arg)
-        {
-            if (string.IsNullOrWhiteSpace(arg) || !arg.Contains('='))
-                return arg;
+        if (string.IsNullOrWhiteSpace(arg) || !arg.Contains('='))
+            return arg;
 
-            var para = arg.Split('=');
-            if (para[1].Contains(' '))
-                para[1] = $"\"{para[1]}\"";
+        var para = arg.Split('=');
+        if (para[1].Contains(' '))
+            para[1] = $"\"{para[1]}\"";
 
-            return string.Join("=", para);
-        }
+        return string.Join("=", para);
+    }
 
-        /// <summary>
-        ///     根据字典来替换字符串内容
-        /// </summary>
-        /// <param name="str">原字符串</param>
-        /// <param name="dic">替换字典</param>
-        /// <returns>替换好的字符串</returns>
-        public static string ReplaceByDic(string str, Dictionary<string, string> dic)
-        {
-            return string.IsNullOrEmpty(str) ? string.Empty : dic.Aggregate(str, (a, b) => a.Replace(b.Key, b.Value));
-        }
+    /// <summary>
+    ///     根据字典来替换字符串内容
+    /// </summary>
+    /// <param name="str">原字符串</param>
+    /// <param name="dic">替换字典</param>
+    /// <returns>替换好的字符串</returns>
+    public static string ReplaceByDic(string str, Dictionary<string, string> dic)
+    {
+        return string.IsNullOrEmpty(str) ? string.Empty : dic.Aggregate(str, (a, b) => a.Replace(b.Key, b.Value));
     }
 }

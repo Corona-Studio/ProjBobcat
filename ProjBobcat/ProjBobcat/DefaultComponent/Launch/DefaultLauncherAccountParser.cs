@@ -9,125 +9,141 @@ using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model.LauncherAccount;
 using ProjBobcat.Interface;
 
-namespace ProjBobcat.DefaultComponent.Launch
+namespace ProjBobcat.DefaultComponent.Launch;
+
+public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccountParser
 {
-    public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccountParser
+    readonly string FullLauncherAccountPath;
+
+    /// <summary>
+    ///     构造函数
+    /// </summary>
+    /// <param name="rootPath"></param>
+    /// <param name="clientToken"></param>
+    public DefaultLauncherAccountParser(string rootPath, Guid clientToken)
     {
-        readonly string FullLauncherAccountPath;
+        RootPath = rootPath;
+        FullLauncherAccountPath = Path.Combine(rootPath, GamePathHelper.GetLauncherAccountPath());
 
-        /// <summary>
-        ///     构造函数
-        /// </summary>
-        /// <param name="rootPath"></param>
-        /// <param name="clientToken"></param>
-        public DefaultLauncherAccountParser(string rootPath, Guid clientToken)
+        if (!File.Exists(FullLauncherAccountPath))
         {
-            RootPath = rootPath;
-            FullLauncherAccountPath = Path.Combine(rootPath, GamePathHelper.GetLauncherAccountPath());
-
-            if (!File.Exists(FullLauncherAccountPath))
+            var launcherAccount = new LauncherAccountModel
             {
-                var launcherAccount = new LauncherAccountModel
-                {
-                    Accounts = new Dictionary<string, AccountModel>(),
-                    MojangClientToken = clientToken.ToString("N")
-                };
+                Accounts = new Dictionary<string, AccountModel>(),
+                MojangClientToken = clientToken.ToString("N")
+            };
 
-                LauncherAccount = launcherAccount;
-
-                var launcherProfileJson =
-                    JsonConvert.SerializeObject(launcherAccount, JsonHelper.CamelCasePropertyNamesSettings);
-
-                if (!Directory.Exists(RootPath))
-                    Directory.CreateDirectory(RootPath);
-
-                File.WriteAllText(FullLauncherAccountPath, launcherProfileJson);
-            }
-            else
-            {
-                var launcherProfileJson =
-                    File.ReadAllText(FullLauncherAccountPath, Encoding.UTF8);
-                LauncherAccount = JsonConvert.DeserializeObject<LauncherAccountModel>(launcherProfileJson);
-            }
-        }
-
-        public LauncherAccountModel LauncherAccount { get; set; }
-
-        public bool ActivateAccount(string uuid)
-        {
-            if (!(LauncherAccount?.Accounts?.ContainsKey(uuid) ?? false))
-                return false;
-
-            LauncherAccount.ActiveAccountLocalId = uuid;
-
-            Save();
-            return true;
-        }
-
-        public bool AddNewAccount(string uuid, AccountModel account)
-        {
-            if (LauncherAccount?.Accounts?.ContainsKey(uuid) ?? false)
-                return false;
-
-            if (LauncherAccount == null)
-                return false;
-
-            LauncherAccount.Accounts ??= new Dictionary<string, AccountModel>();
-
-            /*
-            var existsAccount = LauncherAccount.Accounts
-                .FirstOrDefault(p => p.Value?.RemoteId?.Equals(account.RemoteId, StringComparison.OrdinalIgnoreCase) ?? false);
-            var (key, value) = existsAccount;
-
-            if(!string.IsNullOrEmpty(key) && value != null)
-            {
-                LauncherAccount.Accounts[key] = value;
-            }
-            else
-            */
-            {
-                LauncherAccount.Accounts.Add(uuid, account);
-            }
-
-            Save();
-            return true;
-        }
-
-        public KeyValuePair<string, AccountModel>? Find(string uuid, string name)
-        {
-            var account =
-                LauncherAccount?.Accounts?
-                    .FirstOrDefault(a =>
-                        (a.Value.MinecraftProfile?.Name?.Equals(name, StringComparison.OrdinalIgnoreCase) ?? false) &&
-                        (a.Value.MinecraftProfile?.Id?.Equals(uuid, StringComparison.OrdinalIgnoreCase) ?? false));
-
-            return account;
-        }
-
-        public bool RemoveAccount(string uuid, string name)
-        {
-            var result = Find(uuid, name);
-            if (!result.HasValue) return false;
-
-            var (key, value) = result.Value;
-            if (value == default)
-                return false;
-
-            LauncherAccount.Accounts.Remove(key);
-
-            Save();
-            return true;
-        }
-
-        public void Save()
-        {
-            if (File.Exists(FullLauncherAccountPath))
-                File.Delete(FullLauncherAccountPath);
+            LauncherAccount = launcherAccount;
 
             var launcherProfileJson =
-                JsonConvert.SerializeObject(LauncherAccount, JsonHelper.CamelCasePropertyNamesSettings);
+                JsonConvert.SerializeObject(launcherAccount, JsonHelper.CamelCasePropertyNamesSettings);
+
+            if (!Directory.Exists(RootPath))
+                Directory.CreateDirectory(RootPath);
 
             File.WriteAllText(FullLauncherAccountPath, launcherProfileJson);
         }
+        else
+        {
+            var launcherProfileJson =
+                File.ReadAllText(FullLauncherAccountPath, Encoding.UTF8);
+            LauncherAccount = JsonConvert.DeserializeObject<LauncherAccountModel>(launcherProfileJson);
+        }
+    }
+
+    public LauncherAccountModel LauncherAccount { get; set; }
+
+    public bool ActivateAccount(string uuid)
+    {
+        if (!(LauncherAccount?.Accounts?.ContainsKey(uuid) ?? false))
+            return false;
+
+        LauncherAccount.ActiveAccountLocalId = uuid;
+
+        Save();
+        return true;
+    }
+
+    public bool AddNewAccount(string uuid, AccountModel account, out Guid? id)
+    {
+        if (LauncherAccount?.Accounts?.ContainsKey(uuid) ?? false)
+        {
+            id = null;
+            return false;
+        }
+
+        if (LauncherAccount == null)
+        {
+            id = null;
+            return false;
+        }
+
+        LauncherAccount.Accounts ??= new Dictionary<string, AccountModel>();
+
+        var newId = Guid.NewGuid();
+        /*
+        var existsAccount = LauncherAccount.Accounts
+            .FirstOrDefault(p => p.Value?.RemoteId?.Equals(account.RemoteId, StringComparison.OrdinalIgnoreCase) ?? false);
+        var (key, value) = existsAccount;
+
+        if(!string.IsNullOrEmpty(key) && value != null)
+        {
+            LauncherAccount.Accounts[key] = value;
+        }
+        else
+        */
+        {
+            var findResult = Find(account.Id);
+            if (findResult is {Key: { }, Value: { }})
+            {
+                newId = account.Id;
+                LauncherAccount.Accounts[findResult.Value.Key] = account;
+            }
+            else
+            {
+                if (account.Id == default)
+                {
+                    account.Id = newId;
+                }
+                
+                LauncherAccount.Accounts.Add(uuid, account);
+            }
+        }
+
+        Save();
+
+        id = newId;
+        return true;
+    }
+
+    public KeyValuePair<string, AccountModel>? Find(Guid id)
+    {
+        return LauncherAccount?.Accounts?.FirstOrDefault(a => a.Value.Id == id);
+    }
+
+    public bool RemoveAccount(Guid id)
+    {
+        var result = Find(id);
+        if (!result.HasValue) return false;
+
+        var (key, value) = result.Value;
+        if (value == default)
+            return false;
+
+        LauncherAccount.Accounts.Remove(key);
+
+        Save();
+        return true;
+    }
+
+    public void Save()
+    {
+        if (File.Exists(FullLauncherAccountPath))
+            File.Delete(FullLauncherAccountPath);
+
+        var launcherProfileJson =
+            JsonConvert.SerializeObject(LauncherAccount, JsonHelper.CamelCasePropertyNamesSettings);
+
+        File.WriteAllText(FullLauncherAccountPath, launcherProfileJson);
     }
 }

@@ -1,23 +1,22 @@
-﻿namespace ProjBobcat.Class.Model
+﻿namespace ProjBobcat.Class.Model;
+
+/// <summary>
+///     验证状态枚举
+/// </summary>
+public enum AuthStatus
 {
     /// <summary>
-    ///     验证状态枚举
+    ///     失败
     /// </summary>
-    public enum AuthStatus
-    {
-        /// <summary>
-        ///     失败
-        /// </summary>
-        Failed = 0,
+    Failed = 0,
 
-        /// <summary>
-        ///     成功
-        /// </summary>
-        Succeeded,
+    /// <summary>
+    ///     成功
+    /// </summary>
+    Succeeded,
 
-        /// <summary>
-        ///     未知
-        /// </summary>
-        Unknown
-    }
+    /// <summary>
+    ///     未知
+    /// </summary>
+    Unknown
 }

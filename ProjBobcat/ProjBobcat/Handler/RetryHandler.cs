@@ -4,60 +4,59 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace ProjBobcat.Handler
+namespace ProjBobcat.Handler;
+
+public class RetryHandler : DelegatingHandler
 {
-    public class RetryHandler : DelegatingHandler
+    readonly int _maxRetries = 5;
+
+    public RetryHandler()
     {
-        readonly int _maxRetries = 5;
+    }
 
-        public RetryHandler()
+    public RetryHandler(HttpMessageHandler innerHandler) : base(innerHandler)
+    {
+    }
+
+    public RetryHandler(HttpMessageHandler innerHandler, int maxRetries) : base(innerHandler)
+    {
+        _maxRetries = maxRetries;
+    }
+
+    protected override async Task<HttpResponseMessage> SendAsync(
+        HttpRequestMessage request,
+        CancellationToken cancellationToken)
+    {
+        HttpResponseMessage response = null;
+
+        for (var i = 0; i < _maxRetries; i++)
         {
-        }
-
-        public RetryHandler(HttpMessageHandler innerHandler) : base(innerHandler)
-        {
-        }
-
-        public RetryHandler(HttpMessageHandler innerHandler, int maxRetries) : base(innerHandler)
-        {
-            _maxRetries = maxRetries;
-        }
-
-        protected override async Task<HttpResponseMessage> SendAsync(
-            HttpRequestMessage request,
-            CancellationToken cancellationToken)
-        {
-            HttpResponseMessage response = null;
-
-            for (var i = 0; i < _maxRetries; i++)
+            try
             {
-                try
-                {
-                    response = await base.SendAsync(request, cancellationToken);
-                }
-                catch (Exception e)
-                {
-                    if (IsNetworkError(e))
-                        continue;
+                response = await base.SendAsync(request, cancellationToken);
+            }
+            catch (Exception e)
+            {
+                if (IsNetworkError(e))
+                    continue;
 
-                    throw;
-                }
-
-                return response;
+                throw;
             }
 
             return response;
         }
 
-        static bool IsNetworkError(Exception ex)
-        {
-            while (true)
-            {
-                if (ex is SocketException) return true;
-                if (ex.InnerException == null) return false;
+        return response;
+    }
 
-                ex = ex.InnerException;
-            }
+    static bool IsNetworkError(Exception ex)
+    {
+        while (true)
+        {
+            if (ex is SocketException) return true;
+            if (ex.InnerException == null) return false;
+
+            ex = ex.InnerException;
         }
     }
 }

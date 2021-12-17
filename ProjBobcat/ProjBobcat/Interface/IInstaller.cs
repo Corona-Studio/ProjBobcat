@@ -1,8 +1,7 @@
-﻿namespace ProjBobcat.Interface
+﻿namespace ProjBobcat.Interface;
+
+public interface IInstaller
 {
-    public interface IInstaller
-    {
-        string CustomId { get; set; }
-        string RootPath { get; set; }
-    }
+    string CustomId { get; set; }
+    string RootPath { get; set; }
 }

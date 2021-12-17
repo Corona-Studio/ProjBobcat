@@ -1,12 +1,11 @@
 ﻿using System.Collections.Generic;
 using Newtonsoft.Json;
 
-namespace ProjBobcat.Class.Model
-{
-    public class GameRules
-    {
-        [JsonProperty("action")] public string Action { get; set; }
+namespace ProjBobcat.Class.Model;
 
-        [JsonProperty("features")] public Dictionary<string, bool> Features { get; set; }
-    }
+public class GameRules
+{
+    [JsonProperty("action")] public string Action { get; set; }
+
+    [JsonProperty("features")] public Dictionary<string, bool> Features { get; set; }
 }

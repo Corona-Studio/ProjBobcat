@@ -1,8 +1,7 @@
-﻿namespace ProjBobcat.Class.Model.ServerPing
+﻿namespace ProjBobcat.Class.Model.ServerPing;
+
+public class ServerPingResult
 {
-    public class ServerPingResult
-    {
-        public PingPayload Response { get; set; }
-        public long Latency { get; set; }
-    }
+    public PingPayload Response { get; set; }
+    public long Latency { get; set; }
 }

@@ -1,10 +1,9 @@
 ﻿using System.Threading.Tasks;
 
-namespace ProjBobcat.Interface
+namespace ProjBobcat.Interface;
+
+public interface ILiteLoaderInstaller : IInstaller
 {
-    public interface ILiteLoaderInstaller : IInstaller
-    {
-        string Install();
-        Task<string> InstallTaskAsync();
-    }
+    string Install();
+    Task<string> InstallTaskAsync();
 }

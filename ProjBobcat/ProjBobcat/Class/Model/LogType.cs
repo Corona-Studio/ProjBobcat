@@ -1,10 +1,9 @@
-﻿namespace ProjBobcat.Class.Model
+﻿namespace ProjBobcat.Class.Model;
+
+public enum LogType
 {
-    public enum LogType
-    {
-        Normal,
-        Success,
-        Warning,
-        Error
-    }
+    Normal,
+    Success,
+    Warning,
+    Error
 }

@@ -13,340 +13,339 @@ using ProjBobcat.Interface;
 using SharpCompress.Archives;
 using FileInfo = System.IO.FileInfo;
 
-namespace ProjBobcat.DefaultComponent.Launch.GameCore
+namespace ProjBobcat.DefaultComponent.Launch.GameCore;
+
+/// <summary>
+///     表示一个默认的游戏核心。
+/// </summary>
+public class DefaultGameCore : GameCoreBase
 {
+    string _rootPath;
+
     /// <summary>
-    ///     表示一个默认的游戏核心。
+    ///     启动参数解析器
     /// </summary>
-    public class DefaultGameCore : GameCoreBase
+    public IArgumentParser LaunchArgumentParser { get; set; }
+
+    /// <summary>
+    ///     .minecraft 目录
+    /// </summary>
+    public override string RootPath
     {
-        string _rootPath;
-
-        /// <summary>
-        ///     启动参数解析器
-        /// </summary>
-        public IArgumentParser LaunchArgumentParser { get; set; }
-
-        /// <summary>
-        ///     .minecraft 目录
-        /// </summary>
-        public override string RootPath
+        get => _rootPath;
+        set
         {
-            get => _rootPath;
-            set
-            {
-                if (string.IsNullOrEmpty(value))
-                    return;
+            if (string.IsNullOrEmpty(value))
+                return;
 
-                _rootPath = Path.GetFullPath(value.TrimEnd('/'));
-            }
+            _rootPath = Path.GetFullPath(value.TrimEnd('/'));
         }
+    }
 
-        public override async Task<LaunchResult> LaunchTaskAsync(LaunchSettings settings)
+    public override async Task<LaunchResult> LaunchTaskAsync(LaunchSettings settings)
+    {
+        try
         {
-            try
-            {
-                //逐步测量启动时间。
-                //Measure the launch time step by step.
-                var prevSpan = new TimeSpan();
-                var stopwatch = new Stopwatch();
-                stopwatch.Start();
+            //逐步测量启动时间。
+            //Measure the launch time step by step.
+            var prevSpan = new TimeSpan();
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
 
-                #region 解析游戏 Game Info Resolver
+            #region 解析游戏 Game Info Resolver
 
-                var version = VersionLocator.GetGame(settings.Version);
+            var version = VersionLocator.GetGame(settings.Version);
 
-                //在以下方法中，我们存储前一个步骤的时间并且重置秒表，以此逐步测量启动时间。
-                //In the method InvokeLaunchLogThenStart(args), we storage the time span of the previous process and restart the watch in order that the time used in each step is recorded.
-                InvokeLaunchLogThenStart("解析游戏", ref prevSpan, ref stopwatch);
+            //在以下方法中，我们存储前一个步骤的时间并且重置秒表，以此逐步测量启动时间。
+            //In the method InvokeLaunchLogThenStart(args), we storage the time span of the previous process and restart the watch in order that the time used in each step is recorded.
+            InvokeLaunchLogThenStart("解析游戏", ref prevSpan, ref stopwatch);
 
-                //错误处理
-                //Error processor
-                if (version == null)
-                    return new LaunchResult
-                    {
-                        ErrorType = LaunchErrorType.OperationFailed,
-                        Error = new ErrorModel
-                        {
-                            Error = "解析游戏失败",
-                            ErrorMessage = "我们在解析游戏时出现了错误",
-                            Cause = "这有可能是因为您的游戏JSON文件损坏所导致的问题"
-                        }
-                    };
-
-                #endregion
-
-                #region 验证账户凭据 Legal Account Verifier
-
-                //以下代码实现了账户模式从离线到在线的切换。
-                //The following code switches account mode between offline and yggdrasil.
-                var authResult = settings.Authenticator switch
-                {
-                    OfflineAuthenticator off => off.Auth(),
-                    YggdrasilAuthenticator ygg => await ygg.AuthTaskAsync(true),
-                    MicrosoftAuthenticator mic => await mic.AuthTaskAsync(),
-                    _ => null
-                };
-                InvokeLaunchLogThenStart("验证账户凭据", ref prevSpan, ref stopwatch);
-
-                //错误处理
-                //Error processor
-                if (authResult == null || authResult.AuthStatus == AuthStatus.Failed ||
-                    authResult.AuthStatus == AuthStatus.Unknown)
-                    return new LaunchResult
-                    {
-                        LaunchSettings = settings,
-                        Error = new ErrorModel
-                        {
-                            Error = "验证失败",
-                            Cause = authResult == null
-                                ? "未知的验证器"
-                                : authResult.AuthStatus switch
-                                {
-                                    AuthStatus.Failed => "可能是因为用户名或密码错误，或是验证服务器暂时未响应",
-                                    AuthStatus.Unknown => "未知错误",
-                                    _ => "未知错误"
-                                },
-                            ErrorMessage = "无法验证凭据的有效性"
-                        }
-                    };
-
-                if (authResult.SelectedProfile == default && settings.SelectedProfile == default)
-                    return new LaunchResult
-                    {
-                        LaunchSettings = settings,
-                        Error = new ErrorModel
-                        {
-                            Error = "验证失败",
-                            Cause = "没有选择用于启动游戏的Profile",
-                            ErrorMessage = "没有选择任何Profile"
-                        }
-                    };
-
-                if (settings.SelectedProfile != default)
-                    authResult.SelectedProfile = settings.SelectedProfile;
-
-                #endregion
-
-                #region 解析启动参数 Launch Parameters Resolver
-
-                var javasArr = new[]
-                {
-                    settings.GameArguments?.JavaExecutable,
-                    settings.FallBackGameArguments?.JavaExecutable
-                };
-                var isJavaExists = false;
-
-                foreach (var java in javasArr)
-                    if (!string.IsNullOrEmpty(java) && File.Exists(java))
-                        isJavaExists = true;
-
-                if (!isJavaExists)
-                    return new LaunchResult
-                    {
-                        ErrorType = LaunchErrorType.NoJava,
-                        Error = new ErrorModel
-                        {
-                            Cause = "未找到JRE运行时，可能是输入的路劲为空或出错，亦或是指定的文件并不存在。",
-                            Error = "未找到JRE运行时",
-                            ErrorMessage = "输入的路劲为空或出错，亦或是指定的文件并不存在"
-                        }
-                    };
-
-                var argumentParser = new DefaultLaunchArgumentParser(settings, VersionLocator.LauncherProfileParser,
-                    VersionLocator, authResult, RootPath, version.RootVersion);
-
-                //以字符串数组形式生成启动参数。
-                //Generates launch cmd arguments in string[].
-                var arguments = argumentParser.GenerateLaunchArguments();
-                InvokeLaunchLogThenStart("解析启动参数", ref prevSpan, ref stopwatch);
-
-                if (string.IsNullOrEmpty(arguments.First()))
-                    return new LaunchResult
-                    {
-                        ErrorType = LaunchErrorType.IncompleteArguments,
-                        Error = new ErrorModel
-                        {
-                            Cause = "启动核心生成的参数不完整",
-                            Error = "重要参数缺失",
-                            ErrorMessage = "启动参数不完整，很有可能是缺少Java路径导致的"
-                        }
-                    };
-
-                //从参数数组中移出java路径并加以存储。
-                //Load the first element(java's path) into the excutable string and removes it from the generated arguments
-                var executable = arguments[0];
-                arguments.RemoveAt(0);
-
-                /*
-                for (var i = 0; i < arguments.Count; i++)
-                {
-                    if (arguments[i].Contains(' '))
-                        arguments[i] = $"\"{arguments[i]}\"";
-                }
-                */
-
-                // var totalArg = string.Join(' ', arguments);
-
-                //通过String Builder格式化参数。（转化成字符串）
-                //Format the arguments using string builder.(Convert to string)
-                // arguments.ForEach(arg => sb.Append(arg.Trim()).Append(' '));
-                InvokeLaunchLogThenStart(string.Join(Environment.NewLine, arguments), ref prevSpan, ref stopwatch);
-
-                #endregion
-
-                #region 解压Natives Natives Decompresser
-
-                try
-                {
-                    var nativeRootPath = Path.Combine(RootPath, argumentParser.NativeRoot);
-                    if (!Directory.Exists(nativeRootPath))
-                        Directory.CreateDirectory(nativeRootPath);
-
-                    DirectoryHelper.CleanDirectory(nativeRootPath);
-
-                    foreach (var n in version.Natives)
-                    {
-                        var path =
-                            Path.Combine(RootPath, GamePathHelper.GetLibraryPath(n.FileInfo.Path.Replace('/', '\\')));
-
-                        // await using var stream = File.OpenRead(path);
-                        // using var reader =  ReaderFactory.Open(stream);
-
-                        using var archive = ArchiveFactory.Open(path);
-                        foreach (var entry in archive.Entries)
-                        {
-                            if (n.Extract?.Exclude?.Any(e => entry.Key.StartsWith(e)) ?? false) continue;
-
-                            var extractPath = Path.Combine(nativeRootPath, entry.Key);
-                            if (entry.IsDirectory)
-                            {
-                                if (!Directory.Exists(extractPath))
-                                    Directory.CreateDirectory(extractPath);
-
-                                continue;
-                            }
-
-                            var fi = new FileInfo(extractPath);
-                            var di = fi.Directory ?? new DirectoryInfo(Path.GetDirectoryName(extractPath)!);
-
-                            if (!di.Exists)
-                                di.Create();
-
-                            await using var fs = fi.OpenWrite();
-                            entry.WriteTo(fs);
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    return new LaunchResult
-                    {
-                        Error = new ErrorModel
-                        {
-                            Exception = e
-                        },
-                        ErrorType = LaunchErrorType.DecompressFailed,
-                        LaunchSettings = settings,
-                        RunTime = prevSpan
-                    };
-                }
-
-                InvokeLaunchLogThenStart("解压Natives", ref prevSpan, ref stopwatch);
-
-                #endregion
-
-                #region 启动游戏 Launch
-
-                var rootPath = settings.VersionInsulation
-                    ? Path.Combine(RootPath, GamePathHelper.GetGamePath(settings.Version))
-                    : RootPath;
-
-                var psi = new ProcessStartInfo(executable, string.Join(' ', arguments))
-                {
-                    UseShellExecute = false,
-                    WorkingDirectory = rootPath,
-                    RedirectStandardError = true,
-                    RedirectStandardOutput = true
-                };
-
-                // arguments.ForEach(psi.ArgumentList.Add);
-
-                var launchWrapper = new LaunchWrapper(authResult)
-                {
-                    GameCore = this,
-                    Process = Process.Start(psi)
-                };
-
-                launchWrapper.Do();
-                InvokeLaunchLogThenStart("启动游戏", ref prevSpan, ref stopwatch);
-
-                //绑定游戏退出事件。
-                //Bind the exit event.
-#pragma warning disable CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
-                Task.Run(launchWrapper.Process.WaitForExit)
-                    .ContinueWith(task =>
-                    {
-                        OnGameExit(launchWrapper, new GameExitEventArgs
-                        {
-                            Exception = task.Exception,
-                            ExitCode = launchWrapper.ExitCode
-                        });
-                    });
-
-                if (!string.IsNullOrEmpty(settings.WindowTitle))
-                    Task.Run(() =>
-                    {
-                        while (string.IsNullOrEmpty(launchWrapper.Process.MainWindowTitle))
-                            _ = NativeMethods.SetWindowText(launchWrapper.Process.MainWindowHandle,
-                                settings.WindowTitle);
-                    });
-#pragma warning restore CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
-
-                #endregion
-
-                //返回启动结果。
-                //Return the launch result.
+            //错误处理
+            //Error processor
+            if (version == null)
                 return new LaunchResult
                 {
-                    RunTime = stopwatch.Elapsed,
-                    GameProcess = launchWrapper.Process,
-                    LaunchSettings = settings
+                    ErrorType = LaunchErrorType.OperationFailed,
+                    Error = new ErrorModel
+                    {
+                        Error = "解析游戏失败",
+                        ErrorMessage = "我们在解析游戏时出现了错误",
+                        Cause = "这有可能是因为您的游戏JSON文件损坏所导致的问题"
+                    }
                 };
-            }
-            catch (Exception ex)
+
+            #endregion
+
+            #region 验证账户凭据 Legal Account Verifier
+
+            //以下代码实现了账户模式从离线到在线的切换。
+            //The following code switches account mode between offline and yggdrasil.
+            var authResult = settings.Authenticator switch
             {
+                OfflineAuthenticator off => off.Auth(),
+                YggdrasilAuthenticator ygg => await ygg.AuthTaskAsync(true),
+                MicrosoftAuthenticator mic => await mic.AuthTaskAsync(),
+                _ => null
+            };
+            InvokeLaunchLogThenStart("验证账户凭据", ref prevSpan, ref stopwatch);
+
+            //错误处理
+            //Error processor
+            if (authResult == null || authResult.AuthStatus == AuthStatus.Failed ||
+                authResult.AuthStatus == AuthStatus.Unknown)
                 return new LaunchResult
                 {
                     LaunchSettings = settings,
                     Error = new ErrorModel
                     {
-                        Exception = ex
+                        Error = "验证失败",
+                        Cause = authResult == null
+                            ? "未知的验证器"
+                            : authResult.AuthStatus switch
+                            {
+                                AuthStatus.Failed => "可能是因为用户名或密码错误，或是验证服务器暂时未响应",
+                                AuthStatus.Unknown => "未知错误",
+                                _ => "未知错误"
+                            },
+                        ErrorMessage = "无法验证凭据的有效性"
                     }
                 };
-            }
-        }
 
-        #region 内部方法 Internal Methods
+            if (authResult.SelectedProfile == default && settings.SelectedProfile == default)
+                return new LaunchResult
+                {
+                    LaunchSettings = settings,
+                    Error = new ErrorModel
+                    {
+                        Error = "验证失败",
+                        Cause = "没有选择用于启动游戏的Profile",
+                        ErrorMessage = "没有选择任何Profile"
+                    }
+                };
 
-        /// <summary>
-        ///     （内部方法）写入日志，记录时间。
-        ///     Write the log and record the time.
-        /// </summary>
-        /// <param name="item"></param>
-        /// <param name="time"></param>
-        /// <param name="sw"></param>
-        void InvokeLaunchLogThenStart(string item, ref TimeSpan time, ref Stopwatch sw)
-        {
-            OnLogLaunchData(this, new LaunchLogEventArgs
+            if (settings.SelectedProfile != default)
+                authResult.SelectedProfile = settings.SelectedProfile;
+
+            #endregion
+
+            #region 解析启动参数 Launch Parameters Resolver
+
+            var javasArr = new[]
             {
-                Item = item,
-                ItemRunTime = sw.Elapsed - time
-            });
-            time = sw.Elapsed;
-            sw.Start();
-        }
+                settings.GameArguments?.JavaExecutable,
+                settings.FallBackGameArguments?.JavaExecutable
+            };
+            var isJavaExists = false;
 
-        #endregion
+            foreach (var java in javasArr)
+                if (!string.IsNullOrEmpty(java) && File.Exists(java))
+                    isJavaExists = true;
+
+            if (!isJavaExists)
+                return new LaunchResult
+                {
+                    ErrorType = LaunchErrorType.NoJava,
+                    Error = new ErrorModel
+                    {
+                        Cause = "未找到JRE运行时，可能是输入的路劲为空或出错，亦或是指定的文件并不存在。",
+                        Error = "未找到JRE运行时",
+                        ErrorMessage = "输入的路劲为空或出错，亦或是指定的文件并不存在"
+                    }
+                };
+
+            var argumentParser = new DefaultLaunchArgumentParser(settings, VersionLocator.LauncherProfileParser,
+                VersionLocator, authResult, RootPath, version.RootVersion);
+
+            //以字符串数组形式生成启动参数。
+            //Generates launch cmd arguments in string[].
+            var arguments = argumentParser.GenerateLaunchArguments();
+            InvokeLaunchLogThenStart("解析启动参数", ref prevSpan, ref stopwatch);
+
+            if (string.IsNullOrEmpty(arguments.First()))
+                return new LaunchResult
+                {
+                    ErrorType = LaunchErrorType.IncompleteArguments,
+                    Error = new ErrorModel
+                    {
+                        Cause = "启动核心生成的参数不完整",
+                        Error = "重要参数缺失",
+                        ErrorMessage = "启动参数不完整，很有可能是缺少Java路径导致的"
+                    }
+                };
+
+            //从参数数组中移出java路径并加以存储。
+            //Load the first element(java's path) into the excutable string and removes it from the generated arguments
+            var executable = arguments[0];
+            arguments.RemoveAt(0);
+
+            /*
+            for (var i = 0; i < arguments.Count; i++)
+            {
+                if (arguments[i].Contains(' '))
+                    arguments[i] = $"\"{arguments[i]}\"";
+            }
+            */
+
+            // var totalArg = string.Join(' ', arguments);
+
+            //通过String Builder格式化参数。（转化成字符串）
+            //Format the arguments using string builder.(Convert to string)
+            // arguments.ForEach(arg => sb.Append(arg.Trim()).Append(' '));
+            InvokeLaunchLogThenStart(string.Join(Environment.NewLine, arguments), ref prevSpan, ref stopwatch);
+
+            #endregion
+
+            #region 解压Natives Natives Decompresser
+
+            try
+            {
+                var nativeRootPath = Path.Combine(RootPath, argumentParser.NativeRoot);
+                if (!Directory.Exists(nativeRootPath))
+                    Directory.CreateDirectory(nativeRootPath);
+
+                DirectoryHelper.CleanDirectory(nativeRootPath);
+
+                foreach (var n in version.Natives)
+                {
+                    var path =
+                        Path.Combine(RootPath, GamePathHelper.GetLibraryPath(n.FileInfo.Path.Replace('/', '\\')));
+
+                    // await using var stream = File.OpenRead(path);
+                    // using var reader =  ReaderFactory.Open(stream);
+
+                    using var archive = ArchiveFactory.Open(path);
+                    foreach (var entry in archive.Entries)
+                    {
+                        if (n.Extract?.Exclude?.Any(e => entry.Key.StartsWith(e)) ?? false) continue;
+
+                        var extractPath = Path.Combine(nativeRootPath, entry.Key);
+                        if (entry.IsDirectory)
+                        {
+                            if (!Directory.Exists(extractPath))
+                                Directory.CreateDirectory(extractPath);
+
+                            continue;
+                        }
+
+                        var fi = new FileInfo(extractPath);
+                        var di = fi.Directory ?? new DirectoryInfo(Path.GetDirectoryName(extractPath)!);
+
+                        if (!di.Exists)
+                            di.Create();
+
+                        await using var fs = fi.OpenWrite();
+                        entry.WriteTo(fs);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return new LaunchResult
+                {
+                    Error = new ErrorModel
+                    {
+                        Exception = e
+                    },
+                    ErrorType = LaunchErrorType.DecompressFailed,
+                    LaunchSettings = settings,
+                    RunTime = prevSpan
+                };
+            }
+
+            InvokeLaunchLogThenStart("解压Natives", ref prevSpan, ref stopwatch);
+
+            #endregion
+
+            #region 启动游戏 Launch
+
+            var rootPath = settings.VersionInsulation
+                ? Path.Combine(RootPath, GamePathHelper.GetGamePath(settings.Version))
+                : RootPath;
+
+            var psi = new ProcessStartInfo(executable, string.Join(' ', arguments))
+            {
+                UseShellExecute = false,
+                WorkingDirectory = rootPath,
+                RedirectStandardError = true,
+                RedirectStandardOutput = true
+            };
+
+            // arguments.ForEach(psi.ArgumentList.Add);
+
+            var launchWrapper = new LaunchWrapper(authResult)
+            {
+                GameCore = this,
+                Process = Process.Start(psi)
+            };
+
+            launchWrapper.Do();
+            InvokeLaunchLogThenStart("启动游戏", ref prevSpan, ref stopwatch);
+
+            //绑定游戏退出事件。
+            //Bind the exit event.
+#pragma warning disable CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
+            Task.Run(launchWrapper.Process.WaitForExit)
+                .ContinueWith(task =>
+                {
+                    OnGameExit(launchWrapper, new GameExitEventArgs
+                    {
+                        Exception = task.Exception,
+                        ExitCode = launchWrapper.ExitCode
+                    });
+                });
+
+            if (!string.IsNullOrEmpty(settings.WindowTitle))
+                Task.Run(() =>
+                {
+                    while (string.IsNullOrEmpty(launchWrapper.Process.MainWindowTitle))
+                        _ = NativeMethods.SetWindowText(launchWrapper.Process.MainWindowHandle,
+                            settings.WindowTitle);
+                });
+#pragma warning restore CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
+
+            #endregion
+
+            //返回启动结果。
+            //Return the launch result.
+            return new LaunchResult
+            {
+                RunTime = stopwatch.Elapsed,
+                GameProcess = launchWrapper.Process,
+                LaunchSettings = settings
+            };
+        }
+        catch (Exception ex)
+        {
+            return new LaunchResult
+            {
+                LaunchSettings = settings,
+                Error = new ErrorModel
+                {
+                    Exception = ex
+                }
+            };
+        }
     }
+
+    #region 内部方法 Internal Methods
+
+    /// <summary>
+    ///     （内部方法）写入日志，记录时间。
+    ///     Write the log and record the time.
+    /// </summary>
+    /// <param name="item"></param>
+    /// <param name="time"></param>
+    /// <param name="sw"></param>
+    void InvokeLaunchLogThenStart(string item, ref TimeSpan time, ref Stopwatch sw)
+    {
+        OnLogLaunchData(this, new LaunchLogEventArgs
+        {
+            Item = item,
+            ItemRunTime = sw.Elapsed - time
+        });
+        time = sw.Elapsed;
+        sw.Start();
+    }
+
+    #endregion
 }

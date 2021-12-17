@@ -1,10 +1,9 @@
 ﻿using System;
 using ProjBobcat.Event;
 
-namespace ProjBobcat.Interface
+namespace ProjBobcat.Interface;
+
+public interface IProgressReport
 {
-    public interface IProgressReport
-    {
-        event EventHandler<StageChangedEventArgs> StageChangedEventDelegate;
-    }
+    event EventHandler<StageChangedEventArgs> StageChangedEventDelegate;
 }

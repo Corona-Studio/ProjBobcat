@@ -1,11 +1,10 @@
-﻿namespace ProjBobcat.Class.Model
+﻿namespace ProjBobcat.Class.Model;
+
+public enum SizeUnit
 {
-    public enum SizeUnit
-    {
-        B,
-        Kb,
-        Mb,
-        Gb,
-        Tb
-    }
+    B,
+    Kb,
+    Mb,
+    Gb,
+    Tb
 }

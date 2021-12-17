@@ -1,13 +1,12 @@
-﻿namespace ProjBobcat.Class.Model
+﻿namespace ProjBobcat.Class.Model;
+
+public enum LaunchErrorType
 {
-    public enum LaunchErrorType
-    {
-        None,
-        NoJava,
-        DecompressFailed,
-        AuthFailed,
-        OperationFailed,
-        IncompleteArguments,
-        Unknown
-    }
+    None,
+    NoJava,
+    DecompressFailed,
+    AuthFailed,
+    OperationFailed,
+    IncompleteArguments,
+    Unknown
 }

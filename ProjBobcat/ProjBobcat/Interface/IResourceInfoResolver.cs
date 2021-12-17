@@ -1,20 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Event;
-using System.Threading.Tasks;
 
-namespace ProjBobcat.Interface
+namespace ProjBobcat.Interface;
+
+public interface IResourceInfoResolver : IDisposable
 {
-    public interface IResourceInfoResolver : IDisposable
-    {
-        string BasePath { get; set; }
-        bool CheckLocalFiles { get; set; }
-        VersionInfo VersionInfo { get; set; }
-        Task<IEnumerable<IGameResource>> ResolveResourceAsync();
-        IEnumerable<IGameResource> ResolveResource();
-        int MaxDegreeOfParallelism { get; }
+    string BasePath { get; set; }
+    bool CheckLocalFiles { get; set; }
+    VersionInfo VersionInfo { get; set; }
+    int MaxDegreeOfParallelism { get; }
+    Task<IEnumerable<IGameResource>> ResolveResourceAsync();
+    IEnumerable<IGameResource> ResolveResource();
 
-        event EventHandler<GameResourceInfoResolveEventArgs> GameResourceInfoResolveEvent;
-    }
+    event EventHandler<GameResourceInfoResolveEventArgs> GameResourceInfoResolveEvent;
 }

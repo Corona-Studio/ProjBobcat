@@ -1,60 +1,59 @@
-﻿using ProjBobcat.Class.Model.LauncherProfile;
+﻿using System.Collections.Generic;
+using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.YggdrasilAuth;
 using ProjBobcat.Interface;
-using System.Collections.Generic;
 
-namespace ProjBobcat.Class.Model
+namespace ProjBobcat.Class.Model;
+
+public class GameArguments
 {
-    public class GameArguments
-    {
-        /// <summary>
-        ///     Java executable file
-        /// </summary>
-        public string JavaExecutable { get; set; }
+    /// <summary>
+    ///     Java executable file
+    /// </summary>
+    public string JavaExecutable { get; set; }
 
-        public int MinMemory { get; set; }
-        public int MaxMemory { get; set; }
-        public ResolutionModel Resolution { get; set; }
-        public GcType GcType { get; set; }
-        public IEnumerable<string> AddtionalJvmArguments { get; set; }
-        public ServerSettings ServerSettings { get; set; }
-        public string AdvanceArguments { get; set; }
-    }
+    public int MinMemory { get; set; }
+    public int MaxMemory { get; set; }
+    public ResolutionModel Resolution { get; set; }
+    public GcType GcType { get; set; }
+    public IEnumerable<string> AddtionalJvmArguments { get; set; }
+    public ServerSettings ServerSettings { get; set; }
+    public string AdvanceArguments { get; set; }
+}
 
-    public class LaunchSettings
-    {
-        public string GameName { get; set; }
+public class LaunchSettings
+{
+    public string GameName { get; set; }
 
-        /// <summary>
-        ///     Real game root, should be the root of /saves, /logs
-        /// </summary>
-        public string GamePath { get; set; }
+    /// <summary>
+    ///     Real game root, should be the root of /saves, /logs
+    /// </summary>
+    public string GamePath { get; set; }
 
-        /// <summary>
-        ///     The game resource path, should be the root of  /libraries
-        /// </summary>
-        public string GameResourcePath { get; set; }
+    /// <summary>
+    ///     The game resource path, should be the root of  /libraries
+    /// </summary>
+    public string GameResourcePath { get; set; }
 
-        /// <summary>
-        ///     Real version id, like 1.14, 1.14-forge-xxxx
-        /// </summary>
-        public string Version { get; set; }
+    /// <summary>
+    ///     Real version id, like 1.14, 1.14-forge-xxxx
+    /// </summary>
+    public string Version { get; set; }
 
-        /// <summary>
-        ///     游戏窗口标题
-        /// </summary>
-        public string WindowTitle { get; set; }
+    /// <summary>
+    ///     游戏窗口标题
+    /// </summary>
+    public string WindowTitle { get; set; }
 
-        public IVersionLocator VersionLocator { get; set; }
+    public IVersionLocator VersionLocator { get; set; }
 
-        public IAuthenticator Authenticator { get; set; }
-        public ProfileInfoModel SelectedProfile { get; set; }
+    public IAuthenticator Authenticator { get; set; }
+    public ProfileInfoModel SelectedProfile { get; set; }
 
-        public bool VersionInsulation { get; set; }
-        public string LauncherName { get; set; }
+    public bool VersionInsulation { get; set; }
+    public string LauncherName { get; set; }
 #nullable enable
-        public GameArguments? FallBackGameArguments { get; set; }
-        public GameArguments? GameArguments { get; set; }
+    public GameArguments? FallBackGameArguments { get; set; }
+    public GameArguments? GameArguments { get; set; }
 #nullable restore
-    }
 }

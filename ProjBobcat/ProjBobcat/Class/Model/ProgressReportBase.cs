@@ -2,19 +2,18 @@
 using ProjBobcat.Event;
 using ProjBobcat.Interface;
 
-namespace ProjBobcat.Class.Model
-{
-    public class ProgressReportBase : IProgressReport
-    {
-        public event EventHandler<StageChangedEventArgs> StageChangedEventDelegate;
+namespace ProjBobcat.Class.Model;
 
-        public virtual void InvokeStatusChangedEvent(string currentStage, double progress)
+public class ProgressReportBase : IProgressReport
+{
+    public event EventHandler<StageChangedEventArgs> StageChangedEventDelegate;
+
+    public virtual void InvokeStatusChangedEvent(string currentStage, double progress)
+    {
+        StageChangedEventDelegate?.Invoke(this, new StageChangedEventArgs
         {
-            StageChangedEventDelegate?.Invoke(this, new StageChangedEventArgs
-            {
-                CurrentStage = currentStage,
-                Progress = progress
-            });
-        }
+            CurrentStage = currentStage,
+            Progress = progress
+        });
     }
 }

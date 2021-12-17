@@ -1,13 +1,12 @@
 ﻿using Newtonsoft.Json;
 
-namespace ProjBobcat.Class.Model.LauncherProfile
+namespace ProjBobcat.Class.Model.LauncherProfile;
+
+public class ResolutionModel
 {
-    public class ResolutionModel
-    {
-        [JsonProperty("width")] public uint Width { get; set; }
+    [JsonProperty("width")] public uint Width { get; set; }
 
-        [JsonProperty("height")] public uint Height { get; set; }
+    [JsonProperty("height")] public uint Height { get; set; }
 
-        [JsonIgnore] public bool FullScreen { get; set; }
-    }
+    [JsonIgnore] public bool FullScreen { get; set; }
 }

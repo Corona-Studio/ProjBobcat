@@ -18,581 +18,581 @@ using ProjBobcat.Event;
 using ProjBobcat.Interface;
 using SharpCompress.Archives;
 
-namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller
+namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller;
+
+public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 {
-    public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
+    ConcurrentBag<DownloadFile> _retryFiles;
+    int _totalDownloaded, _needToDownload, _totalProcessed, _needToProcess;
+
+    public HighVersionForgeInstaller()
     {
-        public HighVersionForgeInstaller()
-        {
-            _retryFiles = new ConcurrentBag<DownloadFile>();
-        }
+        _retryFiles = new ConcurrentBag<DownloadFile>();
+    }
 
-        private ConcurrentBag<DownloadFile> _retryFiles;
-        private int _totalDownloaded, _needToDownload, _totalProcessed, _needToProcess;
-        public string JavaExecutablePath { get; init; }
+    public string JavaExecutablePath { get; init; }
 
-        public string MineCraftVersionId { get; set; }
-        public string MineCraftVersion { get; set; }
+    public string MineCraftVersionId { get; set; }
+    public string MineCraftVersion { get; set; }
 
-        public string DownloadUrlRoot { get; set; }
-        public string ForgeExecutablePath { get; set; }
+    public string DownloadUrlRoot { get; set; }
+    public string ForgeExecutablePath { get; set; }
 
-        public VersionLocatorBase VersionLocator { get; set; }
+    public VersionLocatorBase VersionLocator { get; set; }
 
-        public ForgeInstallResult InstallForge()
-        {
-            return InstallForgeTaskAsync().Result;
-        }
+    public ForgeInstallResult InstallForge()
+    {
+        return InstallForgeTaskAsync().Result;
+    }
 
-        public async Task<ForgeInstallResult> InstallForgeTaskAsync()
-        {
-            if (string.IsNullOrEmpty(ForgeExecutablePath))
-                throw new ArgumentNullException("未指定\"ForgeExecutablePath\"参数");
-            if (string.IsNullOrEmpty(JavaExecutablePath))
-                throw new ArgumentNullException("未指定\"JavaExecutablePath\"参数");
+    public async Task<ForgeInstallResult> InstallForgeTaskAsync()
+    {
+        if (string.IsNullOrEmpty(ForgeExecutablePath))
+            throw new ArgumentNullException("未指定\"ForgeExecutablePath\"参数");
+        if (string.IsNullOrEmpty(JavaExecutablePath))
+            throw new ArgumentNullException("未指定\"JavaExecutablePath\"参数");
 
-            if (!File.Exists(JavaExecutablePath))
-                return new ForgeInstallResult
-                {
-                    Succeeded = false,
-                    Error = new ErrorModel
-                    {
-                        Cause = "找不到Java可执行文件",
-                        Error = "Headless安装工具安装前准备失败",
-                        ErrorMessage = "找不到Java可执行文件，请确认您的路径是否正确"
-                    }
-                };
-
-            if (!File.Exists(ForgeExecutablePath))
-                return new ForgeInstallResult
-                {
-                    Succeeded = false,
-                    Error = new ErrorModel
-                    {
-                        Cause = "找不到Forge可执行文件",
-                        Error = "安装前准备失败",
-                        ErrorMessage = "找不到Forge可执行文件，请确认您的路径是否正确"
-                    }
-                };
-
-            using var archive = ArchiveFactory.Open(Path.GetFullPath(ForgeExecutablePath));
-
-            #region 解析 Version.json
-
-            InvokeStatusChangedEvent("解析 Version.json", 0.1);
-
-            var versionJsonEntry =
-                archive.Entries.FirstOrDefault(e => e.Key.Equals("version.json", StringComparison.OrdinalIgnoreCase));
-
-            if (versionJsonEntry == default)
-                return new ForgeInstallResult
-                {
-                    Succeeded = false,
-                    Error = new ErrorModel
-                    {
-                        Cause = "损坏的 Forge 可执行文件",
-                        Error = "安装前准备失败",
-                        ErrorMessage = "损坏的 Forge 可执行文件，请确认您的路径是否正确"
-                    }
-                };
-
-            await using var stream = versionJsonEntry.OpenEntryStream();
-            using var sr = new StreamReader(stream, Encoding.UTF8);
-            var versionJsonContent = await sr.ReadToEndAsync();
-            var versionJsonModel = JsonConvert.DeserializeObject<RawVersionModel>(versionJsonContent);
-
-            var forgeVersion = versionJsonModel.Id.Replace("-forge-", "-");
-            var id = string.IsNullOrEmpty(CustomId) ? versionJsonModel.Id : CustomId;
-
-            versionJsonModel.Id = id;
-
-            var jsonPath = GamePathHelper.GetGameJsonPath(RootPath, id);
-            var jsonContent = JsonConvert.SerializeObject(versionJsonModel,
-                JsonHelper.CamelCasePropertyNamesSettings);
-
-            await File.WriteAllTextAsync(jsonPath, jsonContent);
-
-            #endregion
-
-            #region 解析 Install_profile.json
-
-            InvokeStatusChangedEvent("解析 Install_profile.json", 0.2);
-
-            var installProfileEntry =
-                archive.Entries.FirstOrDefault(e =>
-                    e.Key.Equals("install_profile.json", StringComparison.OrdinalIgnoreCase));
-
-            await using var ipStream = installProfileEntry.OpenEntryStream();
-            using var ipSr = new StreamReader(ipStream, Encoding.UTF8);
-            var ipContent = await ipSr.ReadToEndAsync();
-            var ipModel = JsonConvert.DeserializeObject<ForgeInstallProfile>(ipContent);
-
-            #endregion
-
-            #region 解析 Lzma
-
-            InvokeStatusChangedEvent("解析 Lzma", 0.4);
-
-            var serverLzma = archive.Entries.FirstOrDefault(e =>
-                e.Key.Equals("data/server.lzma", StringComparison.OrdinalIgnoreCase));
-            var clientLzma = archive.Entries.FirstOrDefault(e =>
-                e.Key.Equals("data/client.lzma", StringComparison.OrdinalIgnoreCase));
-
-            if (serverLzma != default)
+        if (!File.Exists(JavaExecutablePath))
+            return new ForgeInstallResult
             {
-                var serverMaven = $"net.minecraftforge:forge:{forgeVersion}:serverdata@lzma";
-
-                ipModel.Data["BINPATCH"].Server = $"[{serverMaven}]";
-
-                var serverBinMaven = serverMaven.ResolveMavenString();
-                var serverBinPath = Path.Combine(RootPath,
-                    GamePathHelper.GetLibraryPath(serverBinMaven.Path.Replace('/', '\\')));
-
-                var di = new DirectoryInfo(Path.GetDirectoryName(serverBinPath));
-
-                if (!di.Exists)
-                    di.Create();
-
-                await using var sFs = File.OpenWrite(serverBinPath);
-
-                serverLzma.WriteTo(sFs);
-            }
-
-            if (clientLzma != default)
-            {
-                var clientMaven = $"net.minecraftforge:forge:{forgeVersion}:clientdata@lzma";
-
-                ipModel.Data["BINPATCH"].Client = $"[{clientMaven}]";
-
-                var clientBinMaven = clientMaven.ResolveMavenString();
-                var clientBinPath = Path.Combine(RootPath,
-                    GamePathHelper.GetLibraryPath(clientBinMaven.Path.Replace('/', '\\')));
-
-                var di = new DirectoryInfo(Path.GetDirectoryName(clientBinPath));
-
-                if (!di.Exists)
-                    di.Create();
-
-                await using var cFs = File.OpenWrite(clientBinPath);
-                clientLzma.WriteTo(cFs);
-            }
-
-            #endregion
-
-            #region 解压 Forge Jar
-
-            InvokeStatusChangedEvent("解压 Forge Jar", 0.5);
-
-            var forgeJar = archive.Entries.FirstOrDefault(e =>
-                e.Key.Equals($"maven/net/minecraftforge/forge/{forgeVersion}/forge-{forgeVersion}.jar",
-                    StringComparison.OrdinalIgnoreCase));
-            var forgeUniversalJar = archive.Entries.FirstOrDefault(e =>
-                e.Key.Equals($"maven/net/minecraftforge/forge/{forgeVersion}/forge-{forgeVersion}-universal.jar",
-                    StringComparison.OrdinalIgnoreCase));
-
-            if (forgeJar != default)
-            {
-                if (forgeUniversalJar != default)
+                Succeeded = false,
+                Error = new ErrorModel
                 {
-                    var forgeUniversalSubPath = forgeUniversalJar?.Key[(forgeUniversalJar.Key.IndexOf('/') + 1)..];
-                    var forgeUniversalLibPath = Path.Combine(RootPath,
-                        GamePathHelper.GetLibraryPath(forgeUniversalSubPath?.Replace('/', '\\')));
-
-                    if (string.IsNullOrEmpty(forgeUniversalSubPath)
-                        || string.IsNullOrEmpty(forgeUniversalLibPath))
-                        return new ForgeInstallResult
-                        {
-                            Error = new ErrorModel
-                            {
-                                ErrorMessage = "不支持的格式"
-                            },
-                            Succeeded = false
-                        };
-
-                    var forgeUniversalLibDir = Path.GetDirectoryName(forgeUniversalLibPath);
-                    if (!Directory.Exists(forgeUniversalLibDir))
-                        Directory.CreateDirectory(forgeUniversalLibDir);
-
-                    await using var forgeUniversalFs = File.OpenWrite(forgeUniversalLibPath);
-                    forgeUniversalJar.WriteTo(forgeUniversalFs);
-                }
-
-                var forgeSubPath = forgeJar.Key[(forgeJar.Key.IndexOf('/') + 1)..];
-                var forgeLibPath =
-                    Path.Combine(RootPath, GamePathHelper.GetLibraryPath(forgeSubPath.Replace('/', '\\')));
-
-                var forgeLibDir = Path.GetDirectoryName(forgeLibPath);
-                if (!Directory.Exists(forgeLibDir))
-                    Directory.CreateDirectory(forgeLibDir);
-
-                await using var forgeFs = File.OpenWrite(forgeLibPath);
-
-                var fLDi = new DirectoryInfo(Path.GetDirectoryName(forgeLibPath));
-
-                if (!fLDi.Exists)
-                    fLDi.Create();
-
-                forgeJar.WriteTo(forgeFs);
-            }
-
-            #endregion
-
-            #region 解析 Processor
-
-            InvokeStatusChangedEvent("解析 Processor", 1);
-
-            var pathRegex = new Regex("^\\[.+\\]$");
-            var variableRegex = new Regex("^{.+}$");
-
-            string ResolvePathRegex(string val)
-            {
-                if (string.IsNullOrEmpty(val) || string.IsNullOrEmpty(pathRegex.Match(val).Value)) return val;
-
-                var name = val[1..^1];
-                var maven = name.ResolveMavenString();
-                var path = Path.Combine(RootPath,
-                    GamePathHelper.GetLibraryPath(maven.Path.Replace('/', '\\')).Replace('/', '\\'));
-
-                return path;
-            }
-
-            var variables = new Dictionary<string, ForgeInstallProfileData>
-            {
-                {
-                    "MINECRAFT_JAR",
-                    new ForgeInstallProfileData
-                    {
-                        Client = GamePathHelper.GetVersionJar(RootPath, MineCraftVersionId)
-                    }
+                    Cause = "找不到Java可执行文件",
+                    Error = "Headless安装工具安装前准备失败",
+                    ErrorMessage = "找不到Java可执行文件，请确认您的路径是否正确"
                 }
             };
 
-            foreach (var (k, v) in ipModel.Data)
-                variables.TryAdd(k, new ForgeInstallProfileData
+        if (!File.Exists(ForgeExecutablePath))
+            return new ForgeInstallResult
+            {
+                Succeeded = false,
+                Error = new ErrorModel
                 {
-                    Client = ResolvePathRegex(v.Client),
-                    Server = ResolvePathRegex(v.Server)
-                });
-
-            string ResolveVariableRegex(string val)
-            {
-                if (string.IsNullOrEmpty(val) || string.IsNullOrEmpty(variableRegex.Match(val).Value)) return val;
-
-                var key = val[1..^1];
-                return variables[key].Client;
-            }
-
-            var procList = new List<ForgeInstallProcessorModel>();
-            var argsReplaceList = new Dictionary<string, string>
-            {
-                { "{SIDE}", "client" },
-                { "{MINECRAFT_JAR}", GamePathHelper.GetVersionJar(RootPath, MineCraftVersionId) },
-                { "{MINECRAFT_VERSION}", MineCraftVersion },
-                { "{ROOT}", RootPath },
-                { "{INSTALLER}", ForgeExecutablePath },
-                { "{LIBRARY_DIR}", Path.Combine(RootPath, GamePathHelper.GetLibraryRootPath()) }
+                    Cause = "找不到Forge可执行文件",
+                    Error = "安装前准备失败",
+                    ErrorMessage = "找不到Forge可执行文件，请确认您的路径是否正确"
+                }
             };
 
-            foreach (var proc in ipModel.Processors)
+        using var archive = ArchiveFactory.Open(Path.GetFullPath(ForgeExecutablePath));
+
+        #region 解析 Version.json
+
+        InvokeStatusChangedEvent("解析 Version.json", 0.1);
+
+        var versionJsonEntry =
+            archive.Entries.FirstOrDefault(e => e.Key.Equals("version.json", StringComparison.OrdinalIgnoreCase));
+
+        if (versionJsonEntry == default)
+            return new ForgeInstallResult
             {
-                if (proc.Sides != null &&
-                    proc.Sides.Any() &&
-                    !proc.Sides.Any(s => s.Equals("client", StringComparison.OrdinalIgnoreCase))
-                )
-                    continue;
-
-                var outputs = new Dictionary<string, string>();
-
-                if (proc.Outputs?.Any() ?? false)
-                    foreach (var (k, v) in proc.Outputs)
-                        outputs.TryAdd(ResolveVariableRegex(k), ResolveVariableRegex(v));
-
-                var args = proc.Arguments
-                    .Select(arg => StringHelper.ReplaceByDic(arg, argsReplaceList))
-                    .Select(ResolvePathRegex)
-                    .Select(ResolveVariableRegex)
-                    .ToList();
-                var model = new ForgeInstallProcessorModel
+                Succeeded = false,
+                Error = new ErrorModel
                 {
-                    Processor = proc,
-                    Arguments = args,
-                    Outputs = outputs
-                };
-
-                procList.Add(model);
-            }
-
-            #endregion
-
-            #region 补全 Libraries
-
-            var libs = ipModel.Libraries;
-            libs.AddRange(versionJsonModel.Libraries);
-
-            var resolvedLibs = VersionLocator.GetNatives(libs).Item2;
-            var libDownloadInfo = new List<DownloadFile>();
-
-            var hasDownloadFailed = false;
-
-            var retryCount = 0;
-            var failedFiles = new ConcurrentBag<DownloadFile>();
-            foreach (var lib in resolvedLibs)
-            {
-                if (
-                    lib.Name.StartsWith("net.minecraftforge:forge", StringComparison.OrdinalIgnoreCase) &&
-                    string.IsNullOrEmpty(lib.Url)
-                )
-                    continue;
-
-                var symbolIndex = lib.Path.LastIndexOf('/');
-                var fileName = lib.Path[(symbolIndex + 1)..];
-                var path = Path.Combine(RootPath,
-                    GamePathHelper.GetLibraryPath(lib.Path[..symbolIndex].Replace('/', '\\')));
-
-                /*
-                if (!string.IsNullOrEmpty(DownloadUrlRoot))
-                {
-                    var urlRoot = HttpHelper.RegexMatchUri(lib.Url);
-                    var url = lib.Url.Replace($"{urlRoot}/", string.Empty);
-                    if (!url.StartsWith("maven", StringComparison.OrdinalIgnoreCase))
-                        url = "maven/" + url;
-
-                    lib.Url = $"{DownloadUrlRoot}{url}";
+                    Cause = "损坏的 Forge 可执行文件",
+                    Error = "安装前准备失败",
+                    ErrorMessage = "损坏的 Forge 可执行文件，请确认您的路径是否正确"
                 }
-                */
+            };
 
-                var libDi = new DirectoryInfo(path);
+        await using var stream = versionJsonEntry.OpenEntryStream();
+        using var sr = new StreamReader(stream, Encoding.UTF8);
+        var versionJsonContent = await sr.ReadToEndAsync();
+        var versionJsonModel = JsonConvert.DeserializeObject<RawVersionModel>(versionJsonContent);
 
-                if (!libDi.Exists)
-                    libDi.Create();
+        var forgeVersion = versionJsonModel.Id.Replace("-forge-", "-");
+        var id = string.IsNullOrEmpty(CustomId) ? versionJsonModel.Id : CustomId;
 
-                var df = new DownloadFile
-                {
-                    CheckSum = lib.Sha1,
-                    DownloadPath = path,
-                    FileName = fileName,
-                    DownloadUri = lib.Url,
-                    FileSize = lib.Size
-                };
-                df.Completed += WhenCompleted;
+        versionJsonModel.Id = id;
 
-                libDownloadInfo.Add(df);
-            }
+        var jsonPath = GamePathHelper.GetGameJsonPath(RootPath, id);
+        var jsonContent = JsonConvert.SerializeObject(versionJsonModel,
+            JsonHelper.CamelCasePropertyNamesSettings);
 
-            _needToDownload = libDownloadInfo.Count;
+        await File.WriteAllTextAsync(jsonPath, jsonContent);
 
-            await DownloadFiles(libDownloadInfo);
+        #endregion
 
-            hasDownloadFailed = !failedFiles.IsEmpty;
-            if (hasDownloadFailed)
-                return new ForgeInstallResult
-                {
-                    Succeeded = false,
-                    Error = new ErrorModel
-                    {
-                        Cause = "未能下载全部依赖",
-                        Error = "未能下载全部依赖",
-                        ErrorMessage = "未能下载全部依赖"
-                    }
-                };
+        #region 解析 Install_profile.json
 
-            #endregion
+        InvokeStatusChangedEvent("解析 Install_profile.json", 0.2);
 
-            #region 启动 Process
+        var installProfileEntry =
+            archive.Entries.FirstOrDefault(e =>
+                e.Key.Equals("install_profile.json", StringComparison.OrdinalIgnoreCase));
 
-            _needToProcess = procList.Count;
-            foreach (var processor in procList)
+        await using var ipStream = installProfileEntry.OpenEntryStream();
+        using var ipSr = new StreamReader(ipStream, Encoding.UTF8);
+        var ipContent = await ipSr.ReadToEndAsync();
+        var ipModel = JsonConvert.DeserializeObject<ForgeInstallProfile>(ipContent);
+
+        #endregion
+
+        #region 解析 Lzma
+
+        InvokeStatusChangedEvent("解析 Lzma", 0.4);
+
+        var serverLzma = archive.Entries.FirstOrDefault(e =>
+            e.Key.Equals("data/server.lzma", StringComparison.OrdinalIgnoreCase));
+        var clientLzma = archive.Entries.FirstOrDefault(e =>
+            e.Key.Equals("data/client.lzma", StringComparison.OrdinalIgnoreCase));
+
+        if (serverLzma != default)
+        {
+            var serverMaven = $"net.minecraftforge:forge:{forgeVersion}:serverdata@lzma";
+
+            ipModel.Data["BINPATCH"].Server = $"[{serverMaven}]";
+
+            var serverBinMaven = serverMaven.ResolveMavenString();
+            var serverBinPath = Path.Combine(RootPath,
+                GamePathHelper.GetLibraryPath(serverBinMaven.Path.Replace('/', '\\')));
+
+            var di = new DirectoryInfo(Path.GetDirectoryName(serverBinPath));
+
+            if (!di.Exists)
+                di.Create();
+
+            await using var sFs = File.OpenWrite(serverBinPath);
+
+            serverLzma.WriteTo(sFs);
+        }
+
+        if (clientLzma != default)
+        {
+            var clientMaven = $"net.minecraftforge:forge:{forgeVersion}:clientdata@lzma";
+
+            ipModel.Data["BINPATCH"].Client = $"[{clientMaven}]";
+
+            var clientBinMaven = clientMaven.ResolveMavenString();
+            var clientBinPath = Path.Combine(RootPath,
+                GamePathHelper.GetLibraryPath(clientBinMaven.Path.Replace('/', '\\')));
+
+            var di = new DirectoryInfo(Path.GetDirectoryName(clientBinPath));
+
+            if (!di.Exists)
+                di.Create();
+
+            await using var cFs = File.OpenWrite(clientBinPath);
+            clientLzma.WriteTo(cFs);
+        }
+
+        #endregion
+
+        #region 解压 Forge Jar
+
+        InvokeStatusChangedEvent("解压 Forge Jar", 0.5);
+
+        var forgeJar = archive.Entries.FirstOrDefault(e =>
+            e.Key.Equals($"maven/net/minecraftforge/forge/{forgeVersion}/forge-{forgeVersion}.jar",
+                StringComparison.OrdinalIgnoreCase));
+        var forgeUniversalJar = archive.Entries.FirstOrDefault(e =>
+            e.Key.Equals($"maven/net/minecraftforge/forge/{forgeVersion}/forge-{forgeVersion}-universal.jar",
+                StringComparison.OrdinalIgnoreCase));
+
+        if (forgeJar != default)
+        {
+            if (forgeUniversalJar != default)
             {
-                var maven = processor.Processor.Jar.ResolveMavenString();
-                var libPath = Path.Combine(RootPath, GamePathHelper.GetLibraryPath(maven.Path.Replace('/', '\\')));
+                var forgeUniversalSubPath = forgeUniversalJar?.Key[(forgeUniversalJar.Key.IndexOf('/') + 1)..];
+                var forgeUniversalLibPath = Path.Combine(RootPath,
+                    GamePathHelper.GetLibraryPath(forgeUniversalSubPath?.Replace('/', '\\')));
 
-                using var libArchive = ArchiveFactory.Open(Path.GetFullPath(libPath));
-                var libEntry =
-                    libArchive.Entries.FirstOrDefault(e =>
-                        e.Key.Equals("META-INF/MANIFEST.MF", StringComparison.OrdinalIgnoreCase));
-
-                await using var libStream = libEntry.OpenEntryStream();
-                using var libSr = new StreamReader(libStream, Encoding.UTF8);
-                var content = await libSr.ReadToEndAsync();
-                var mainClass =
-                    (from line in content.Split('\n')
-                        select line.Split(": ")
-                        into lineSp
-                        where lineSp[0].Equals("Main-Class", StringComparison.OrdinalIgnoreCase)
-                        select lineSp[1].Trim()).First();
-
-                var totalLibs = processor.Processor.ClassPath;
-                totalLibs.Add(processor.Processor.Jar);
-
-                var cp = totalLibs.Select(MavenHelper.ResolveMavenString)
-                    .Select(m => Path.Combine(RootPath, GamePathHelper.GetLibraryPath(m.Path).Replace('/', '\\')));
-                var cpStr = string.Join(';', cp);
-                var parameter = new List<string>
-                {
-                    "-cp",
-                    $"\"{cpStr}\"",
-                    mainClass
-                };
-
-                parameter.AddRange(processor.Arguments);
-
-                var pi = new ProcessStartInfo(JavaExecutablePath)
-                {
-                    Arguments = string.Join(' ', parameter),
-                    UseShellExecute = false,
-                    WorkingDirectory = Path.GetFullPath(RootPath),
-                    RedirectStandardError = true,
-                    RedirectStandardOutput = true
-                };
-
-                using var p = Process.Start(pi);
-                var logSb = new StringBuilder();
-                var errSb = new StringBuilder();
-
-                p.OutputDataReceived += (_, args) =>
-                {
-                    if (string.IsNullOrEmpty(args.Data)) return;
-
-                    logSb.AppendLine(args.Data);
-
-                    var data = args.Data ?? string.Empty;
-                    var progress = (double)_totalProcessed / _needToProcess;
-                    var dataLength = data.Length;
-                    var dataStr = dataLength > 30
-                                    ? $"..{data[(dataLength - 30)..]}"
-                                    : data;
-
-                    InvokeStatusChangedEvent($"{dataStr} <安装信息> ( {_totalProcessed} / {_needToProcess} )", progress);
-                };
-
-                p.ErrorDataReceived += (_, args) =>
-                {
-                    if (string.IsNullOrEmpty(args.Data)) return;
-
-                    errSb.AppendLine(args.Data);
-
-                    var data = args.Data ?? string.Empty;
-                    var progress = (double)_totalProcessed / _needToProcess;
-                    var dataLength = data.Length;
-                    var dataStr = dataLength > 30
-                                    ? $"{data[(dataLength - 30)..]}"
-                                    : data;
-
-
-                    InvokeStatusChangedEvent($"{data} <错误> ( {_totalProcessed} / {_needToProcess} )", progress);
-                };
-
-                p.BeginOutputReadLine();
-                p.BeginErrorReadLine();
-
-                _totalProcessed++;
-                await p.WaitForExitAsync();
-
-                var installLogPath = Path.Combine(RootPath, GamePathHelper.GetGamePath(id));
-
-                if (logSb.Length != 0)
-                    await File.WriteAllTextAsync(Path.Combine(installLogPath, $"PROCESSOR #{_totalProcessed}_Logs.log"),
-                        logSb.ToString());
-                if (errSb.Length != 0)
-                    await File.WriteAllTextAsync(
-                        Path.Combine(installLogPath, $"PROCESSOR #{_totalProcessed}_Errors.log"), errSb.ToString());
-
-                if (errSb.Length != 0)
+                if (string.IsNullOrEmpty(forgeUniversalSubPath)
+                    || string.IsNullOrEmpty(forgeUniversalLibPath))
                     return new ForgeInstallResult
                     {
                         Error = new ErrorModel
                         {
-                            Cause = "执行 Forge 安装脚本时出现了错误",
-                            Error = errSb.ToString(),
-                            ErrorMessage = "安装过程中出现了错误"
+                            ErrorMessage = "不支持的格式"
                         },
                         Succeeded = false
                     };
+
+                var forgeUniversalLibDir = Path.GetDirectoryName(forgeUniversalLibPath);
+                if (!Directory.Exists(forgeUniversalLibDir))
+                    Directory.CreateDirectory(forgeUniversalLibDir);
+
+                await using var forgeUniversalFs = File.OpenWrite(forgeUniversalLibPath);
+                forgeUniversalJar.WriteTo(forgeUniversalFs);
             }
 
-            #endregion
+            var forgeSubPath = forgeJar.Key[(forgeJar.Key.IndexOf('/') + 1)..];
+            var forgeLibPath =
+                Path.Combine(RootPath, GamePathHelper.GetLibraryPath(forgeSubPath.Replace('/', '\\')));
 
+            var forgeLibDir = Path.GetDirectoryName(forgeLibPath);
+            if (!Directory.Exists(forgeLibDir))
+                Directory.CreateDirectory(forgeLibDir);
+
+            await using var forgeFs = File.OpenWrite(forgeLibPath);
+
+            var fLDi = new DirectoryInfo(Path.GetDirectoryName(forgeLibPath));
+
+            if (!fLDi.Exists)
+                fLDi.Create();
+
+            forgeJar.WriteTo(forgeFs);
+        }
+
+        #endregion
+
+        #region 解析 Processor
+
+        InvokeStatusChangedEvent("解析 Processor", 1);
+
+        var pathRegex = new Regex("^\\[.+\\]$");
+        var variableRegex = new Regex("^{.+}$");
+
+        string ResolvePathRegex(string val)
+        {
+            if (string.IsNullOrEmpty(val) || string.IsNullOrEmpty(pathRegex.Match(val).Value)) return val;
+
+            var name = val[1..^1];
+            var maven = name.ResolveMavenString();
+            var path = Path.Combine(RootPath,
+                GamePathHelper.GetLibraryPath(maven.Path.Replace('/', '\\')).Replace('/', '\\'));
+
+            return path;
+        }
+
+        var variables = new Dictionary<string, ForgeInstallProfileData>
+        {
+            {
+                "MINECRAFT_JAR",
+                new ForgeInstallProfileData
+                {
+                    Client = GamePathHelper.GetVersionJar(RootPath, MineCraftVersionId)
+                }
+            }
+        };
+
+        foreach (var (k, v) in ipModel.Data)
+            variables.TryAdd(k, new ForgeInstallProfileData
+            {
+                Client = ResolvePathRegex(v.Client),
+                Server = ResolvePathRegex(v.Server)
+            });
+
+        string ResolveVariableRegex(string val)
+        {
+            if (string.IsNullOrEmpty(val) || string.IsNullOrEmpty(variableRegex.Match(val).Value)) return val;
+
+            var key = val[1..^1];
+            return variables[key].Client;
+        }
+
+        var procList = new List<ForgeInstallProcessorModel>();
+        var argsReplaceList = new Dictionary<string, string>
+        {
+            {"{SIDE}", "client"},
+            {"{MINECRAFT_JAR}", GamePathHelper.GetVersionJar(RootPath, MineCraftVersionId)},
+            {"{MINECRAFT_VERSION}", MineCraftVersion},
+            {"{ROOT}", RootPath},
+            {"{INSTALLER}", ForgeExecutablePath},
+            {"{LIBRARY_DIR}", Path.Combine(RootPath, GamePathHelper.GetLibraryRootPath())}
+        };
+
+        foreach (var proc in ipModel.Processors)
+        {
+            if (proc.Sides != null &&
+                proc.Sides.Any() &&
+                !proc.Sides.Any(s => s.Equals("client", StringComparison.OrdinalIgnoreCase))
+               )
+                continue;
+
+            var outputs = new Dictionary<string, string>();
+
+            if (proc.Outputs?.Any() ?? false)
+                foreach (var (k, v) in proc.Outputs)
+                    outputs.TryAdd(ResolveVariableRegex(k), ResolveVariableRegex(v));
+
+            var args = proc.Arguments
+                .Select(arg => StringHelper.ReplaceByDic(arg, argsReplaceList))
+                .Select(ResolvePathRegex)
+                .Select(ResolveVariableRegex)
+                .ToList();
+            var model = new ForgeInstallProcessorModel
+            {
+                Processor = proc,
+                Arguments = args,
+                Outputs = outputs
+            };
+
+            procList.Add(model);
+        }
+
+        #endregion
+
+        #region 补全 Libraries
+
+        var libs = ipModel.Libraries;
+        libs.AddRange(versionJsonModel.Libraries);
+
+        var resolvedLibs = VersionLocator.GetNatives(libs).Item2;
+        var libDownloadInfo = new List<DownloadFile>();
+
+        var hasDownloadFailed = false;
+
+        var retryCount = 0;
+        var failedFiles = new ConcurrentBag<DownloadFile>();
+        foreach (var lib in resolvedLibs)
+        {
+            if (
+                lib.Name.StartsWith("net.minecraftforge:forge", StringComparison.OrdinalIgnoreCase) &&
+                string.IsNullOrEmpty(lib.Url)
+            )
+                continue;
+
+            var symbolIndex = lib.Path.LastIndexOf('/');
+            var fileName = lib.Path[(symbolIndex + 1)..];
+            var path = Path.Combine(RootPath,
+                GamePathHelper.GetLibraryPath(lib.Path[..symbolIndex].Replace('/', '\\')));
+
+            /*
+            if (!string.IsNullOrEmpty(DownloadUrlRoot))
+            {
+                var urlRoot = HttpHelper.RegexMatchUri(lib.Url);
+                var url = lib.Url.Replace($"{urlRoot}/", string.Empty);
+                if (!url.StartsWith("maven", StringComparison.OrdinalIgnoreCase))
+                    url = "maven/" + url;
+
+                lib.Url = $"{DownloadUrlRoot}{url}";
+            }
+            */
+
+            var libDi = new DirectoryInfo(path);
+
+            if (!libDi.Exists)
+                libDi.Create();
+
+            var df = new DownloadFile
+            {
+                CheckSum = lib.Sha1,
+                DownloadPath = path,
+                FileName = fileName,
+                DownloadUri = lib.Url,
+                FileSize = lib.Size
+            };
+            df.Completed += WhenCompleted;
+
+            libDownloadInfo.Add(df);
+        }
+
+        _needToDownload = libDownloadInfo.Count;
+
+        await DownloadFiles(libDownloadInfo);
+
+        hasDownloadFailed = !failedFiles.IsEmpty;
+        if (hasDownloadFailed)
             return new ForgeInstallResult
             {
-                Succeeded = true
-            };
-        }
-
-        async Task<bool> DownloadFiles(IEnumerable<DownloadFile> downloadList)
-        {
-            await DownloadHelper.AdvancedDownloadListFile(downloadList, 4);
-
-            var leftRetries = 3;
-            var fileBag = new ConcurrentBag<DownloadFile>(_retryFiles);
-
-            while (!fileBag.IsEmpty && leftRetries >= 0)
-            {
-                _retryFiles.Clear();
-
-                var files = fileBag.Select(f => (DownloadFile)f.Clone()).ToList();
-
-                _needToDownload = files.Count;
-                fileBag.Clear();
-
-                foreach (var file in files)
+                Succeeded = false,
+                Error = new ErrorModel
                 {
-                    file.RetryCount++;
-                    file.Completed += WhenCompleted;
+                    Cause = "未能下载全部依赖",
+                    Error = "未能下载全部依赖",
+                    ErrorMessage = "未能下载全部依赖"
                 }
+            };
 
-                await DownloadHelper.AdvancedDownloadListFile(files);
+        #endregion
 
-                fileBag = new ConcurrentBag<DownloadFile>(_retryFiles);
-                leftRetries--;
-            }
+        #region 启动 Process
 
-            return fileBag.IsEmpty;
-        }
-
-        private void WhenCompleted(object? sender, DownloadFileCompletedEventArgs e)
+        _needToProcess = procList.Count;
+        foreach (var processor in procList)
         {
-            if (sender is not DownloadFile file) return;
+            var maven = processor.Processor.Jar.ResolveMavenString();
+            var libPath = Path.Combine(RootPath, GamePathHelper.GetLibraryPath(maven.Path.Replace('/', '\\')));
 
-            _totalDownloaded++;
+            using var libArchive = ArchiveFactory.Open(Path.GetFullPath(libPath));
+            var libEntry =
+                libArchive.Entries.FirstOrDefault(e =>
+                    e.Key.Equals("META-INF/MANIFEST.MF", StringComparison.OrdinalIgnoreCase));
 
-            var progress = (double)_totalDownloaded / _needToDownload;
-            var retryStr = file.RetryCount > 0 ? $"[重试 - {file.RetryCount}] " : string.Empty;
+            await using var libStream = libEntry.OpenEntryStream();
+            using var libSr = new StreamReader(libStream, Encoding.UTF8);
+            var content = await libSr.ReadToEndAsync();
+            var mainClass =
+                (from line in content.Split('\n')
+                    select line.Split(": ")
+                    into lineSp
+                    where lineSp[0].Equals("Main-Class", StringComparison.OrdinalIgnoreCase)
+                    select lineSp[1].Trim()).First();
 
-            InvokeStatusChangedEvent(
-                $"{retryStr}下载模组 - {file.FileName} ( {_totalDownloaded} / {_needToDownload} )",
-                progress);
+            var totalLibs = processor.Processor.ClassPath;
+            totalLibs.Add(processor.Processor.Jar);
 
-            if (!(e.Success ?? false))
+            var cp = totalLibs.Select(MavenHelper.ResolveMavenString)
+                .Select(m => Path.Combine(RootPath, GamePathHelper.GetLibraryPath(m.Path).Replace('/', '\\')));
+            var cpStr = string.Join(';', cp);
+            var parameter = new List<string>
             {
-                _retryFiles.Add(file);
-                return;
-            }
+                "-cp",
+                $"\"{cpStr}\"",
+                mainClass
+            };
 
-            Check(file, ref _retryFiles);
+            parameter.AddRange(processor.Arguments);
+
+            var pi = new ProcessStartInfo(JavaExecutablePath)
+            {
+                Arguments = string.Join(' ', parameter),
+                UseShellExecute = false,
+                WorkingDirectory = Path.GetFullPath(RootPath),
+                RedirectStandardError = true,
+                RedirectStandardOutput = true
+            };
+
+            using var p = Process.Start(pi);
+            var logSb = new StringBuilder();
+            var errSb = new StringBuilder();
+
+            p.OutputDataReceived += (_, args) =>
+            {
+                if (string.IsNullOrEmpty(args.Data)) return;
+
+                logSb.AppendLine(args.Data);
+
+                var data = args.Data ?? string.Empty;
+                var progress = (double) _totalProcessed / _needToProcess;
+                var dataLength = data.Length;
+                var dataStr = dataLength > 30
+                    ? $"..{data[(dataLength - 30)..]}"
+                    : data;
+
+                InvokeStatusChangedEvent($"{dataStr} <安装信息> ( {_totalProcessed} / {_needToProcess} )", progress);
+            };
+
+            p.ErrorDataReceived += (_, args) =>
+            {
+                if (string.IsNullOrEmpty(args.Data)) return;
+
+                errSb.AppendLine(args.Data);
+
+                var data = args.Data ?? string.Empty;
+                var progress = (double) _totalProcessed / _needToProcess;
+                var dataLength = data.Length;
+                var dataStr = dataLength > 30
+                    ? $"{data[(dataLength - 30)..]}"
+                    : data;
+
+
+                InvokeStatusChangedEvent($"{data} <错误> ( {_totalProcessed} / {_needToProcess} )", progress);
+            };
+
+            p.BeginOutputReadLine();
+            p.BeginErrorReadLine();
+
+            _totalProcessed++;
+            await p.WaitForExitAsync();
+
+            var installLogPath = Path.Combine(RootPath, GamePathHelper.GetGamePath(id));
+
+            if (logSb.Length != 0)
+                await File.WriteAllTextAsync(Path.Combine(installLogPath, $"PROCESSOR #{_totalProcessed}_Logs.log"),
+                    logSb.ToString());
+            if (errSb.Length != 0)
+                await File.WriteAllTextAsync(
+                    Path.Combine(installLogPath, $"PROCESSOR #{_totalProcessed}_Errors.log"), errSb.ToString());
+
+            if (errSb.Length != 0)
+                return new ForgeInstallResult
+                {
+                    Error = new ErrorModel
+                    {
+                        Cause = "执行 Forge 安装脚本时出现了错误",
+                        Error = errSb.ToString(),
+                        ErrorMessage = "安装过程中出现了错误"
+                    },
+                    Succeeded = false
+                };
         }
 
-        private static void Check(DownloadFile file, ref ConcurrentBag<DownloadFile> bag)
+        #endregion
+
+        return new ForgeInstallResult
         {
-            var filePath = Path.Combine(file.DownloadPath, file.FileName);
-            if (!File.Exists(filePath)) bag.Add(file);
+            Succeeded = true
+        };
+    }
+
+    async Task<bool> DownloadFiles(IEnumerable<DownloadFile> downloadList)
+    {
+        await DownloadHelper.AdvancedDownloadListFile(downloadList, 4);
+
+        var leftRetries = 3;
+        var fileBag = new ConcurrentBag<DownloadFile>(_retryFiles);
+
+        while (!fileBag.IsEmpty && leftRetries >= 0)
+        {
+            _retryFiles.Clear();
+
+            var files = fileBag.ToList();
+
+            _needToDownload = files.Count;
+            fileBag.Clear();
+
+            foreach (var file in files)
+            {
+                file.RetryCount++;
+                // file.Completed += WhenCompleted;
+            }
+
+            await DownloadHelper.AdvancedDownloadListFile(files);
+
+            fileBag = new ConcurrentBag<DownloadFile>(_retryFiles);
+            leftRetries--;
+        }
+
+        return fileBag.IsEmpty;
+    }
+
+    void WhenCompleted(object? sender, DownloadFileCompletedEventArgs e)
+    {
+        if (sender is not DownloadFile file) return;
+
+        _totalDownloaded++;
+
+        var progress = (double) _totalDownloaded / _needToDownload;
+        var retryStr = file.RetryCount > 0 ? $"[重试 - {file.RetryCount}] " : string.Empty;
+
+        InvokeStatusChangedEvent(
+            $"{retryStr}下载模组 - {file.FileName} ( {_totalDownloaded} / {_needToDownload} )",
+            progress);
+
+        if (!(e.Success ?? false))
+        {
+            _retryFiles.Add(file);
+            return;
+        }
+
+        Check(file, ref _retryFiles);
+    }
+
+    static void Check(DownloadFile file, ref ConcurrentBag<DownloadFile> bag)
+    {
+        var filePath = Path.Combine(file.DownloadPath, file.FileName);
+        if (!File.Exists(filePath)) bag.Add(file);
 
 #pragma warning disable CA5350 // 不要使用弱加密算法
-            using var hA = SHA1.Create();
+        using var hA = SHA1.Create();
 #pragma warning restore CA5350 // 不要使用弱加密算法
 
-            try
-            {
-                var hash = CryptoHelper.ComputeFileHash(filePath, hA);
+        try
+        {
+            var hash = CryptoHelper.ComputeFileHash(filePath, hA);
 
-                if (string.IsNullOrEmpty(file.CheckSum)) return;
-                if (hash.Equals(file.CheckSum, StringComparison.OrdinalIgnoreCase)) return;
+            if (string.IsNullOrEmpty(file.CheckSum)) return;
+            if (hash.Equals(file.CheckSum, StringComparison.OrdinalIgnoreCase)) return;
 
-                bag.Add(file);
-                File.Delete(filePath);
-            }
-            catch (Exception)
-            {
-            }
+            bag.Add(file);
+            File.Delete(filePath);
+        }
+        catch (Exception)
+        {
         }
     }
 }

@@ -1,11 +1,10 @@
 ﻿using System;
 
-namespace ProjBobcat.Event
-{
-    public class GameExitEventArgs : EventArgs
-    {
-        public Exception Exception { get; set; }
+namespace ProjBobcat.Event;
 
-        public int ExitCode { get; set; }
-    }
+public class GameExitEventArgs : EventArgs
+{
+    public Exception Exception { get; set; }
+
+    public int ExitCode { get; set; }
 }

@@ -1,8 +1,7 @@
-﻿namespace ProjBobcat.Class.Model
+﻿namespace ProjBobcat.Class.Model;
+
+public class NativeFileInfo
 {
-    public class NativeFileInfo
-    {
-        public FileInfo FileInfo { get; set; }
-        public Extract Extract { get; set; }
-    }
+    public FileInfo FileInfo { get; set; }
+    public Extract Extract { get; set; }
 }

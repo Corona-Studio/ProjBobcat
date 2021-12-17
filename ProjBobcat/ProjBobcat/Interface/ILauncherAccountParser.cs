@@ -1,15 +1,15 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using ProjBobcat.Class.Model.LauncherAccount;
 
-namespace ProjBobcat.Interface
+namespace ProjBobcat.Interface;
+
+public interface ILauncherAccountParser
 {
-    public interface ILauncherAccountParser
-    {
-        LauncherAccountModel LauncherAccount { get; set; }
-        bool AddNewAccount(string uuid, AccountModel account);
-        bool RemoveAccount(string uuid, string name);
-        KeyValuePair<string, AccountModel>? Find(string uuid, string name);
-        bool ActivateAccount(string uuid);
-        void Save();
-    }
+    LauncherAccountModel LauncherAccount { get; set; }
+    bool AddNewAccount(string uuid, AccountModel account, out Guid? id);
+    bool RemoveAccount(Guid id);
+    KeyValuePair<string, AccountModel>? Find(Guid id);
+    bool ActivateAccount(string uuid);
+    void Save();
 }

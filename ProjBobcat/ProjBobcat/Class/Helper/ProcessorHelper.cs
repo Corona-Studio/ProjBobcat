@@ -1,25 +1,24 @@
 ﻿using System.Threading;
 
-namespace ProjBobcat.Class.Helper
+namespace ProjBobcat.Class.Helper;
+
+/// <summary>
+///     处理器工具类
+/// </summary>
+public static class ProcessorHelper
 {
     /// <summary>
-    ///     处理器工具类
+    ///     自动设置最大线程数
     /// </summary>
-    public static class ProcessorHelper
+    /// <returns></returns>
+    public static bool SetMaxThreads()
     {
-        /// <summary>
-        ///     自动设置最大线程数
-        /// </summary>
-        /// <returns></returns>
-        public static bool SetMaxThreads()
-        {
-            ThreadPool.GetMaxThreads(out var maxWorkerThreads,
-                out var maxConcurrentActiveRequests);
+        ThreadPool.GetMaxThreads(out var maxWorkerThreads,
+            out var maxConcurrentActiveRequests);
 
-            var changeSucceeded = ThreadPool.SetMaxThreads(
-                maxWorkerThreads, maxConcurrentActiveRequests);
+        var changeSucceeded = ThreadPool.SetMaxThreads(
+            maxWorkerThreads, maxConcurrentActiveRequests);
 
-            return changeSucceeded;
-        }
+        return changeSucceeded;
     }
 }

@@ -1,83 +1,76 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace ProjBobcat.Class.Model.Version.Item
+namespace ProjBobcat.Class.Model.Version.Item;
+
+public class StringItem : IItem
 {
-    public class StringItem : IItem
+    static readonly List<string> Qualifiers = new()
     {
-        private static readonly List<string> Qualifiers = new()
-        {
-            "alpha",
-            "beta",
-            "milestone",
-            "rc",
-            "snapshot",
-            string.Empty,
-            "sp"
-        };
+        "alpha",
+        "beta",
+        "milestone",
+        "rc",
+        "snapshot",
+        string.Empty,
+        "sp"
+    };
 
-        private static readonly Dictionary<string, string> Aliases = new()
-        {
-            { "ga", string.Empty },
-            { "final", string.Empty },
-            { "release", string.Empty },
-            { "cr", "rc" }
-        };
+    static readonly Dictionary<string, string> Aliases = new()
+    {
+        {"ga", string.Empty},
+        {"final", string.Empty},
+        {"release", string.Empty},
+        {"cr", "rc"}
+    };
 
-        private static readonly string ReleaseVersionIndex = Qualifiers.IndexOf(string.Empty).ToString();
+    static readonly string ReleaseVersionIndex = Qualifiers.IndexOf(string.Empty).ToString();
 
-        private readonly string _value;
+    readonly string _value;
 
-        public StringItem(string str, bool followedByDigit)
-        {
-            if (followedByDigit && str.Length == 1)
+    public StringItem(string str, bool followedByDigit)
+    {
+        if (followedByDigit && str.Length == 1)
+            // a1 = alpha-1, b1 = beta-1, m1 = milestone-1
+            str = str[0] switch
             {
-                // a1 = alpha-1, b1 = beta-1, m1 = milestone-1
-                str = str[0] switch
-                {
-                    'a' => "alpha",
-                    'b' => "beta",
-                    'm' => "milestone",
-                    _ => string.Empty,
-                };
-            }
-
-            _value = Aliases.TryGetValue(str, out var outVal) ? outVal : str;
-        }
-
-        public int CompareTo(object obj)
-        {
-            if (obj == null)
-            {
-                // 1-rc < 1, 1-ga > 1
-                return ComparableQualifier(_value).CompareTo(ReleaseVersionIndex);
-            }
-
-            var item = obj as IItem;
-
-            return item.GetType() switch
-            {
-                IItem.INT_ITEM or IItem.LONG_ITEM or IItem.BIGINTEGER_ITEM => -1,// 1.any < 1.1 ?
-                IItem.STRING_ITEM => ComparableQualifier(_value).CompareTo(ComparableQualifier(((StringItem)item)._value)),
-                IItem.LIST_ITEM => -1,// 1.any < 1-1
-                _ => throw new ArgumentOutOfRangeException($"invalid item: {item.GetType()}"),
+                'a' => "alpha",
+                'b' => "beta",
+                'm' => "milestone",
+                _ => string.Empty
             };
-        }
 
-        public bool IsNull()
+        _value = Aliases.TryGetValue(str, out var outVal) ? outVal : str;
+    }
+
+    public int CompareTo(object obj)
+    {
+        if (obj == null)
+            // 1-rc < 1, 1-ga > 1
+            return ComparableQualifier(_value).CompareTo(ReleaseVersionIndex);
+
+        var item = obj as IItem;
+
+        return item.GetType() switch
         {
-            return ComparableQualifier(_value).CompareTo(ReleaseVersionIndex) == 0;
-        }
+            IItem.INT_ITEM or IItem.LONG_ITEM or IItem.BIGINTEGER_ITEM => -1, // 1.any < 1.1 ?
+            IItem.STRING_ITEM => ComparableQualifier(_value).CompareTo(ComparableQualifier(((StringItem) item)._value)),
+            IItem.LIST_ITEM => -1, // 1.any < 1-1
+            _ => throw new ArgumentOutOfRangeException($"invalid item: {item.GetType()}")
+        };
+    }
 
-        int IItem.GetType()
-        {
-            return IItem.STRING_ITEM;
-        }
+    public bool IsNull()
+    {
+        return ComparableQualifier(_value).CompareTo(ReleaseVersionIndex) == 0;
+    }
 
-        /**
+    int IItem.GetType()
+    {
+        return IItem.STRING_ITEM;
+    }
+
+    /**
          * Returns a comparable value for a qualifier.
          *
          * This method takes into account the ordering of known qualifiers then unknown qualifiers with lexical
@@ -90,37 +83,30 @@ namespace ProjBobcat.Class.Model.Version.Item
          * @param qualifier
          * @return an equivalent value that can be used with lexical comparison
          */
-        public static string ComparableQualifier(string qualifier)
-        {
-            var i = Qualifiers.IndexOf(qualifier);
+    public static string ComparableQualifier(string qualifier)
+    {
+        var i = Qualifiers.IndexOf(qualifier);
 
-            return i == -1 ? $"{Qualifiers.Count}-{qualifier}" : i.ToString();
-        }
+        return i == -1 ? $"{Qualifiers.Count}-{qualifier}" : i.ToString();
+    }
 
-        public override bool Equals(object obj)
-        {
-            if (this == obj)
-            {
-                return true;
-            }
-            if (obj == null || GetType() != obj.GetType())
-            {
-                return false;
-            }
+    public override bool Equals(object obj)
+    {
+        if (this == obj) return true;
+        if (obj == null || GetType() != obj.GetType()) return false;
 
-            var that = (StringItem)obj;
+        var that = (StringItem) obj;
 
-            return _value == that._value;
-        }
+        return _value == that._value;
+    }
 
-        public override int GetHashCode()
-        {
-            return _value.GetHashCode();
-        }
+    public override int GetHashCode()
+    {
+        return _value.GetHashCode();
+    }
 
-        public override string ToString()
-        {
-            return _value;
-        }
+    public override string ToString()
+    {
+        return _value;
     }
 }

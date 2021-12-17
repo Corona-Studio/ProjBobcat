@@ -1,31 +1,30 @@
-﻿namespace ProjBobcat.Interface
+﻿namespace ProjBobcat.Interface;
+
+public interface IGameResource
 {
-    public interface IGameResource
-    {
-        /// <summary>
-        ///     下载目录
-        /// </summary>
-        string Path { get; set; }
+    /// <summary>
+    ///     下载目录
+    /// </summary>
+    string Path { get; set; }
 
-        /// <summary>
-        ///     标题
-        /// </summary>
-        string Title { get; set; }
+    /// <summary>
+    ///     标题
+    /// </summary>
+    string Title { get; set; }
 
-        /// <summary>
-        ///     文件类型
-        /// </summary>
-        string Type { get; set; }
+    /// <summary>
+    ///     文件类型
+    /// </summary>
+    string Type { get; set; }
 
-        /// <summary>
-        ///     Uri
-        /// </summary>
-        string Uri { get; set; }
+    /// <summary>
+    ///     Uri
+    /// </summary>
+    string Uri { get; set; }
 
-        string FileName { get; set; }
+    string FileName { get; set; }
 
-        long FileSize { get; set; }
+    long FileSize { get; set; }
 
-        string CheckSum { get; set; }
-    }
+    string CheckSum { get; set; }
 }

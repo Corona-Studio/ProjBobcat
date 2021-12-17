@@ -1,32 +1,31 @@
 ﻿using System;
 
-namespace ProjBobcat.Class.Helper
+namespace ProjBobcat.Class.Helper;
+
+/// <summary>
+///     时间戳助手
+/// </summary>
+public static class TimeHelper
 {
     /// <summary>
-    ///     时间戳助手
+    ///     Unix11 时间戳（11位）转 DateTIme
     /// </summary>
-    public static class TimeHelper
+    /// <param name="time"></param>
+    /// <returns></returns>
+    public static DateTime Unix11ToDateTime(long time)
     {
-        /// <summary>
-        ///     Unix11 时间戳（11位）转 DateTIme
-        /// </summary>
-        /// <param name="time"></param>
-        /// <returns></returns>
-        public static DateTime Unix11ToDateTime(long time)
-        {
-            return TimeZoneInfo.ConvertTime(new DateTime(1970, 1, 1), TimeZoneInfo.Local)
-                .AddSeconds(time);
-        }
+        return TimeZoneInfo.ConvertTime(new DateTime(1970, 1, 1), TimeZoneInfo.Local)
+            .AddSeconds(time);
+    }
 
-        /// <summary>
-        ///     Unix11 时间戳（13位）转 DateTIme
-        /// </summary>
-        /// <param name="time"></param>
-        /// <returns></returns>
-        public static DateTime Unix13ToDateTime(long time)
-        {
-            return TimeZoneInfo.ConvertTime(new DateTime(1970, 1, 1), TimeZoneInfo.Local)
-                .AddMilliseconds(time);
-        }
+    /// <summary>
+    ///     Unix11 时间戳（13位）转 DateTIme
+    /// </summary>
+    /// <param name="time"></param>
+    /// <returns></returns>
+    public static DateTime Unix13ToDateTime(long time)
+    {
+        return TimeZoneInfo.ConvertTime(new DateTime(1970, 1, 1), TimeZoneInfo.Local)
+            .AddMilliseconds(time);
     }
 }
