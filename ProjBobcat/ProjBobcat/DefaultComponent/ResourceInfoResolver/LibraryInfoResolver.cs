@@ -187,7 +187,7 @@ public class LibraryInfoResolver : ResolverBase
                 {
                     Path = path,
                     Title = lL.Name.Split(':')[1],
-                    Type = "Library/Native",
+                    Type = ResourceType.LibraryOrNative,
                     Uri = uri,
                     FileSize = lL.Size,
                     CheckSum = lL.Sha1,

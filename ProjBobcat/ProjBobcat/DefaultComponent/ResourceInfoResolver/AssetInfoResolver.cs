@@ -170,7 +170,7 @@ public class AssetInfoResolver : ResolverBase
             {
                 Title = hash,
                 Path = path,
-                Type = "Asset",
+                Type = ResourceType.Asset,
                 Uri = $"{AssetUriRoot}{twoDigitsHash}/{fi.Hash}",
                 FileSize = fi.Size,
                 CheckSum = hash,

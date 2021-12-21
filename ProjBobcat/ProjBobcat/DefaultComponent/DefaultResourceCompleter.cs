@@ -105,7 +105,7 @@ public class DefaultResourceCompleter : IResourceCompleter
             downloadList.Add(dF);
         }
 
-        if (downloadList.First().FileType.Equals("GameJar", StringComparison.OrdinalIgnoreCase))
+        if (downloadList.First().FileType == ResourceType.GameJar)
             downloadList.First().Changed += (_, args) =>
             {
                 OnCompleted(downloadList.First(), new DownloadFileCompletedEventArgs(null, null, args.Speed));
@@ -228,11 +228,16 @@ public class DefaultResourceCompleter : IResourceCompleter
         }
 
         var isLibraryFailed =
-            fileBag.Any(f => f.FileType.Equals("Library/Native", StringComparison.OrdinalIgnoreCase));
-        var resultType = fileBag.IsEmpty ? TaskResultStatus.Success : TaskResultStatus.PartialSuccess;
-        if (isLibraryFailed) resultType = TaskResultStatus.Error;
+            fileBag.Any(f => f.FileType == ResourceType.LibraryOrNative);
 
-        return (resultType, new ResourceCompleterCheckResult {IsLibDownloadFailed = isLibraryFailed});
+        var result = fileBag switch
+        {
+            _ when isLibraryFailed => TaskResultStatus.Error,
+            _ when !fileBag.IsEmpty => TaskResultStatus.PartialSuccess,
+            _ => TaskResultStatus.Success
+        };
+
+        return (result, new ResourceCompleterCheckResult {IsLibDownloadFailed = isLibraryFailed});
     }
 
     protected virtual void Dispose(bool disposing)

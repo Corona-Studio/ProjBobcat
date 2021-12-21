@@ -39,7 +39,7 @@ public class DownloadFile : IDisposable
     /// <summary>
     ///     文件类型（仅在Lib/Asset补全时可用）
     /// </summary>
-    public string FileType { get; set; }
+    public ResourceType FileType { get; set; }
 
     /// <summary>
     ///     文件大小

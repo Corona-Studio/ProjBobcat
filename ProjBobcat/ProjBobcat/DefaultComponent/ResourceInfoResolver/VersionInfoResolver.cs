@@ -38,7 +38,7 @@ public class VersionInfoResolver : ResolverBase
             FileSize = clientDownload.Size,
             Path = Path.Combine(BasePath, GamePathHelper.GetGamePath(id)),
             Title = $"{id}.jar",
-            Type = "GameJar",
+            Type = ResourceType.GameJar,
             Uri = clientDownload.Url
         };
 

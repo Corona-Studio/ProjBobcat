@@ -1,4 +1,6 @@
-﻿namespace ProjBobcat.Interface;
+﻿using ProjBobcat.Class.Model;
+
+namespace ProjBobcat.Interface;
 
 public interface IGameResource
 {
@@ -15,7 +17,7 @@ public interface IGameResource
     /// <summary>
     ///     文件类型
     /// </summary>
-    string Type { get; set; }
+    ResourceType Type { get; set; }
 
     /// <summary>
     ///     Uri
