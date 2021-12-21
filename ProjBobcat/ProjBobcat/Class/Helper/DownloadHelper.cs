@@ -144,6 +144,7 @@ public static class DownloadHelper
                     responseLength);
             }
 
+            await fileToWriteTo.FlushAsync();
             sw.Stop();
 
             var aSpeed = tSpeed / cSpeed;
@@ -290,9 +291,7 @@ public static class DownloadHelper
                 new TransformBlock<DownloadRange, ValueTuple<Task<HttpResponseMessage>, DownloadRange>>(
                     p =>
                     {
-                        using var request = new HttpRequestMessage
-                            {RequestUri = new Uri(downloadFile.DownloadUri)};
-
+                        using var request = new HttpRequestMessage {RequestUri = new Uri(downloadFile.DownloadUri)};
                         if (!string.IsNullOrEmpty(downloadFile.Host))
                             request.Headers.Host = downloadFile.Host;
 
@@ -351,6 +350,9 @@ public static class DownloadHelper
                     }
 
                     sw.Stop();
+
+                    await fileToWriteTo.FlushAsync();
+                    fileToWriteTo.Close();
                 }
 
                 Interlocked.Add(ref tasksDone, 1);
@@ -374,41 +376,39 @@ public static class DownloadHelper
             filesBlock.Post(readRanges);
             filesBlock.Complete();
 
-            await writeActionBlock.Completion.ContinueWith(async task =>
+            await writeActionBlock.Completion;
+
+            var aSpeed = tSpeed / cSpeed;
+
+            if (!doneRanges.IsEmpty)
             {
-                if (!task.IsCompletedSuccessfully)
-                    throw task.Exception?.Flatten() ?? new Exception("xxx!");
+                var ex = new AggregateException(new Exception("没有完全下载所有的分片"));
 
-                var aSpeed = tSpeed / cSpeed;
+                downloadFile.OnCompleted(false, ex, aSpeed);
 
-                if (!doneRanges.IsEmpty)
+                if (File.Exists(filePath))
+                    File.Delete(filePath);
+
+                return;
+            }
+
+            await using (var outputStream = File.Create(filePath))
+            {
+                foreach (var inputFilePath in readRanges)
                 {
-                    var ex = task.Exception ?? new AggregateException(new Exception("没有完全下载所有的分片"));
+                    await using var inputStream = File.OpenRead(inputFilePath.TempFileName);
+                    outputStream.Seek(inputFilePath.Start, SeekOrigin.Begin);
+                    await inputStream.CopyToAsync(outputStream, cts.Token);
+                    
+                    inputStream.Close();
 
-                    downloadFile.OnCompleted(false, ex, aSpeed);
-
-                    if (File.Exists(filePath))
-                        File.Delete(filePath);
-
-                    return;
+                    File.Delete(inputFilePath.TempFileName);
                 }
 
-                await using (var outputStream = File.Create(filePath))
-                {
-                    foreach (var inputFilePath in readRanges)
-                    {
-                        await using var inputStream = File.OpenRead(inputFilePath.TempFileName);
-                        outputStream.Seek(inputFilePath.Start, SeekOrigin.Begin);
-                        await inputStream.CopyToAsync(outputStream, cts.Token);
+                await outputStream.FlushAsync();
+            }
 
-                        inputStream.Close();
-
-                        File.Delete(inputFilePath.TempFileName);
-                    }
-                }
-                
-                downloadFile.OnCompleted(true, null, aSpeed);
-            }, cts.Token);
+            downloadFile.OnCompleted(true, null, aSpeed);
 
             streamBlock.Complete();
             writeActionBlock.Complete();
