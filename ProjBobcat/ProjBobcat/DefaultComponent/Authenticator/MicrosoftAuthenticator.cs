@@ -227,7 +227,6 @@ public class MicrosoftAuthenticator : IAuthenticator
         };
 
         if (!LauncherAccountParser.AddNewAccount(uuid, accountModel, out var id))
-        {
             return new MicrosoftAuthResult
             {
                 AuthStatus = AuthStatus.Failed,
@@ -238,7 +237,6 @@ public class MicrosoftAuthenticator : IAuthenticator
                     ErrorMessage = "请检查 launcher_accounts.json 的权限"
                 }
             };
-        }
 
         var sPUuid = new PlayerUUID(profileRes.Id);
         var sP = new ProfileInfoModel

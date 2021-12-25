@@ -42,7 +42,6 @@ public class YggdrasilAuthenticator : IAuthenticator
             _loginHistoryQueue.TryDequeue(out _);
         };
     }
-    public Guid AccountId { get; set; }
 
     /// <summary>
     ///     获取或设置邮箱。
@@ -89,6 +88,8 @@ public class YggdrasilAuthenticator : IAuthenticator
     /// </summary>
     string SignOutAddress =>
         $"{AuthServer}{(string.IsNullOrEmpty(AuthServer) ? OfficialAuthServer : "/authserver")}/signout";
+
+    public Guid AccountId { get; set; }
 
     public ILauncherAccountParser LauncherAccountParser { get; set; }
 
@@ -177,14 +178,13 @@ public class YggdrasilAuthenticator : IAuthenticator
         foreach (var (playerUuid, authProfileModel) in profiles)
         {
             var ids = LauncherAccountParser.LauncherAccount.Accounts.Where(a =>
-                    (a.Value.MinecraftProfile?.Name?.Equals(authProfileModel.DisplayName, StringComparison.OrdinalIgnoreCase) ?? false) &&
-                    (a.Value.MinecraftProfile?.Id?.Equals(playerUuid.ToString(), StringComparison.OrdinalIgnoreCase) ?? false))
+                    (a.Value.MinecraftProfile?.Name?.Equals(authProfileModel.DisplayName,
+                        StringComparison.OrdinalIgnoreCase) ?? false) &&
+                    (a.Value.MinecraftProfile?.Id?.Equals(playerUuid.ToString(), StringComparison.OrdinalIgnoreCase) ??
+                     false))
                 .Select(p => p.Value.Id);
 
-            foreach (var id in ids)
-            {
-                LauncherAccountParser.RemoveAccount(id);
-            }
+            foreach (var id in ids) LauncherAccountParser.RemoveAccount(id);
         }
 
         var rUuid = GuidHelper.NewGuidString();
@@ -232,7 +232,6 @@ public class YggdrasilAuthenticator : IAuthenticator
         */
 
         if (!LauncherAccountParser.AddNewAccount(rUuid, profile, out var accountId))
-        {
             return new YggdrasilAuthResult
             {
                 AuthStatus = AuthStatus.Failed,
@@ -243,7 +242,6 @@ public class YggdrasilAuthenticator : IAuthenticator
                     ErrorMessage = "请检查 launcher_accounts.json 的权限"
                 }
             };
-        }
 
         _loginHistoryQueue.Enqueue($"{Email}_{Password}");
 
@@ -362,10 +360,7 @@ public class YggdrasilAuthenticator : IAuthenticator
                         StringComparison.OrdinalIgnoreCase) ?? false) &&
                     (a.Value.MinecraftProfile?.Id?.Equals(uuid, StringComparison.OrdinalIgnoreCase) ?? false));
 
-                if (value != default)
-                {
-                    LauncherAccountParser.RemoveAccount(value.Id);
-                }
+                if (value != default) LauncherAccountParser.RemoveAccount(value.Id);
 
                 var rUuid = GuidHelper.NewGuidString();
 
@@ -393,7 +388,6 @@ public class YggdrasilAuthenticator : IAuthenticator
                     };
 
                 if (!LauncherAccountParser.AddNewAccount(rUuid, profile, out var id))
-                {
                     return new YggdrasilAuthResult
                     {
                         AuthStatus = AuthStatus.Failed,
@@ -404,8 +398,7 @@ public class YggdrasilAuthenticator : IAuthenticator
                             ErrorMessage = "请检查 launcher_accounts.json 的权限"
                         }
                     };
-                }
-                
+
                 return new YggdrasilAuthResult
                 {
                     Id = id ?? Guid.Empty,

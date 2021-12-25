@@ -12,9 +12,9 @@ public class DownloadFile : IDisposable
     static readonly object CompletedEventKey = new();
     static readonly object ChangedEventKey = new();
 
-    bool disposedValue;
-
     protected readonly EventHandlerList ListEventDelegates = new();
+
+    bool disposedValue;
 
     /// <summary>
     ///     下载Uri

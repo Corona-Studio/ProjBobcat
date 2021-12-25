@@ -139,7 +139,7 @@ public static class DownloadHelper
 
                 downloadProperty.OnChanged(
                     speed,
-                    (double)downloadedBytesCount / responseLength,
+                    (double) downloadedBytesCount / responseLength,
                     downloadedBytesCount,
                     responseLength);
             }
@@ -344,7 +344,7 @@ public static class DownloadHelper
 
                         downloadFile.OnChanged(
                             speed,
-                            (double)downloadedBytesCount / responseLength,
+                            (double) downloadedBytesCount / responseLength,
                             downloadedBytesCount,
                             responseLength);
                     }
@@ -399,7 +399,7 @@ public static class DownloadHelper
                     await using var inputStream = File.OpenRead(inputFilePath.TempFileName);
                     outputStream.Seek(inputFilePath.Start, SeekOrigin.Begin);
                     await inputStream.CopyToAsync(outputStream, cts.Token);
-                    
+
                     inputStream.Close();
 
                     File.Delete(inputFilePath.TempFileName);
@@ -418,7 +418,6 @@ public static class DownloadHelper
         catch (Exception ex)
         {
             foreach (var piece in readRanges.Where(piece => File.Exists(piece.TempFileName)))
-            {
                 try
                 {
                     File.Delete(piece.TempFileName);
@@ -427,7 +426,6 @@ public static class DownloadHelper
                 {
                     Debug.WriteLine(e);
                 }
-            }
 
             downloadFile.OnCompleted(false, ex, 0);
         }

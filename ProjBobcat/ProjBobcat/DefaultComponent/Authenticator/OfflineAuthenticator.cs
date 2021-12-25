@@ -20,6 +20,7 @@ public class OfflineAuthenticator : IAuthenticator
     ///     获取或设置用户名。
     /// </summary>
     public string Username { get; init; }
+
     public Guid AccountId { get; set; }
 
     /// <summary>
@@ -70,7 +71,6 @@ public class OfflineAuthenticator : IAuthenticator
         };
 
         if (!LauncherAccountParser.AddNewAccount(localUuid, accountModel, out var id))
-        {
             return new AuthResultBase
             {
                 AuthStatus = AuthStatus.Failed,
@@ -81,7 +81,6 @@ public class OfflineAuthenticator : IAuthenticator
                     ErrorMessage = "请检查 launcher_accounts.json 的权限"
                 }
             };
-        }
 
         var result = new AuthResultBase
         {

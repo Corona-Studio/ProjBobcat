@@ -84,54 +84,58 @@ public class ComparableVersion : IComparable<ComparableVersion>
         {
             var c = version[i];
 
-            if (c == '.')
+            switch (c)
             {
-                if (i == startIndex)
-                    list.Add(IntItem.Zero);
-                else
-                    list.Add(ParseItem(isDigit, version.Substring(startIndex, i - startIndex)));
-                startIndex = i + 1;
-            }
-            else if (c == '-')
-            {
-                if (i == startIndex)
-                    list.Add(IntItem.Zero);
-                else
-                    list.Add(ParseItem(isDigit, version.Substring(startIndex, i - startIndex)));
-                startIndex = i + 1;
-
-                list.Add(list = new ListItem());
-                stack.Push(list);
-            }
-            else if (char.IsDigit(c))
-            {
-                if (!isDigit && i > startIndex)
-                {
-                    list.Add(new StringItem(version.Substring(startIndex, i - startIndex), true));
-                    startIndex = i;
+                case '.':
+                    list.Add(i == startIndex
+                        ? IntItem.Zero
+                        : ParseItem(isDigit, version[startIndex..i]));
+                    startIndex = i + 1;
+                    break;
+                case '-':
+                    list.Add(i == startIndex
+                        ? IntItem.Zero
+                        : ParseItem(isDigit, version[startIndex..i]));
+                    startIndex = i + 1;
 
                     list.Add(list = new ListItem());
                     stack.Push(list);
-                }
-
-                isDigit = true;
-            }
-            else
-            {
-                if (isDigit && i > startIndex)
+                    break;
+                default:
                 {
-                    list.Add(ParseItem(true, version.Substring(startIndex, i - startIndex)));
-                    startIndex = i;
+                    if (char.IsDigit(c))
+                    {
+                        if (!isDigit && i > startIndex)
+                        {
+                            list.Add(new StringItem(version[startIndex..i], true));
+                            startIndex = i;
 
-                    list.Add(list = new ListItem());
-                    stack.Push(list);
+                            list.Add(list = new ListItem());
+                            stack.Push(list);
+                        }
+
+                        isDigit = true;
+                    }
+                    else
+                    {
+                        if (isDigit && i > startIndex)
+                        {
+                            list.Add(ParseItem(true, version[startIndex..i]));
+                            startIndex = i;
+
+                            list.Add(list = new ListItem());
+                            stack.Push(list);
+                        }
+
+                        isDigit = false;
+                    }
+
+                    break;
                 }
-
-                isDigit = false;
             }
         }
 
-        if (version.Length > startIndex) list.Add(ParseItem(isDigit, version.Substring(startIndex)));
+        if (version.Length > startIndex) list.Add(ParseItem(isDigit, version[startIndex..]));
 
         while (stack.Any())
         {

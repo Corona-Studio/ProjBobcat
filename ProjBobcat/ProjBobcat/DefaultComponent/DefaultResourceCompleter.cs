@@ -216,10 +216,8 @@ public class DefaultResourceCompleter : IResourceCompleter
             fileBag.Clear();
 
             foreach (var file in files)
-            {
                 file.RetryCount++;
-                // file.Completed += WhenCompleted;
-            }
+            // file.Completed += WhenCompleted;
 
             await DownloadHelper.AdvancedDownloadListFile(files);
 

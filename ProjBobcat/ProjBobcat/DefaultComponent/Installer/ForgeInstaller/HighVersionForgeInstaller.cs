@@ -334,9 +334,8 @@ public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
         var libDownloadInfo = new List<DownloadFile>();
 
         var hasDownloadFailed = false;
-
-        var retryCount = 0;
         var failedFiles = new ConcurrentBag<DownloadFile>();
+
         foreach (var lib in resolvedLibs)
         {
             if (
@@ -536,10 +535,8 @@ public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             fileBag.Clear();
 
             foreach (var file in files)
-            {
                 file.RetryCount++;
-                // file.Completed += WhenCompleted;
-            }
+            // file.Completed += WhenCompleted;
 
             await DownloadHelper.AdvancedDownloadListFile(files);
 

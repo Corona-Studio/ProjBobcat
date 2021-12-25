@@ -89,12 +89,12 @@ public static class SystemInfoHelper
                 var versions = javaRuntimeReg.OpenSubKey(ver);
                 var javaHomes = versions?.GetValue("JavaHome");
 
-                if(javaHomes == null) continue;
+                if (javaHomes == null) continue;
 
                 var str = javaHomes?.ToString();
 
-                if(string.IsNullOrWhiteSpace(str)) continue;
-                
+                if (string.IsNullOrWhiteSpace(str)) continue;
+
                 result.Add($"{str}\\bin\\javaw.exe");
             }
 

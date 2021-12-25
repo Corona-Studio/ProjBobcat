@@ -101,11 +101,8 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
             }
             else
             {
-                if (account.Id == default)
-                {
-                    account.Id = newId;
-                }
-                
+                if (account.Id == default) account.Id = newId;
+
                 LauncherAccount.Accounts.Add(uuid, account);
             }
         }
