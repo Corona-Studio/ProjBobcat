@@ -19,12 +19,7 @@ namespace ProjBobcat.Class.Helper;
 /// </summary>
 public static class DownloadHelper
 {
-    const int BufferSize = 1024 * 1024 * 5;
-
-    /// <summary>
-    ///     获取或设置用户代理信息。
-    /// </summary>
-    public static string Ua { get; set; } = "ProjBobcat";
+    const int BufferSize = 1024;
 
     /// <summary>
     ///     下载线程
@@ -108,7 +103,7 @@ public static class DownloadHelper
             using var res = await DataClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
 
             await using var stream = await res.Content.ReadAsStreamAsync(ct);
-            await using var fileToWriteTo = File.Create(filePath);
+            await using var fileToWriteTo = File.Open(filePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
 
             var responseLength = res.Content.Headers.ContentLength ?? 0;
             var downloadedBytesCount = 0L;
@@ -319,7 +314,7 @@ public static class DownloadHelper
 
                 await using (var stream = await res.Content.ReadAsStreamAsync(cts.Token))
                 {
-                    await using var fileToWriteTo = File.OpenWrite(t.Item2.TempFileName);
+                    await using var fileToWriteTo = File.Open(t.Item2.TempFileName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
                     var buffer = new byte[BufferSize];
                     var sw = new Stopwatch();
 
@@ -352,7 +347,6 @@ public static class DownloadHelper
                     sw.Stop();
 
                     await fileToWriteTo.FlushAsync();
-                    fileToWriteTo.Close();
                 }
 
                 Interlocked.Add(ref tasksDone, 1);
@@ -392,15 +386,13 @@ public static class DownloadHelper
                 return;
             }
 
-            await using (var outputStream = File.Create(filePath))
+            await using (var outputStream = File.Open(filePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
             {
                 foreach (var inputFilePath in readRanges)
                 {
-                    await using var inputStream = File.OpenRead(inputFilePath.TempFileName);
+                    await using var inputStream = File.Open(inputFilePath.TempFileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
                     outputStream.Seek(inputFilePath.Start, SeekOrigin.Begin);
                     await inputStream.CopyToAsync(outputStream, cts.Token);
-
-                    inputStream.Close();
 
                     File.Delete(inputFilePath.TempFileName);
                 }

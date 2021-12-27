@@ -18,7 +18,7 @@ public static class CryptoHelper
     /// <returns></returns>
     public static async Task<string> ComputeFileHashAsync(string path, HashAlgorithm hashAlgorithm)
     {
-        await using var fs = File.OpenRead(path);
+        await using var fs = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
         var retVal = await hashAlgorithm.ComputeHashAsync(fs);
 
         return BitConverter.ToString(retVal).Replace("-", string.Empty);
@@ -32,8 +32,8 @@ public static class CryptoHelper
     /// <returns></returns>
     public static string ComputeFileHash(string path, HashAlgorithm hashAlgorithm)
     {
-        var bytes = File.ReadAllBytes(path);
-        var retVal = hashAlgorithm.ComputeHash(bytes);
+        using var fs = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        var retVal = hashAlgorithm.ComputeHash(fs);
 
         return BitConverter.ToString(retVal).Replace("-", string.Empty);
     }

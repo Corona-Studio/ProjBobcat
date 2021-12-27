@@ -73,9 +73,7 @@ public static class RandomHelper
         {
             n--;
             var k = RandomInteger(0, n);
-            var value = list[k];
-            list[k] = list[n];
-            list[n] = value;
+            (list[k], list[n]) = (list[n], list[k]);
         }
     }
 }

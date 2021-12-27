@@ -14,6 +14,11 @@ public static class HttpClientHelper
     public const string HeadClientName = "HeadClient";
     public const string MultiPartClientName = "MultiPartClient";
 
+    /// <summary>
+    ///     获取或设置用户代理信息。
+    /// </summary>
+    public static string Ua { get; set; } = "ProjBobcat";
+
     public static IHttpClientFactory HttpClientFactory { get; private set; }
 
     public static void Init()
@@ -21,7 +26,10 @@ public static class HttpClientHelper
         var arr = new[] {DefaultClientName, DataClientName, HeadClientName, MultiPartClientName};
         foreach (var name in arr)
             ServiceHelper.ServiceCollection
-                .AddHttpClient(name)
+                .AddHttpClient(name, client =>
+                {
+                    client.DefaultRequestHeaders.UserAgent.ParseAdd(Ua);
+                })
                 .ConfigurePrimaryHttpMessageHandler(_ => new HttpClientHandler
                 {
                     AllowAutoRedirect = false
