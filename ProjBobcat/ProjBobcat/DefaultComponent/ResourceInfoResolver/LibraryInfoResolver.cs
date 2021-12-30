@@ -19,6 +19,7 @@ public class LibraryInfoResolver : ResolverBase
 {
     public string LibraryUriRoot { get; init; } = "https://libraries.minecraft.net/";
     public string ForgeUriRoot { get; init; } = "https://files.minecraftforge.net/";
+    public string FabricMavenUriRoot { get; init; } = "https://maven.fabricmc.net";
     public string ForgeMavenUriRoot { get; init; } = "https://maven.minecraftforge.net/";
 
     public override async Task<IEnumerable<IGameResource>> ResolveResourceAsync()
@@ -164,18 +165,16 @@ public class LibraryInfoResolver : ResolverBase
         var result = new List<IGameResource>();
         foreach (var lL in checkedResult)
         {
-            string uri;
-            if (IsForgeLib(lL))
+            var libType = GetLibType(lL);
+            var uri = libType switch
             {
-                if (lL.Url?.StartsWith("https://maven.minecraftforge.net", StringComparison.OrdinalIgnoreCase) ?? false)
-                    uri = $"{ForgeMavenUriRoot}{lL.Path.Replace('\\', '/')}";
-                else
-                    uri = $"{ForgeUriRoot}{lL.Path.Replace('\\', '/')}";
-            }
-            else
-            {
-                uri = $"{LibraryUriRoot}{lL.Path.Replace('\\', '/')}";
-            }
+                LibraryType.Forge when lL.Url?.StartsWith("https://maven.minecraftforge.net",
+                    StringComparison.OrdinalIgnoreCase) ?? false => $"{ForgeMavenUriRoot}{lL.Path.Replace('\\', '/')}",
+                LibraryType.Forge => $"{ForgeUriRoot}{lL.Path.Replace('\\', '/')}",
+                LibraryType.Fabric => $"{FabricMavenUriRoot}{lL.Path.Replace('\\', '/')}",
+                LibraryType.Other => $"{LibraryUriRoot}{lL.Path.Replace('\\', '/')}",
+                _ => string.Empty
+            };
 
             var symbolIndex = lL.Path.LastIndexOf('/');
             var fileName = lL.Path[(symbolIndex + 1)..];
@@ -202,7 +201,23 @@ public class LibraryInfoResolver : ResolverBase
         return result;
     }
 
-    bool IsForgeLib(FileInfo fi)
+    static LibraryType GetLibType(FileInfo fi)
+    {
+        if (IsForgeLib(fi)) return LibraryType.Forge;
+        if (IsFabricLib(fi)) return LibraryType.Fabric;
+
+        return LibraryType.Other;
+    }
+
+    static bool IsFabricLib(FileInfo fi)
+    {
+        if (fi.Name.Contains("fabricmc", StringComparison.OrdinalIgnoreCase)) return true;
+        if (fi.Url.Contains("fabricmc", StringComparison.OrdinalIgnoreCase)) return true;
+
+        return false;
+    }
+
+    static bool IsForgeLib(FileInfo fi)
     {
         if (fi.Name.StartsWith("forge", StringComparison.Ordinal)) return true;
         if (fi.Name.StartsWith("net.minecraftforge", StringComparison.Ordinal)) return true;

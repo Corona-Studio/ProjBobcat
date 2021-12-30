@@ -103,16 +103,18 @@ public class FabricInstaller : InstallerBase, IFabricInstaller
     {
         InvokeStatusChangedEvent("开始安装", 0);
 
-        var jsonUrl = "https://fabricmc.net/download/technic/?intermediary="
-                      + Uri.EscapeDataString(LoaderArtifact.Intermediary.Version)
-                      + "&loader="
-                      + Uri.EscapeDataString(LoaderArtifact.Loader.Version);
+        var jsonUrl = string.Format("https://meta.fabricmc.net/v2/versions/loader/{0}/{1}/profile/json",
+            Uri.EscapeDataString(LoaderArtifact.Intermediary.Version),
+            Uri.EscapeDataString(LoaderArtifact.Loader.Version));
         var jsonContentRes = await HttpHelper.Get(jsonUrl);
         var jsonContent = await jsonContentRes.Content.ReadAsStringAsync();
         var versionModel = JsonConvert.DeserializeObject<RawVersionModel>(jsonContent);
         var id = string.IsNullOrEmpty(CustomId)
             ? $"{LoaderArtifact.Loader.GameVersion}-fabric-{LoaderArtifact.Loader.Version}-{LoaderArtifact.Intermediary.Version}"
             : CustomId;
+
+        if (versionModel == default)
+            throw new ArgumentNullException(nameof(versionModel));
 
         versionModel.Id = id;
         versionModel.InheritsFrom = LoaderArtifact.Loader.GameVersion;

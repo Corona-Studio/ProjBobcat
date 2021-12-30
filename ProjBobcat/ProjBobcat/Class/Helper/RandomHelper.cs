@@ -44,6 +44,7 @@ public static class RandomHelper
     public static int RandomInteger(int min, int max)
     {
         return RandomNumberGenerator.GetInt32(min, max + 1);
+
         /*
         var scale = uint.MaxValue;
         while (scale == uint.MaxValue)
