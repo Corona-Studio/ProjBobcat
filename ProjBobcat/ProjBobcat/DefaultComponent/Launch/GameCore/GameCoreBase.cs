@@ -74,21 +74,21 @@ public abstract class GameCoreBase : IGameCore
     {
         var eventList = listEventDelegates;
         var @event = (EventHandler<GameExitEventArgs>) eventList[GameExitEventKey]!;
-        @event.Invoke(sender, e);
+        @event?.Invoke(sender, e);
     }
 
     public virtual void OnLogGameData(object sender, GameLogEventArgs e)
     {
         var eventList = listEventDelegates;
         var @event = (EventHandler<GameLogEventArgs>) eventList[GameLogEventKey]!;
-        @event.Invoke(sender, e);
+        @event?.Invoke(sender, e);
     }
 
     public virtual void OnLogLaunchData(object sender, LaunchLogEventArgs e)
     {
         var eventList = listEventDelegates;
         var @event = (EventHandler<LaunchLogEventArgs>) eventList[LaunchLogEventKey]!;
-        @event.Invoke(sender, e);
+        @event?.Invoke(sender, e);
     }
 
     protected virtual void Dispose(bool disposing)

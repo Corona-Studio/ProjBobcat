@@ -79,7 +79,14 @@ public class LaunchWrapper : IDisposable
 
     void ProcessOnExited(object sender, EventArgs e)
     {
-        ExitCode = Process.ExitCode;
+        try
+        {
+            ExitCode = Process.ExitCode;
+        }
+        catch (InvalidOperationException)
+        {
+            ExitCode = -1;
+        }
     }
 
     void ProcessOnErrorDataReceived(object sender, DataReceivedEventArgs e)
