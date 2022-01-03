@@ -56,11 +56,6 @@ public class DownloadFile : IDisposable
     /// </summary>
     public string Host { get; set; }
 
-    /// <summary>
-    ///     超时（毫秒）
-    /// </summary>
-    public int TimeOut { get; set; } = 60000;
-
     // // TODO: 仅当“Dispose(bool disposing)”拥有用于释放未托管资源的代码时才替代终结器
     // ~DownloadFile()
     // {

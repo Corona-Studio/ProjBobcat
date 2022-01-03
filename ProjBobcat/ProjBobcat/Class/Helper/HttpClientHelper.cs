@@ -26,10 +26,7 @@ public static class HttpClientHelper
         var arr = new[] {DefaultClientName, DataClientName, HeadClientName, MultiPartClientName};
         foreach (var name in arr)
             ServiceHelper.ServiceCollection
-                .AddHttpClient(name, client =>
-                {
-                    client.DefaultRequestHeaders.UserAgent.ParseAdd(Ua);
-                })
+                .AddHttpClient(name, client => { client.DefaultRequestHeaders.UserAgent.ParseAdd(Ua); })
                 .ConfigurePrimaryHttpMessageHandler(_ => new HttpClientHandler
                 {
                     AllowAutoRedirect = false

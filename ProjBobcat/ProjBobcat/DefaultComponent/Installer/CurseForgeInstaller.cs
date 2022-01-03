@@ -18,14 +18,8 @@ namespace ProjBobcat.DefaultComponent.Installer;
 
 public class CurseForgeInstaller : InstallerBase, ICurseForgeInstaller
 {
-    ConcurrentBag<DownloadFile> _retryFiles;
-
+    readonly ConcurrentBag<DownloadFile> _failedFiles = new();
     int _totalDownloaded, _needToDownload;
-
-    public CurseForgeInstaller()
-    {
-        _retryFiles = new ConcurrentBag<DownloadFile>();
-    }
 
     public string ModPackPath { get; set; }
     public string GameId { get; set; }
@@ -92,9 +86,16 @@ public class CurseForgeInstaller : InstallerBase, ICurseForgeInstaller
         await actionBlock.Completion;
 
         _totalDownloaded = 0;
-        var isModAllDownloaded = await DownloadFiles(urlBags);
+        await DownloadHelper.AdvancedDownloadListFile(urlBags, new DownloadSettings
+        {
+            CheckFile = true,
+            DownloadParts = 4,
+            HashType = HashType.SHA1,
+            RetryCount = 3,
+            Timeout = 5000
+        });
 
-        if (!isModAllDownloaded)
+        if (!_failedFiles.IsEmpty)
             throw new NullReferenceException("未能下载全部的 Mods");
 
         using var archive = ArchiveFactory.Open(Path.GetFullPath(ModPackPath));
@@ -155,33 +156,6 @@ public class CurseForgeInstaller : InstallerBase, ICurseForgeInstaller
         return manifestModel;
     }
 
-    async Task<bool> DownloadFiles(IEnumerable<DownloadFile> downloadList)
-    {
-        await DownloadHelper.AdvancedDownloadListFile(downloadList, 4);
-
-        var leftRetries = 3;
-        var fileBag = new ConcurrentBag<DownloadFile>(_retryFiles);
-
-        while (!fileBag.IsEmpty && leftRetries >= 0)
-        {
-            _retryFiles.Clear();
-
-            var files = fileBag.ToList();
-            fileBag.Clear();
-
-            foreach (var file in files)
-                file.RetryCount++;
-            // file.Completed += WhenCompleted;
-
-            await DownloadHelper.AdvancedDownloadListFile(files);
-
-            fileBag = new ConcurrentBag<DownloadFile>(_retryFiles);
-            leftRetries--;
-        }
-
-        return fileBag.IsEmpty;
-    }
-
     void WhenCompleted(object? sender, DownloadFileCompletedEventArgs e)
     {
         if (sender is not DownloadFile file) return;
@@ -197,37 +171,7 @@ public class CurseForgeInstaller : InstallerBase, ICurseForgeInstaller
         InvokeStatusChangedEvent($"{retryStr}下载整合包中的 Mods - {fileName} ({_totalDownloaded} / {_needToDownload})",
             progress);
 
-        if (!(e.Success ?? false))
-        {
-            _retryFiles.Add(file);
-            return;
-        }
-
-        Check(file, ref _retryFiles);
-    }
-
-    static void Check(DownloadFile file, ref ConcurrentBag<DownloadFile> bag)
-    {
-        var filePath = Path.Combine(file.DownloadPath, file.FileName);
-        if (!File.Exists(filePath)) bag.Add(file);
-
-//#pragma warning disable CA5350 // 不要使用弱加密算法
-//            using var hA = SHA1.Create();
-//#pragma warning restore CA5350 // 不要使用弱加密算法
-
-//            try
-//            {
-//                var hash = CryptoHelper.ComputeFileHash(filePath, hA);
-
-//                if (string.IsNullOrEmpty(file.CheckSum)) return;
-//                if (hash.Equals(file.CheckSum, StringComparison.OrdinalIgnoreCase)) return;
-
-//                bag.Add(file);
-//                File.Delete(filePath);
-//            }
-//            catch (Exception)
-//            {
-//            }
+        if (!(e.Success ?? false)) _failedFiles.Add(file);
     }
 
     static string CurseForgeModRequestUrl(long projectId, long fileId)

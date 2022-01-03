@@ -21,6 +21,7 @@ public class LibraryInfoResolver : ResolverBase
     public string ForgeUriRoot { get; init; } = "https://files.minecraftforge.net/";
     public string FabricMavenUriRoot { get; init; } = "https://maven.fabricmc.net";
     public string ForgeMavenUriRoot { get; init; } = "https://maven.minecraftforge.net/";
+    public string ForgeMavenOldUriRoot { get; init; } = "https://files.minecraftforge.net/maven/";
 
     public override async Task<IEnumerable<IGameResource>> ResolveResourceAsync()
     {
@@ -141,18 +142,6 @@ public class LibraryInfoResolver : ResolverBase
             BoundedCapacity = MaxDegreeOfParallelism
         });
 
-        /*
-        Parallel.ForEach(VersionInfo.Natives,
-            new ParallelOptions
-            {
-                MaxDegreeOfParallelism = MaxDegreeOfParallelism
-            },
-            async native =>
-            {
-                
-            });
-        */
-
         OnResolve("检索并验证 Native");
 
         nativeFilesBlock.LinkTo(nativeResolveActionBlock, linkOptions);
@@ -170,6 +159,9 @@ public class LibraryInfoResolver : ResolverBase
             {
                 LibraryType.Forge when lL.Url?.StartsWith("https://maven.minecraftforge.net",
                     StringComparison.OrdinalIgnoreCase) ?? false => $"{ForgeMavenUriRoot}{lL.Path.Replace('\\', '/')}",
+                LibraryType.Forge when lL.Url?.StartsWith("https://files.minecraftforge.net/maven/",
+                                           StringComparison.OrdinalIgnoreCase) ??
+                                       false => $"{ForgeMavenOldUriRoot}{lL.Path.Replace('\\', '/')}",
                 LibraryType.Forge => $"{ForgeUriRoot}{lL.Path.Replace('\\', '/')}",
                 LibraryType.Fabric => $"{FabricMavenUriRoot}{lL.Path.Replace('\\', '/')}",
                 LibraryType.Other => $"{LibraryUriRoot}{lL.Path.Replace('\\', '/')}",
@@ -221,7 +213,8 @@ public class LibraryInfoResolver : ResolverBase
     {
         if (fi.Name.StartsWith("forge", StringComparison.Ordinal)) return true;
         if (fi.Name.StartsWith("net.minecraftforge", StringComparison.Ordinal)) return true;
-        if (fi.Url.StartsWith("https://maven.minecraftforge.net", StringComparison.OrdinalIgnoreCase)) return true;
+        if (HttpHelper.RegexMatchUri(fi?.Url ?? string.Empty)
+            .Contains("minecraftforge", StringComparison.OrdinalIgnoreCase)) return true;
 
         return false;
     }

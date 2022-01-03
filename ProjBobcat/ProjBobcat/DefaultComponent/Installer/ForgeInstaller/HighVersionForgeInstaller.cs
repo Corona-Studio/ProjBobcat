@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -22,13 +21,8 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller;
 
 public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 {
-    ConcurrentBag<DownloadFile> _retryFiles;
+    readonly ConcurrentBag<DownloadFile> _failedFiles = new();
     int _totalDownloaded, _needToDownload, _totalProcessed, _needToProcess;
-
-    public HighVersionForgeInstaller()
-    {
-        _retryFiles = new ConcurrentBag<DownloadFile>();
-    }
 
     public string JavaExecutablePath { get; init; }
 
@@ -327,14 +321,13 @@ public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
         #region 补全 Libraries
 
+        _failedFiles.Clear();
+
         var libs = ipModel.Libraries;
         libs.AddRange(versionJsonModel.Libraries);
 
         var resolvedLibs = VersionLocator.GetNatives(libs).Item2;
         var libDownloadInfo = new List<DownloadFile>();
-
-        var hasDownloadFailed = false;
-        var failedFiles = new ConcurrentBag<DownloadFile>();
 
         foreach (var lib in resolvedLibs)
         {
@@ -381,10 +374,16 @@ public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
         _needToDownload = libDownloadInfo.Count;
 
-        await DownloadFiles(libDownloadInfo);
+        await DownloadHelper.AdvancedDownloadListFile(libDownloadInfo, new DownloadSettings
+        {
+            CheckFile = true,
+            DownloadParts = 4,
+            HashType = HashType.SHA1,
+            RetryCount = 3,
+            Timeout = 5000
+        });
 
-        hasDownloadFailed = !failedFiles.IsEmpty;
-        if (hasDownloadFailed)
+        if (!_failedFiles.IsEmpty)
             return new ForgeInstallResult
             {
                 Succeeded = false,
@@ -518,35 +517,6 @@ public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
         };
     }
 
-    async Task<bool> DownloadFiles(IEnumerable<DownloadFile> downloadList)
-    {
-        await DownloadHelper.AdvancedDownloadListFile(downloadList, 4);
-
-        var leftRetries = 3;
-        var fileBag = new ConcurrentBag<DownloadFile>(_retryFiles);
-
-        while (!fileBag.IsEmpty && leftRetries >= 0)
-        {
-            _retryFiles.Clear();
-
-            var files = fileBag.ToList();
-
-            _needToDownload = files.Count;
-            fileBag.Clear();
-
-            foreach (var file in files)
-                file.RetryCount++;
-            // file.Completed += WhenCompleted;
-
-            await DownloadHelper.AdvancedDownloadListFile(files);
-
-            fileBag = new ConcurrentBag<DownloadFile>(_retryFiles);
-            leftRetries--;
-        }
-
-        return fileBag.IsEmpty;
-    }
-
     void WhenCompleted(object? sender, DownloadFileCompletedEventArgs e)
     {
         if (sender is not DownloadFile file) return;
@@ -560,36 +530,6 @@ public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             $"{retryStr}下载模组 - {file.FileName} ( {_totalDownloaded} / {_needToDownload} )",
             progress);
 
-        if (!(e.Success ?? false))
-        {
-            _retryFiles.Add(file);
-            return;
-        }
-
-        Check(file, ref _retryFiles);
-    }
-
-    static void Check(DownloadFile file, ref ConcurrentBag<DownloadFile> bag)
-    {
-        var filePath = Path.Combine(file.DownloadPath, file.FileName);
-        if (!File.Exists(filePath)) bag.Add(file);
-
-#pragma warning disable CA5350 // 不要使用弱加密算法
-        using var hA = SHA1.Create();
-#pragma warning restore CA5350 // 不要使用弱加密算法
-
-        try
-        {
-            var hash = CryptoHelper.ComputeFileHash(filePath, hA);
-
-            if (string.IsNullOrEmpty(file.CheckSum)) return;
-            if (hash.Equals(file.CheckSum, StringComparison.OrdinalIgnoreCase)) return;
-
-            bag.Add(file);
-            File.Delete(filePath);
-        }
-        catch (Exception)
-        {
-        }
+        if (!(e.Success ?? false)) _failedFiles.Add(file);
     }
 }

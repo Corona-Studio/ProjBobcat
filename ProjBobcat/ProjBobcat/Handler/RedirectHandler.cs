@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -30,6 +31,10 @@ public class RedirectHandler : DelegatingHandler
         HttpResponseMessage response, CancellationToken cancellationToken)
     {
         var redirectUri = response.Headers.Location;
+
+        if (redirectUri == null) return null;
+        if (request.RequestUri == null) return null;
+
         if (!redirectUri.IsAbsoluteUri)
             redirectUri = new Uri(request.RequestUri.GetLeftPart(UriPartial.Authority) + redirectUri);
 
@@ -45,13 +50,17 @@ public class RedirectHandler : DelegatingHandler
     {
         var currentRedirect = 0;
         var response = await base.SendAsync(request, cancellationToken);
-        var statusCode = (int?) response?.StatusCode;
+        var statusCode = response?.StatusCode;
 
-        while (currentRedirect < _maxRetries && statusCode == 302)
+        while (currentRedirect < _maxRetries &&
+               statusCode is
+                   HttpStatusCode.MovedPermanently or
+                   HttpStatusCode.Found or
+                   HttpStatusCode.PermanentRedirect)
         {
             Debug.WriteLine($"第{currentRedirect}次重定向");
             response = await CreateRedirectResponse(request, response, cancellationToken);
-            statusCode = (int?) response?.StatusCode;
+            statusCode = response?.StatusCode;
             currentRedirect++;
         }
 

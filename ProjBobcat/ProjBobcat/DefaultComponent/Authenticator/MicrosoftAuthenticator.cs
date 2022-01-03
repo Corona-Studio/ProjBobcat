@@ -399,10 +399,10 @@ public class MicrosoftAuthenticator : IAuthenticator
     public static string GetLoginUri(string clientId, string redirectUri)
     {
         return Uri.EscapeDataString("https://login.live.com/oauth20_authorize.srf"
-                                   + $"?client_id={clientId}"
-                                   + "&response_type=code"
-                                   + $"&scope={MSAuthScope}"
-                                   + $"&redirect_uri={redirectUri}");
+                                    + $"?client_id={clientId}"
+                                    + "&response_type=code"
+                                    + $"&scope={MSAuthScope}"
+                                    + $"&redirect_uri={redirectUri}");
     }
 
     async Task<T> SendRequest<T>(string url, object model)

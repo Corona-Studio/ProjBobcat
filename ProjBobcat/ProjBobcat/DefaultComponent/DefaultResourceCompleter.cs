@@ -2,9 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Threading.Tasks;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
@@ -21,16 +19,11 @@ public class DefaultResourceCompleter : IResourceCompleter
     static readonly object ResolveEventKey = new();
     static readonly object ChangedEventKey = new();
     static readonly object CompletedEventKey = new();
-    ConcurrentBag<DownloadFile> _retryFiles;
+
+    readonly ConcurrentBag<DownloadFile> _failedFiles = new();
+    readonly EventHandlerList _listEventDelegates = new();
 
     bool disposedValue;
-
-    protected EventHandlerList listEventDelegates = new();
-
-    public DefaultResourceCompleter()
-    {
-        _retryFiles = new ConcurrentBag<DownloadFile>();
-    }
 
     public int TotalDownloaded { get; set; }
     public int NeedToDownload { get; set; }
@@ -42,20 +35,20 @@ public class DefaultResourceCompleter : IResourceCompleter
 
     public event EventHandler<GameResourceInfoResolveEventArgs> GameResourceInfoResolveStatus
     {
-        add => listEventDelegates.AddHandler(ResolveEventKey, value);
-        remove => listEventDelegates.RemoveHandler(ResolveEventKey, value);
+        add => _listEventDelegates.AddHandler(ResolveEventKey, value);
+        remove => _listEventDelegates.RemoveHandler(ResolveEventKey, value);
     }
 
     public event EventHandler<DownloadFileChangedEventArgs> DownloadFileChangedEvent
     {
-        add => listEventDelegates.AddHandler(ChangedEventKey, value);
-        remove => listEventDelegates.RemoveHandler(ChangedEventKey, value);
+        add => _listEventDelegates.AddHandler(ChangedEventKey, value);
+        remove => _listEventDelegates.RemoveHandler(ChangedEventKey, value);
     }
 
     public event EventHandler<DownloadFileCompletedEventArgs> DownloadFileCompletedEvent
     {
-        add => listEventDelegates.AddHandler(CompletedEventKey, value);
-        remove => listEventDelegates.RemoveHandler(CompletedEventKey, value);
+        add => _listEventDelegates.AddHandler(CompletedEventKey, value);
+        remove => _listEventDelegates.RemoveHandler(CompletedEventKey, value);
     }
 
     public TaskResult<ResourceCompleterCheckResult?> CheckAndDownload()
@@ -65,15 +58,13 @@ public class DefaultResourceCompleter : IResourceCompleter
 
     public async Task<TaskResult<ResourceCompleterCheckResult?>> CheckAndDownloadTaskAsync()
     {
-        _retryFiles.Clear();
-
         if (!(ResourceInfoResolvers?.Any() ?? false))
             return new TaskResult<ResourceCompleterCheckResult?>(TaskResultStatus.Success, value: null);
 
         var totalLostFiles = new List<IGameResource>();
         foreach (var resolver in ResourceInfoResolvers)
         {
-            var handler = (EventHandler<GameResourceInfoResolveEventArgs>) listEventDelegates[ResolveEventKey]!;
+            var handler = (EventHandler<GameResourceInfoResolveEventArgs>) _listEventDelegates[ResolveEventKey]!;
             if (handler != null)
                 resolver.GameResourceInfoResolveEvent += handler;
 
@@ -97,8 +88,7 @@ public class DefaultResourceCompleter : IResourceCompleter
                 FileName = f.FileName,
                 FileSize = f.FileSize,
                 CheckSum = f.CheckSum,
-                FileType = f.Type,
-                TimeOut = 10000
+                FileType = f.Type
             };
             dF.Completed += WhenCompleted;
 
@@ -138,14 +128,14 @@ public class DefaultResourceCompleter : IResourceCompleter
 
     void OnCompleted(object? sender, DownloadFileCompletedEventArgs e)
     {
-        var eventList = listEventDelegates;
+        var eventList = _listEventDelegates;
         var @event = (EventHandler<DownloadFileCompletedEventArgs>) eventList[CompletedEventKey]!;
         @event?.Invoke(sender, e);
     }
 
     void OnChanged(double progress, double speed)
     {
-        var eventList = listEventDelegates;
+        var eventList = _listEventDelegates;
         var @event = (EventHandler<DownloadFileChangedEventArgs>) eventList[ChangedEventKey]!;
 
         @event?.Invoke(this, new DownloadFileChangedEventArgs
@@ -157,92 +147,49 @@ public class DefaultResourceCompleter : IResourceCompleter
 
     void WhenCompleted(object? sender, DownloadFileCompletedEventArgs e)
     {
-        if (sender is not DownloadFile file) return;
+        if (sender is not DownloadFile df) return;
+
+        if (!(e.Success ?? false)) _failedFiles.Add(df);
 
         TotalDownloaded++;
         OnChanged((double) TotalDownloaded / NeedToDownload, e.AverageSpeed);
         OnCompleted(sender, e);
-
-        if (!(e.Success ?? false))
-        {
-            _retryFiles.Add(file);
-            return;
-        }
-
-        if (!CheckFile) return;
-
-        Check(file, ref _retryFiles);
-    }
-
-    static void Check(DownloadFile file, ref ConcurrentBag<DownloadFile> bag)
-    {
-        var filePath = Path.Combine(file.DownloadPath, file.FileName);
-        if (!File.Exists(filePath)) return;
-
-#pragma warning disable CA5350 // 不要使用弱加密算法
-        using var hA = SHA1.Create();
-#pragma warning restore CA5350 // 不要使用弱加密算法
-
-        try
-        {
-            var hash = CryptoHelper.ComputeFileHash(filePath, hA);
-
-            if (string.IsNullOrEmpty(file.CheckSum)) return;
-            if (hash.Equals(file.CheckSum, StringComparison.OrdinalIgnoreCase)) return;
-
-            bag.Add(file);
-            File.Delete(filePath);
-        }
-        catch (Exception)
-        {
-        }
     }
 
     async Task<ValueTuple<TaskResultStatus, ResourceCompleterCheckResult?>> DownloadFiles(
         IEnumerable<DownloadFile> downloadList)
     {
-        await DownloadHelper.AdvancedDownloadListFile(downloadList, DownloadParts);
+        _failedFiles.Clear();
 
-        var leftRetries = TotalRetry;
-        var fileBag = new ConcurrentBag<DownloadFile>(_retryFiles);
-
-        while (!fileBag.IsEmpty && leftRetries >= 0)
+        await DownloadHelper.AdvancedDownloadListFile(downloadList, new DownloadSettings
         {
-            _retryFiles.Clear();
-            TotalDownloaded = 0;
-            NeedToDownload = fileBag.Count;
+            CheckFile = true,
+            DownloadParts = DownloadParts,
+            HashType = HashType.SHA1,
+            RetryCount = TotalRetry,
+            Timeout = 10000
+        });
 
-            var files = fileBag.ToList();
-            fileBag.Clear();
-
-            foreach (var file in files)
-                file.RetryCount++;
-            // file.Completed += WhenCompleted;
-
-            await DownloadHelper.AdvancedDownloadListFile(files);
-
-            fileBag = new ConcurrentBag<DownloadFile>(_retryFiles);
-            leftRetries--;
-        }
-
-        var isLibraryFailed =
-            fileBag.Any(f => f.FileType == ResourceType.LibraryOrNative);
-
-        var result = fileBag switch
+        var isLibraryFailed = _failedFiles.Any(d => d.FileType == ResourceType.LibraryOrNative);
+        var result = _failedFiles switch
         {
             _ when isLibraryFailed => TaskResultStatus.Error,
-            _ when !fileBag.IsEmpty => TaskResultStatus.PartialSuccess,
+            _ when !_failedFiles.IsEmpty => TaskResultStatus.PartialSuccess,
             _ => TaskResultStatus.Success
         };
 
-        return (result, new ResourceCompleterCheckResult {IsLibDownloadFailed = isLibraryFailed});
+        return (result, new ResourceCompleterCheckResult
+        {
+            IsLibDownloadFailed = isLibraryFailed,
+            FailedFiles = _failedFiles
+        });
     }
 
     protected virtual void Dispose(bool disposing)
     {
         if (!disposedValue)
         {
-            if (disposing) listEventDelegates.Dispose();
+            if (disposing) _listEventDelegates.Dispose();
 
             // TODO: 释放未托管的资源(未托管的对象)并重写终结器
             // TODO: 将大型字段设置为 null
