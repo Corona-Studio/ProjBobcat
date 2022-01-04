@@ -18,6 +18,18 @@ public static class CryptoHelper
     /// <summary>
     ///     计算文件 Hash 值
     /// </summary>
+    /// <param name="hashAlgorithm"></param>
+    /// <returns></returns>
+    public static string ComputeFileHash(Stream stream, HashAlgorithm hashAlgorithm)
+    {
+        var retVal = hashAlgorithm.ComputeHash(stream);
+
+        return BitConverter.ToString(retVal).Replace("-", string.Empty);
+    }
+
+    /// <summary>
+    ///     计算文件 Hash 值
+    /// </summary>
     /// <param name="path"></param>
     /// <param name="hashAlgorithm"></param>
     /// <returns></returns>
