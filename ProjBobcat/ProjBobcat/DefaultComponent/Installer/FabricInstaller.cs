@@ -1,45 +1,46 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Fabric;
+using ProjBobcat.DefaultComponent.Launch;
+using ProjBobcat.Exceptions;
 using ProjBobcat.Interface;
 
 namespace ProjBobcat.DefaultComponent.Installer;
 
 public class FabricInstaller : InstallerBase, IFabricInstaller
 {
+    public IVersionLocator VersionLocator { get; set; }
     public FabricLoaderArtifactModel LoaderArtifact { get; set; }
 
     public string Install()
     {
-        /*
-        InvokeStageChangedEvent("开始安装", 0);
+        return InstallTaskAsync().Result;
+    }
 
-        var jsonUrl = "https://fabricmc.net/download/technic/?yarn="
-            + Uri.EscapeDataString(YarnArtifact.Version)
-            + "&loader="
-            + Uri.EscapeDataString(LoaderArtifact.Loader.Version);
+    public async Task<string> InstallTaskAsync()
+    {
+        InvokeStatusChangedEvent("开始安装", 0);
 
         var mcVersion = LoaderArtifact.Intermediary.Version;
-        var vl = new DefaultVersionLocator(RootPath, Guid.Empty);
-
-        var rawVersion = vl.ParseRawVersion(mcVersion);
+        var id = $"{mcVersion}-fabric{LoaderArtifact.Loader.Version}";
+        var rawVersion = VersionLocator.GetGame(mcVersion);
         if (rawVersion == null)
             throw new UnknownGameNameException(mcVersion);
 
-        var id = $"{mcVersion}-fabric{LoaderArtifact.Loader.Version}";
-
         var libraries = new List<Library>
         {
-            new Library
+            new()
             {
                 Name = LoaderArtifact.Loader.Maven,
                 Url = "https://maven.fabricmc.net/"
             },
-            new Library
+            new()
             {
                 Name = LoaderArtifact.Intermediary.Maven,
                 Url = "https://maven.fabricmc.net/"
@@ -49,16 +50,18 @@ public class FabricInstaller : InstallerBase, IFabricInstaller
         libraries.AddRange(LoaderArtifact.LauncherMeta.Libraries.Common);
         libraries.AddRange(LoaderArtifact.LauncherMeta.Libraries.Client);
 
-        InvokeStageChangedEvent("解析 Libraries 完成", 23.3333);
-
-        var mainClass = LoaderArtifact.LauncherMeta.MainClass switch
+        var mainClassJObject = (JObject) LoaderArtifact.LauncherMeta.MainClass;
+        var mainClass = mainClassJObject.Type switch
         {
-            string mainClassString => mainClassString,
-            Dictionary<string, string> dic => dic["client"],
+            JTokenType.String => mainClassJObject.ToObject<string>(),
+            JTokenType.Object => (mainClassJObject.ToObject<Dictionary<string, string>>()
+                ?.TryGetValue("client", out var outMainClass) ?? false)
+                ? outMainClass
+                : string.Empty,
             _ => string.Empty
         };
-
-        if(string.IsNullOrEmpty(mainClass))
+        
+        if (string.IsNullOrEmpty(mainClass))
             throw new NullReferenceException("MainClass 字段为空");
 
         var inheritsFrom = mcVersion;
@@ -71,8 +74,9 @@ public class FabricInstaller : InstallerBase, IFabricInstaller
         else
             DirectoryHelper.CleanDirectory(di.FullName);
 
-        InvokeStageChangedEvent("生成版本总成", 70);
+        InvokeStatusChangedEvent("生成版本总成", 70);
 
+        
         var resultModel = new RawVersionModel
         {
             Id = id,
@@ -87,55 +91,9 @@ public class FabricInstaller : InstallerBase, IFabricInstaller
         var jsonPath = GamePathHelper.GetGameJsonPath(RootPath, id);
         var jsonContent = JsonConvert.SerializeObject(resultModel, JsonHelper.CamelCasePropertyNamesSettings);
 
-        InvokeStageChangedEvent("将版本 Json 写入文件", 90);
-
-        File.WriteAllText(jsonPath, jsonContent);
-
-        InvokeStageChangedEvent("安装完成", 100);
-
-        return id;
-        */
-
-        return InstallTaskAsync().Result;
-    }
-
-    public async Task<string> InstallTaskAsync()
-    {
-        InvokeStatusChangedEvent("开始安装", 0);
-
-        var jsonUrl = string.Format("https://meta.fabricmc.net/v2/versions/loader/{0}/{1}/profile/json",
-            Uri.EscapeDataString(LoaderArtifact.Intermediary.Version),
-            Uri.EscapeDataString(LoaderArtifact.Loader.Version));
-        var jsonContentRes = await HttpHelper.Get(jsonUrl);
-        var jsonContent = await jsonContentRes.Content.ReadAsStringAsync();
-        var versionModel = JsonConvert.DeserializeObject<RawVersionModel>(jsonContent);
-        var id = string.IsNullOrEmpty(CustomId)
-            ? $"{LoaderArtifact.Loader.GameVersion}-fabric-{LoaderArtifact.Loader.Version}-{LoaderArtifact.Intermediary.Version}"
-            : CustomId;
-
-        if (versionModel == default)
-            throw new ArgumentNullException(nameof(versionModel));
-
-        versionModel.Id = id;
-        versionModel.InheritsFrom = LoaderArtifact.Loader.GameVersion;
-
-        InvokeStatusChangedEvent("解析 Libraries 完成", 23.3333);
-
-        var dir = Path.Combine(RootPath, GamePathHelper.GetGamePath(id));
-        var di = new DirectoryInfo(dir);
-
-        if (!di.Exists)
-            di.Create();
-        else
-            DirectoryHelper.CleanDirectory(di.FullName);
-
-        var resultJson = JsonConvert.SerializeObject(versionModel, JsonHelper.CamelCasePropertyNamesSettings);
-        InvokeStatusChangedEvent("生成版本总成", 70);
-        var jsonPath = GamePathHelper.GetGameJsonPath(RootPath, id);
-
         InvokeStatusChangedEvent("将版本 Json 写入文件", 90);
 
-        await File.WriteAllTextAsync(jsonPath, resultJson);
+        await File.WriteAllTextAsync(jsonPath, jsonContent);
 
         InvokeStatusChangedEvent("安装完成", 100);
 
