@@ -18,7 +18,7 @@ public class DownloadSettings
     {
         RetryCount = 0,
         CheckFile = false,
-        Timeout = 4000,
+        Timeout = (int) TimeSpan.FromMinutes(5).TotalMilliseconds,
         DownloadParts = 8
     };
 

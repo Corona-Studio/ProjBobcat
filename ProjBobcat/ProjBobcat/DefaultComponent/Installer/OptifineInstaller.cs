@@ -143,10 +143,8 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
         };
 
         var p = Process.Start(ps);
-        if (p == null)
-            throw new NullReferenceException();
 
-        p.BeginOutputReadLine();
+        p!.BeginOutputReadLine();
         p.BeginErrorReadLine();
 
         void LogReceivedEvent(object sender, DataReceivedEventArgs args)
@@ -169,7 +167,7 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
         InvokeStatusChangedEvent("安装即将完成", 90);
 
         if (errList.Any())
-            throw new NullReferenceException();
+            throw new NullReferenceException(string.Join(Environment.NewLine, errList));
 
         InvokeStatusChangedEvent("Optifine 安装完成", 100);
 
