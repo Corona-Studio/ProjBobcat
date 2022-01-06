@@ -7,59 +7,57 @@ namespace ProjBobcat.Class.Helper.SystemInfo;
 /// </summary>
 public class WindowsSystemVersion : IFormattable, IEquatable<WindowsSystemVersion>
 {
-    byte version;
+    readonly byte _version;
 
-    WindowsSystemVersion()
+    public WindowsSystemVersion()
     {
+        _version = 0;
+    }
+
+    public WindowsSystemVersion(byte version)
+    {
+        _version = version;
     }
 
     /// <summary>
     ///     未知。
     /// </summary>
-    public static WindowsSystemVersion Unknown { get; }
-        = new() {version = 0};
+    public static WindowsSystemVersion Unknown { get; } = new();
 
     /// <summary>
     ///     XP 。
     /// </summary>
-    public static WindowsSystemVersion WindowsXP { get; }
-        = new() {version = 1};
+    public static WindowsSystemVersion WindowsXP { get; } = new(1);
 
     /// <summary>
     ///     2003 。
     /// </summary>
-    public static WindowsSystemVersion Windows2003 { get; }
-        = new() {version = 2};
+    public static WindowsSystemVersion Windows2003 { get; } = new(2);
 
     /// <summary>
     ///     2008 。
     /// </summary>
-    public static WindowsSystemVersion Windows2008 { get; }
-        = new() {version = 3};
+    public static WindowsSystemVersion Windows2008 { get; } = new(3);
 
     /// <summary>
     ///     7 。
     /// </summary>
-    public static WindowsSystemVersion Windows7 { get; }
-        = new() {version = 4};
+    public static WindowsSystemVersion Windows7 { get; } = new(4);
 
     /// <summary>
     ///     8 。
     /// </summary>
-    public static WindowsSystemVersion Windows8 { get; }
-        = new() {version = 5};
+    public static WindowsSystemVersion Windows8 { get; } = new(5);
 
     /// <summary>
     ///     8.1 。
     /// </summary>
-    public static WindowsSystemVersion Windows8Dot1 { get; }
-        = new() {version = 6};
+    public static WindowsSystemVersion Windows8Dot1 { get; } = new(6);
 
     /// <summary>
     ///     10 。
     /// </summary>
-    public static WindowsSystemVersion Windows10 { get; }
-        = new() {version = 7};
+    public static WindowsSystemVersion Windows10 { get; } = new(7);
 
     /// <summary>
     ///     获取当前程序运行所在的系统版本。
@@ -84,7 +82,9 @@ public class WindowsSystemVersion : IFormattable, IEquatable<WindowsSystemVersio
     /// <returns>判断结果。</returns>
     public bool Equals(WindowsSystemVersion other)
     {
-        return version == other.version;
+        if(other == null) return false;
+
+        return _version == other._version;
     }
 
     /// <summary>
@@ -105,7 +105,7 @@ public class WindowsSystemVersion : IFormattable, IEquatable<WindowsSystemVersio
     /// <returns>判断结果。</returns>
     public override bool Equals(object obj)
     {
-        if (obj is WindowsSystemVersion systemVersion) return version == systemVersion.version;
+        if (obj is WindowsSystemVersion systemVersion) return _version == systemVersion._version;
         return false;
     }
 
@@ -115,7 +115,7 @@ public class WindowsSystemVersion : IFormattable, IEquatable<WindowsSystemVersio
     /// <returns>当前实例的哈希值。</returns>
     public override int GetHashCode()
     {
-        return version;
+        return _version;
     }
 
     /// <summary>
@@ -125,7 +125,7 @@ public class WindowsSystemVersion : IFormattable, IEquatable<WindowsSystemVersio
     /// <returns>对应的字符串。</returns>
     public override string ToString()
     {
-        return version switch
+        return _version switch
         {
             7 => "10",
             6 => "8.1",
@@ -146,7 +146,7 @@ public class WindowsSystemVersion : IFormattable, IEquatable<WindowsSystemVersio
     /// <returns></returns>
     public static bool operator ==(WindowsSystemVersion left, WindowsSystemVersion right)
     {
-        return left?.version == right?.version;
+        return left?._version == right?._version;
     }
 
     /// <summary>
@@ -156,6 +156,6 @@ public class WindowsSystemVersion : IFormattable, IEquatable<WindowsSystemVersio
     /// <returns></returns>
     public static bool operator !=(WindowsSystemVersion left, WindowsSystemVersion right)
     {
-        return left?.version != right?.version;
+        return left?._version != right?._version;
     }
 }
