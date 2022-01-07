@@ -25,7 +25,7 @@ public static class DownloadHelper
     /// <summary>
     ///     下载线程
     /// </summary>
-    public static int DownloadThread { get; set; }
+    public static int DownloadThread { get; set; } = 8;
 
     static HttpClient DataClient => HttpClientHelper.GetNewClient(HttpClientHelper.DataClientName);
 

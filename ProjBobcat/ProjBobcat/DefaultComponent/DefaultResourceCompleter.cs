@@ -25,8 +25,8 @@ public class DefaultResourceCompleter : IResourceCompleter
 
     bool disposedValue;
 
-    public int TotalDownloaded { get; set; }
-    public int NeedToDownload { get; set; }
+    public int TotalDownloaded { get; private set; }
+    public int NeedToDownload { get; private set; }
 
     public int DownloadParts { get; set; } = 16;
     public int TotalRetry { get; set; }
@@ -64,8 +64,7 @@ public class DefaultResourceCompleter : IResourceCompleter
         var totalLostFiles = new List<IGameResource>();
         foreach (var resolver in ResourceInfoResolvers)
         {
-            var handler = (EventHandler<GameResourceInfoResolveEventArgs>) _listEventDelegates[ResolveEventKey]!;
-            if (handler != null)
+            if (_listEventDelegates[ResolveEventKey] is EventHandler<GameResourceInfoResolveEventArgs> handler)
                 resolver.GameResourceInfoResolveEvent += handler;
 
             var lostFiles = await resolver.ResolveResourceAsync();
