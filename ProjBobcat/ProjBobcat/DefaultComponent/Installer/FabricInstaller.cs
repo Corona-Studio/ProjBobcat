@@ -7,7 +7,6 @@ using Newtonsoft.Json.Linq;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Fabric;
-using ProjBobcat.DefaultComponent.Launch;
 using ProjBobcat.Exceptions;
 using ProjBobcat.Interface;
 
@@ -54,13 +53,13 @@ public class FabricInstaller : InstallerBase, IFabricInstaller
         var mainClass = mainClassJObject.Type switch
         {
             JTokenType.String => mainClassJObject.ToObject<string>(),
-            JTokenType.Object => (mainClassJObject.ToObject<Dictionary<string, string>>()
-                ?.TryGetValue("client", out var outMainClass) ?? false)
+            JTokenType.Object => mainClassJObject.ToObject<Dictionary<string, string>>()
+                ?.TryGetValue("client", out var outMainClass) ?? false
                 ? outMainClass
                 : string.Empty,
             _ => string.Empty
         };
-        
+
         if (string.IsNullOrEmpty(mainClass))
             throw new NullReferenceException("MainClass 字段为空");
 
@@ -76,7 +75,7 @@ public class FabricInstaller : InstallerBase, IFabricInstaller
 
         InvokeStatusChangedEvent("生成版本总成", 70);
 
-        
+
         var resultModel = new RawVersionModel
         {
             Id = id,

@@ -82,7 +82,7 @@ public class WindowsSystemVersion : IFormattable, IEquatable<WindowsSystemVersio
     /// <returns>判断结果。</returns>
     public bool Equals(WindowsSystemVersion other)
     {
-        if(other == null) return false;
+        if (other == null) return false;
 
         return _version == other._version;
     }

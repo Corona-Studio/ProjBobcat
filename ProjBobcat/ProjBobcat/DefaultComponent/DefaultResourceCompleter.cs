@@ -167,7 +167,7 @@ public class DefaultResourceCompleter : IResourceCompleter
             DownloadParts = DownloadParts,
             HashType = HashType.SHA1,
             RetryCount = TotalRetry,
-            Timeout = (int)TimeoutPerFile.TotalMilliseconds
+            Timeout = (int) TimeoutPerFile.TotalMilliseconds
         });
 
         var isLibraryFailed = _failedFiles.Any(d => d.FileType == ResourceType.LibraryOrNative);
