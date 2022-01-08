@@ -28,6 +28,7 @@ public class DefaultResourceCompleter : IResourceCompleter
     public int TotalDownloaded { get; private set; }
     public int NeedToDownload { get; private set; }
 
+    public TimeSpan TimeoutPerFile { get; set; } = TimeSpan.FromSeconds(10);
     public int DownloadParts { get; set; } = 16;
     public int TotalRetry { get; set; }
     public bool CheckFile { get; set; }
@@ -166,7 +167,7 @@ public class DefaultResourceCompleter : IResourceCompleter
             DownloadParts = DownloadParts,
             HashType = HashType.SHA1,
             RetryCount = TotalRetry,
-            Timeout = 10000
+            Timeout = (int)TimeoutPerFile.TotalMilliseconds
         });
 
         var isLibraryFailed = _failedFiles.Any(d => d.FileType == ResourceType.LibraryOrNative);

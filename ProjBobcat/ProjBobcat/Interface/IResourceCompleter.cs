@@ -13,6 +13,8 @@ public interface IResourceCompleter : IDisposable
     /// </summary>
     int TotalRetry { get; set; }
 
+    TimeSpan TimeoutPerFile { get; }
+
     /// <summary>
     ///     下载分片数量
     /// </summary>

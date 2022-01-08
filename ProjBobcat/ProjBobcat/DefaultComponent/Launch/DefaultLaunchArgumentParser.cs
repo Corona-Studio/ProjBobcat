@@ -250,10 +250,10 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
             yield return LaunchSettings.FallBackGameArguments.Resolution.Height.ToString();
         }
 
-        if (LaunchSettings.GameArguments.ServerSettings == null &&
+        if (LaunchSettings.GameArguments?.ServerSettings == null &&
             LaunchSettings.FallBackGameArguments?.ServerSettings == null) yield break;
 
-        var serverSettings = LaunchSettings.GameArguments.ServerSettings ??
+        var serverSettings = LaunchSettings.GameArguments?.ServerSettings ??
                              LaunchSettings.FallBackGameArguments.ServerSettings;
 
         if (string.IsNullOrEmpty(serverSettings.Address)) yield break;
