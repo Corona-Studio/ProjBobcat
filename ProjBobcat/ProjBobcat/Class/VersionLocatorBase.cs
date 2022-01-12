@@ -14,14 +14,12 @@ public abstract class VersionLocatorBase : LauncherParserBase, IVersionLocator
 
     public abstract IEnumerable<VersionInfo> GetAllGames();
 
-    public abstract IEnumerable<string> ParseJvmArguments(List<object> arguments);
+    public abstract IEnumerable<string> ParseJvmArguments(IEnumerable<object> arguments);
     private protected abstract VersionInfo ToVersion(string id);
 
-    public abstract ValueTuple<List<NativeFileInfo>, List<FileInfo>> GetNatives(
-        IEnumerable<Library> libraries);
+    public abstract (List<NativeFileInfo>, List<FileInfo>) GetNatives(IEnumerable<Library> libraries);
 
-    private protected abstract ValueTuple<IEnumerable<string>, Dictionary<string, string>> ParseGameArguments(
-        ValueTuple<string, List<object>> arguments);
+    private protected abstract (IEnumerable<string>, Dictionary<string, string>) ParseGameArguments((string, List<object>) arguments);
 
     public abstract RawVersionModel ParseRawVersion(string id);
 }

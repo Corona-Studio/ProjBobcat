@@ -124,10 +124,6 @@ public class AssetInfoResolver : ResolverBase
             return Enumerable.Empty<IGameResource>();
         }
 
-#pragma warning disable CA5350 // 不要使用弱加密算法
-        using var hA = SHA1.Create();
-#pragma warning restore CA5350 // 不要使用弱加密算法
-
         var checkedObject = 0;
         var objectCount = assetObject.Objects.Count;
         var result = new ConcurrentBag<IGameResource>();
@@ -141,6 +137,10 @@ public class AssetInfoResolver : ResolverBase
 
         var resolveActionBlock = new ActionBlock<KeyValuePair<string, AssetFileInfo>>(async obj =>
         {
+#pragma warning disable CA5350 // 不要使用弱加密算法
+            using var hA = SHA1.Create();
+#pragma warning restore CA5350 // 不要使用弱加密算法
+
             var (_, fi) = obj;
             var hash = fi.Hash;
             var twoDigitsHash = hash[..2];
@@ -154,16 +154,9 @@ public class AssetInfoResolver : ResolverBase
             if (File.Exists(filePath))
             {
                 if (!CheckLocalFiles) return;
-                try
-                {
-                    var computedHash = await CryptoHelper.ComputeFileHashAsync(filePath, hA);
-                    if (computedHash.Equals(fi.Hash, StringComparison.OrdinalIgnoreCase)) return;
 
-                    File.Delete(filePath);
-                }
-                catch (Exception)
-                {
-                }
+                var computedHash = await CryptoHelper.ComputeFileHashAsync(filePath, hA);
+                if (computedHash.Equals(fi.Hash, StringComparison.OrdinalIgnoreCase)) return;
             }
 
             result.Add(new AssetDownloadInfo
@@ -191,17 +184,6 @@ public class AssetInfoResolver : ResolverBase
 
         await resolveActionBlock.Completion;
         resolveActionBlock.Complete();
-
-        /*
-        Parallel.ForEach(assetObject.Objects,
-            new ParallelOptions
-            {
-                MaxDegreeOfParallelism = MaxDegreeOfParallelism
-            }, async obj =>
-            {
-                
-            });
-        */
 
         OnResolve("Assets 解析完成", 100);
 

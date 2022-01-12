@@ -56,7 +56,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
         return version;
     }
 
-    public override IEnumerable<string> ParseJvmArguments(List<object> arguments)
+    public override IEnumerable<string> ParseJvmArguments(IEnumerable<object> arguments)
     {
         if (!(arguments?.Any() ?? false))
             yield break;
@@ -130,8 +130,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
     /// </summary>
     /// <param name="arguments"></param>
     /// <returns></returns>
-    private protected override ValueTuple<IEnumerable<string>, Dictionary<string, string>> ParseGameArguments(
-        ValueTuple<string, List<object>> arguments)
+    private protected override (IEnumerable<string>, Dictionary<string, string>) ParseGameArguments((string, List<object>) arguments)
     {
         var argList = new List<string>();
         var availableArguments = new Dictionary<string, string>();
@@ -185,8 +184,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
     /// </summary>
     /// <param name="libraries">反序列化后的库数据。Deserialized library data.</param>
     /// <returns>二元组（包含一组list，T1是Natives列表，T2是Libraries列表）。A tuple.(T1 -> Natives, T2 -> Libraries)</returns>
-    public override ValueTuple<List<NativeFileInfo>, List<FileInfo>> GetNatives(
-        IEnumerable<Library> libraries)
+    public override (List<NativeFileInfo>, List<FileInfo>) GetNatives(IEnumerable<Library> libraries)
     {
         var result = (new List<NativeFileInfo>(), new List<FileInfo>());
         var isForge = libraries.Any(l => l.Name.Contains("minecraftforge", StringComparison.OrdinalIgnoreCase));

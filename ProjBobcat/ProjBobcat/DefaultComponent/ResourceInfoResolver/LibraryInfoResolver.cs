@@ -34,10 +34,6 @@ public class LibraryInfoResolver : ResolverBase
 
         if (!libDi.Exists) libDi.Create();
 
-#pragma warning disable CA5350 // 不要使用弱加密算法
-        using var hA = SHA1.Create();
-#pragma warning restore CA5350 // 不要使用弱加密算法
-
         var checkedLib = 0;
         var libCount = VersionInfo.Libraries.Count;
         var checkedResult = new ConcurrentBag<FileInfo>();
@@ -49,6 +45,10 @@ public class LibraryInfoResolver : ResolverBase
 
         var libResolveActionBlock = new ActionBlock<FileInfo>(async lib =>
         {
+#pragma warning disable CA5350 // 不要使用弱加密算法
+            using var hA = SHA1.Create();
+#pragma warning restore CA5350 // 不要使用弱加密算法
+
             var libPath = GamePathHelper.GetLibraryPath(lib.Path.Replace('/', '\\'));
             var filePath = Path.Combine(BasePath, libPath);
 
@@ -62,16 +62,9 @@ public class LibraryInfoResolver : ResolverBase
                 if (!CheckLocalFiles) return;
                 if (string.IsNullOrEmpty(lib.Sha1)) return;
 
-                try
-                {
-                    var computedHash = await CryptoHelper.ComputeFileHashAsync(filePath, hA);
-                    if (computedHash.Equals(lib.Sha1, StringComparison.OrdinalIgnoreCase)) return;
+                var computedHash = await CryptoHelper.ComputeFileHashAsync(filePath, hA);
 
-                    File.Delete(filePath);
-                }
-                catch (Exception)
-                {
-                }
+                if (computedHash.Equals(lib.Sha1, StringComparison.OrdinalIgnoreCase)) return;
             }
 
             checkedResult.Add(lib);
@@ -111,6 +104,10 @@ public class LibraryInfoResolver : ResolverBase
 
         var nativeResolveActionBlock = new ActionBlock<NativeFileInfo>(async native =>
         {
+#pragma warning disable CA5350 // 不要使用弱加密算法
+            using var hA = SHA1.Create();
+#pragma warning restore CA5350 // 不要使用弱加密算法
+
             var nativePath = GamePathHelper.GetLibraryPath(native.FileInfo.Path.Replace('/', '\\'));
             var filePath = Path.Combine(BasePath, nativePath);
 
@@ -123,16 +120,8 @@ public class LibraryInfoResolver : ResolverBase
                 var progress = (double) checkedLib / libCount * 100;
                 OnResolve(string.Empty, progress);
 
-                try
-                {
-                    var computedHash = await CryptoHelper.ComputeFileHashAsync(filePath, hA);
-                    if (computedHash.Equals(native.FileInfo.Sha1, StringComparison.OrdinalIgnoreCase)) return;
-
-                    File.Delete(filePath);
-                }
-                catch (Exception)
-                {
-                }
+                var computedHash = await CryptoHelper.ComputeFileHashAsync(filePath, hA);
+                if (computedHash.Equals(native.FileInfo.Sha1, StringComparison.OrdinalIgnoreCase)) return;
             }
 
             checkedResult.Add(native.FileInfo);
@@ -185,8 +174,6 @@ public class LibraryInfoResolver : ResolverBase
                     FileName = fileName
                 });
         }
-
-        await Task.Delay(1);
 
         OnResolve("检查Library完成", 100);
 

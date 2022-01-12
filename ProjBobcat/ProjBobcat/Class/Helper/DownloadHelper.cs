@@ -329,7 +329,7 @@ public static class DownloadHelper
                 var doneRanges = new ConcurrentBag<DownloadRange>();
 
                 var streamBlock =
-                    new TransformBlock<DownloadRange, ValueTuple<Task<HttpResponseMessage>, DownloadRange>>(
+                    new TransformBlock<DownloadRange, (Task<HttpResponseMessage>, DownloadRange)>(
                         p =>
                         {
                             using var request = new HttpRequestMessage {RequestUri = new Uri(downloadFile.DownloadUri)};

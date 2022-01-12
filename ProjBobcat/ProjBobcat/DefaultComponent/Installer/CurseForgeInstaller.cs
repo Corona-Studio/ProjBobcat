@@ -44,13 +44,13 @@ public class CurseForgeInstaller : InstallerBase, ICurseForgeInstaller
 
         _needToDownload = manifest.Files.Count;
 
-        var urlBlock = new TransformManyBlock<IEnumerable<CurseForgeFileModel>, ValueTuple<long, long>>(urls =>
+        var urlBlock = new TransformManyBlock<IEnumerable<CurseForgeFileModel>, (long, long)>(urls =>
         {
             return urls.Select(file => (file.ProjectId, file.FileId));
         });
 
         var urlBags = new ConcurrentBag<DownloadFile>();
-        var actionBlock = new ActionBlock<ValueTuple<long, long>>(async t =>
+        var actionBlock = new ActionBlock<(long, long)>(async t =>
         {
             var downloadUrlRes = await CurseForgeAPIHelper.GetAddonDownloadUrl(t.Item1, t.Item2);
             var d = downloadUrlRes.Trim('"');

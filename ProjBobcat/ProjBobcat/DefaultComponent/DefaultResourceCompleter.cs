@@ -156,7 +156,7 @@ public class DefaultResourceCompleter : IResourceCompleter
         OnCompleted(sender, e);
     }
 
-    async Task<ValueTuple<TaskResultStatus, ResourceCompleterCheckResult?>> DownloadFiles(
+    async Task<(TaskResultStatus, ResourceCompleterCheckResult?)> DownloadFiles(
         IEnumerable<DownloadFile> downloadList)
     {
         _failedFiles.Clear();

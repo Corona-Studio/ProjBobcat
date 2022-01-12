@@ -58,14 +58,6 @@ public class VersionInfoResolver : ResolverBase
             if (computedHash.Equals(clientDownload.Sha1, StringComparison.OrdinalIgnoreCase))
                 return Enumerable.Empty<IGameResource>();
 
-            try
-            {
-                File.Delete(jarPath);
-            }
-            catch (Exception)
-            {
-            }
-
             result.Add(downloadInfo);
         }
 
