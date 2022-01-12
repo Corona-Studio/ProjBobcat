@@ -13,7 +13,7 @@ public class ServerSettings
 
     public override string ToString()
     {
-        if (IsDefault) return "未指定服务器。";
+        if (IsDefault) return "[N/A]";
         return $"{Address}:{Port}";
     }
 }
