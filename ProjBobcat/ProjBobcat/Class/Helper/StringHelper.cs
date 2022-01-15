@@ -35,4 +35,11 @@ public static class StringHelper
     {
         return string.IsNullOrEmpty(str) ? string.Empty : dic.Aggregate(str, (a, b) => a.Replace(b.Key, b.Value));
     }
+
+    public static string TrimStr(this string str, bool trim, params char[] trimChars)
+    {
+        str = trimChars.Aggregate(str, (current, ch) => current.Trim(ch));
+
+        return trim ? str.Trim() : str;
+    }
 }
