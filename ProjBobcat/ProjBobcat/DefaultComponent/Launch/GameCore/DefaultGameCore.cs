@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
@@ -174,7 +176,7 @@ public class DefaultGameCore : GameCoreBase
                 };
 
             //从参数数组中移出java路径并加以存储。
-            //Load the first element(java's path) into the excutable string and removes it from the generated arguments
+            //Load the first element(java's path) into the executable string and removes it from the generated arguments
             var executable = arguments[0];
             arguments.RemoveAt(0);
 
@@ -269,6 +271,12 @@ public class DefaultGameCore : GameCoreBase
                 RedirectStandardError = true,
                 RedirectStandardOutput = true
             };
+
+            #region log4j 缓解措施
+
+            psi.EnvironmentVariables.Add("FORMAT_MESSAGES_PATTERN_DISABLE_LOOKUPS", "true");
+
+            #endregion
 
             // arguments.ForEach(psi.ArgumentList.Add);
 

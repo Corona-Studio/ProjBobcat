@@ -156,6 +156,12 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
             {"${library_directory}", $"\"{Path.Combine(RootPath, GamePathHelper.GetLibraryRootPath())}\""}
         };
 
+        #region log4j 缓解措施
+
+        yield return "-Dlog4j2.formatMsgNoLookups=true";
+
+        #endregion
+
         yield return "-Dfml.ignoreInvalidMinecraftCertificates=true";
         yield return "-Dfml.ignorePatchDiscrepancies=true";
 
