@@ -274,7 +274,20 @@ public class DefaultGameCore : GameCoreBase
 
             #region log4j 缓解措施
 
-            psi.EnvironmentVariables.Add("FORMAT_MESSAGES_PATTERN_DISABLE_LOOKUPS", "true");
+            await Task.Run(() =>
+            {
+                try
+                {
+                    Environment.SetEnvironmentVariable("FORMAT_MESSAGES_PATTERN_DISABLE_LOOKUPS", "true",
+                        EnvironmentVariableTarget.User);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                }
+            });
+
+            InvokeLaunchLogThenStart("设置 log4j 缓解措施", ref prevSpan, ref stopwatch);
 
             #endregion
 
