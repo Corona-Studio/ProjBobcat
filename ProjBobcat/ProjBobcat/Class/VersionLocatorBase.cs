@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Interface;
 
@@ -19,7 +18,8 @@ public abstract class VersionLocatorBase : LauncherParserBase, IVersionLocator
 
     public abstract (List<NativeFileInfo>, List<FileInfo>) GetNatives(IEnumerable<Library> libraries);
 
-    private protected abstract (IEnumerable<string>, Dictionary<string, string>) ParseGameArguments((string, List<object>) arguments);
+    private protected abstract (IEnumerable<string>, Dictionary<string, string>) ParseGameArguments(
+        (string, List<object>) arguments);
 
     public abstract RawVersionModel ParseRawVersion(string id);
 }

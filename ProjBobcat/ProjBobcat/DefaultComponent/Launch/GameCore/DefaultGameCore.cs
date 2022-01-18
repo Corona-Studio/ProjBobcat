@@ -1,4 +1,9 @@
-﻿using ProjBobcat.Class;
+﻿using System;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.YggdrasilAuth;
@@ -6,11 +11,6 @@ using ProjBobcat.DefaultComponent.Authenticator;
 using ProjBobcat.Event;
 using ProjBobcat.Interface;
 using SharpCompress.Archives;
-using System;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using FileInfo = System.IO.FileInfo;
 
 namespace ProjBobcat.DefaultComponent.Launch.GameCore;

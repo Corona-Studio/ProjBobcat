@@ -130,7 +130,8 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
     /// </summary>
     /// <param name="arguments"></param>
     /// <returns></returns>
-    private protected override (IEnumerable<string>, Dictionary<string, string>) ParseGameArguments((string, List<object>) arguments)
+    private protected override (IEnumerable<string>, Dictionary<string, string>) ParseGameArguments(
+        (string, List<object>) arguments)
     {
         var argList = new List<string>();
         var availableArguments = new Dictionary<string, string>();
