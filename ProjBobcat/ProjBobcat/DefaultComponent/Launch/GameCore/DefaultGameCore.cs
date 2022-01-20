@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
@@ -272,11 +273,20 @@ public class DefaultGameCore : GameCoreBase
 
             #region log4j 缓解措施
 
+            const string log4JKey = "FORMAT_MESSAGES_PATTERN_DISABLE_LOOKUPS";
+            const string log4JValue = "true";
+
             await Task.Run(() =>
             {
                 try
                 {
-                    Environment.SetEnvironmentVariable("FORMAT_MESSAGES_PATTERN_DISABLE_LOOKUPS", "true",
+                    var configuration = new ConfigurationBuilder()
+                        .AddEnvironmentVariables()
+                        .Build();
+
+                    if (configuration[log4JKey] == log4JValue) return;
+
+                    Environment.SetEnvironmentVariable(log4JKey, log4JValue,
                         EnvironmentVariableTarget.User);
                 }
                 catch (Exception e)
