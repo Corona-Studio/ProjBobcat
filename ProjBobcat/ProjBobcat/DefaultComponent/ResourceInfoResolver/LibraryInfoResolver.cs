@@ -25,6 +25,8 @@ public class LibraryInfoResolver : ResolverBase
 
     public override async Task<IEnumerable<IGameResource>> ResolveResourceAsync()
     {
+        if(!CheckLocalFiles) return Enumerable.Empty<IGameResource>();
+
         OnResolve("开始进行游戏资源(Library)检查");
         if (!(VersionInfo?.Natives?.Any() ?? false) &&
             !(VersionInfo?.Libraries?.Any() ?? false))
@@ -59,7 +61,6 @@ public class LibraryInfoResolver : ResolverBase
 
             if (File.Exists(filePath))
             {
-                if (!CheckLocalFiles) return;
                 if (string.IsNullOrEmpty(lib.Sha1)) return;
 
                 var computedHash = await CryptoHelper.ComputeFileHashAsync(filePath, hA);
@@ -113,7 +114,6 @@ public class LibraryInfoResolver : ResolverBase
 
             if (File.Exists(filePath))
             {
-                if (!CheckLocalFiles) return;
                 if (string.IsNullOrEmpty(native.FileInfo.Sha1)) return;
 
                 Interlocked.Increment(ref checkedLib);

@@ -32,6 +32,8 @@ public class AssetInfoResolver : ResolverBase
 
     public override async Task<IEnumerable<IGameResource>> ResolveResourceAsync()
     {
+        if(!CheckLocalFiles) return Enumerable.Empty<IGameResource>();
+
         OnResolve("开始进行游戏资源(Asset)检查");
 
         if (!(Versions?.Any() ?? false) && VersionInfo?.AssetInfo == null) return Enumerable.Empty<IGameResource>();
@@ -153,8 +155,6 @@ public class AssetInfoResolver : ResolverBase
 
             if (File.Exists(filePath))
             {
-                if (!CheckLocalFiles) return;
-
                 var computedHash = await CryptoHelper.ComputeFileHashAsync(filePath, hA);
                 if (computedHash.Equals(fi.Hash, StringComparison.OrdinalIgnoreCase)) return;
             }
