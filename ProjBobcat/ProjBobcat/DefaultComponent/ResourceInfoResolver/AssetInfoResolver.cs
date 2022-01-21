@@ -32,7 +32,7 @@ public class AssetInfoResolver : ResolverBase
 
     public override async Task<IEnumerable<IGameResource>> ResolveResourceAsync()
     {
-        if(!CheckLocalFiles) return Enumerable.Empty<IGameResource>();
+        if (!CheckLocalFiles) return Enumerable.Empty<IGameResource>();
 
         OnResolve("开始进行游戏资源(Asset)检查");
 

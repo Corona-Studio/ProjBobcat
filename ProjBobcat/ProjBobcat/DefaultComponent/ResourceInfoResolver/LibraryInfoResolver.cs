@@ -25,7 +25,7 @@ public class LibraryInfoResolver : ResolverBase
 
     public override async Task<IEnumerable<IGameResource>> ResolveResourceAsync()
     {
-        if(!CheckLocalFiles) return Enumerable.Empty<IGameResource>();
+        if (!CheckLocalFiles) return Enumerable.Empty<IGameResource>();
 
         OnResolve("开始进行游戏资源(Library)检查");
         if (!(VersionInfo?.Natives?.Any() ?? false) &&
