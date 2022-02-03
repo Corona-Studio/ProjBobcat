@@ -46,7 +46,7 @@ public class ListItem : List<IItem>, IItem
                     var r = hasNextRight ? right.Current : null;
 
                     // if this is shorter, then invert the compare and mul with -1
-                    var result = l == null ? r == null ? 0 : -1 * r.CompareTo(l) : l.CompareTo(r);
+                    var result = l?.CompareTo(r) ?? (r == null ? 0 : -1 * r.CompareTo(l));
 
                     if (result != 0) return result;
 

@@ -22,7 +22,7 @@ public class LongItem : IItem
                 return 1;
             case IItem.LONG_ITEM:
                 var itemValue = ((LongItem) item)._value;
-                return itemValue.CompareTo(_value);
+                return _value.CompareTo(itemValue);
             case IItem.BIGINTEGER_ITEM:
                 return -1;
             case IItem.STRING_ITEM:

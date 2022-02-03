@@ -37,7 +37,7 @@ public class IntItem : IItem
         {
             case IItem.INT_ITEM:
                 var itemValue = ((IntItem) item)._value;
-                return itemValue.CompareTo(_value);
+                return _value.CompareTo(itemValue);
             case IItem.LONG_ITEM:
             case IItem.BIGINTEGER_ITEM:
                 return -1;

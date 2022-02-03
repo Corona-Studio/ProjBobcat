@@ -21,7 +21,7 @@ public class BigIntegerItem : IItem
         return item.GetType() switch
         {
             IItem.INT_ITEM or IItem.LONG_ITEM => 1,
-            IItem.BIGINTEGER_ITEM => ((BigIntegerItem) item)._value.CompareTo(_value),
+            IItem.BIGINTEGER_ITEM => _value.CompareTo(((BigIntegerItem)item)._value),
             IItem.STRING_ITEM => 1, // 1.1 > 1-sp
             IItem.LIST_ITEM => 1, // 1.1 > 1-1
             _ => throw new ArgumentOutOfRangeException($"invalid item: {item.GetType()}")
