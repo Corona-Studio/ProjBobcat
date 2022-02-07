@@ -9,7 +9,7 @@ public class ListItem : List<IItem>, IItem
 {
     public int CompareTo(object obj)
     {
-        if (obj == null)
+        if (obj is not IItem item)
         {
             if (Count == 0) return 0; // 1-0 = 1- (normalize) = 1
 
@@ -23,19 +23,18 @@ public class ListItem : List<IItem>, IItem
 
             return 0;
         }
-
-        var item = obj as IItem;
-        switch (item.GetType())
+        
+        switch (item)
         {
-            case IItem.INT_ITEM:
-            case IItem.LONG_ITEM:
-            case IItem.BIGINTEGER_ITEM:
+            case IntItem:
+            case LongItem:
+            case BigIntegerItem:
                 return -1; // 1-1 < 1.0.x
-            case IItem.STRING_ITEM:
+            case StringItem:
                 return 1; // 1-1 > 1-sp
-            case IItem.LIST_ITEM:
+            case ListItem listItem:
                 var left = GetEnumerator();
-                var right = ((ListItem) item).GetEnumerator();
+                var right = listItem.GetEnumerator();
 
                 var hasNextLeft = left.MoveNext();
                 var hasNextRight = right.MoveNext();
@@ -54,6 +53,9 @@ public class ListItem : List<IItem>, IItem
                     hasNextRight = right.MoveNext();
                 }
 
+                left.Dispose();
+                right.Dispose();
+
                 return 0;
             default:
                 throw new ArgumentOutOfRangeException($"invalid item: {item.GetType()}");
@@ -63,11 +65,6 @@ public class ListItem : List<IItem>, IItem
     public bool IsNull()
     {
         return !this.Any();
-    }
-
-    int IItem.GetType()
-    {
-        return IItem.LIST_ITEM;
     }
 
     public void Normalize()

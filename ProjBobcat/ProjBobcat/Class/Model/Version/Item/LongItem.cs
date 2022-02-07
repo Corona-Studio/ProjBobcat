@@ -13,21 +13,20 @@ public class LongItem : IItem
 
     public int CompareTo(object obj)
     {
-        if (obj == null) return _value == 0 ? 0 : 1; // 1.0 == 1, 1.1 > 1
-
-        var item = obj as IItem;
-        switch (item.GetType())
+        if (obj is not IItem item) return _value == 0 ? 0 : 1; // 1.0 == 1, 1.1 > 1
+        
+        switch (item)
         {
-            case IItem.INT_ITEM:
+            case IntItem:
                 return 1;
-            case IItem.LONG_ITEM:
-                var itemValue = ((LongItem) item)._value;
+            case LongItem longItem:
+                var itemValue = longItem._value;
                 return _value.CompareTo(itemValue);
-            case IItem.BIGINTEGER_ITEM:
+            case BigIntegerItem:
                 return -1;
-            case IItem.STRING_ITEM:
+            case StringItem:
                 return 1; // 1.1 > 1-sp
-            case IItem.LIST_ITEM:
+            case ListItem:
                 return 1; // 1.1 > 1-1
             default:
                 throw new ArgumentOutOfRangeException($"invalid item: {item.GetType()}");
@@ -39,19 +38,12 @@ public class LongItem : IItem
         return _value == 0;
     }
 
-    int IItem.GetType()
-    {
-        return IItem.LONG_ITEM;
-    }
-
     public override bool Equals(object obj)
     {
         if (this == obj) return true;
-        if (obj == null || GetType() != obj.GetType()) return false;
+        if (obj is not LongItem that) return false;
 
-        var longItem = (LongItem) obj;
-
-        return _value == longItem._value;
+        return _value == that._value;
     }
 
     public override int GetHashCode()

@@ -45,17 +45,15 @@ public class StringItem : IItem
 
     public int CompareTo(object obj)
     {
-        if (obj == null)
+        if (obj is not IItem item)
             // 1-rc < 1, 1-ga > 1
             return ComparableQualifier(_value).CompareTo(ReleaseVersionIndex);
-
-        var item = obj as IItem;
-
-        return item.GetType() switch
+        
+        return item switch
         {
-            IItem.INT_ITEM or IItem.LONG_ITEM or IItem.BIGINTEGER_ITEM => -1, // 1.any < 1.1 ?
-            IItem.STRING_ITEM => ComparableQualifier(_value).CompareTo(ComparableQualifier(((StringItem) item)._value)),
-            IItem.LIST_ITEM => -1, // 1.any < 1-1
+            IntItem or LongItem or BigIntegerItem => -1, // 1.any < 1.1 ?
+            StringItem strItem => ComparableQualifier(_value).CompareTo(ComparableQualifier(strItem._value)),
+            ListItem => -1, // 1.any < 1-1
             _ => throw new ArgumentOutOfRangeException($"invalid item: {item.GetType()}")
         };
     }
@@ -63,11 +61,6 @@ public class StringItem : IItem
     public bool IsNull()
     {
         return ComparableQualifier(_value).CompareTo(ReleaseVersionIndex) == 0;
-    }
-
-    int IItem.GetType()
-    {
-        return IItem.STRING_ITEM;
     }
 
     /**
@@ -93,9 +86,7 @@ public class StringItem : IItem
     public override bool Equals(object obj)
     {
         if (this == obj) return true;
-        if (obj == null || GetType() != obj.GetType()) return false;
-
-        var that = (StringItem) obj;
+        if (obj is not StringItem that) return false;
 
         return _value == that._value;
     }

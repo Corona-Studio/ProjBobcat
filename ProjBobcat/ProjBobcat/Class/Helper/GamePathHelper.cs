@@ -89,6 +89,17 @@ public static class GamePathHelper
     }
 
     /// <summary>
+    ///     .minecraft/versions/{versionId}/options.txt
+    /// </summary>
+    /// <param name="rootPath">指.minecraft/ Refers to .minecraft/</param>
+    /// <param name="versionId"></param>
+    /// <returns></returns>
+    public static string GetVersionConfig(string versionId)
+    {
+        return Path.Combine("versions", versionId, "options.txt");
+    }
+
+    /// <summary>
     ///     .minecraft/assets/
     /// </summary>
     /// <returns></returns>

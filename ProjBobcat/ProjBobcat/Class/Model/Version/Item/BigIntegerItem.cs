@@ -14,16 +14,14 @@ public class BigIntegerItem : IItem
 
     public int CompareTo(object obj)
     {
-        if (obj == null) return BigInteger.Zero == _value ? 0 : 1; // 1.0 == 1, 1.1 > 1
-
-        var item = obj as IItem;
-
-        return item.GetType() switch
+        if (obj is not IItem item) return BigInteger.Zero == _value ? 0 : 1; // 1.0 == 1, 1.1 > 1
+        
+        return item switch
         {
-            IItem.INT_ITEM or IItem.LONG_ITEM => 1,
-            IItem.BIGINTEGER_ITEM => _value.CompareTo(((BigIntegerItem)item)._value),
-            IItem.STRING_ITEM => 1, // 1.1 > 1-sp
-            IItem.LIST_ITEM => 1, // 1.1 > 1-1
+            IntItem or LongItem => 1,
+            BigIntegerItem biItem => _value.CompareTo(biItem._value),
+            StringItem => 1, // 1.1 > 1-sp
+            ListItem => 1, // 1.1 > 1-1
             _ => throw new ArgumentOutOfRangeException($"invalid item: {item.GetType()}")
         };
     }
@@ -33,17 +31,10 @@ public class BigIntegerItem : IItem
         return _value == BigInteger.Zero;
     }
 
-    int IItem.GetType()
-    {
-        return IItem.BIGINTEGER_ITEM;
-    }
-
     public override bool Equals(object obj)
     {
         if (this == obj) return true;
-        if (obj == null || GetType() != obj.GetType()) return false;
-
-        var that = (BigIntegerItem) obj;
+        if (obj is not BigIntegerItem that) return false;
 
         return _value.Equals(that._value);
     }

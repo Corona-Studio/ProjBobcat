@@ -50,10 +50,15 @@ public class ComparableVersion : IComparable<ComparableVersion>
 {
     const int MaxIntItemLength = 9;
     const int MaxLongItemLength = 18;
-    string _canonical;
-    ListItem _items;
-
+    
+    readonly ListItem _items = new ();
     string _value;
+
+    string _canonical;
+    public string Canonical
+    {
+        get { return _canonical ??= _items.ToString(); }
+    }
 
     public ComparableVersion(string version)
     {
@@ -68,7 +73,7 @@ public class ComparableVersion : IComparable<ComparableVersion>
     void ParseVersion(string version)
     {
         _value = version;
-        _items = new ListItem();
+        _items.Clear();
         version = version.ToLower(CultureInfo.GetCultureInfo("en-US"));
 
         var list = _items;
@@ -166,12 +171,6 @@ public class ComparableVersion : IComparable<ComparableVersion>
     public override string ToString()
     {
         return _value;
-    }
-
-    public string GetCanonical()
-    {
-        if (_canonical == null) _canonical = _items.ToString();
-        return _canonical;
     }
 
     public override bool Equals(object obj)
