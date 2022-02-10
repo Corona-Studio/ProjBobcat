@@ -46,18 +46,19 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
         using var archive = ArchiveFactory.Open(OptifineJarPath);
         var entries = archive.Entries;
 
-        var launchWrapperVersion = "1.7";
+        var launchWrapperVersion = "1.12";
+        var launchWrapperOfEntry =
+            entries.FirstOrDefault(e => e.Key.Equals("launchwrapper-of.txt", StringComparison.OrdinalIgnoreCase));
 
-        foreach (var entry in entries)
+        if (launchWrapperOfEntry != default)
         {
-            if (!entry.Key.Equals("launchwrapper-of.txt", StringComparison.OrdinalIgnoreCase)) continue;
-            await using var stream = entry.OpenEntryStream();
+            await using var stream = launchWrapperOfEntry.OpenEntryStream();
             using var sr = new StreamReader(stream, Encoding.UTF8);
             launchWrapperVersion = await sr.ReadToEndAsync();
         }
 
         var launchWrapperEntry =
-            entries.First(x => x.Key.Equals($"launchwrapper-of-{launchWrapperVersion}.jar"));
+            entries.FirstOrDefault(x => x.Key.Equals($"launchwrapper-of-{launchWrapperVersion}.jar"));
 
         InvokeStatusChangedEvent("生成版本总成", 40);
 
@@ -81,7 +82,9 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
             {
                 new()
                 {
-                    Name = $"optifine:launchwrapper-of:{launchWrapperVersion}"
+                    Name = launchWrapperVersion == "1.12" ?
+                        "net.minecraft:launchwrapper:1.12" : 
+                        $"optifine:launchwrapper-of:{launchWrapperVersion}"
                 },
                 new()
                 {
@@ -108,7 +111,7 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
 
         var launchWrapperPath = Path.Combine(librariesPath,
             $"launchwrapper-of-{launchWrapperVersion}.jar");
-        if (!File.Exists(launchWrapperPath))
+        if (!File.Exists(launchWrapperPath) && launchWrapperEntry != default)
         {
             await using var launchWrapperFs = File.OpenWrite(launchWrapperPath);
             launchWrapperEntry.WriteTo(launchWrapperFs);
