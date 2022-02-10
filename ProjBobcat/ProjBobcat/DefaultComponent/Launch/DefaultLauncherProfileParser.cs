@@ -80,8 +80,8 @@ public sealed class DefaultLauncherProfileParser : LauncherParserBase, ILauncher
     public GameProfileModel GetGameProfile(string name)
     {
         var profile = LauncherProfile.Profiles.FirstOrDefault(
-                   p => p.Value.Name.Equals(name, StringComparison.Ordinal)).Value ??
-               throw new UnknownGameNameException(name);
+                          p => p.Value.Name.Equals(name, StringComparison.Ordinal)).Value ??
+                      throw new UnknownGameNameException(name);
 
         profile.Resolution ??= new ResolutionModel();
 

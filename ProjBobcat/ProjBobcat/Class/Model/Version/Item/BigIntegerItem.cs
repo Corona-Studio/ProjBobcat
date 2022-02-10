@@ -15,7 +15,7 @@ public class BigIntegerItem : IItem
     public int CompareTo(object obj)
     {
         if (obj is not IItem item) return BigInteger.Zero == _value ? 0 : 1; // 1.0 == 1, 1.1 > 1
-        
+
         return item switch
         {
             IntItem or LongItem => 1,

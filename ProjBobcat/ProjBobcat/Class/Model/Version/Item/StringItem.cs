@@ -48,7 +48,7 @@ public class StringItem : IItem
         if (obj is not IItem item)
             // 1-rc < 1, 1-ga > 1
             return ComparableQualifier(_value).CompareTo(ReleaseVersionIndex);
-        
+
         return item switch
         {
             IntItem or LongItem or BigIntegerItem => -1, // 1.any < 1.1 ?

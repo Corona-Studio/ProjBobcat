@@ -50,19 +50,20 @@ public class ComparableVersion : IComparable<ComparableVersion>
 {
     const int MaxIntItemLength = 9;
     const int MaxLongItemLength = 18;
-    
-    readonly ListItem _items = new ();
-    string _value;
+
+    readonly ListItem _items = new();
 
     string _canonical;
-    public string Canonical
-    {
-        get { return _canonical ??= _items.ToString(); }
-    }
+    string _value;
 
     public ComparableVersion(string version)
     {
         ParseVersion(version);
+    }
+
+    public string Canonical
+    {
+        get { return _canonical ??= _items.ToString(); }
     }
 
     public int CompareTo(ComparableVersion other)

@@ -23,7 +23,7 @@ public class ListItem : List<IItem>, IItem
 
             return 0;
         }
-        
+
         switch (item)
         {
             case IntItem:

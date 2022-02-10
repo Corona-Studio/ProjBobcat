@@ -14,7 +14,7 @@ public class LongItem : IItem
     public int CompareTo(object obj)
     {
         if (obj is not IItem item) return _value == 0 ? 0 : 1; // 1.0 == 1, 1.1 > 1
-        
+
         switch (item)
         {
             case IntItem:

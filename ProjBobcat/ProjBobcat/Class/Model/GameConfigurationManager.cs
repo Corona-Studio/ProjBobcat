@@ -11,22 +11,6 @@ public class GameConfigurationManager : IEnumerable<KeyValuePair<string, string>
 {
     readonly Dictionary<string, string> _configuration;
 
-    public string this[string key]
-    {
-        get => _configuration[key];
-        set => _configuration[key] = value;
-    }
-
-    public IEnumerator<KeyValuePair<string, string>> GetEnumerator()
-    {
-        return _configuration.GetEnumerator();
-    }
-
-    IEnumerator IEnumerable.GetEnumerator()
-    {
-        return _configuration.GetEnumerator();
-    }
-
     public GameConfigurationManager()
     {
         _configuration = new Dictionary<string, string>();
@@ -43,14 +27,27 @@ public class GameConfigurationManager : IEnumerable<KeyValuePair<string, string>
         _configuration = GetConfigurationDictionary(list);
     }
 
+    public string this[string key]
+    {
+        get => _configuration[key];
+        set => _configuration[key] = value;
+    }
+
+    public IEnumerator<KeyValuePair<string, string>> GetEnumerator()
+    {
+        return _configuration.GetEnumerator();
+    }
+
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return _configuration.GetEnumerator();
+    }
+
     public async Task SaveAsync(string path)
     {
         var sb = new StringBuilder();
 
-        foreach (var (key, value) in _configuration)
-        {
-            sb.AppendLine($"{key}:{value}");
-        }
+        foreach (var (key, value) in _configuration) sb.AppendLine($"{key}:{value}");
 
         await File.WriteAllTextAsync(path, sb.ToString());
     }
@@ -63,8 +60,8 @@ public class GameConfigurationManager : IEnumerable<KeyValuePair<string, string>
 
         foreach (var line in lines)
         {
-            if(string.IsNullOrWhiteSpace(line)) continue;
-            if(!line.Contains(':')) continue;
+            if (string.IsNullOrWhiteSpace(line)) continue;
+            if (!line.Contains(':')) continue;
 
             var arr = line.Split(':');
 

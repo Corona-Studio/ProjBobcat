@@ -82,9 +82,9 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
             {
                 new()
                 {
-                    Name = launchWrapperVersion == "1.12" ?
-                        "net.minecraft:launchwrapper:1.12" : 
-                        $"optifine:launchwrapper-of:{launchWrapperVersion}"
+                    Name = launchWrapperVersion == "1.12"
+                        ? "net.minecraft:launchwrapper:1.12"
+                        : $"optifine:launchwrapper-of:{launchWrapperVersion}"
                 },
                 new()
                 {
