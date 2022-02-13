@@ -88,10 +88,8 @@ public class CurseForgeInstaller : InstallerBase, ICurseForgeInstaller
         _totalDownloaded = 0;
         await DownloadHelper.AdvancedDownloadListFile(urlBags, new DownloadSettings
         {
-            CheckFile = true,
             DownloadParts = 4,
-            HashType = HashType.SHA1,
-            RetryCount = 3,
+            RetryCount = 5,
             Timeout = 5000
         });
 
