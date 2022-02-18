@@ -2,12 +2,13 @@
 
 public enum GameLogType
 {
+    All = 0,
+    Unknown,
+    Debug,
+    Info,
+    Warning,
     Fatal,
     Error,
-    Warning,
-    Info,
-    Debug,
-    ExceptionMessage,
     StackTrace,
-    Unknown
+    ExceptionMessage
 }
