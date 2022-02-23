@@ -85,7 +85,11 @@ public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
             var content = await sR.ReadToEndAsync();
 
             InvokeStatusChangedEvent("解析安装文档", 0.35);
+
             var profileModel = JsonConvert.DeserializeObject<LegacyForgeInstallProfile>(content);
+            if (profileModel == null)
+                throw new ArgumentNullException(nameof(profileModel));
+
             InvokeStatusChangedEvent("解析完成", 0.75);
 
             var id = string.IsNullOrEmpty(CustomId) ? profileModel.VersionInfo.Id : CustomId;
@@ -98,6 +102,8 @@ public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
                 forgeDi.Create();
 
             profileModel.VersionInfo.Id = id;
+            if (!string.IsNullOrEmpty(InheritsFrom))
+                profileModel.VersionInfo.InheritsFrom = InheritsFrom;
 
             var forgeLibrary = profileModel.VersionInfo.Libraries.First(l =>
                 l.Name.StartsWith("net.minecraftforge:forge", StringComparison.OrdinalIgnoreCase));

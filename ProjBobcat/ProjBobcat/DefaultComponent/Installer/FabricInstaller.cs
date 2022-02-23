@@ -63,7 +63,7 @@ public class FabricInstaller : InstallerBase, IFabricInstaller
         if (string.IsNullOrEmpty(mainClass))
             throw new NullReferenceException("MainClass 字段为空");
 
-        var inheritsFrom = mcVersion;
+        var inheritsFrom = string.IsNullOrEmpty(InheritsFrom) ? mcVersion : InheritsFrom;
 
         var installPath = Path.Combine(RootPath, GamePathHelper.GetGamePath(id));
         var di = new DirectoryInfo(installPath);
@@ -74,7 +74,6 @@ public class FabricInstaller : InstallerBase, IFabricInstaller
             DirectoryHelper.CleanDirectory(di.FullName);
 
         InvokeStatusChangedEvent("生成版本总成", 70);
-
 
         var resultModel = new RawVersionModel
         {

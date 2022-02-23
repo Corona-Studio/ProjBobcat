@@ -100,6 +100,8 @@ public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
         var id = string.IsNullOrEmpty(CustomId) ? versionJsonModel.Id : CustomId;
 
         versionJsonModel.Id = id;
+        if (!string.IsNullOrEmpty(InheritsFrom))
+            versionJsonModel.InheritsFrom = InheritsFrom;
 
         var jsonPath = GamePathHelper.GetGameJsonPath(RootPath, id);
         var jsonContent = JsonConvert.SerializeObject(versionJsonModel,

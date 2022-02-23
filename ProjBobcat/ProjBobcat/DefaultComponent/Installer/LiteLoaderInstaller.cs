@@ -83,7 +83,7 @@ public class LiteLoaderInstaller : InstallerBase, ILiteLoaderInstaller
             ReleaseTime = time,
             Libraries = libraries,
             MainClass = mainClass,
-            InheritsFrom = VersionModel.McVersion,
+            InheritsFrom = string.IsNullOrEmpty(InheritsFrom) ? VersionModel.McVersion : InheritsFrom,
             BuildType = VersionModel.Type,
             JarFile = InheritVersion.JarFile ?? InheritVersion.Id
         };

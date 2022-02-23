@@ -65,7 +65,7 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
         var versionModel = new RawVersionModel
         {
             Id = id,
-            InheritsFrom = mcVersion,
+            InheritsFrom = string.IsNullOrEmpty(InheritsFrom) ? mcVersion : InheritsFrom,
             Arguments = new Arguments
             {
                 Game = new List<object>
