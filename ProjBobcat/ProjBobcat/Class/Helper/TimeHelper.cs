@@ -17,15 +17,4 @@ public static class TimeHelper
         return TimeZoneInfo.ConvertTime(new DateTime(1970, 1, 1), TimeZoneInfo.Local)
             .AddSeconds(time);
     }
-
-    /// <summary>
-    ///     Unix11 时间戳（13位）转 DateTIme
-    /// </summary>
-    /// <param name="time"></param>
-    /// <returns></returns>
-    public static DateTime Unix13ToDateTime(long time)
-    {
-        return TimeZoneInfo.ConvertTime(new DateTime(1970, 1, 1), TimeZoneInfo.Local)
-            .AddMilliseconds(time);
-    }
 }

@@ -49,8 +49,6 @@ public class MicrosoftAuthenticator : IAuthenticator
 
     public string Email { get; set; }
     public Func<Task<(bool, GraphAuthResultModel)>> CacheTokenProvider { get; init; }
-
-    public Guid AccountId { get; set; }
     public ILauncherAccountParser LauncherAccountParser { get; set; }
 
     public AuthResultBase Auth(bool userField = false)
@@ -206,7 +204,6 @@ public class MicrosoftAuthenticator : IAuthenticator
         var uuid = Guid.NewGuid().ToString("N");
         var accountModel = new AccountModel
         {
-            Id = AccountId,
             AccessToken = mcRes.AccessToken,
             AccessTokenExpiresAt = DateTime.Now.AddSeconds(expiresIn > 0 ? expiresIn : mcRes.ExpiresIn),
             Avatar = profileRes.GetActiveSkin()?.Url,
@@ -244,6 +241,8 @@ public class MicrosoftAuthenticator : IAuthenticator
             Name = profileRes.Name,
             UUID = sPUuid
         };
+
+        accountModel.Id = sPUuid.ToGuid();
 
         if (!string.IsNullOrEmpty(idToken))
         {

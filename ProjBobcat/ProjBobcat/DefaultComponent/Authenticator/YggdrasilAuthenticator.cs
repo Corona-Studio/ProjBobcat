@@ -89,8 +89,6 @@ public class YggdrasilAuthenticator : IAuthenticator
     string SignOutAddress =>
         $"{AuthServer}{(string.IsNullOrEmpty(AuthServer) ? OfficialAuthServer : "/authserver")}/signout";
 
-    public Guid AccountId { get; set; }
-
     public ILauncherAccountParser LauncherAccountParser { get; set; }
 
     /// <summary>
@@ -191,7 +189,6 @@ public class YggdrasilAuthenticator : IAuthenticator
 
         var profile = new AccountModel
         {
-            Id = AccountId,
             AccessToken = result.AccessToken,
             AccessTokenExpiresAt = DateTime.Now.AddHours(48),
             EligibleForMigration = false,
@@ -206,11 +203,14 @@ public class YggdrasilAuthenticator : IAuthenticator
         };
 
         if (result.SelectedProfile != null)
+        {
+            profile.Id = result.SelectedProfile.UUID.ToGuid();
             profile.MinecraftProfile = new AccountProfileModel
             {
                 Id = result.SelectedProfile.UUID.ToString(),
                 Name = result.SelectedProfile.Name
             };
+        }
         /*
         else
         {
@@ -366,7 +366,6 @@ public class YggdrasilAuthenticator : IAuthenticator
 
                 var profile = new AccountModel
                 {
-                    Id = AccountId,
                     AccessToken = authResponse.AccessToken,
                     AccessTokenExpiresAt = DateTime.Now.AddHours(48),
                     EligibleForMigration = false,
@@ -381,11 +380,14 @@ public class YggdrasilAuthenticator : IAuthenticator
                 };
 
                 if (authResponse.SelectedProfile != null)
+                {
+                    profile.Id = authResponse.SelectedProfile.UUID.ToGuid();
                     profile.MinecraftProfile = new AccountProfileModel
                     {
                         Id = authResponse.SelectedProfile.UUID.ToString(),
                         Name = authResponse.SelectedProfile.Name
                     };
+                }
 
                 if (!LauncherAccountParser.AddNewAccount(rUuid, profile, out var id))
                     return new YggdrasilAuthResult

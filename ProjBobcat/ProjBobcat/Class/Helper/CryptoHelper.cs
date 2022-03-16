@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace ProjBobcat.Class.Helper;
@@ -13,6 +14,11 @@ public static class CryptoHelper
     public static string ToString(byte[] bytes)
     {
         return BitConverter.ToString(bytes).Replace("-", string.Empty);
+    }
+
+    public static string ComputeStringHash(string str, HashAlgorithm hashAlgorithm)
+    {
+        return ComputeByteHash(Encoding.UTF8.GetBytes(str), hashAlgorithm);
     }
 
     /// <summary>

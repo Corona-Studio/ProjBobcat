@@ -28,7 +28,6 @@ public static class GuidHelper
     /// </summary>
     /// <param name="username">玩家名。</param>
     /// <returns>生成结果。</returns>
-    [Obsolete("你不应该调用此方法！请使用 PlayerUUID 代替。", true)]
     public static Guid ToGuidHashAsName(this string username)
     {
         using var md5 = MD5.Create();

@@ -21,8 +21,6 @@ public class OfflineAuthenticator : IAuthenticator
     /// </summary>
     public string Username { get; init; }
 
-    public Guid AccountId { get; set; }
-
     /// <summary>
     ///     获取或设置启动程序配置文件分析器。
     /// </summary>
@@ -48,7 +46,7 @@ public class OfflineAuthenticator : IAuthenticator
         var localUuid = GuidHelper.NewGuidString();
         var accountModel = new AccountModel
         {
-            Id = AccountId,
+            Id = uuid.ToGuid(),
             AccessToken = GuidHelper.NewGuidString(),
             AccessTokenExpiresAt = DateTime.Now,
             EligibleForMigration = false,
