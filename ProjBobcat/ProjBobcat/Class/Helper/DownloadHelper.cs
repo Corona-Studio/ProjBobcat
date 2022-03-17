@@ -503,7 +503,10 @@ public static class DownloadHelper
             }
         }
 
-        downloadFile.OnCompleted(false, new AggregateException(exceptions), 0);
+        if(exceptions.Any())
+            downloadFile.OnCompleted(false, new AggregateException(exceptions), 0);
+        else
+            downloadFile.OnCompleted(true, null, 0);
     }
 
     #endregion
