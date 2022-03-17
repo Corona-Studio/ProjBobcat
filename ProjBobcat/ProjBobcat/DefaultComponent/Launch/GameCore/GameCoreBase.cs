@@ -15,7 +15,7 @@ public abstract class GameCoreBase : IGameCore
     static readonly object LaunchLogEventKey = new();
     bool disposedValue;
 
-    protected EventHandlerList listEventDelegates = new();
+    protected readonly EventHandlerList ListEventDelegates = new();
     public virtual string RootPath { get; set; }
     public virtual Guid ClientToken { get; set; }
     public virtual VersionLocatorBase VersionLocator { get; set; }
@@ -23,20 +23,20 @@ public abstract class GameCoreBase : IGameCore
 
     public event EventHandler<GameExitEventArgs> GameExitEventDelegate
     {
-        add => listEventDelegates.AddHandler(GameExitEventKey, value);
-        remove => listEventDelegates.RemoveHandler(GameExitEventKey, value);
+        add => ListEventDelegates.AddHandler(GameExitEventKey, value);
+        remove => ListEventDelegates.RemoveHandler(GameExitEventKey, value);
     }
 
     public event EventHandler<GameLogEventArgs> GameLogEventDelegate
     {
-        add => listEventDelegates.AddHandler(GameLogEventKey, value);
-        remove => listEventDelegates.RemoveHandler(GameLogEventKey, value);
+        add => ListEventDelegates.AddHandler(GameLogEventKey, value);
+        remove => ListEventDelegates.RemoveHandler(GameLogEventKey, value);
     }
 
     public event EventHandler<LaunchLogEventArgs> LaunchLogEventDelegate
     {
-        add => listEventDelegates.AddHandler(LaunchLogEventKey, value);
-        remove => listEventDelegates.RemoveHandler(LaunchLogEventKey, value);
+        add => ListEventDelegates.AddHandler(LaunchLogEventKey, value);
+        remove => ListEventDelegates.RemoveHandler(LaunchLogEventKey, value);
     }
 
     /// <summary>
@@ -72,21 +72,21 @@ public abstract class GameCoreBase : IGameCore
 
     public virtual void OnGameExit(object sender, GameExitEventArgs e)
     {
-        var eventList = listEventDelegates;
+        var eventList = ListEventDelegates;
         var @event = (EventHandler<GameExitEventArgs>) eventList[GameExitEventKey]!;
         @event?.Invoke(sender, e);
     }
 
     public virtual void OnLogGameData(object sender, GameLogEventArgs e)
     {
-        var eventList = listEventDelegates;
+        var eventList = ListEventDelegates;
         var @event = (EventHandler<GameLogEventArgs>) eventList[GameLogEventKey]!;
         @event?.Invoke(sender, e);
     }
 
     public virtual void OnLogLaunchData(object sender, LaunchLogEventArgs e)
     {
-        var eventList = listEventDelegates;
+        var eventList = ListEventDelegates;
         var @event = (EventHandler<LaunchLogEventArgs>) eventList[LaunchLogEventKey]!;
         @event?.Invoke(sender, e);
     }
@@ -95,7 +95,7 @@ public abstract class GameCoreBase : IGameCore
     {
         if (!disposedValue)
         {
-            if (disposing) listEventDelegates.Dispose();
+            if (disposing) ListEventDelegates.Dispose();
 
             // TODO: 释放未托管的资源(未托管的对象)并重写终结器
             // TODO: 将大型字段设置为 null

@@ -47,10 +47,6 @@ public class LibraryInfoResolver : ResolverBase
 
         var libResolveActionBlock = new ActionBlock<FileInfo>(async lib =>
         {
-#pragma warning disable CA5350 // 不要使用弱加密算法
-            using var hA = SHA1.Create();
-#pragma warning restore CA5350 // 不要使用弱加密算法
-
             var libPath = GamePathHelper.GetLibraryPath(lib.Path.Replace('/', '\\'));
             var filePath = Path.Combine(BasePath, libPath);
 
@@ -63,7 +59,7 @@ public class LibraryInfoResolver : ResolverBase
             {
                 if (string.IsNullOrEmpty(lib.Sha1)) return;
 
-                var computedHash = await CryptoHelper.ComputeFileHashAsync(filePath, hA);
+                var computedHash = CryptoHelper.ToString(SHA1.HashData(await File.ReadAllBytesAsync(filePath)));
 
                 if (computedHash.Equals(lib.Sha1, StringComparison.OrdinalIgnoreCase)) return;
             }
@@ -84,18 +80,6 @@ public class LibraryInfoResolver : ResolverBase
         await libResolveActionBlock.Completion;
         libResolveActionBlock.Complete();
 
-        /*
-        Parallel.ForEach(VersionInfo.Libraries,
-            new ParallelOptions
-            {
-                MaxDegreeOfParallelism = MaxDegreeOfParallelism
-            },
-            async lib =>
-            {
-                
-            });
-        */
-
         checkedLib = 0;
         libCount = VersionInfo.Natives.Count;
 
@@ -105,10 +89,6 @@ public class LibraryInfoResolver : ResolverBase
 
         var nativeResolveActionBlock = new ActionBlock<NativeFileInfo>(async native =>
         {
-#pragma warning disable CA5350 // 不要使用弱加密算法
-            using var hA = SHA1.Create();
-#pragma warning restore CA5350 // 不要使用弱加密算法
-
             var nativePath = GamePathHelper.GetLibraryPath(native.FileInfo.Path.Replace('/', '\\'));
             var filePath = Path.Combine(BasePath, nativePath);
 
@@ -120,7 +100,8 @@ public class LibraryInfoResolver : ResolverBase
                 var progress = (double) checkedLib / libCount * 100;
                 OnResolve(string.Empty, progress);
 
-                var computedHash = await CryptoHelper.ComputeFileHashAsync(filePath, hA);
+                var computedHash = CryptoHelper.ToString(SHA1.HashData(await File.ReadAllBytesAsync(filePath)));
+
                 if (computedHash.Equals(native.FileInfo.Sha1, StringComparison.OrdinalIgnoreCase)) return;
             }
 
