@@ -310,6 +310,22 @@ public class DefaultGameCore : GameCoreBase
             launchWrapper.Do();
             InvokeLaunchLogThenStart("启动游戏", ref prevSpan, ref stopwatch);
 
+            if (launchWrapper.Process == null)
+            {
+                OnGameExit(launchWrapper, new GameExitEventArgs
+                {
+                    Exception = null,
+                    ExitCode = -1
+                });
+
+                return new LaunchResult
+                {
+                    RunTime = stopwatch.Elapsed,
+                    GameProcess = launchWrapper.Process,
+                    LaunchSettings = settings
+                };
+            }
+
             //绑定游戏退出事件。
             //Bind the exit event.
 #pragma warning disable CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
@@ -322,13 +338,17 @@ public class DefaultGameCore : GameCoreBase
                         ExitCode = launchWrapper.ExitCode
                     });
                 });
-
+            
             if (!string.IsNullOrEmpty(settings.WindowTitle))
                 Task.Run(() =>
                 {
-                    while (string.IsNullOrEmpty(launchWrapper.Process.MainWindowTitle))
+                    do
+                    {
+                        if (launchWrapper.Process == null) break;
+
                         _ = NativeMethods.SetWindowText(launchWrapper.Process.MainWindowHandle,
                             settings.WindowTitle);
+                    } while (string.IsNullOrEmpty(launchWrapper.Process?.MainWindowTitle));
                 });
 #pragma warning restore CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
 

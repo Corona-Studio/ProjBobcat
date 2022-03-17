@@ -42,7 +42,7 @@ public class LaunchWrapper : IDisposable
     /// <summary>
     ///     游戏进程
     /// </summary>
-    public Process Process { get; init; }
+    public Process? Process { get; init; }
 
     // // TODO: 仅当“Dispose(bool disposing)”拥有用于释放未托管资源的代码时才替代终结器
     // ~LaunchWrapper()
@@ -63,6 +63,8 @@ public class LaunchWrapper : IDisposable
     /// </summary>
     public void Do()
     {
+        if (Process == null) return;
+
         Process.BeginOutputReadLine();
         Process.OutputDataReceived += ProcessOnOutputDataReceived;
         Process.BeginErrorReadLine();
@@ -72,6 +74,8 @@ public class LaunchWrapper : IDisposable
 
     void DisposeManaged()
     {
+        if (Process == null) return;
+
         Process.OutputDataReceived -= ProcessOnOutputDataReceived;
         Process.ErrorDataReceived -= ProcessOnErrorDataReceived;
         Process.Exited -= ProcessOnExited;
@@ -81,7 +85,7 @@ public class LaunchWrapper : IDisposable
     {
         try
         {
-            ExitCode = Process.ExitCode;
+            ExitCode = Process?.ExitCode ?? -1;
         }
         catch (InvalidOperationException)
         {
