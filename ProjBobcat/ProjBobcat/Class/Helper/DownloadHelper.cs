@@ -257,15 +257,20 @@ public static class DownloadHelper
 
                 headRes.EnsureSuccessStatusCode();
 
+                var responseLength = headRes.Content.Headers.ContentLength ?? 0;
                 var hasAcceptRanges = headRes.Headers.AcceptRanges.Any();
-                var hasRightStatusCode = headRes.StatusCode == HttpStatusCode.PartialContent;
-                var responseLength = headRes.Content.Headers.ContentRange?.Length ?? 0;
-                var contentLength = headRes.Content.Headers.ContentLength ?? 0;
+
+                using var rangeGetMessage = new HttpRequestMessage(HttpMethod.Get, new Uri(downloadFile.DownloadUri));
+                rangeGetMessage.Headers.Range = new RangeHeaderValue(0, 0);
+
+                using var rangeGetRes = await HeadClient.SendAsync(rangeGetMessage, cts.Token);
+
                 var parallelDownloadSupported =
+                    responseLength != 0 &&
                     hasAcceptRanges &&
-                    hasRightStatusCode &&
-                    contentLength == 2 &&
-                    responseLength != 0;
+                    rangeGetRes.StatusCode == HttpStatusCode.PartialContent &&
+                    rangeGetRes.Content.Headers.ContentRange.HasRange &&
+                    rangeGetRes.Content.Headers.ContentLength == 1;
 
                 if (!parallelDownloadSupported)
                 {
@@ -453,8 +458,6 @@ public static class DownloadHelper
                             var partBytes = ms.ToArray();
                             hash.TransformBlock(partBytes, 0, partBytes.Length, partBytes, 0);
                         }
-
-                        File.Delete(inputFilePath.TempFileName);
                     }
 
                     hash.TransformFinalBlock(Array.Empty<byte>(), 0, 0);
