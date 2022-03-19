@@ -53,7 +53,7 @@ public static class DownloadHelper
     ///     下载文件方法（自动确定是否使用分片下载）
     /// </summary>
     /// <param name="fileEnumerable">文件列表</param>
-    /// <param name="downloadParts"></param>
+    /// <param name="downloadSettings"></param>
     public static async Task AdvancedDownloadListFile(IEnumerable<DownloadFile> fileEnumerable,
         DownloadSettings downloadSettings)
     {
@@ -106,7 +106,7 @@ public static class DownloadHelper
 
         for (var i = 0; i <= downloadSettings.RetryCount; i++)
         {
-            using var cts = new CancellationTokenSource(downloadSettings.Timeout);
+            using var cts = new CancellationTokenSource(downloadSettings.Timeout * Math.Max(1, i + 1));
 
             try
             {
@@ -183,7 +183,7 @@ public static class DownloadHelper
             }
             catch (Exception e)
             {
-                await Task.Delay(500);
+                await Task.Delay(500, cts.Token);
 
                 downloadFile.RetryCount++;
                 exceptions.Add(e);
@@ -223,9 +223,7 @@ public static class DownloadHelper
     ///     分片下载方法（异步）
     /// </summary>
     /// <param name="downloadFile"></param>
-    /// <param name="retryCount"></param>
-    /// <param name="checkFile"></param>
-    /// <param name="numberOfParts"></param>
+    /// <param name="downloadSettings"></param>
     /// <returns></returns>
     public static async Task MultiPartDownloadTaskAsync(DownloadFile downloadFile, DownloadSettings downloadSettings)
     {
@@ -242,7 +240,7 @@ public static class DownloadHelper
 
         for (var r = 0; r <= downloadSettings.RetryCount; r++)
         {
-            using var cts = new CancellationTokenSource(timeout);
+            using var cts = new CancellationTokenSource(timeout * Math.Max(1, r + 1));
 
             try
             {
@@ -343,9 +341,10 @@ public static class DownloadHelper
 
                             request.Headers.Range = new RangeHeaderValue(p.Start, p.End);
 
-                            var downloadTask = MultiPartClient.SendAsync(request,
+                            var downloadTask = MultiPartClient.SendAsync(
+                                request,
                                 HttpCompletionOption.ResponseHeadersRead,
-                                CancellationToken.None);
+                                cts.Token);
 
                             doneRanges.Add(p);
 

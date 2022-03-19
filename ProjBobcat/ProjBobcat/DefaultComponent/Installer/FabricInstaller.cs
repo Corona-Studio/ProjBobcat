@@ -27,7 +27,7 @@ public class FabricInstaller : InstallerBase, IFabricInstaller
         InvokeStatusChangedEvent("开始安装", 0);
 
         var mcVersion = LoaderArtifact.Intermediary.Version;
-        var id = $"{mcVersion}-fabric{LoaderArtifact.Loader.Version}";
+        var id = CustomId ?? $"{mcVersion}-fabric{LoaderArtifact.Loader.Version}";
         var rawVersion = VersionLocator.GetGame(mcVersion);
         if (rawVersion == null)
             throw new UnknownGameNameException(mcVersion);
