@@ -59,7 +59,8 @@ public class LibraryInfoResolver : ResolverBase
             {
                 if (string.IsNullOrEmpty(lib.Sha1)) return;
 
-                var computedHash = CryptoHelper.ToString(SHA1.HashData(await File.ReadAllBytesAsync(filePath)));
+                var bytes = await File.ReadAllBytesAsync(filePath);
+                var computedHash = CryptoHelper.ToString(SHA1.HashData(bytes.AsSpan()));
 
                 if (computedHash.Equals(lib.Sha1, StringComparison.OrdinalIgnoreCase)) return;
             }
