@@ -502,7 +502,7 @@ public static class DownloadHelper
             }
         }
 
-        if(exceptions.Any())
+        if (exceptions.Any())
             downloadFile.OnCompleted(false, new AggregateException(exceptions), 0);
         else
             downloadFile.OnCompleted(true, null, 0);

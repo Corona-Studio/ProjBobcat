@@ -338,7 +338,7 @@ public class DefaultGameCore : GameCoreBase
                         ExitCode = launchWrapper.ExitCode
                     });
                 });
-            
+
             if (!string.IsNullOrEmpty(settings.WindowTitle))
                 Task.Run(() =>
                 {

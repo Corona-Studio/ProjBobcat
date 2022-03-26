@@ -14,10 +14,7 @@ public class ModrinthSearchOptions
         var sb = new StringBuilder($"?query={Name ?? "any"}&index={Index}&facets=[");
         var projType = $"[\"project_type:{ProjectType}\"]";
 
-        if (!string.IsNullOrEmpty(Category))
-        {
-            sb.Append($"[\"categories:{Category}\"],");
-        }
+        if (!string.IsNullOrEmpty(Category)) sb.Append($"[\"categories:{Category}\"],");
 
         sb.Append(projType);
         sb.Append(']');

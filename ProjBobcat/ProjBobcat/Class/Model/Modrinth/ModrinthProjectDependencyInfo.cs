@@ -5,9 +5,7 @@ namespace ProjBobcat.Class.Model.Modrinth;
 
 public class ModrinthProjectDependencyInfo
 {
-    [JsonProperty("projects")]
-    public List<ModrinthProjectInfo> Projects { get; set; }
+    [JsonProperty("projects")] public List<ModrinthProjectInfo> Projects { get; set; }
 
-    [JsonProperty("versions")]
-    public List<ModrinthVersionInfo> Versions { get; set; }
+    [JsonProperty("versions")] public List<ModrinthVersionInfo> Versions { get; set; }
 }

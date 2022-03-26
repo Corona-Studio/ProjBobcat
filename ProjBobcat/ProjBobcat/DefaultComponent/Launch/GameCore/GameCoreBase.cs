@@ -13,9 +13,9 @@ public abstract class GameCoreBase : IGameCore
     static readonly object GameExitEventKey = new();
     static readonly object GameLogEventKey = new();
     static readonly object LaunchLogEventKey = new();
-    bool disposedValue;
 
     protected readonly EventHandlerList ListEventDelegates = new();
+    bool disposedValue;
     public virtual string RootPath { get; set; }
     public virtual Guid ClientToken { get; set; }
     public virtual VersionLocatorBase VersionLocator { get; set; }

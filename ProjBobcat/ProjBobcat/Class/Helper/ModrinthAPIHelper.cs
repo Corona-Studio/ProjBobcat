@@ -1,8 +1,8 @@
-﻿using Newtonsoft.Json;
-using ProjBobcat.Class.Model.Modrinth;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+using ProjBobcat.Class.Model.Modrinth;
 
 namespace ProjBobcat.Class.Helper;
 
@@ -27,9 +27,7 @@ public static class ModrinthAPIHelper
         var resContent = await Get(reqUrl);
         var resModel = JsonConvert.DeserializeObject<List<ModrinthCategoryInfo>>(resContent);
 
-        return resModel == null ? 
-            new List<string>() : 
-            resModel.Select(c => c.Name).ToList();
+        return resModel == null ? new List<string>() : resModel.Select(c => c.Name).ToList();
     }
 
     public static async Task<ModrinthProjectDependencyInfo> GetProjectDependenciesInfo(string projectId)
