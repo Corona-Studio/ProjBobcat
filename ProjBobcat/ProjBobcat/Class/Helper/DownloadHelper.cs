@@ -236,6 +236,7 @@ public static class DownloadHelper
         var filePath = Path.Combine(downloadFile.DownloadPath, downloadFile.FileName);
         var timeout = TimeSpan.FromMilliseconds(downloadSettings.Timeout * 2);
 
+        var isLatestFileCheckSucceeded = true;
         List<DownloadRange> readRanges = null;
 
         for (var r = 0; r <= downloadSettings.RetryCount; r++)
@@ -425,13 +426,14 @@ public static class DownloadHelper
 
                 if (!doneRanges.IsEmpty)
                 {
-                    var ex = new AggregateException(new Exception("没有完全下载所有的分片"));
+                    // var ex = new AggregateException(new Exception("没有完全下载所有的分片"));
 
                     downloadFile.RetryCount++;
-                    downloadFile.OnCompleted(false, ex, aSpeed);
 
-                    if (File.Exists(filePath))
-                        File.Delete(filePath);
+                    // downloadFile.OnCompleted(false, ex, aSpeed);
+
+                    // if (File.Exists(filePath))
+                    //    File.Delete(filePath);
 
                     continue;
                 }
@@ -469,18 +471,20 @@ public static class DownloadHelper
                         if (!checkResult)
                         {
                             downloadFile.RetryCount++;
+                            isLatestFileCheckSucceeded = false;
                             continue;
                         }
+
+                        isLatestFileCheckSucceeded = true;
                     }
                 }
 
-                downloadFile.OnCompleted(true, null, aSpeed);
-
                 streamBlock.Complete();
                 writeActionBlock.Complete();
-
+                
                 #endregion
 
+                downloadFile.OnCompleted(true, null, aSpeed);
                 return;
             }
             catch (Exception ex)
@@ -503,9 +507,18 @@ public static class DownloadHelper
         }
 
         if (exceptions.Any())
+        {
             downloadFile.OnCompleted(false, new AggregateException(exceptions), 0);
-        else
-            downloadFile.OnCompleted(true, null, 0);
+            return;
+        }
+
+        if (!isLatestFileCheckSucceeded)
+        {
+            downloadFile.OnCompleted(false, null, 0);
+            return;
+        }
+
+        downloadFile.OnCompleted(true, null, 0);
     }
 
     #endregion
