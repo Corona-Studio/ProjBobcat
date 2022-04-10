@@ -15,7 +15,7 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageIcon>Bobcat.png</PackageIcon>
     <RepositoryUrl>https://github.com/Corona-Studio/ProjBobcat</RepositoryUrl>
-    <Version>1.10.0</Version>
+    <Version>1.12.0</Version>
     <Authors>Corona Studio</Authors>
     <Company>Corona Studio</Company>
     <Product>ProjBobcat</Product>
