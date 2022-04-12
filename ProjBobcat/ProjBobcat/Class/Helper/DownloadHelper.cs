@@ -99,8 +99,10 @@ public static class DownloadHelper
     /// <param name="downloadFile"></param>
     /// <param name="downloadSettings"></param>
     /// <returns></returns>
-    public static async Task DownloadData(DownloadFile downloadFile, DownloadSettings downloadSettings)
+    public static async Task DownloadData(DownloadFile downloadFile, DownloadSettings? downloadSettings = null)
     {
+        downloadSettings ??= DownloadSettings.Default;
+
         var filePath = Path.Combine(downloadFile.DownloadPath, downloadFile.FileName);
         var exceptions = new List<Exception>();
 
@@ -137,7 +139,7 @@ public static class DownloadHelper
                 while (true)
                 {
                     sw.Restart();
-                    var bytesRead = await stream.ReadAsync(buffer.AsMemory(), cts.Token);
+                    var bytesRead = await stream.ReadAsync(buffer, cts.Token);
                     sw.Stop();
 
                     if (bytesRead == 0) break;
@@ -225,9 +227,11 @@ public static class DownloadHelper
     /// <param name="downloadFile"></param>
     /// <param name="downloadSettings"></param>
     /// <returns></returns>
-    public static async Task MultiPartDownloadTaskAsync(DownloadFile downloadFile, DownloadSettings downloadSettings)
+    public static async Task MultiPartDownloadTaskAsync(DownloadFile downloadFile, DownloadSettings? downloadSettings = null)
     {
         if (downloadFile == null) return;
+
+        downloadSettings ??= DownloadSettings.Default;
 
         if (downloadSettings.DownloadParts <= 0)
             downloadSettings.DownloadParts = Environment.ProcessorCount;
@@ -333,8 +337,8 @@ public static class DownloadHelper
                 var doneRanges = new ConcurrentBag<DownloadRange>();
 
                 var streamBlock =
-                    new TransformBlock<DownloadRange, (Task<HttpResponseMessage>, DownloadRange)>(
-                        p =>
+                    new TransformBlock<DownloadRange, (HttpResponseMessage, DownloadRange)>(
+                        async p =>
                         {
                             using var request = new HttpRequestMessage {RequestUri = new Uri(downloadFile.DownloadUri)};
                             if (!string.IsNullOrEmpty(downloadFile.Host))
@@ -342,12 +346,10 @@ public static class DownloadHelper
 
                             request.Headers.Range = new RangeHeaderValue(p.Start, p.End);
 
-                            var downloadTask = MultiPartClient.SendAsync(
+                            var downloadTask = await MultiPartClient.SendAsync(
                                 request,
                                 HttpCompletionOption.ResponseHeadersRead,
                                 cts.Token);
-
-                            doneRanges.Add(p);
 
                             return (downloadTask, p);
                         }, new ExecutionDataflowBlockOptions
@@ -359,10 +361,10 @@ public static class DownloadHelper
                 var tSpeed = 0D;
                 var cSpeed = 0;
 
-                var writeActionBlock = new ActionBlock<(Task<HttpResponseMessage>, DownloadRange)>(async t =>
+                var writeActionBlock = new ActionBlock<(HttpResponseMessage, DownloadRange)>(async t =>
                 {
-                    using var res = await t.Item1;
-
+                    using var res = t.Item1;
+                    
                     await using (var stream = await res.Content.ReadAsStreamAsync(cts.Token))
                     {
                         await using var fileToWriteTo = File.Open(t.Item2.TempFileName, FileMode.Create,
@@ -373,7 +375,7 @@ public static class DownloadHelper
                         while (true)
                         {
                             sw.Restart();
-                            var bytesRead = await stream.ReadAsync(buffer.AsMemory(0, BufferSize), cts.Token);
+                            var bytesRead = await stream.ReadAsync(buffer, cts.Token);
                             sw.Stop();
 
                             if (bytesRead == 0)
@@ -400,7 +402,7 @@ public static class DownloadHelper
                     }
 
                     Interlocked.Add(ref tasksDone, 1);
-                    doneRanges.TryTake(out _);
+                    doneRanges.Add(t.Item2);
                 }, new ExecutionDataflowBlockOptions
                 {
                     BoundedCapacity = downloadSettings.DownloadParts,
@@ -424,59 +426,40 @@ public static class DownloadHelper
 
                 var aSpeed = tSpeed / cSpeed;
 
-                if (!doneRanges.IsEmpty)
+                if (doneRanges.Count != readRanges.Count)
                 {
-                    // var ex = new AggregateException(new Exception("没有完全下载所有的分片"));
-
                     downloadFile.RetryCount++;
-
-                    // downloadFile.OnCompleted(false, ex, aSpeed);
-
-                    // if (File.Exists(filePath))
-                    //    File.Delete(filePath);
 
                     continue;
                 }
 
-                await using (var outputStream = File.Open(filePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+                await using (var outputStream = File.Open(filePath, FileMode.Create, FileAccess.ReadWrite, FileShare.Read))
                 {
-                    using var hash = downloadSettings.GetHashAlgorithm();
-
                     foreach (var inputFilePath in readRanges)
                     {
-                        await using var ms = new MemoryStream();
-
                         await using var inputStream = File.Open(inputFilePath.TempFileName, FileMode.Open,
                             FileAccess.Read,
                             FileShare.Read);
                         outputStream.Seek(inputFilePath.Start, SeekOrigin.Begin);
-
+                        
                         await inputStream.CopyToAsync(outputStream, cts.Token);
-                        await inputStream.CopyToAsync(ms, cts.Token);
-
-                        if (downloadSettings.CheckFile)
-                        {
-                            var partBytes = ms.ToArray();
-                            hash.TransformBlock(partBytes, 0, partBytes.Length, partBytes, 0);
-                        }
                     }
+                }
+                
+                if (downloadSettings.CheckFile && !string.IsNullOrEmpty(downloadFile.CheckSum))
+                {
+                    using var hash = downloadSettings.GetHashAlgorithm();
 
-                    hash.TransformFinalBlock(Array.Empty<byte>(), 0, 0);
+                    var checkSum = CryptoHelper.ToString(await hash.ComputeHashAsync(File.OpenRead(filePath), cts.Token));
 
-                    if (downloadSettings.CheckFile && !string.IsNullOrEmpty(downloadFile.CheckSum))
+                    if (!checkSum.Equals(downloadFile.CheckSum, StringComparison.OrdinalIgnoreCase))
                     {
-                        var checkResult = CryptoHelper.ToString(hash.Hash)
-                            .Equals(downloadFile.CheckSum, StringComparison.OrdinalIgnoreCase);
-
-                        if (!checkResult)
-                        {
-                            downloadFile.RetryCount++;
-                            isLatestFileCheckSucceeded = false;
-                            continue;
-                        }
-
-                        isLatestFileCheckSucceeded = true;
+                        downloadFile.RetryCount++;
+                        isLatestFileCheckSucceeded = false;
+                        continue;
                     }
+
+                    isLatestFileCheckSucceeded = true;
                 }
 
                 streamBlock.Complete();

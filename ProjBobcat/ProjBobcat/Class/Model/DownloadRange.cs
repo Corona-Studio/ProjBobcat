@@ -19,4 +19,9 @@ public class DownloadRange
     ///     临时文件名称
     /// </summary>
     public string TempFileName { get; set; }
+
+    public override string ToString()
+    {
+        return $"[{Start}-{End}]";
+    }
 }

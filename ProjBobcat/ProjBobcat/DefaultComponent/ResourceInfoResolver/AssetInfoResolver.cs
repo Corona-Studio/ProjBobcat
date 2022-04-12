@@ -93,7 +93,7 @@ public class AssetInfoResolver : ResolverBase
 
             try
             {
-                await DownloadHelper.DownloadData(dp, DownloadSettings.Default);
+                await DownloadHelper.DownloadData(dp);
             }
             catch (Exception e)
             {
