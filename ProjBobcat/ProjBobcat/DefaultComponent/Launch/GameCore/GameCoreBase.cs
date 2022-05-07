@@ -73,21 +73,21 @@ public abstract class GameCoreBase : IGameCore
     public virtual void OnGameExit(object sender, GameExitEventArgs e)
     {
         var eventList = ListEventDelegates;
-        var @event = (EventHandler<GameExitEventArgs>) eventList[GameExitEventKey]!;
+        var @event = (EventHandler<GameExitEventArgs>)eventList[GameExitEventKey]!;
         @event?.Invoke(sender, e);
     }
 
     public virtual void OnLogGameData(object sender, GameLogEventArgs e)
     {
         var eventList = ListEventDelegates;
-        var @event = (EventHandler<GameLogEventArgs>) eventList[GameLogEventKey]!;
+        var @event = (EventHandler<GameLogEventArgs>)eventList[GameLogEventKey]!;
         @event?.Invoke(sender, e);
     }
 
     public virtual void OnLogLaunchData(object sender, LaunchLogEventArgs e)
     {
         var eventList = ListEventDelegates;
-        var @event = (EventHandler<LaunchLogEventArgs>) eventList[LaunchLogEventKey]!;
+        var @event = (EventHandler<LaunchLogEventArgs>)eventList[LaunchLogEventKey]!;
         @event?.Invoke(sender, e);
     }
 

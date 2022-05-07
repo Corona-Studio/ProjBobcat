@@ -18,10 +18,10 @@ public class StringItem : IItem
 
     static readonly Dictionary<string, string> Aliases = new()
     {
-        {"ga", string.Empty},
-        {"final", string.Empty},
-        {"release", string.Empty},
-        {"cr", "rc"}
+        { "ga", string.Empty },
+        { "final", string.Empty },
+        { "release", string.Empty },
+        { "cr", "rc" }
     };
 
     static readonly string ReleaseVersionIndex = Qualifiers.IndexOf(string.Empty).ToString();

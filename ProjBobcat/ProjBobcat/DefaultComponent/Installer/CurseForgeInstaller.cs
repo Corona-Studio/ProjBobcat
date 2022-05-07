@@ -68,7 +68,7 @@ public class CurseForgeInstaller : InstallerBase, ICurseForgeInstaller
 
             _totalDownloaded++;
 
-            var progress = (double) _totalDownloaded / _needToDownload * 100;
+            var progress = (double)_totalDownloaded / _needToDownload * 100;
 
             InvokeStatusChangedEvent($"成功解析 MOD [{t.Item1}] 的下载地址",
                 progress);
@@ -78,7 +78,7 @@ public class CurseForgeInstaller : InstallerBase, ICurseForgeInstaller
             MaxDegreeOfParallelism = 32
         });
 
-        var linkOptions = new DataflowLinkOptions {PropagateCompletion = true};
+        var linkOptions = new DataflowLinkOptions { PropagateCompletion = true };
         urlBlock.LinkTo(actionBlock, linkOptions);
         urlBlock.Post(manifest.Files);
         urlBlock.Complete();
@@ -125,7 +125,7 @@ public class CurseForgeInstaller : InstallerBase, ICurseForgeInstaller
                 ? $"...{subPath[(subPathLength - 15)..]}"
                 : subPath;
 
-            InvokeStatusChangedEvent($"解压缩安装文件：{subPathName}", (double) _totalDownloaded / _needToDownload * 100);
+            InvokeStatusChangedEvent($"解压缩安装文件：{subPathName}", (double)_totalDownloaded / _needToDownload * 100);
 
             await using var fs = File.OpenWrite(path);
             entry.WriteTo(fs);
@@ -160,7 +160,7 @@ public class CurseForgeInstaller : InstallerBase, ICurseForgeInstaller
 
         _totalDownloaded++;
 
-        var progress = (double) _totalDownloaded / _needToDownload * 100;
+        var progress = (double)_totalDownloaded / _needToDownload * 100;
         var retryStr = file.RetryCount > 0 ? $"[重试 - {file.RetryCount}] " : string.Empty;
         var fileName = file.FileName.Length > 20
             ? $"{file.FileName[..20]}..."

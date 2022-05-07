@@ -49,7 +49,7 @@ public class FabricInstaller : InstallerBase, IFabricInstaller
         libraries.AddRange(LoaderArtifact.LauncherMeta.Libraries.Common);
         libraries.AddRange(LoaderArtifact.LauncherMeta.Libraries.Client);
 
-        var mainClassJObject = (JObject) LoaderArtifact.LauncherMeta.MainClass;
+        var mainClassJObject = (JObject)LoaderArtifact.LauncherMeta.MainClass;
         var mainClass = mainClassJObject.Type switch
         {
             JTokenType.String => mainClassJObject.ToObject<string>(),

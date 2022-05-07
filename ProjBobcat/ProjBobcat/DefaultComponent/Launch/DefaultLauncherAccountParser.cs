@@ -94,7 +94,7 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
         */
         {
             var findResult = Find(account.Id);
-            if (findResult is {Key: { }, Value: { }})
+            if (findResult is { Key: { }, Value: { } })
             {
                 newId = account.Id;
                 LauncherAccount.Accounts[findResult.Value.Key] = account;

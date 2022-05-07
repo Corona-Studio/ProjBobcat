@@ -51,7 +51,7 @@ public static class SystemInfoHelper
         var basePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             ".minecraft", "runtime");
 
-        var paths = new[] {"java-runtime-alpha", "java-runtime-beta", "jre-legacy"};
+        var paths = new[] { "java-runtime-alpha", "java-runtime-beta", "jre-legacy" };
 
         return paths.Select(path => Path.Combine(basePath, path, "bin", "javaw.exe"))
             .Where(File.Exists);

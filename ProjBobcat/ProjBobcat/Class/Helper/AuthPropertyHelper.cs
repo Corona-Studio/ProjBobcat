@@ -24,7 +24,7 @@ public static class AuthPropertyHelper
         var keyValues = properties
             .ToDictionary(
                 item => item.Name,
-                item => new[] {item.Value});
+                item => new[] { item.Value });
 
         return JsonConvert.SerializeObject(keyValues);
     }

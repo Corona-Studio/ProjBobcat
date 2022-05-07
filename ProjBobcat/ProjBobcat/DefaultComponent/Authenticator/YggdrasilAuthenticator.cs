@@ -171,7 +171,7 @@ public class YggdrasilAuthenticator : IAuthenticator
             };
 
         var profiles = result.AvailableProfiles.ToDictionary(profile => profile.UUID,
-            profile => new AuthProfileModel {DisplayName = profile.Name});
+            profile => new AuthProfileModel { DisplayName = profile.Name });
 
         foreach (var (playerUuid, authProfileModel) in profiles)
         {
@@ -352,7 +352,7 @@ public class YggdrasilAuthenticator : IAuthenticator
                     };
 
                 var profiles = authResponse.AvailableProfiles.ToDictionary(profile => profile.UUID,
-                    profile => new AuthProfileModel {DisplayName = profile.Name});
+                    profile => new AuthProfileModel { DisplayName = profile.Name });
 
                 var uuid = authResponse.User.UUID.ToString();
                 var (_, value) = LauncherAccountParser.LauncherAccount.Accounts.FirstOrDefault(a =>

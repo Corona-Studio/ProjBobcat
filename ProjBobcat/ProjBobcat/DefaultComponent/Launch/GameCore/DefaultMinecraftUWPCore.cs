@@ -16,7 +16,7 @@ public class DefaultMineCraftUWPCore : GameCoreBase
         if (!SystemInfoHelper.IsMinecraftUWPInstalled()) throw new InvalidOperationException();
 
         using var process = new Process
-            {StartInfo = new ProcessStartInfo {UseShellExecute = true, FileName = "minecraft:"}};
+            { StartInfo = new ProcessStartInfo { UseShellExecute = true, FileName = "minecraft:" } };
         process.Start();
 
         return default;

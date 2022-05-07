@@ -49,7 +49,7 @@ public abstract class ResolverBase : IResourceInfoResolver
     public virtual void OnResolve(string currentStatus, double progress = 0)
     {
         var eventList = listEventDelegates;
-        var @event = (EventHandler<GameResourceInfoResolveEventArgs>) eventList[ResolveEventKey]!;
+        var @event = (EventHandler<GameResourceInfoResolveEventArgs>)eventList[ResolveEventKey]!;
 
         if (string.IsNullOrEmpty(currentStatus))
             @event?.Invoke(this, new GameResourceInfoResolveEventArgs

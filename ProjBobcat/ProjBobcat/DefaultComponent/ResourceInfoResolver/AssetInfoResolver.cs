@@ -146,7 +146,7 @@ public class AssetInfoResolver : ResolverBase
             var filePath = Path.Combine(path, fi.Hash);
 
             Interlocked.Increment(ref checkedObject);
-            var progress = (double) checkedObject / objectCount * 100;
+            var progress = (double)checkedObject / objectCount * 100;
             OnResolve(string.Empty, progress);
 
             if (File.Exists(filePath))
@@ -172,7 +172,7 @@ public class AssetInfoResolver : ResolverBase
             BoundedCapacity = MaxDegreeOfParallelism
         });
 
-        var linkOptions = new DataflowLinkOptions {PropagateCompletion = true};
+        var linkOptions = new DataflowLinkOptions { PropagateCompletion = true };
 
         filesBlock.LinkTo(resolveActionBlock, linkOptions);
 

@@ -386,7 +386,7 @@ public class MicrosoftAuthenticator : IAuthenticator
                             return null;
                     }
 
-            result = (GraphAuthResultModel) userAuthResultModel;
+            result = (GraphAuthResultModel)userAuthResultModel;
             break;
         }
 

@@ -282,12 +282,12 @@ public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
         var procList = new List<ForgeInstallProcessorModel>();
         var argsReplaceList = new Dictionary<string, string>
         {
-            {"{SIDE}", "client"},
-            {"{MINECRAFT_JAR}", GamePathHelper.GetVersionJar(RootPath, MineCraftVersionId)},
-            {"{MINECRAFT_VERSION}", MineCraftVersion},
-            {"{ROOT}", RootPath},
-            {"{INSTALLER}", ForgeExecutablePath},
-            {"{LIBRARY_DIR}", Path.Combine(RootPath, GamePathHelper.GetLibraryRootPath())}
+            { "{SIDE}", "client" },
+            { "{MINECRAFT_JAR}", GamePathHelper.GetVersionJar(RootPath, MineCraftVersionId) },
+            { "{MINECRAFT_VERSION}", MineCraftVersion },
+            { "{ROOT}", RootPath },
+            { "{INSTALLER}", ForgeExecutablePath },
+            { "{LIBRARY_DIR}", Path.Combine(RootPath, GamePathHelper.GetLibraryRootPath()) }
         };
 
         foreach (var proc in ipModel.Processors)
@@ -457,7 +457,7 @@ public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
                 logSb.AppendLine(args.Data);
 
                 var data = args.Data ?? string.Empty;
-                var progress = (double) _totalProcessed / _needToProcess;
+                var progress = (double)_totalProcessed / _needToProcess;
                 var dataLength = data.Length;
                 var dataStr = dataLength > 30
                     ? $"..{data[(dataLength - 30)..]}"
@@ -473,7 +473,7 @@ public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
                 errSb.AppendLine(args.Data);
 
                 var data = args.Data ?? string.Empty;
-                var progress = (double) _totalProcessed / _needToProcess;
+                var progress = (double)_totalProcessed / _needToProcess;
                 var dataLength = data.Length;
                 var dataStr = dataLength > 30
                     ? $"{data[(dataLength - 30)..]}"
@@ -525,7 +525,7 @@ public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
         _totalDownloaded++;
 
-        var progress = (double) _totalDownloaded / _needToDownload;
+        var progress = (double)_totalDownloaded / _needToDownload;
         var retryStr = file.RetryCount > 0 ? $"[重试 - {file.RetryCount}] " : string.Empty;
 
         InvokeStatusChangedEvent(

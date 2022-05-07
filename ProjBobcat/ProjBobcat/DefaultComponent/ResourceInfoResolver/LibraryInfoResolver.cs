@@ -39,7 +39,7 @@ public class LibraryInfoResolver : ResolverBase
         var checkedLib = 0;
         var libCount = VersionInfo.Libraries.Count;
         var checkedResult = new ConcurrentBag<FileInfo>();
-        var linkOptions = new DataflowLinkOptions {PropagateCompletion = true};
+        var linkOptions = new DataflowLinkOptions { PropagateCompletion = true };
 
         var libFilesBlock =
             new TransformManyBlock<IEnumerable<FileInfo>, FileInfo>(chunk => chunk,
@@ -51,7 +51,7 @@ public class LibraryInfoResolver : ResolverBase
             var filePath = Path.Combine(BasePath, libPath);
 
             Interlocked.Increment(ref checkedLib);
-            var progress = (double) checkedLib / libCount * 100;
+            var progress = (double)checkedLib / libCount * 100;
 
             OnResolve(string.Empty, progress);
 
@@ -98,7 +98,7 @@ public class LibraryInfoResolver : ResolverBase
                 if (string.IsNullOrEmpty(native.FileInfo.Sha1)) return;
 
                 Interlocked.Increment(ref checkedLib);
-                var progress = (double) checkedLib / libCount * 100;
+                var progress = (double)checkedLib / libCount * 100;
                 OnResolve(string.Empty, progress);
 
                 var computedHash = CryptoHelper.ToString(SHA1.HashData(await File.ReadAllBytesAsync(filePath)));

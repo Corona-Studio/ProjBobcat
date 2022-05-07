@@ -174,11 +174,11 @@ public class ServerPingService : ProgressReportBase
     {
         while ((value & 128) != 0)
         {
-            _buffer.Add((byte) ((value & 127) | 128));
-            value = (int) (uint) value >> 7;
+            _buffer.Add((byte)((value & 127) | 128));
+            value = (int)(uint)value >> 7;
         }
 
-        _buffer.Add((byte) value);
+        _buffer.Add((byte)value);
     }
 
     void WriteShort(ushort value)
@@ -199,7 +199,7 @@ public class ServerPingService : ProgressReportBase
         _buffer.Clear();
 
         var add = 0;
-        var packetData = new[] {(byte) 0x00};
+        var packetData = new[] { (byte)0x00 };
         if (id >= 0)
         {
             WriteVarInt(id);

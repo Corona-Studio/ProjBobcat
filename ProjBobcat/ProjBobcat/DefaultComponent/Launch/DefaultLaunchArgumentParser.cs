@@ -66,7 +66,7 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
     public IEnumerable<string> ParseJvmHeadArguments()
     {
         if (LaunchSettings == null ||
-            LaunchSettings.GameArguments == null && LaunchSettings.FallBackGameArguments == null)
+            (LaunchSettings.GameArguments == null && LaunchSettings.FallBackGameArguments == null))
             throw new ArgumentNullException("重要参数为Null!");
 
         var gameArgs = LaunchSettings.GameArguments ?? LaunchSettings.FallBackGameArguments;
@@ -148,12 +148,12 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
     {
         var jvmArgumentsDic = new Dictionary<string, string>
         {
-            {"${natives_directory}", $"\"{NativeRoot}\""},
-            {"${launcher_name}", $"\"{LaunchSettings.LauncherName}\""},
-            {"${launcher_version}", "32"},
-            {"${classpath}", $"\"{ClassPath}\""},
-            {"${classpath_separator}", ";"},
-            {"${library_directory}", $"\"{Path.Combine(RootPath, GamePathHelper.GetLibraryRootPath())}\""}
+            { "${natives_directory}", $"\"{NativeRoot}\"" },
+            { "${launcher_name}", $"\"{LaunchSettings.LauncherName}\"" },
+            { "${launcher_version}", "32" },
+            { "${classpath}", $"\"{ClassPath}\"" },
+            { "${classpath_separator}", ";" },
+            { "${library_directory}", $"\"{Path.Combine(RootPath, GamePathHelper.GetLibraryRootPath())}\"" }
         };
 
         #region log4j 缓解措施
@@ -187,16 +187,16 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
             : RootPath;
         var mcArgumentsDic = new Dictionary<string, string>
         {
-            {"${version_name}", $"\"{LaunchSettings.Version}\""},
-            {"${version_type}", $"\"{GameProfile?.Type ?? LaunchSettings.LauncherName}\""},
-            {"${assets_root}", $"\"{AssetRoot}\""},
-            {"${assets_index_name}", VersionInfo.AssetInfo?.Id ?? VersionInfo.Assets},
-            {"${game_directory}", $"\"{gameDir}\""},
-            {"${auth_player_name}", authResult?.SelectedProfile?.Name},
-            {"${auth_uuid}", authResult?.SelectedProfile?.UUID.ToString()},
-            {"${auth_access_token}", authResult?.AccessToken},
-            {"${user_properties}", "{}"}, //authResult?.User?.Properties.ResolveUserProperties() },
-            {"${user_type}", "Mojang"} // use default value as placeholder
+            { "${version_name}", $"\"{LaunchSettings.Version}\"" },
+            { "${version_type}", $"\"{GameProfile?.Type ?? LaunchSettings.LauncherName}\"" },
+            { "${assets_root}", $"\"{AssetRoot}\"" },
+            { "${assets_index_name}", VersionInfo.AssetInfo?.Id ?? VersionInfo.Assets },
+            { "${game_directory}", $"\"{gameDir}\"" },
+            { "${auth_player_name}", authResult?.SelectedProfile?.Name },
+            { "${auth_uuid}", authResult?.SelectedProfile?.UUID.ToString() },
+            { "${auth_access_token}", authResult?.AccessToken },
+            { "${user_properties}", "{}" }, //authResult?.User?.Properties.ResolveUserProperties() },
+            { "${user_type}", "Mojang" } // use default value as placeholder
         };
 
         foreach (var gameArg in VersionInfo.GameArguments)

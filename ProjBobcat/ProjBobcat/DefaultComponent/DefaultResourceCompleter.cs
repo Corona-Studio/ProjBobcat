@@ -129,14 +129,14 @@ public class DefaultResourceCompleter : IResourceCompleter
     void OnCompleted(object? sender, DownloadFileCompletedEventArgs e)
     {
         var eventList = _listEventDelegates;
-        var @event = (EventHandler<DownloadFileCompletedEventArgs>) eventList[CompletedEventKey]!;
+        var @event = (EventHandler<DownloadFileCompletedEventArgs>)eventList[CompletedEventKey]!;
         @event?.Invoke(sender, e);
     }
 
     void OnChanged(double progress, double speed)
     {
         var eventList = _listEventDelegates;
-        var @event = (EventHandler<DownloadFileChangedEventArgs>) eventList[ChangedEventKey]!;
+        var @event = (EventHandler<DownloadFileChangedEventArgs>)eventList[ChangedEventKey]!;
 
         @event?.Invoke(this, new DownloadFileChangedEventArgs
         {
@@ -152,7 +152,7 @@ public class DefaultResourceCompleter : IResourceCompleter
         if (!(e.Success ?? false)) _failedFiles.Add(df);
 
         TotalDownloaded++;
-        OnChanged((double) TotalDownloaded / NeedToDownload, e.AverageSpeed);
+        OnChanged((double)TotalDownloaded / NeedToDownload, e.AverageSpeed);
         OnCompleted(sender, e);
     }
 
@@ -167,7 +167,7 @@ public class DefaultResourceCompleter : IResourceCompleter
             DownloadParts = DownloadParts,
             HashType = HashType.SHA1,
             RetryCount = TotalRetry,
-            Timeout = (int) TimeoutPerFile.TotalMilliseconds
+            Timeout = (int)TimeoutPerFile.TotalMilliseconds
         });
 
         var isLibraryFailed = _failedFiles.Any(d => d.FileType == ResourceType.LibraryOrNative);

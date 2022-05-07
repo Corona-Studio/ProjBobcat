@@ -145,7 +145,7 @@ public class ComparableVersion : IComparable<ComparableVersion>
 
         while (stack.Any())
         {
-            list = (ListItem) stack.Pop();
+            list = (ListItem)stack.Pop();
             list.Normalize();
         }
     }
