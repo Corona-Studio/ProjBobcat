@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Text;
 using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.YggdrasilAuth;
 using ProjBobcat.Interface;
@@ -56,4 +57,20 @@ public class LaunchSettings
     public GameArguments? FallBackGameArguments { get; set; }
     public GameArguments? GameArguments { get; set; }
 #nullable restore
+
+    public override string ToString()
+    {
+        var sb = new StringBuilder();
+
+        sb
+            .AppendLine()
+            .AppendFormat("Game Name: {0}", GameName).AppendLine()
+            .AppendFormat("Game Resource Path: {0}", GameResourcePath).AppendLine()
+            .AppendFormat("Version: {0}", Version).AppendLine()
+            .AppendFormat("Authenticator: {0}", Authenticator?.GetType().Name ?? "-").AppendLine()
+            .AppendFormat("Version Insulation: {0}", VersionInsulation).AppendLine()
+            .AppendLine();
+
+        return sb.ToString();
+    }
 }
