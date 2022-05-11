@@ -53,10 +53,6 @@ public class LaunchSettings
 
     public bool VersionInsulation { get; set; }
     public string LauncherName { get; set; }
-#nullable enable
-    public GameArguments? FallBackGameArguments { get; set; }
-    public GameArguments? GameArguments { get; set; }
-#nullable restore
 
     public override string ToString()
     {
@@ -73,4 +69,8 @@ public class LaunchSettings
 
         return sb.ToString();
     }
+#nullable enable
+    public GameArguments? FallBackGameArguments { get; set; }
+    public GameArguments? GameArguments { get; set; }
+#nullable restore
 }
