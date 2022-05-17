@@ -10,8 +10,6 @@ public class CurseForgeAttachmentInfo
 
     [JsonProperty("description")] public string Description { get; set; }
 
-    [JsonProperty("isDefault")] public bool IsDefault { get; set; }
-
     [JsonProperty("thumbnailUrl")] public string ThumbnailUrl { get; set; }
 
     [JsonProperty("title")] public string Title { get; set; }

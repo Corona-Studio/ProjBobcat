@@ -11,16 +11,19 @@ public class CurseForgeAddonInfo
     [JsonProperty("name")] public string Name { get; set; }
 
     [JsonProperty("authors")] public List<CurseForgeAddonAuthorInfo> Authors { get; set; }
+    [JsonProperty("logo")] public CurseForgeAttachmentInfo Logo { get; set; }
 
-    [JsonProperty("attachments")] public List<CurseForgeAttachmentInfo> Attachments { get; set; }
+    [JsonProperty("screenshots")] public List<CurseForgeAttachmentInfo> Screenshots { get; set; }
 
     [JsonProperty("websiteUrl")] public string WebsiteUrl { get; set; }
 
     [JsonProperty("gameId")] public int GameId { get; set; }
 
     [JsonProperty("summary")] public string Summary { get; set; }
+    [JsonProperty("links")] public Dictionary<string, string> Links { get; set; }
 
     [JsonProperty("defaultFileId")] public int DefaultFileId { get; set; }
+    [JsonProperty("releaseType")] public int ReleaseType { get; set; }
 
     [JsonProperty("downloadCount")] public double DownloadCount { get; set; }
 
@@ -40,8 +43,6 @@ public class CurseForgeAddonInfo
     public List<CurseForgeGameVersionLatestFiles> GameVersionLatestFiles { get; set; }
 
     [JsonProperty("isFeatured")] public bool IsFeatured { get; set; }
-
-    [JsonProperty("popularityScore")] public double PopularityScore { get; set; }
 
     [JsonProperty("gamePopularityRank")] public int GamePopularityRank { get; set; }
 

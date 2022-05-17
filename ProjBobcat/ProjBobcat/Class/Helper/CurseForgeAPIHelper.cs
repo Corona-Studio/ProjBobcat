@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using ProjBobcat.Class.Model.CurseForge;
@@ -8,100 +10,128 @@ namespace ProjBobcat.Class.Helper;
 
 public static class CurseForgeAPIHelper
 {
-    const string BaseUrl = "https://addons-ecs.forgesvc.net";
+    const string BaseUrl = "https://api.curseforge.com/v1";
 
-    static async Task<string> Get(string reqUrl)
+    static string ApiKey { get; set; }
+    static HttpClient Client => HttpClientHelper.GetNewClient(HttpClientHelper.DefaultClientName);
+
+    static HttpRequestMessage Req(HttpMethod method, string url)
     {
-        using var req = await HttpHelper.Get(reqUrl);
-        req.EnsureSuccessStatusCode();
+        var req = new HttpRequestMessage(method, url);
 
-        var resContent = await req.Content.ReadAsStringAsync();
+        req.Headers.Add("x-api-key", ApiKey);
 
-        return resContent;
+        return req;
+    }
+
+    public static void SetApiKey(string apiKey)
+    {
+        ApiKey = apiKey;
     }
 
     public static async Task<List<CurseForgeAddonInfo>> SearchAddons(SearchOptions options)
     {
-        var reqUrl = $"{BaseUrl}/api/v2/addon/search{options}";
+        var reqUrl = $"{BaseUrl}/mods/search{options}";
 
-        var resContent = await Get(reqUrl);
-        var resModel = JsonConvert.DeserializeObject<List<CurseForgeAddonInfo>>(resContent);
+        using var req = Req(HttpMethod.Get, reqUrl);
+        using var res = await Client.SendAsync(req);
+        var resContent = await res.Content.ReadAsStringAsync();
+        var resModel = JsonConvert.DeserializeObject<DataModel<List<CurseForgeAddonInfo>>>(resContent);
 
-        return resModel;
+        return resModel?.Data;
     }
 
     public static async Task<string> GetAddonDescription(int addonId)
     {
-        var reqUrl = $"{BaseUrl}/api/v2/addon/${addonId}/description";
+        var reqUrl = $"{BaseUrl}/mods/{addonId}/description";
 
-        var resContent = await Get(reqUrl);
+        using var req = Req(HttpMethod.Get, reqUrl);
+        using var res = await Client.SendAsync(req);
+        var resContent = await res.Content.ReadAsStringAsync();
 
         return resContent;
     }
 
     public static async Task<CurseForgeAddonInfo> GetAddon(int addonId)
     {
-        var reqUrl = $"{BaseUrl}/api/v2/addon/{addonId}";
+        var reqUrl = $"{BaseUrl}/mods/{addonId}";
 
-        var resContent = await Get(reqUrl);
-        var resModel = JsonConvert.DeserializeObject<CurseForgeAddonInfo>(resContent);
+        using var req = Req(HttpMethod.Get, reqUrl);
+        using var res = await Client.SendAsync(req);
+        var resContent = await res.Content.ReadAsStringAsync();
+        var resModel = JsonConvert.DeserializeObject<DataModel<CurseForgeAddonInfo>>(resContent);
 
-        return resModel;
+        return resModel?.Data;
     }
 
     public static async Task<List<CurseForgeAddonInfo>> GetAddons(IEnumerable<int> addonIds)
     {
-        var reqUrl = $"{BaseUrl}/api/v2/addon";
-        var data = JsonConvert.SerializeObject(addonIds);
-        var resContent = await HttpHelper.Post(reqUrl, data);
+        const string reqUrl = $"{BaseUrl}/mods";
+        var data = JsonConvert.SerializeObject(new
+        {
+            modIds = addonIds
+        });
 
-        resContent.EnsureSuccessStatusCode();
+        using var req = Req(HttpMethod.Post, reqUrl);
+        req.Content = new StringContent(data, Encoding.UTF8, "application/json");
 
-        var resultStr = await resContent.Content.ReadAsStringAsync();
-        var resModel = JsonConvert.DeserializeObject<List<CurseForgeAddonInfo>>(resultStr);
+        using var res = await Client.SendAsync(req);
 
-        return resModel;
+        res.EnsureSuccessStatusCode();
+
+        var resultStr = await res.Content.ReadAsStringAsync();
+        var resModel = JsonConvert.DeserializeObject<DataModel<List<CurseForgeAddonInfo>>>(resultStr);
+
+        return resModel?.Data;
     }
 
     public static async Task<List<CurseForgeLatestFileModel>> GetAddonFiles(int addonId)
     {
-        var reqUrl = $"{BaseUrl}/api/v2/addon/{addonId}/files";
+        var reqUrl = $"{BaseUrl}/mods/{addonId}/files";
 
-        var resContent = await Get(reqUrl);
-        var resModel = JsonConvert.DeserializeObject<List<CurseForgeLatestFileModel>>(resContent);
+        using var req = Req(HttpMethod.Get, reqUrl);
+        using var res = await Client.SendAsync(req);
+        var resContent = await res.Content.ReadAsStringAsync();
+        var resModel = JsonConvert.DeserializeObject<DataModel<List<CurseForgeLatestFileModel>>>(resContent);
 
-        return resModel;
+        return resModel?.Data;
     }
 
     public static async Task<List<CurseForgeSearchCategoryModel>> GetCategories(int gameId = 432)
     {
-        var reqUrl = $"{BaseUrl}/api/v2/category?gameId={gameId}";
+        var reqUrl = $"{BaseUrl}/categories?gameId={gameId}";
 
-        var resContent = await Get(reqUrl);
-        var resModel = JsonConvert.DeserializeObject<List<CurseForgeSearchCategoryModel>>(resContent);
+        using var req = Req(HttpMethod.Get, reqUrl);
+        using var res = await Client.SendAsync(req);
+        var resContent = await res.Content.ReadAsStringAsync();
+        var resModel = JsonConvert.DeserializeObject<DataModel<List<CurseForgeSearchCategoryModel>>>(resContent);
 
-        return resModel;
+        return resModel?.Data;
     }
 
     public static async Task<CurseForgeFeaturedAddonModel> GetFeaturedAddons(FeaturedQueryOptions options)
     {
-        var reqUrl = $"{BaseUrl}/api/v2/addon/featured";
+        const string reqUrl = $"{BaseUrl}/mods/featured";
         var reqJson = JsonConvert.SerializeObject(options);
 
-        using var req = await HttpHelper.Post(reqUrl, reqJson);
-        req.EnsureSuccessStatusCode();
+        using var req = Req(HttpMethod.Post, reqUrl);
+        req.Content = new StringContent(reqJson, Encoding.UTF8, "application/json");
 
-        var resContent = await req.Content.ReadAsStringAsync();
-        var resModel = JsonConvert.DeserializeObject<CurseForgeFeaturedAddonModel>(resContent);
+        using var res = await Client.SendAsync(req);
+        res.EnsureSuccessStatusCode();
 
-        return resModel;
+        var resContent = await res.Content.ReadAsStringAsync();
+        var resModel = JsonConvert.DeserializeObject<DataModel<CurseForgeFeaturedAddonModel>>(resContent);
+
+        return resModel?.Data;
     }
 
     public static async Task<string> GetAddonDownloadUrl(long addonId, long fileId)
     {
-        var reqUrl = $"{BaseUrl}/api/v2/addon/{addonId}/file/{fileId}/download-url";
+        var reqUrl = $"{BaseUrl}/mods/{addonId}/files/{fileId}/download-url";
 
-        var resContent = await Get(reqUrl);
+        using var res = await Client.SendAsync(Req(HttpMethod.Get, reqUrl));
+        var resContent = await res.Content.ReadAsStringAsync();
 
         return resContent;
     }

@@ -34,7 +34,7 @@ public class CurseForgeLatestFileModel
 
     [JsonProperty("packageFingerprint")] public long PackageFingerprint { get; set; }
 
-    [JsonProperty("gameVersion")] public List<string> GameVersion { get; set; }
+    [JsonProperty("gameVersions")] public List<string> GameVersions { get; set; }
 
     [JsonProperty("sortableGameVersion")]
     public List<CurseForgeSortableGameVersionModel> SortableGameVersion { get; set; }
