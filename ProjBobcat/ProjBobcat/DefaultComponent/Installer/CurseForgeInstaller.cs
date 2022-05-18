@@ -89,8 +89,8 @@ public class CurseForgeInstaller : InstallerBase, ICurseForgeInstaller
         await DownloadHelper.AdvancedDownloadListFile(urlBags, new DownloadSettings
         {
             DownloadParts = 4,
-            RetryCount = 5,
-            Timeout = 5000
+            RetryCount = 10,
+            Timeout = (int) TimeSpan.FromMinutes(1).TotalMilliseconds
         });
 
         if (!_failedFiles.IsEmpty)
@@ -170,10 +170,5 @@ public class CurseForgeInstaller : InstallerBase, ICurseForgeInstaller
             progress);
 
         if (!(e.Success ?? false)) _failedFiles.Add(file);
-    }
-
-    static string CurseForgeModRequestUrl(long projectId, long fileId)
-    {
-        return $"https://addons-ecs.forgesvc.net/api/v2/addon/{projectId}/file/{fileId}/download-url";
     }
 }

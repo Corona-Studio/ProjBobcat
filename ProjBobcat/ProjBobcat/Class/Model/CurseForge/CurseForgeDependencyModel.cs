@@ -8,22 +8,17 @@ public class CurseForgeDependencyModelComparer : IEqualityComparer<CurseForgeDep
 {
     public bool Equals(CurseForgeDependencyModel x, CurseForgeDependencyModel y)
     {
-        return x.AddonId == y.AddonId;
+        return x.ModId == y.ModId;
     }
 
     public int GetHashCode([DisallowNull] CurseForgeDependencyModel obj)
     {
-        return obj.AddonId.GetHashCode();
+        return obj.ModId.GetHashCode();
     }
 }
 
 public class CurseForgeDependencyModel
 {
-    [JsonProperty("id")] public int Id { get; set; }
-
-    [JsonProperty("addonId")] public int AddonId { get; set; }
-
-    [JsonProperty("type")] public int Type { get; set; }
-
-    [JsonProperty("fileId")] public int FileId { get; set; }
+    [JsonProperty("modId")] public int ModId { get; set; }
+    [JsonProperty("relationType")] public int RelationType { get; set; }
 }

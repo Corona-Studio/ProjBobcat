@@ -41,17 +41,6 @@ public static class CurseForgeAPIHelper
         return resModel?.Data;
     }
 
-    public static async Task<string> GetAddonDescription(int addonId)
-    {
-        var reqUrl = $"{BaseUrl}/mods/{addonId}/description";
-
-        using var req = Req(HttpMethod.Get, reqUrl);
-        using var res = await Client.SendAsync(req);
-        var resContent = await res.Content.ReadAsStringAsync();
-
-        return resContent;
-    }
-
     public static async Task<CurseForgeAddonInfo> GetAddon(int addonId)
     {
         var reqUrl = $"{BaseUrl}/mods/{addonId}";
@@ -131,8 +120,24 @@ public static class CurseForgeAPIHelper
         var reqUrl = $"{BaseUrl}/mods/{addonId}/files/{fileId}/download-url";
 
         using var res = await Client.SendAsync(Req(HttpMethod.Get, reqUrl));
-        var resContent = await res.Content.ReadAsStringAsync();
+        res.EnsureSuccessStatusCode();
 
-        return resContent;
+        var resContent = await res.Content.ReadAsStringAsync();
+        var resModel = JsonConvert.DeserializeObject<DataModel<string>>(resContent);
+
+        return resModel?.Data;
+    }
+
+    public static async Task<string> GetAddonDescriptionHtml(long addonId)
+    {
+        var reqUrl = $"{BaseUrl}/mods/{addonId}/description";
+
+        using var res = await Client.SendAsync(Req(HttpMethod.Get, reqUrl));
+        res.EnsureSuccessStatusCode();
+
+        var resContent = await res.Content.ReadAsStringAsync();
+        var resModel = JsonConvert.DeserializeObject<DataModel<string>>(resContent);
+
+        return resModel?.Data;
     }
 }
