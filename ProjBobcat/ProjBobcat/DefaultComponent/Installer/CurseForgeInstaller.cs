@@ -90,7 +90,7 @@ public class CurseForgeInstaller : InstallerBase, ICurseForgeInstaller
         {
             DownloadParts = 4,
             RetryCount = 10,
-            Timeout = (int) TimeSpan.FromMinutes(1).TotalMilliseconds
+            Timeout = (int)TimeSpan.FromMinutes(1).TotalMilliseconds
         });
 
         if (!_failedFiles.IsEmpty)
