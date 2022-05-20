@@ -2,7 +2,6 @@
 #nullable enable
 public class SearchOptions
 {
-    public int? SectionId { get; init; }
     public int? CategoryId { get; init; }
     public int? GameId { get; init; }
     public string? GameVersion { get; init; }
@@ -17,17 +16,16 @@ public class SearchOptions
         var result =
             "?" +
             $"gameId={GameId ?? 432}" +
-            $"&gameVersion={GameVersion ?? string.Empty}" +
             $"&index={Index ?? 0}" +
             $"&pageSize={PageSize ?? 12}" +
-            $"&sort={Sort ?? 0}";
+            $"&sortOrder={Sort ?? 1}";
 
-        if (SearchFilter != null)
+        if (!string.IsNullOrEmpty(GameVersion))
+            result += $"&gameVersion={GameVersion}";
+        if (!string.IsNullOrEmpty(SearchFilter))
             result += $"&searchFilter={SearchFilter}";
-        if (SectionId != null)
-            result += $"&sectionId={SectionId}";
-        if (CategoryId != null)
-            result += $"&categoryId={CategoryId}";
+        if (CategoryId is { })
+            result += $"&classId={CategoryId}";
 
         return result;
     }
