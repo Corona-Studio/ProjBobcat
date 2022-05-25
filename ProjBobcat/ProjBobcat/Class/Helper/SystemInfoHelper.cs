@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Management;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Win32;
 using ProjBobcat.Class.Model;
@@ -15,6 +16,19 @@ namespace ProjBobcat.Class.Helper;
 /// </summary>
 public static class SystemInfoHelper
 {
+    public static async Task<IEnumerable<string>> FindJavaFull()
+    {
+        var result = new HashSet<string>();
+
+        await foreach(var path in DeepJavaSearcher.DeepSearch())
+            result.Add(path);
+        foreach (var path in FindJava())
+            result.Add(path);
+
+
+        return result;
+    }
+
     /// <summary>
     ///     从注册表中查找可能的 javaw.exe 的路径。
     /// </summary>
