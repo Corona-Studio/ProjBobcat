@@ -16,7 +16,7 @@ namespace ProjBobcat.Class.Helper;
 /// </summary>
 public static class SystemInfoHelper
 {
-    public static async Task<IEnumerable<string>> FindJavaFull()
+    public static async IAsyncEnumerable<string> FindJavaFull()
     {
         var result = new HashSet<string>();
 
@@ -24,9 +24,8 @@ public static class SystemInfoHelper
             result.Add(path);
         foreach (var path in FindJava())
             result.Add(path);
-
-
-        return result;
+        foreach (var path in result)
+            yield return path;
     }
 
     /// <summary>

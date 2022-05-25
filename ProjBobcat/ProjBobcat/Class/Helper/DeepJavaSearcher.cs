@@ -23,7 +23,7 @@ public static class DeepJavaSearcher
                 $"{drive}\\",
                 fileName
             },
-            CreateNoWindow = false,
+            CreateNoWindow = true,
             RedirectStandardError = true,
             RedirectStandardOutput = true,
             UseShellExecute = false
