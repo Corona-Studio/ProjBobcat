@@ -15,16 +15,19 @@ public class SearchOptions
     {
         var result =
             "?" +
-            $"gameId={GameId ?? 432}" +
-            $"&index={Index ?? 0}" +
-            $"&pageSize={PageSize ?? 12}" +
-            $"&sortOrder={Sort ?? 1}";
-
+            $"gameId={GameId ?? 432}";
+        
+        if(Index != null)
+            result += $"&index={Index ?? 0}";
+        if (Sort != null)
+            result += $"&sortOrder={Sort ?? 1}";
+        if (PageSize != null)
+            result += $"&pageSize={PageSize}";
         if (!string.IsNullOrEmpty(GameVersion))
             result += $"&gameVersion={GameVersion}";
         if (!string.IsNullOrEmpty(SearchFilter))
             result += $"&searchFilter={SearchFilter}";
-        if (CategoryId is { })
+        if (CategoryId != null)
             result += $"&classId={CategoryId}";
 
         return result;

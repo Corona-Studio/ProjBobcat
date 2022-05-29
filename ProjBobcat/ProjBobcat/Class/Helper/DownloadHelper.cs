@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -7,6 +8,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
@@ -19,8 +21,6 @@ namespace ProjBobcat.Class.Helper;
 /// </summary>
 public static class DownloadHelper
 {
-    const int BufferSize = 1024;
-
     /// <summary>
     ///     下载线程
     /// </summary>
@@ -104,31 +104,33 @@ public static class DownloadHelper
                 res.EnsureSuccessStatusCode();
 
                 await using var stream = await res.Content.ReadAsStreamAsync(cts.Token);
-                await using var fileToWriteTo =
+
+                using var hash = downloadSettings.GetHashAlgorithm();
+                await using var fs =
                     File.Open(filePath, FileMode.Create, FileAccess.ReadWrite, FileShare.Read);
+                await using Stream outputStream =
+                    downloadSettings.CheckFile && !string.IsNullOrEmpty(downloadFile.CheckSum)
+                        ? new CryptoStream(fs, hash, CryptoStreamMode.Write)
+                        : fs;
 
                 var responseLength = res.Content.Headers.ContentLength ?? 0;
                 var downloadedBytesCount = 0L;
-                var buffer = new byte[BufferSize];
                 var sw = new Stopwatch();
 
                 var tSpeed = 0d;
                 var cSpeed = 0;
-
-                using var hash = downloadSettings.GetHashAlgorithm();
+                
+                using var rentMemory = Pool.Rent(1024);
 
                 while (true)
                 {
                     sw.Restart();
-                    var bytesRead = await stream.ReadAsync(buffer, cts.Token);
+                    var bytesRead = await stream.ReadAsync(rentMemory.Memory, cts.Token);
                     sw.Stop();
 
                     if (bytesRead == 0) break;
 
-                    await fileToWriteTo.WriteAsync(buffer.AsMemory(0, bytesRead), cts.Token);
-
-                    if (downloadSettings.CheckFile)
-                        hash.TransformBlock(buffer, 0, bytesRead, buffer, 0);
+                    await outputStream.WriteAsync(rentMemory.Memory[..bytesRead], cts.Token);
 
                     Interlocked.Add(ref downloadedBytesCount, bytesRead);
 
@@ -145,14 +147,16 @@ public static class DownloadHelper
                         responseLength);
                 }
 
-                hash.TransformFinalBlock(buffer, 0, 0);
                 sw.Stop();
+
+                if (outputStream is CryptoStream cryptoStream)
+                    await cryptoStream.FlushFinalBlockAsync(cts.Token);
 
                 if (downloadSettings.CheckFile && !string.IsNullOrEmpty(downloadFile.CheckSum))
                 {
-                    var checkResult = CryptoHelper.ToString(hash.Hash)
-                        .Equals(downloadFile.CheckSum, StringComparison.OrdinalIgnoreCase);
-                    if (!checkResult)
+                    var checkSum = CryptoHelper.ToString(hash.Hash);
+
+                    if (!checkSum.Equals(downloadFile.CheckSum, StringComparison.OrdinalIgnoreCase))
                     {
                         downloadFile.RetryCount++;
                         continue;
@@ -201,6 +205,8 @@ public static class DownloadHelper
 
     static HttpClient MultiPartClient =>
         HttpClientHelper.GetNewClient(HttpClientHelper.MultiPartClientName);
+
+    static readonly MemoryPool<byte> Pool = MemoryPool<byte>.Shared;
 
     /// <summary>
     ///     分片下载方法（异步）
@@ -348,41 +354,40 @@ public static class DownloadHelper
                 {
                     using var res = t.Item1;
 
-                    await using (var stream = await res.Content.ReadAsStreamAsync(cts.Token))
+                    await using var stream = await res.Content.ReadAsStreamAsync(cts.Token);
+                    await using var fileToWriteTo = File.Open(t.Item2.TempFileName, FileMode.Create,
+                        FileAccess.Write, FileShare.Read);
+                    using var rentMemory = Pool.Rent(1024);
+                    
+                    var sw = new Stopwatch();
+
+                    while (true)
                     {
-                        await using var fileToWriteTo = File.Open(t.Item2.TempFileName, FileMode.Create,
-                            FileAccess.Write, FileShare.Read);
-                        var buffer = new byte[BufferSize];
-                        var sw = new Stopwatch();
-
-                        while (true)
-                        {
-                            sw.Restart();
-                            var bytesRead = await stream.ReadAsync(buffer, cts.Token);
-                            sw.Stop();
-
-                            if (bytesRead == 0)
-                                break;
-
-                            await fileToWriteTo.WriteAsync(buffer.AsMemory(0, bytesRead), cts.Token);
-
-                            Interlocked.Add(ref downloadedBytesCount, bytesRead);
-
-                            var elapsedTime = Math.Ceiling(sw.Elapsed.TotalSeconds);
-                            var speed = CalculateDownloadSpeed(bytesRead, elapsedTime, SizeUnit.Kb);
-
-                            tSpeed += speed;
-                            cSpeed++;
-
-                            downloadFile.OnChanged(
-                                speed,
-                                (double)downloadedBytesCount / responseLength,
-                                downloadedBytesCount,
-                                responseLength);
-                        }
-
+                        sw.Restart();
+                        var bytesRead = await stream.ReadAsync(rentMemory.Memory, cts.Token);
                         sw.Stop();
+
+                        if (bytesRead == 0)
+                            break;
+
+                        await fileToWriteTo.WriteAsync(rentMemory.Memory[..bytesRead], cts.Token);
+
+                        Interlocked.Add(ref downloadedBytesCount, bytesRead);
+
+                        var elapsedTime = Math.Ceiling(sw.Elapsed.TotalSeconds);
+                        var speed = CalculateDownloadSpeed(bytesRead, elapsedTime, SizeUnit.Kb);
+
+                        tSpeed += speed;
+                        cSpeed++;
+
+                        downloadFile.OnChanged(
+                            speed,
+                            (double)downloadedBytesCount / responseLength,
+                            downloadedBytesCount,
+                            responseLength);
                     }
+
+                    sw.Stop();
 
                     Interlocked.Add(ref tasksDone, 1);
                     doneRanges.Add(t.Item2);
@@ -401,8 +406,8 @@ public static class DownloadHelper
 
                 filesBlock.LinkTo(streamBlock, linkOptions);
                 streamBlock.LinkTo(writeActionBlock, linkOptions);
-
                 filesBlock.Post(readRanges);
+
                 filesBlock.Complete();
 
                 await writeActionBlock.Completion;
@@ -412,35 +417,42 @@ public static class DownloadHelper
                 if (doneRanges.Count != readRanges.Count)
                 {
                     downloadFile.RetryCount++;
-
+                    streamBlock.Complete();
+                    writeActionBlock.Complete();
                     continue;
                 }
 
-                await using (var outputStream =
-                             File.Open(filePath, FileMode.Create, FileAccess.ReadWrite, FileShare.Read))
-                {
-                    foreach (var inputFilePath in readRanges)
-                    {
-                        await using var inputStream = File.Open(inputFilePath.TempFileName, FileMode.Open,
-                            FileAccess.Read,
-                            FileShare.Read);
-                        outputStream.Seek(inputFilePath.Start, SeekOrigin.Begin);
+                using var hash = downloadSettings.GetHashAlgorithm();
+                await using var fs =
+                    File.Open(filePath, FileMode.Create, FileAccess.ReadWrite, FileShare.Read);
+                await using Stream outputStream = 
+                    downloadSettings.CheckFile && !string.IsNullOrEmpty(downloadFile.CheckSum)
+                        ? new CryptoStream(fs, hash, CryptoStreamMode.Write) 
+                        : fs;
 
-                        await inputStream.CopyToAsync(outputStream, cts.Token);
-                    }
+                foreach (var inputFilePath in readRanges)
+                {
+                    await using var inputStream = File.Open(inputFilePath.TempFileName, FileMode.Open,
+                        FileAccess.Read,
+                        FileShare.Read);
+                    outputStream.Seek(inputFilePath.Start, SeekOrigin.Begin);
+
+                    await inputStream.CopyToAsync(outputStream, cts.Token);
                 }
+
+                if (outputStream is CryptoStream cryptoStream)
+                    await cryptoStream.FlushFinalBlockAsync(cts.Token);
 
                 if (downloadSettings.CheckFile && !string.IsNullOrEmpty(downloadFile.CheckSum))
                 {
-                    using var hash = downloadSettings.GetHashAlgorithm();
-
-                    var checkSum =
-                        CryptoHelper.ToString(await hash.ComputeHashAsync(File.OpenRead(filePath), cts.Token));
+                    var checkSum = CryptoHelper.ToString(hash.Hash);
 
                     if (!checkSum.Equals(downloadFile.CheckSum, StringComparison.OrdinalIgnoreCase))
                     {
                         downloadFile.RetryCount++;
                         isLatestFileCheckSucceeded = false;
+                        streamBlock.Complete();
+                        writeActionBlock.Complete();
                         continue;
                     }
 

@@ -29,16 +29,16 @@ public static class CurseForgeAPIHelper
         ApiKey = apiKey;
     }
 
-    public static async Task<List<CurseForgeAddonInfo>> SearchAddons(SearchOptions options)
+    public static async Task<DataModelWithPagination<List<CurseForgeAddonInfo>>> SearchAddons(SearchOptions options)
     {
         var reqUrl = $"{BaseUrl}/mods/search{options}";
 
         using var req = Req(HttpMethod.Get, reqUrl);
         using var res = await Client.SendAsync(req);
         var resContent = await res.Content.ReadAsStringAsync();
-        var resModel = JsonConvert.DeserializeObject<DataModel<List<CurseForgeAddonInfo>>>(resContent);
+        var resModel = JsonConvert.DeserializeObject<DataModelWithPagination<List<CurseForgeAddonInfo>>>(resContent);
 
-        return resModel?.Data;
+        return resModel;
     }
 
     public static async Task<CurseForgeAddonInfo> GetAddon(int addonId)

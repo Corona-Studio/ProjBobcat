@@ -8,6 +8,8 @@ public class ModrinthSearchOptions
     public string? Category { get; init; }
     public string Index { get; init; } = "relevance";
     public string? ProjectType { get; init; } = "mod";
+    public int? Offset { get; init; }
+    public int? Limit { get; set; }
 
     public override string ToString()
     {
@@ -18,6 +20,9 @@ public class ModrinthSearchOptions
 
         sb.Append(projType);
         sb.Append(']');
+
+        if (Offset != null) sb.Append($"&offset={Offset}");
+        if (Limit != null) sb.Append($"&limit={Limit}");
 
         return sb.ToString();
     }
