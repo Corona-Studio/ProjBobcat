@@ -424,7 +424,7 @@ public static class DownloadHelper
 
                 using var hash = downloadSettings.GetHashAlgorithm();
                 await using var fs =
-                    File.Open(filePath, FileMode.Create, FileAccess.ReadWrite, FileShare.Read);
+                    File.Open(filePath, FileMode.Append, FileAccess.Write, FileShare.Read);
                 await using Stream outputStream = 
                     downloadSettings.CheckFile && !string.IsNullOrEmpty(downloadFile.CheckSum)
                         ? new CryptoStream(fs, hash, CryptoStreamMode.Write) 
@@ -432,12 +432,9 @@ public static class DownloadHelper
 
                 foreach (var inputFilePath in readRanges)
                 {
-                    await using var inputStream = File.Open(inputFilePath.TempFileName, FileMode.Open,
-                        FileAccess.Read,
-                        FileShare.Read);
-                    outputStream.Seek(inputFilePath.Start, SeekOrigin.Begin);
+                    var fileMem = await File.ReadAllBytesAsync(inputFilePath.TempFileName, cts.Token);
 
-                    await inputStream.CopyToAsync(outputStream, cts.Token);
+                    await outputStream.WriteAsync(fileMem.AsMemory(), cts.Token);
                 }
 
                 if (outputStream is CryptoStream cryptoStream)
