@@ -277,44 +277,31 @@ public static class DownloadHelper
                 #region Calculate ranges
 
                 readRanges = new List<DownloadRange>();
-                var partSize = (long)Math.Round((double)responseLength / downloadSettings.DownloadParts);
-                var previous = 0L;
+                var partSize = responseLength / downloadSettings.DownloadParts;
+                var totalSize = responseLength;
 
-                if (responseLength > downloadSettings.DownloadParts)
-                    for (var i = partSize; i <= responseLength; i += partSize)
-                        if (i + partSize < responseLength)
-                        {
-                            var start = previous;
+                while (totalSize > 0)
+                {
+                    //计算分片
+                    var to = totalSize;
+                    var from = totalSize - partSize;
 
-                            readRanges.Add(new DownloadRange
-                            {
-                                Start = start,
-                                End = i,
-                                TempFileName = Path.GetTempFileName()
-                            });
+                    if (from < 0)
+                    {
+                        from = 0;
+                    }
 
-                            previous = i;
-                        }
-                        else
-                        {
-                            var start = previous;
+                    totalSize -= partSize;
 
-                            readRanges.Add(new DownloadRange
-                            {
-                                Start = start,
-                                End = responseLength,
-                                TempFileName = Path.GetTempFileName()
-                            });
-
-                            previous = i;
-                        }
-                else
                     readRanges.Add(new DownloadRange
                     {
-                        End = responseLength,
-                        Start = 0,
+                        Start = from,
+                        End = to,
                         TempFileName = Path.GetTempFileName()
                     });
+                }
+
+                readRanges = readRanges.OrderBy(r => r.Start).ToList();
 
                 #endregion
 
@@ -422,34 +409,31 @@ public static class DownloadHelper
                     continue;
                 }
 
-                using var hash = downloadSettings.GetHashAlgorithm();
-                await using var fs =
-                    File.Open(filePath, FileMode.Append, FileAccess.Write, FileShare.Read);
-                await using Stream outputStream = 
-                    downloadSettings.CheckFile && !string.IsNullOrEmpty(downloadFile.CheckSum)
-                        ? new CryptoStream(fs, hash, CryptoStreamMode.Write) 
-                        : fs;
-
-                foreach (var inputFilePath in readRanges)
+                await using (var outputStream =
+                             File.Open(filePath, FileMode.Create, FileAccess.ReadWrite, FileShare.Read))
                 {
-                    var fileMem = await File.ReadAllBytesAsync(inputFilePath.TempFileName, cts.Token);
+                    foreach (var inputFilePath in readRanges)
+                    {
+                        await using var inputStream = File.Open(inputFilePath.TempFileName, FileMode.Open,
+                            FileAccess.Read,
+                            FileShare.Read);
+                        outputStream.Seek(inputFilePath.Start, SeekOrigin.Begin);
 
-                    await outputStream.WriteAsync(fileMem.AsMemory(), cts.Token);
+                        await inputStream.CopyToAsync(outputStream, cts.Token);
+                    }
                 }
-
-                if (outputStream is CryptoStream cryptoStream)
-                    await cryptoStream.FlushFinalBlockAsync(cts.Token);
 
                 if (downloadSettings.CheckFile && !string.IsNullOrEmpty(downloadFile.CheckSum))
                 {
-                    var checkSum = CryptoHelper.ToString(hash.Hash);
+                    using var hash = downloadSettings.GetHashAlgorithm();
+
+                    var checkSum =
+                        CryptoHelper.ToString(await hash.ComputeHashAsync(File.OpenRead(filePath), cts.Token));
 
                     if (!checkSum.Equals(downloadFile.CheckSum, StringComparison.OrdinalIgnoreCase))
                     {
                         downloadFile.RetryCount++;
                         isLatestFileCheckSucceeded = false;
-                        streamBlock.Complete();
-                        writeActionBlock.Complete();
                         continue;
                     }
 
