@@ -4,5 +4,6 @@ public enum LibraryType
 {
     Forge,
     Fabric,
+    Quilt,
     Other
 }

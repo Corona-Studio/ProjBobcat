@@ -22,6 +22,7 @@ public class LibraryInfoResolver : ResolverBase
     public string FabricMavenUriRoot { get; init; } = "https://maven.fabricmc.net";
     public string ForgeMavenUriRoot { get; init; } = "https://maven.minecraftforge.net/";
     public string ForgeMavenOldUriRoot { get; init; } = "https://files.minecraftforge.net/maven/";
+    public string QuiltMavenUriRoot { get; init; } = "https://maven.quiltmc.org/repository/release/";
 
     public override async Task<IEnumerable<IGameResource>> ResolveResourceAsync()
     {
@@ -135,6 +136,7 @@ public class LibraryInfoResolver : ResolverBase
                                        false => $"{ForgeMavenOldUriRoot}{lL.Path.Replace('\\', '/')}",
                 LibraryType.Forge => $"{ForgeUriRoot}{lL.Path.Replace('\\', '/')}",
                 LibraryType.Fabric => $"{FabricMavenUriRoot}{lL.Path.Replace('\\', '/')}",
+                LibraryType.Quilt when !string.IsNullOrEmpty(lL.Url) => $"{QuiltMavenUriRoot}{lL.Path.Replace('\\', '/')}",
                 LibraryType.Other => $"{LibraryUriRoot}{lL.Path.Replace('\\', '/')}",
                 _ => string.Empty
             };
@@ -166,8 +168,17 @@ public class LibraryInfoResolver : ResolverBase
     {
         if (IsForgeLib(fi)) return LibraryType.Forge;
         if (IsFabricLib(fi)) return LibraryType.Fabric;
+        if (IsQuiltLib(fi)) return LibraryType.Quilt;
 
         return LibraryType.Other;
+    }
+
+    static bool IsQuiltLib(FileInfo fi)
+    {
+        if (fi.Name.Contains("quiltmc", StringComparison.OrdinalIgnoreCase)) return true;
+        if (fi.Url.Contains("quiltmc", StringComparison.OrdinalIgnoreCase)) return true;
+
+        return false;
     }
 
     static bool IsFabricLib(FileInfo fi)

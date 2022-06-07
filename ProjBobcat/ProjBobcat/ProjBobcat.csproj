@@ -64,4 +64,7 @@ performance improvement
     </PackageReference>
     <PackageReference Include="System.Management" Version="6.0.0" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Class\Model\Quilt\" />
+  </ItemGroup>
 </Project>
