@@ -2,7 +2,7 @@
 
 # [简体中文](https://github.com/Corona-Studio/ProjBobcat/blob/master/README_zh_cn.md)
 
-![bobcatlong.png](https://i.loli.net/2020/02/07/Hx18lYLKR43WAb2.png)
+![Hx18lYLKR43WAb2](https://user-images.githubusercontent.com/25716486/172503112-95515b07-52ee-4d1e-868e-b87137c6034e.png)
 ![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/corona-studio/projbobcat?logo=codefactor&style=for-the-badge)
 ![Nuget](https://img.shields.io/nuget/v/ProjBobcat?logo=nuget&style=for-the-badge)
 ![Nuget](https://img.shields.io/nuget/dt/projbobcat?logo=nuget&style=for-the-badge)
