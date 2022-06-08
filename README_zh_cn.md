@@ -5,7 +5,7 @@
 ## 查看我们在MCBBS的教程贴
 [MCBBS教程](https://www.mcbbs.net/thread-956299-1-1.html)
 
-![bobcatlong.png](https://i.loli.net/2020/02/07/Hx18lYLKR43WAb2.png)
+![Hx18lYLKR43WAb2](https://user-images.githubusercontent.com/25716486/172503112-95515b07-52ee-4d1e-868e-b87137c6034e.png)
 ![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/corona-studio/projbobcat?logo=codefactor&label=CODEFACTOR评分&style=for-the-badge)
 ![Nuget](https://img.shields.io/nuget/v/ProjBobcat?logo=nuget&label=NUGET版本&style=for-the-badge)
 ![Nuget](https://img.shields.io/nuget/dt/projbobcat?logo=nuget&label=NUGET下载量&style=for-the-badge)
