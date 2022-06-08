@@ -126,7 +126,7 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
                 GcType.G1Gc => "-XX:+UseG1GC",
                 GcType.ParallelGc => "-XX:+UseParallelGC",
                 GcType.SerialGc => "-XX:+UseSerialGC",
-                GcType.ZGc => "-XX:UseZGC",
+                GcType.ZGc => "-XX:+UseZGC",
                 _ => "-XX:+UseG1GC"
             };
 
