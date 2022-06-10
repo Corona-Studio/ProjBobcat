@@ -21,7 +21,12 @@
 由日冕工作室开发和维护。
 
 ## Stats
+
 ![Alt](https://repobeats.axiom.co/api/embed/d8d56d4c2023d90ea067d5b3ca83ed5da4979289.svg "Repobeats analytics image")
+
+### CodeQL
+
+[![CodeQL](https://github.com/Corona-Studio/ProjBobcat/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/Corona-Studio/ProjBobcat/actions/workflows/codeql-analysis.yml)
 
 ## [广告] 一个超牛逼的Typescript启动核心
 [仓库链接](https://github.com/Voxelum/minecraft-launcher-core-node)
