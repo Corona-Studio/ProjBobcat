@@ -30,7 +30,9 @@ Developed and maintained by Corona Studio.
 All you need for minecraft launcher in typescript. https://voxelum.github.io/minecraft-launcher-core-node/
 
 ## Reminder before installation
-* Due to the limitation of the default number of connections in .NET, you need to manually override the default number of connections to ensure that some methods in <DownloadHelper> are executed normally. You can add the following code in App.xaml.cs or the entry point of the program to complete the modification (The maximum value should not exceed 1024)
+
++ Because Projbobcat uses tons of latest language features and data structures from .NET Core and .NET 5+. As the result, you need to switch you project target to at least **.NET 5 or above** to use this package.
++ Due to the limitation of the default number of connections in .NET, you need to manually override the default number of connections to ensure that some methods in <DownloadHelper> are executed normally. You can add the following code in App.xaml.cs or the entry point of the program to complete the modification (The maximum value should not exceed 1024)
 
   ```c#
    using System.Net;
