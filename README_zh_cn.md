@@ -46,7 +46,8 @@ All you need for minecraft launcher in typescript. https://voxelum.github.io/min
 + 日冕开发组官方审核群：1040526762
 
 ## 安装前提醒
-* 由于.NET的默认连接数限制，您需要手动覆盖掉默认的连接数才能保证 <DownloadHelper> 中的部分方法正常执行，您可以在App.xaml.cs或程序入口点添加下面的代码来完成修改（最大值不宜超过1024）
++ 由于 Projbobcat 使用了来自 .NET Core 和 .NET 5.0+ 的诸多最新语言特性。如果您想使用本项目，您需要将您的项目框架版本设置为 **.NET 5 或更高版本**。
++ 由于.NET的默认连接数限制，您需要手动覆盖掉默认的连接数才能保证 <DownloadHelper> 中的部分方法正常执行，您可以在App.xaml.cs或程序入口点添加下面的代码来完成修改（最大值不宜超过1024）
   ```c#
   using System.Net;
   
