@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using ProjBobcat.DefaultComponent.Authenticator;
 using ProjBobcat.DefaultComponent.Logging;
 using ProjBobcat.DefaultComponent.Launch.GameCore;
+using System.Collections.Generic;
 
 namespace Example
 {
@@ -19,10 +20,12 @@ namespace Example
         private static async Task Main(string[] args)
         {
             var jl = SystemInfoHelper.FindJava();
+            var javaResult = new List<string>();
 
-            foreach (var java in jl)
+            await foreach (var java in jl)
             {
                 Console.WriteLine($"搜索到的 Java - {java}");
+                javaResult.Add(java);
             }
 
             InitLauncherCore(); //初始化核心
@@ -37,12 +40,12 @@ namespace Example
             var firstGame = gameList.First(); //获取搜索到的第一个游戏
             Console.WriteLine(
                 string.Format("第一个游戏的信息：{0}游戏 ID：{1}{0}游戏底层版本：{2}{0}游戏名称：{3}", 
-                $"{Environment.NewLine}\t", 
+                $"{Environment.NewLine}\t",
                 firstGame.Id, 
                 firstGame.RootVersion, 
                 firstGame.Name));
 
-            var javaPath = jl.ToList().First(); //获取搜索到的第一个Java
+            var javaPath = javaResult.First(); //获取搜索到的第一个Java
             Console.WriteLine($"列表中的第一个 Java 所在的路径：{javaPath}");
 
             var launchSettings = new LaunchSettings

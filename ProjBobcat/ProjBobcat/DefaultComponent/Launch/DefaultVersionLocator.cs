@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
@@ -10,6 +6,10 @@ using ProjBobcat.Class.Helper.SystemInfo;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.Version;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using FileInfo = ProjBobcat.Class.Model.FileInfo;
 
 namespace ProjBobcat.DefaultComponent.Launch;
@@ -19,6 +19,14 @@ namespace ProjBobcat.DefaultComponent.Launch;
 /// </summary>
 public sealed class DefaultVersionLocator : VersionLocatorBase
 {
+#if WINDOWS
+    public const string OS_Symbol = "windows";
+#elif OSX
+    public const string OS_Symbol = "osx";
+#elif LINUX
+    public const string OS_Symbol = "linux";
+#endif
+
     /// <summary>
     ///     构造函数。
     ///     Constructor.
@@ -104,10 +112,10 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
 
                     if (!rule.OperatingSystem.ContainsKey("version"))
                         flag = rule.Action.Equals("allow", StringComparison.Ordinal) &&
-                               rule.OperatingSystem["name"].Equals("windows", StringComparison.Ordinal);
+                               rule.OperatingSystem["name"].Equals(OS_Symbol, StringComparison.Ordinal);
                     else
                         flag = rule.Action.Equals("allow", StringComparison.Ordinal) &&
-                               rule.OperatingSystem["name"].Equals("windows", StringComparison.Ordinal) &&
+                               rule.OperatingSystem["name"].Equals(OS_Symbol, StringComparison.Ordinal) &&
                                rule.OperatingSystem["version"].Equals($"^{WindowsSystemVersion.CurrentVersion}\\.",
                                    StringComparison.Ordinal);
                 }
@@ -203,9 +211,9 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             var isNative = lib.Natives?.Any() ?? false;
             if (isNative)
             {
-                var key = lib.Natives.ContainsKey("windows")
-                    ? lib.Natives["windows"].Replace("${arch}", SystemArch.CurrentArch.ToString("{0}"))
-                    : "natives-windows";
+                var key = lib.Natives.ContainsKey(OS_Symbol)
+                    ? lib.Natives[OS_Symbol].Replace("${arch}", SystemArch.CurrentArch.ToString("{0}"))
+                    : $"natives-{OS_Symbol}";
 
                 FileInfo libFi;
                 if (lib.Downloads?.Classifiers?.ContainsKey(key) ?? false)

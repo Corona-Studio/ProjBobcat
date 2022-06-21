@@ -1,25 +1,30 @@
-﻿using System;
+﻿using ProjBobcat.Class.Model;
+using System;
 using System.Diagnostics;
+using System.Runtime.Versioning;
 using System.Threading.Tasks;
-using ProjBobcat.Class.Helper;
-using ProjBobcat.Class.Model;
 
 namespace ProjBobcat.DefaultComponent.Launch.GameCore;
 
 /// <summary>
 ///     提供了UWP版本MineCraft的启动核心
 /// </summary>
+[SupportedOSPlatform("Windows")]
 public class DefaultMineCraftUWPCore : GameCoreBase
 {
     public override LaunchResult Launch(LaunchSettings launchSettings)
     {
-        if (!SystemInfoHelper.IsMinecraftUWPInstalled()) throw new InvalidOperationException();
+#if NET5_0_WINDOWS || NET6_0_WINDOWS
+        if (!ProjBobcat.Platforms.Windows.SystemInfoHelper.IsMinecraftUWPInstalled()) throw new InvalidOperationException();
 
         using var process = new Process
             { StartInfo = new ProcessStartInfo { UseShellExecute = true, FileName = "minecraft:" } };
         process.Start();
 
         return default;
+#endif
+
+        throw new NotSupportedException();
     }
 
     [Obsolete("UWP启动核心并不支持异步启动")]
