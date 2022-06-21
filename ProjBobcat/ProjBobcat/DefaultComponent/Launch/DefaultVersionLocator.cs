@@ -1,4 +1,8 @@
-﻿using Newtonsoft.Json;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
@@ -6,10 +10,6 @@ using ProjBobcat.Class.Helper.SystemInfo;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.Version;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using FileInfo = ProjBobcat.Class.Model.FileInfo;
 
 namespace ProjBobcat.DefaultComponent.Launch;

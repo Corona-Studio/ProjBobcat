@@ -119,7 +119,7 @@ public static class DownloadHelper
 
                 var tSpeed = 0d;
                 var cSpeed = 0;
-                
+
                 using var rentMemory = Pool.Rent(1024);
 
                 while (true)
@@ -286,10 +286,7 @@ public static class DownloadHelper
                     var to = totalSize;
                     var from = totalSize - partSize;
 
-                    if (from < 0)
-                    {
-                        from = 0;
-                    }
+                    if (from < 0) from = 0;
 
                     totalSize -= partSize;
 
@@ -345,7 +342,7 @@ public static class DownloadHelper
                     await using var fileToWriteTo = File.Open(t.Item2.TempFileName, FileMode.Create,
                         FileAccess.Write, FileShare.Read);
                     using var rentMemory = Pool.Rent(1024);
-                    
+
                     var sw = new Stopwatch();
 
                     while (true)

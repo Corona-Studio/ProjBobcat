@@ -136,7 +136,8 @@ public class LibraryInfoResolver : ResolverBase
                                        false => $"{ForgeMavenOldUriRoot}{lL.Path.Replace('\\', '/')}",
                 LibraryType.Forge => $"{ForgeUriRoot}{lL.Path.Replace('\\', '/')}",
                 LibraryType.Fabric => $"{FabricMavenUriRoot}{lL.Path.Replace('\\', '/')}",
-                LibraryType.Quilt when !string.IsNullOrEmpty(lL.Url) => $"{QuiltMavenUriRoot}{lL.Path.Replace('\\', '/')}",
+                LibraryType.Quilt when !string.IsNullOrEmpty(lL.Url) =>
+                    $"{QuiltMavenUriRoot}{lL.Path.Replace('\\', '/')}",
                 LibraryType.Other => $"{LibraryUriRoot}{lL.Path.Replace('\\', '/')}",
                 _ => string.Empty
             };

@@ -21,8 +21,12 @@ public static class JwtTokenHelper
         str = str.Replace('_', '/').Replace('-', '+');
         switch (str.Length % 4)
         {
-            case 2: str += "=="; break;
-            case 3: str += "="; break;
+            case 2:
+                str += "==";
+                break;
+            case 3:
+                str += "=";
+                break;
         }
 
         return str;

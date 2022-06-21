@@ -24,7 +24,7 @@ public static class CurseForgeAPIHelper
         return req;
     }
 
-    public static void SetApiKey(string apiKey) 
+    public static void SetApiKey(string apiKey)
     {
         ApiKey = apiKey;
     }

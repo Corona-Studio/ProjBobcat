@@ -1,9 +1,9 @@
-﻿using Microsoft.Extensions.Configuration;
-using ProjBobcat.Class.Model;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Microsoft.Extensions.Configuration;
+using ProjBobcat.Class.Model;
 
 namespace ProjBobcat.Class.Helper;
 
@@ -16,7 +16,7 @@ public static class SystemInfoHelper
     {
 #if WINDOWS
         return Platforms.Windows.SystemInfoHelper.GetWindowsCpuUsage()
-                        .FirstOrDefault(i => i.Name.Equals("_Total", StringComparison.OrdinalIgnoreCase));
+            .FirstOrDefault(i => i.Name.Equals("_Total", StringComparison.OrdinalIgnoreCase));
 #elif LINUX
         return Platforms.Linux.SystemInfoHelper.GetLinuxCpuUsage().FirstOrDefault();
 #else
@@ -39,8 +39,8 @@ public static class SystemInfoHelper
     {
         var result = new HashSet<string>();
 
-         if(fullSearch)
-            await foreach(var path in DeepJavaSearcher.DeepSearch())
+        if (fullSearch)
+            await foreach (var path in DeepJavaSearcher.DeepSearch())
                 result.Add(path);
 
 #if WINDOWS

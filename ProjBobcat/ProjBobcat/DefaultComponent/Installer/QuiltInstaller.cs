@@ -48,7 +48,8 @@ public class QuiltInstaller : InstallerBase, IQuiltInstaller
         if (versionModel == null)
             throw new NullReferenceException(nameof(versionModel));
 
-        var hashed = versionModel.Libraries.FirstOrDefault(l => l.Name.StartsWith("org.quiltmc:hashed", StringComparison.OrdinalIgnoreCase));
+        var hashed = versionModel.Libraries.FirstOrDefault(l =>
+            l.Name.StartsWith("org.quiltmc:hashed", StringComparison.OrdinalIgnoreCase));
 
         if (hashed != default)
         {
@@ -56,15 +57,12 @@ public class QuiltInstaller : InstallerBase, IQuiltInstaller
 
             hashed.Name = hashed.Name.Replace("org.quiltmc:hashed", "net.fabricmc:intermediary");
 
-            if (!string.IsNullOrEmpty(hashed.Url))
-            {
-                hashed.Url = "https://maven.fabricmc.net/";
-            }
+            if (!string.IsNullOrEmpty(hashed.Url)) hashed.Url = "https://maven.fabricmc.net/";
 
             versionModel.Libraries[index] = hashed;
         }
 
-        if(!string.IsNullOrEmpty(CustomId))
+        if (!string.IsNullOrEmpty(CustomId))
             versionModel.Id = CustomId;
 
         var id = versionModel.Id;

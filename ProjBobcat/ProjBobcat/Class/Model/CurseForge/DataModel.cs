@@ -9,6 +9,5 @@ public class DataModel<T>
 
 public class DataModelWithPagination<T> : DataModel<T>
 {
-    [JsonProperty("pagination")]
-    public PaginationModel Pagination { get; set; }
+    [JsonProperty("pagination")] public PaginationModel Pagination { get; set; }
 }

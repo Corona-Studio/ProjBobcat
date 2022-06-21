@@ -16,8 +16,8 @@ public class SearchOptions
         var result =
             "?" +
             $"gameId={GameId ?? 432}";
-        
-        if(Index != null)
+
+        if (Index != null)
             result += $"&index={Index ?? 0}";
         if (Sort != null)
             result += $"&sortOrder={Sort ?? 1}";

@@ -1,8 +1,7 @@
-﻿using ProjBobcat.Class.Model;
-using System;
-using System.Diagnostics;
+﻿using System;
 using System.Runtime.Versioning;
 using System.Threading.Tasks;
+using ProjBobcat.Class.Model;
 
 namespace ProjBobcat.DefaultComponent.Launch.GameCore;
 

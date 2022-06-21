@@ -18,7 +18,7 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageIcon>Bobcat.png</PackageIcon>
     <RepositoryUrl>https://github.com/Corona-Studio/ProjBobcat</RepositoryUrl>
-    <Version>1.16.0</Version>
+    <Version>1.20.0</Version>
     <Authors>Corona Studio</Authors>
     <Company>Corona Studio</Company>
     <Product>ProjBobcat</Product>
@@ -62,7 +62,7 @@ add support for Quilt installation
       <Version>13.0.1</Version>
     </PackageReference>
     <PackageReference Include="SharpCompress">
-      <Version>0.32.0</Version>
+      <Version>0.32.1</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup Condition=" '$(IsWindows)'=='true' ">

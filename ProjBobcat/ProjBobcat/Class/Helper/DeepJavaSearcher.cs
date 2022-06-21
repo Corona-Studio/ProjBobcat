@@ -57,10 +57,7 @@ public static class DeepJavaSearcher
         if (isFailed || process.ExitCode != 0)
             yield break;
 
-        foreach (var path in result)
-        {
-            yield return path;
-        }
+        foreach (var path in result) yield return path;
     }
 
     public static async IAsyncEnumerable<string> DeepSearch()
@@ -69,9 +66,7 @@ public static class DeepJavaSearcher
         var drives = GetLogicalDrives();
 
         foreach (var drive in drives)
-        {
-            await foreach (var path in DeepSearch(drive, "javaw.exe"))
-                yield return path;
-        }
+        await foreach (var path in DeepSearch(drive, "javaw.exe"))
+            yield return path;
     }
 }
