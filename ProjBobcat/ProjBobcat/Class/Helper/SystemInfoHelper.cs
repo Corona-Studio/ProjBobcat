@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -42,10 +42,60 @@ public static class SystemInfoHelper
         if (fullSearch)
             await foreach (var path in DeepJavaSearcher.DeepSearch())
                 result.Add(path);
+        //C遍历Java常见位置
+        try
+        {
+            DirectoryInfo TheFolder = new DirectoryInfo("C:\\Program Files\\Java");
+            foreach (DirectoryInfo NextFolder in TheFolder.GetDirectories())
+            {
+                string FullPath = "C:\\Program Files\\Java\\" + NextFolder.Name + "\\bin\\javaw.exe";
+                if (File.Exists(FullPath))
+                    result.Add(FullPath);
+            }
+        }
+        catch { }
+
+        try
+        {
+            DirectoryInfo TheFolder = new DirectoryInfo("D:\\Program Files\\Java");
+            foreach (DirectoryInfo NextFolder in TheFolder.GetDirectories())
+            {
+                string FullPath = "D:\\Program Files\\Java\\" + NextFolder.Name + "\\bin\\javaw.exe";
+                if (File.Exists(FullPath))
+                    result.Add(FullPath);
+            }
+        }
+        catch { }
+
+        try
+        {
+            DirectoryInfo TheFolder = new DirectoryInfo("E:\\Program Files\\Java");
+            foreach (DirectoryInfo NextFolder in TheFolder.GetDirectories())
+            {
+                string FullPath = "E:\\Program Files\\Java\\" + NextFolder.Name + "\\bin\\javaw.exe";
+                if (File.Exists(FullPath))
+                    result.Add(FullPath);
+            }
+        }
+        catch { }
+
+        try
+        {
+            DirectoryInfo TheFolder = new DirectoryInfo("F:\\Program Files\\Java");
+            foreach (DirectoryInfo NextFolder in TheFolder.GetDirectories())
+            {
+                string FullPath = "F:\\Program Files\\Java\\" + NextFolder.Name + "\\bin\\javaw.exe";
+                if (File.Exists(FullPath))
+                    result.Add(FullPath);
+            }
+
+        }
+        catch { }
+
 
 #if WINDOWS
-        foreach (var path in Platforms.Windows.SystemInfoHelper.FindJavaWindows())
-            result.Add(path);
+            foreach (var path in Platforms.Windows.SystemInfoHelper.FindJavaWindows())
+                result.Add(path);
 #endif
 
         foreach (var path in result)
