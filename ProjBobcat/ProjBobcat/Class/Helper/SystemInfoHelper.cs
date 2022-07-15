@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Management;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
 using ProjBobcat.Class.Model;
@@ -43,7 +42,7 @@ public static class SystemInfoHelper
     public static async IAsyncEnumerable<string> FindJava(bool fullSearch = false)
     {
         var result = new HashSet<string>();
-        var DiskName = getDisk();
+        var DiskName = DeepJavaSearcher.GetLogicalDrives();
 
         if (fullSearch)
             await foreach (var path in DeepJavaSearcher.DeepSearch())
@@ -51,33 +50,35 @@ public static class SystemInfoHelper
         
         foreach(var JP in DiskName)
         {
-            try
-            {
-                DirectoryInfo TheFolder = new DirectoryInfo($"{JP}\\Program Files\\Java");
+            string JavaFolderPath = JP+"\\Program Files\\Java";
+            if (Directory.Exists(JavaFolderPath)) {
+                DirectoryInfo TheFolder = new DirectoryInfo(JavaFolderPath);
                 foreach (DirectoryInfo NextFolder in TheFolder.GetDirectories())
                 {
-                    string FullPath = JP+"\\Program Files\\Java\\" + NextFolder.Name + "\\bin\\javaw.exe";
+                    string FullPath = JavaFolderPath + "\\" + NextFolder.Name + "\\bin\\javaw.exe";
                     if (File.Exists(FullPath))
+                    {
+                        //yield return FullPath;
                         result.Add(FullPath);
+                    }
                 }
             }
-            catch { }
         }
 
-#if WINDOWS
-        foreach (var path in Platforms.Windows.SystemInfoHelper.FindJavaWindows())
-            result.Add(path);
-#endif
+//#if WINDOWS
+//        foreach (var path in Platforms.Windows.SystemInfoHelper.FindJavaWindows())
+//            result.Add(path);
+//#endif
 
         foreach (var path in result)
             yield return path;
-        foreach (var path in FindJavaInOfficialGamePath())
-            yield return path;
+//        foreach (var path in FindJavaInOfficialGamePath())
+//            yield return path;
 
-        var evJava = FindJavaUsingEnvironmentVariable();
+//        var evJava = FindJavaUsingEnvironmentVariable();
 
-        if (!string.IsNullOrEmpty(evJava))
-            yield return Path.Combine(evJava, "bin", "javaw.exe");
+//        if (!string.IsNullOrEmpty(evJava))
+//            yield return Path.Combine(evJava, "bin", "javaw.exe");
     }
 
     static IEnumerable<string> FindJavaInOfficialGamePath()
@@ -115,18 +116,5 @@ public static class SystemInfoHelper
         }
     }
 
-
-    public static List<string> getDisk()
-    {
-        WqlObjectQuery wmiquery = new WqlObjectQuery("select * from Win32_LogiCalDisk");
-        ManagementObjectSearcher wmifind = new ManagementObjectSearcher(wmiquery);
-        ManagementObjectCollection queryCollection = wmifind.Get();
-        List<string> ls = new List<string>();
-        foreach (var disk in queryCollection)
-        {
-            ls.Add(disk["DeviceID"].ToString());
-        }
-        return ls;
-    }
 
 }

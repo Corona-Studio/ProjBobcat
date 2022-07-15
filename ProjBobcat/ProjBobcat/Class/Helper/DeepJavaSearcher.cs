@@ -7,7 +7,7 @@ namespace ProjBobcat.Class.Helper;
 
 public static class DeepJavaSearcher
 {
-    static IEnumerable<string> GetLogicalDrives()
+    public static IEnumerable<string> GetLogicalDrives()
     {
         return Environment.GetLogicalDrives();
     }
