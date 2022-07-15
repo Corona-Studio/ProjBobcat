@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Management;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
 using ProjBobcat.Class.Model;
@@ -10,6 +11,10 @@ namespace ProjBobcat.Class.Helper;
 /// <summary>
 ///     系统信息帮助器。
 /// </summary>
+/// 
+
+
+
 public static class SystemInfoHelper
 {
     public static CPUInfo GetProcessorUsage()
@@ -38,64 +43,30 @@ public static class SystemInfoHelper
     public static async IAsyncEnumerable<string> FindJava(bool fullSearch = false)
     {
         var result = new HashSet<string>();
+        var DiskName = getDisk();
 
         if (fullSearch)
             await foreach (var path in DeepJavaSearcher.DeepSearch())
                 result.Add(path);
-        //C遍历Java常见位置
-        try
+        
+        foreach(var JP in DiskName)
         {
-            DirectoryInfo TheFolder = new DirectoryInfo("C:\\Program Files\\Java");
-            foreach (DirectoryInfo NextFolder in TheFolder.GetDirectories())
+            try
             {
-                string FullPath = "C:\\Program Files\\Java\\" + NextFolder.Name + "\\bin\\javaw.exe";
-                if (File.Exists(FullPath))
-                    result.Add(FullPath);
+                DirectoryInfo TheFolder = new DirectoryInfo($"{JP}\\Program Files\\Java");
+                foreach (DirectoryInfo NextFolder in TheFolder.GetDirectories())
+                {
+                    string FullPath = JP+"\\Program Files\\Java\\" + NextFolder.Name + "\\bin\\javaw.exe";
+                    if (File.Exists(FullPath))
+                        result.Add(FullPath);
+                }
             }
+            catch { }
         }
-        catch { }
-
-        try
-        {
-            DirectoryInfo TheFolder = new DirectoryInfo("D:\\Program Files\\Java");
-            foreach (DirectoryInfo NextFolder in TheFolder.GetDirectories())
-            {
-                string FullPath = "D:\\Program Files\\Java\\" + NextFolder.Name + "\\bin\\javaw.exe";
-                if (File.Exists(FullPath))
-                    result.Add(FullPath);
-            }
-        }
-        catch { }
-
-        try
-        {
-            DirectoryInfo TheFolder = new DirectoryInfo("E:\\Program Files\\Java");
-            foreach (DirectoryInfo NextFolder in TheFolder.GetDirectories())
-            {
-                string FullPath = "E:\\Program Files\\Java\\" + NextFolder.Name + "\\bin\\javaw.exe";
-                if (File.Exists(FullPath))
-                    result.Add(FullPath);
-            }
-        }
-        catch { }
-
-        try
-        {
-            DirectoryInfo TheFolder = new DirectoryInfo("F:\\Program Files\\Java");
-            foreach (DirectoryInfo NextFolder in TheFolder.GetDirectories())
-            {
-                string FullPath = "F:\\Program Files\\Java\\" + NextFolder.Name + "\\bin\\javaw.exe";
-                if (File.Exists(FullPath))
-                    result.Add(FullPath);
-            }
-
-        }
-        catch { }
-
 
 #if WINDOWS
-            foreach (var path in Platforms.Windows.SystemInfoHelper.FindJavaWindows())
-                result.Add(path);
+        foreach (var path in Platforms.Windows.SystemInfoHelper.FindJavaWindows())
+            result.Add(path);
 #endif
 
         foreach (var path in result)
@@ -143,4 +114,19 @@ public static class SystemInfoHelper
             return string.Empty;
         }
     }
+
+
+    public static List<string> getDisk()
+    {
+        WqlObjectQuery wmiquery = new WqlObjectQuery("select * from Win32_LogiCalDisk");
+        ManagementObjectSearcher wmifind = new ManagementObjectSearcher(wmiquery);
+        ManagementObjectCollection queryCollection = wmifind.Get();
+        List<string> ls = new List<string>();
+        foreach (var disk in queryCollection)
+        {
+            ls.Add(disk["DeviceID"].ToString());
+        }
+        return ls;
+    }
+
 }
