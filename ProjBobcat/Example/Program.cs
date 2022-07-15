@@ -1,4 +1,4 @@
-﻿using ProjBobcat.Class.Helper;
+using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.DefaultComponent.Launch;
@@ -21,13 +21,18 @@ namespace Example
         {
             var jl = SystemInfoHelper.FindJava();
             var javaResult = new List<string>();
-
+            var Disk = SystemInfoHelper.getDisk();
+            var DiskResult = new List<string>();
             await foreach (var java in jl)
             {
                 Console.WriteLine($"搜索到的 Java - {java}");
                 javaResult.Add(java);
             }
-
+            foreach (var disk in Disk)
+            {
+                Console.WriteLine($"搜索到的盘符:{disk}");
+                DiskResult.Add(disk);
+            }
             InitLauncherCore(); //初始化核心
 
             Console.WriteLine($"在目录中扫描到了 {core.VersionLocator.GetAllGames().Count()} 个游戏：");
