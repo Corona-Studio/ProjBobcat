@@ -42,13 +42,13 @@ public static class SystemInfoHelper
     public static async IAsyncEnumerable<string> FindJava(bool fullSearch = false)
     {
         var result = new HashSet<string>();
-        var DiskName = DeepJavaSearcher.GetLogicalDrives();
+        var diskName = DeepJavaSearcher.GetLogicalDrives();
 
         if (fullSearch)
             await foreach (var path in DeepJavaSearcher.DeepSearch())
                 result.Add(path);
-        
-        foreach(var JP in DiskName)
+#if WINDOWS        
+        foreach(var JP in diskName)
         {
             string JavaFolderPath = JP+"\\Program Files\\Java";
             if (Directory.Exists(JavaFolderPath)) {
@@ -64,21 +64,22 @@ public static class SystemInfoHelper
                 }
             }
         }
-
-//#if WINDOWS
-//        foreach (var path in Platforms.Windows.SystemInfoHelper.FindJavaWindows())
-//            result.Add(path);
-//#endif
+#endif
+        //#if WINDOWS
+        //        foreach (var path in Platforms.Windows.SystemInfoHelper.FindJavaWindows())
+        //            result.Add(path);
+        //#endif
 
         foreach (var path in result)
             yield return path;
-//        foreach (var path in FindJavaInOfficialGamePath())
-//            yield return path;
+        foreach (var path in FindJavaInOfficialGamePath())
+            yield return path;
 
-//        var evJava = FindJavaUsingEnvironmentVariable();
-
-//        if (!string.IsNullOrEmpty(evJava))
-//            yield return Path.Combine(evJava, "bin", "javaw.exe");
+        //var evJava = FindJavaUsingEnvironmentVariable();
+        //if (!string.IsNullOrEmpty(evJava))
+        //{
+         //   yield return Path.Combine(evJava, "bin", "javaw.exe");
+        //}
     }
 
     static IEnumerable<string> FindJavaInOfficialGamePath()

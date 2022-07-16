@@ -21,17 +21,17 @@ namespace Example
         {
             var jl = SystemInfoHelper.FindJava();
             var javaResult = new List<string>();
-            var Disk = DeepJavaSearcher.GetLogicalDrives();
-            var DiskResult = new List<string>();
+            var disk = DeepJavaSearcher.GetLogicalDrives();
+            var diskResult = new List<string>();
             await foreach (var java in jl)
             {
                 Console.WriteLine($"搜索到的 Java - {java}");
                 javaResult.Add(java);
             }
-            foreach (var disk in Disk)
+            foreach (var disktmp in disk)
             {
-                Console.WriteLine($"搜索到的盘符:{disk}");
-                DiskResult.Add(disk);
+                Console.WriteLine($"搜索到的盘符:{disktmp}");
+                diskResult.Add(disktmp);
             }
             InitLauncherCore(); //初始化核心
 
