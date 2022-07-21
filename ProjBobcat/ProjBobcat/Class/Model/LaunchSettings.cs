@@ -13,8 +13,8 @@ public class GameArguments
     /// </summary>
     public string JavaExecutable { get; set; }
 
-    public int MinMemory { get; set; }
-    public int MaxMemory { get; set; }
+    public uint MinMemory { get; set; }
+    public uint MaxMemory { get; set; }
     public ResolutionModel Resolution { get; set; }
     public GcType GcType { get; set; }
     public IEnumerable<string> AddtionalJvmArguments { get; set; }
