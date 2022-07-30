@@ -62,7 +62,7 @@ add support for Quilt installation
       <Version>13.0.1</Version>
     </PackageReference>
     <PackageReference Include="SharpCompress">
-      <Version>0.32.1</Version>
+      <Version>0.32.2</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup Condition=" '$(IsWindows)'=='true' ">
