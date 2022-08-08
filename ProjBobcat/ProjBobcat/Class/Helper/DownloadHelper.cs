@@ -170,7 +170,7 @@ public static class DownloadHelper
             }
             catch (Exception e)
             {
-                await Task.Delay(500, cts.Token);
+                await Task.Delay(250);
 
                 downloadFile.RetryCount++;
                 exceptions.Add(e);
