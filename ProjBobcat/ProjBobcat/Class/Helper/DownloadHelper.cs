@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ProjBobcat.Class.Model;
+using System;
 using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -12,7 +13,6 @@ using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using ProjBobcat.Class.Model;
 
 namespace ProjBobcat.Class.Helper;
 
