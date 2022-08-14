@@ -62,7 +62,6 @@ public static class DeepJavaSearcher
 
     public static async IAsyncEnumerable<string> DeepSearch()
     {
-        var result = new HashSet<string>();
         var drives = GetLogicalDrives();
 
         foreach (var drive in drives)

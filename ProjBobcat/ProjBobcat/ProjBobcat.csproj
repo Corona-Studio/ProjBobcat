@@ -1,10 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' And '$(OS)' == 'Windows_NT' ">
+    <RuntimeIdentifier>win7-x64</RuntimeIdentifier>
+  </PropertyGroup>
+
   <PropertyGroup>
     <TargetFrameworks>net5.0;net6.0</TargetFrameworks>
     <OutputType>Library</OutputType>
-    <IsWindows Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'true'">true</IsWindows>
-    <IsOSX Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))' == 'true'">true</IsOSX>
-    <IsLinux Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'true'">true</IsLinux>
+    <IsWindows Condition="'$(RuntimeIdentifier)' == 'win-x64' Or '$(RuntimeIdentifier)' == 'win7-x64'">true</IsWindows>
+    <IsOSX Condition="'$(RuntimeIdentifier)' == 'osx-x64'">true</IsOSX>
+    <IsLinux Condition="'$(RuntimeIdentifier)' == 'linux-x64'">true</IsLinux>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <NoWarn>CA1716;CA2227;CA2208;CA1031;CA5351;CA1065;CA1305;CS0067;CA1720;CA1055;CA1054;CA1056;CA1062</NoWarn>
@@ -84,7 +89,6 @@ add support for Quilt installation
   <!-- Compile Options -->
   <ItemGroup>
     <Compile Remove="Platforms\**\*.cs" />
-    <None Include="Platforms\**\*.cs" />
   </ItemGroup>
 
   <ItemGroup Condition=" '$(IsLinux)'=='true' ">

@@ -19,14 +19,6 @@ namespace ProjBobcat.DefaultComponent.Launch;
 /// </summary>
 public sealed class DefaultVersionLocator : VersionLocatorBase
 {
-#if WINDOWS
-    public const string OS_Symbol = "windows";
-#elif OSX
-    public const string OS_Symbol = "osx";
-#elif LINUX
-    public const string OS_Symbol = "linux";
-#endif
-
     /// <summary>
     ///     构造函数。
     ///     Constructor.
@@ -112,10 +104,10 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
 
                     if (!rule.OperatingSystem.ContainsKey("version"))
                         flag = rule.Action.Equals("allow", StringComparison.Ordinal) &&
-                               rule.OperatingSystem["name"].Equals(OS_Symbol, StringComparison.Ordinal);
+                               rule.OperatingSystem["name"].Equals(Constants.OsSymbol, StringComparison.Ordinal);
                     else
                         flag = rule.Action.Equals("allow", StringComparison.Ordinal) &&
-                               rule.OperatingSystem["name"].Equals(OS_Symbol, StringComparison.Ordinal) &&
+                               rule.OperatingSystem["name"].Equals(Constants.OsSymbol, StringComparison.Ordinal) &&
                                rule.OperatingSystem["version"].Equals($"^{WindowsSystemVersion.CurrentVersion}\\.",
                                    StringComparison.Ordinal);
                 }
@@ -211,9 +203,9 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             var isNative = lib.Natives?.Any() ?? false;
             if (isNative)
             {
-                var key = lib.Natives.ContainsKey(OS_Symbol)
-                    ? lib.Natives[OS_Symbol].Replace("${arch}", SystemArch.CurrentArch.ToString("{0}"))
-                    : $"natives-{OS_Symbol}";
+                var key = lib.Natives.ContainsKey(Constants.OsSymbol)
+                    ? lib.Natives[Constants.OsSymbol].Replace("${arch}", SystemArch.CurrentArch.ToString("{0}"))
+                    : $"natives-{Constants.OsSymbol}";
 
                 FileInfo libFi;
                 if (lib.Downloads?.Classifiers?.ContainsKey(key) ?? false)

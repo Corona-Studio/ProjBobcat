@@ -10,15 +10,6 @@ namespace ProjBobcat.Class.Helper;
 /// </summary>
 public static class RandomHelper
 {
-    /*
-    [ThreadStatic] private static RandomNumberGenerator _random;
-
-    private static RandomNumberGenerator Random
-    {
-        get { return _random ??= new RNGCryptoServiceProvider(); }
-    }
-    */
-
     /// <summary>
     ///     在一个有限的 <see cref="IEnumerable{T}" /> 中等概率地随机取出一项返回。
     ///     若其中元素数为 0 ，则会返回此类型的默认值；
@@ -44,20 +35,6 @@ public static class RandomHelper
     public static int RandomInteger(int min, int max)
     {
         return RandomNumberGenerator.GetInt32(min, max + 1);
-
-        /*
-        var scale = uint.MaxValue;
-        while (scale == uint.MaxValue)
-        {
-            var fourBytes = new byte[4];
-            Random.GetBytes(fourBytes);
-
-            scale = BitConverter.ToUInt32(fourBytes, 0);
-        }
-
-        return (int) (min + (max - min) *
-            (scale / (double) uint.MaxValue));
-        */
     }
 
     /// <summary>
