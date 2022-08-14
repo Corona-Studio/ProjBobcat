@@ -24,6 +24,16 @@
 
 ![Alt](https://repobeats.axiom.co/api/embed/d8d56d4c2023d90ea067d5b3ca83ed5da4979289.svg "Repobeats analytics image")
 
+## 跨平台支持
+
+目前我们正在为 ProjBobcat 加入跨平台支持
+
+|平台|状态|
+|:------:|:----:|
+|Windows |  ✅ |
+|macOS |  WIP |
+|Linux |  WIP |
+
 ### CodeQL
 
 [![CodeQL](https://github.com/Corona-Studio/ProjBobcat/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/Corona-Studio/ProjBobcat/actions/workflows/codeql-analysis.yml)
