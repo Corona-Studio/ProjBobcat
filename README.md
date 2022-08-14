@@ -20,6 +20,15 @@ Developed and maintained by Corona Studio.
 ## Stats
 ![Alt](https://repobeats.axiom.co/api/embed/d8d56d4c2023d90ea067d5b3ca83ed5da4979289.svg "Repobeats analytics image")
 
+## Multi-Platform Support
+
+Currently we are working on the multi-platform support for ProjBobcat
+|Platform|Status|
+|:------:|:----:|
+|Windows |  ✅ |
+|macOS |  WIP |
+|Linux |  WIP |
+
 ### CodeQL
 
 [![CodeQL](https://github.com/Corona-Studio/ProjBobcat/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/Corona-Studio/ProjBobcat/actions/workflows/codeql-analysis.yml)
