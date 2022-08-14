@@ -109,7 +109,7 @@ public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
                 l.Name.StartsWith("net.minecraftforge:forge", StringComparison.OrdinalIgnoreCase));
             var mavenInfo = forgeLibrary.Name.ResolveMavenString();
 
-            var libSubPath = GamePathHelper.GetLibraryPath(mavenInfo.Path).Replace('/', '\\');
+            var libSubPath = GamePathHelper.GetLibraryPath(mavenInfo.Path);
             var forgeLibPath = Path.Combine(RootPath, libSubPath);
 
             var libDi = new DirectoryInfo(Path.GetDirectoryName(forgeLibPath));

@@ -143,7 +143,7 @@ public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
             var serverBinMaven = serverMaven.ResolveMavenString();
             var serverBinPath = Path.Combine(RootPath,
-                GamePathHelper.GetLibraryPath(serverBinMaven.Path.Replace('/', '\\')));
+                GamePathHelper.GetLibraryPath(serverBinMaven.Path));
 
             var di = new DirectoryInfo(Path.GetDirectoryName(serverBinPath));
 
@@ -163,7 +163,7 @@ public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
             var clientBinMaven = clientMaven.ResolveMavenString();
             var clientBinPath = Path.Combine(RootPath,
-                GamePathHelper.GetLibraryPath(clientBinMaven.Path.Replace('/', '\\')));
+                GamePathHelper.GetLibraryPath(clientBinMaven.Path));
 
             var di = new DirectoryInfo(Path.GetDirectoryName(clientBinPath));
 
@@ -193,7 +193,7 @@ public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             {
                 var forgeUniversalSubPath = forgeUniversalJar?.Key[(forgeUniversalJar.Key.IndexOf('/') + 1)..];
                 var forgeUniversalLibPath = Path.Combine(RootPath,
-                    GamePathHelper.GetLibraryPath(forgeUniversalSubPath?.Replace('/', '\\')));
+                    GamePathHelper.GetLibraryPath(forgeUniversalSubPath));
 
                 if (string.IsNullOrEmpty(forgeUniversalSubPath)
                     || string.IsNullOrEmpty(forgeUniversalLibPath))
@@ -216,7 +216,7 @@ public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
             var forgeSubPath = forgeJar.Key[(forgeJar.Key.IndexOf('/') + 1)..];
             var forgeLibPath =
-                Path.Combine(RootPath, GamePathHelper.GetLibraryPath(forgeSubPath.Replace('/', '\\')));
+                Path.Combine(RootPath, GamePathHelper.GetLibraryPath(forgeSubPath));
 
             var forgeLibDir = Path.GetDirectoryName(forgeLibPath);
             if (!Directory.Exists(forgeLibDir))
@@ -248,7 +248,7 @@ public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             var name = val[1..^1];
             var maven = name.ResolveMavenString();
             var path = Path.Combine(RootPath,
-                GamePathHelper.GetLibraryPath(maven.Path.Replace('/', '\\')).Replace('/', '\\'));
+                GamePathHelper.GetLibraryPath(maven.Path));
 
             return path;
         }
@@ -342,7 +342,7 @@ public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             var symbolIndex = lib.Path.LastIndexOf('/');
             var fileName = lib.Path[(symbolIndex + 1)..];
             var path = Path.Combine(RootPath,
-                GamePathHelper.GetLibraryPath(lib.Path[..symbolIndex].Replace('/', '\\')));
+                GamePathHelper.GetLibraryPath(lib.Path[..symbolIndex]));
 
             /*
             if (!string.IsNullOrEmpty(DownloadUrlRoot))
@@ -405,7 +405,7 @@ public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
         foreach (var processor in procList)
         {
             var maven = processor.Processor.Jar.ResolveMavenString();
-            var libPath = Path.Combine(RootPath, GamePathHelper.GetLibraryPath(maven.Path.Replace('/', '\\')));
+            var libPath = Path.Combine(RootPath, GamePathHelper.GetLibraryPath(maven.Path));
 
             using var libArchive = ArchiveFactory.Open(Path.GetFullPath(libPath));
             var libEntry =
@@ -426,7 +426,7 @@ public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             totalLibs.Add(processor.Processor.Jar);
 
             var cp = totalLibs.Select(MavenHelper.ResolveMavenString)
-                .Select(m => Path.Combine(RootPath, GamePathHelper.GetLibraryPath(m.Path).Replace('/', '\\')));
+                .Select(m => Path.Combine(RootPath, GamePathHelper.GetLibraryPath(m.Path)));
             var cpStr = string.Join(';', cp);
             var parameter = new List<string>
             {

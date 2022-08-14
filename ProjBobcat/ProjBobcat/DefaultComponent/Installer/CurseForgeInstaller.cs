@@ -105,7 +105,7 @@ public class CurseForgeInstaller : InstallerBase, ICurseForgeInstaller
         {
             if (!entry.Key.StartsWith(manifest.Overrides, StringComparison.OrdinalIgnoreCase)) continue;
 
-            var subPath = entry.Key[(manifest.Overrides.Length + 1)..].Replace('/', '\\');
+            var subPath = entry.Key[(manifest.Overrides.Length + 1)..];
             if (string.IsNullOrEmpty(subPath)) continue;
 
             var path = Path.Combine(Path.GetFullPath(idPath), subPath);

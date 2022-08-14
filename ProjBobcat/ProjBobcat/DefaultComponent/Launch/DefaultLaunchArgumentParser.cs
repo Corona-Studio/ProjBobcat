@@ -44,7 +44,7 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
         var sb = new StringBuilder();
         foreach (var lib in VersionInfo.Libraries)
             sb.AppendFormat("{0};",
-                Path.Combine(RootPath, GamePathHelper.GetLibraryPath(lib.Path).Replace('/', '\\')));
+                Path.Combine(RootPath, GamePathHelper.GetLibraryPath(lib.Path)));
 
 
         if (!VersionInfo.MainClass.Equals("cpw.mods.bootstraplauncher.BootstrapLauncher",

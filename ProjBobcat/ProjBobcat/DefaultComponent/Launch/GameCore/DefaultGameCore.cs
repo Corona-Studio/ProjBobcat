@@ -209,7 +209,7 @@ public class DefaultGameCore : GameCoreBase
                 foreach (var n in version.Natives)
                 {
                     var path =
-                        Path.Combine(RootPath, GamePathHelper.GetLibraryPath(n.FileInfo.Path.Replace('/', '\\')));
+                        Path.Combine(RootPath, GamePathHelper.GetLibraryPath(n.FileInfo.Path));
 
                     // await using var stream = File.OpenRead(path);
                     // using var reader =  ReaderFactory.Open(stream);

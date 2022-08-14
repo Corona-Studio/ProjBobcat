@@ -48,7 +48,7 @@ public class LibraryInfoResolver : ResolverBase
 
         var libResolveActionBlock = new ActionBlock<FileInfo>(async lib =>
         {
-            var libPath = GamePathHelper.GetLibraryPath(lib.Path.Replace('/', '\\'));
+            var libPath = GamePathHelper.GetLibraryPath(lib.Path);
             var filePath = Path.Combine(BasePath, libPath);
 
             Interlocked.Increment(ref checkedLib);
@@ -91,7 +91,7 @@ public class LibraryInfoResolver : ResolverBase
 
         var nativeResolveActionBlock = new ActionBlock<NativeFileInfo>(async native =>
         {
-            var nativePath = GamePathHelper.GetLibraryPath(native.FileInfo.Path.Replace('/', '\\'));
+            var nativePath = GamePathHelper.GetLibraryPath(native.FileInfo.Path);
             var filePath = Path.Combine(BasePath, nativePath);
 
             if (File.Exists(filePath))
@@ -145,7 +145,7 @@ public class LibraryInfoResolver : ResolverBase
             var symbolIndex = lL.Path.LastIndexOf('/');
             var fileName = lL.Path[(symbolIndex + 1)..];
             var path = Path.Combine(BasePath,
-                GamePathHelper.GetLibraryPath(lL.Path[..symbolIndex].Replace('/', '\\')));
+                GamePathHelper.GetLibraryPath(lL.Path[..symbolIndex]));
 
             result.Add(
                 new LibraryDownloadInfo

@@ -67,7 +67,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
         {
             if (arguments[pArgIndex + 1] is string pArg)
             {
-                arguments[pArgIndex + 1] = $"\"{pArg.Replace('/', '\\')}\"";
+                arguments[pArgIndex + 1] = $"\"{pArg}\"";
             }
         }
 
