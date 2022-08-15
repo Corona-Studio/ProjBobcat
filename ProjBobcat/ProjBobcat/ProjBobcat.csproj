@@ -11,9 +11,23 @@
     <IsOSX Condition="'$(RuntimeIdentifier)' == 'osx-x64'">true</IsOSX>
     <IsLinux Condition="'$(RuntimeIdentifier)' == 'linux-x64'">true</IsLinux>
   </PropertyGroup>
+
+  <!-- Symbol Definitions -->
+  <PropertyGroup Condition="'$(IsWindows)'=='true'">
+    <DefineConstants>WINDOWS</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(IsOSX)'=='true'">
+    <DefineConstants>OSX</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(IsLinux)'=='true'">
+    <DefineConstants>LINUX</DefineConstants>
+  </PropertyGroup>
+  <!-- Symbol Definitions -->
+
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <NoWarn>CA1716;CA2227;CA2208;CA1031;CA5351;CA1065;CA1305;CS0067;CA1720;CA1055;CA1054;CA1056;CA1062</NoWarn>
   </PropertyGroup>
+
   <PropertyGroup>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
@@ -39,16 +53,19 @@ fix high memory consumption in the DownloadHelper.cs
 add support for Quilt installation
     </PackageReleaseNotes>
   </PropertyGroup>
+
   <PropertyGroup>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/Corona-Studio/ProjBobcat</PackageProjectUrl>
   </PropertyGroup>
+
   <ItemGroup>
     <None Remove="FodyWeavers.xml" />
     <None Remove="ProjBobcat.GeneratedMSBuildEditorConfig.editorconfig" />
   </ItemGroup>
+  
   <ItemGroup>
     <None Include="..\.editorconfig">
       <Link>.editorconfig</Link>
@@ -58,6 +75,7 @@ add support for Quilt installation
       <PackagePath></PackagePath>
     </None>
   </ItemGroup>
+
   <!-- Dependencies -->
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="6.0.1" />
@@ -75,17 +93,7 @@ add support for Quilt installation
     <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
   </ItemGroup>
   <!-- Dependencies -->
-  <!-- Symbol Definitions -->
-  <PropertyGroup Condition="'$(IsWindows)'=='true'">
-    <DefineConstants>WINDOWS</DefineConstants>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(IsOSX)'=='true'">
-    <DefineConstants>OSX</DefineConstants>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(IsLinux)'=='true'">
-    <DefineConstants>LINUX</DefineConstants>
-  </PropertyGroup>
-  <!-- Symbol Definitions -->
+
   <!-- Compile Options -->
   <ItemGroup>
     <Compile Remove="Platforms\**\*.cs" />

@@ -17,6 +17,8 @@ public static class SystemInfoHelper
 #if WINDOWS
         return Platforms.Windows.SystemInfoHelper.GetWindowsCpuUsage()
             .FirstOrDefault(i => i.Name.Equals("_Total", StringComparison.OrdinalIgnoreCase));
+#elif OSX
+        return Platforms.MacOS.SystemInfoHelper.GetOSXCpuUsage().FirstOrDefault();
 #elif LINUX
         return Platforms.Linux.SystemInfoHelper.GetLinuxCpuUsage().FirstOrDefault();
 #else
@@ -28,6 +30,8 @@ public static class SystemInfoHelper
     {
 #if WINDOWS
         return Platforms.Windows.SystemInfoHelper.GetWindowsMemoryStatus();
+#elif OSX
+        return Platforms.MacOS.SystemInfoHelper.GetOSXMemoryStatus();
 #elif LINUX
         return Platforms.Linux.SystemInfoHelper.GetLinuxMemoryStatus();
 #else
@@ -63,7 +67,7 @@ public static class SystemInfoHelper
     {
 #if WINDOWS
         var basePath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-#elif MACOS
+#elif OSX
         var path = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
         var basePath = Path.Combine(path, "Application Support");
 #elif LINUX

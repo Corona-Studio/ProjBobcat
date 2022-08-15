@@ -50,9 +50,10 @@ namespace ProjBobcat.Platforms.Linux
 
             using var process = Process.Start(info);
             var output = process.StandardOutput.ReadToEnd();
+            process.WaitForExit();
             // Console.WriteLine(output);
 
-            var lines = output.Split("\n");
+            var lines = output.Split('\n');
             var memory = lines[1].Split(" ", StringSplitOptions.RemoveEmptyEntries);
 
             var total = double.Parse(memory[1]);
@@ -67,7 +68,6 @@ namespace ProjBobcat.Platforms.Linux
                 Free = free,
                 Percentage = percentage
             };
-            
 
             return metrics;
         }
