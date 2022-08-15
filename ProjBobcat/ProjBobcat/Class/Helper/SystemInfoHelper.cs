@@ -56,7 +56,7 @@ public static class SystemInfoHelper
         var evJava = FindJavaUsingEnvironmentVariable();
 
         if (!string.IsNullOrEmpty(evJava))
-            yield return Path.Combine(evJava, "bin", "javaw.exe");
+            yield return Path.Combine(evJava, "bin", Constants.JavaExecutable);
     }
 
     static IEnumerable<string> FindJavaInOfficialGamePath()
@@ -74,7 +74,8 @@ public static class SystemInfoHelper
 
         var paths = new[] { "java-runtime-alpha", "java-runtime-beta", "jre-legacy" };
 
-        return paths.Select(path => Path.Combine(basePath, path, "bin", "javaw.exe"))
+        return paths
+            .Select(path => Path.Combine(basePath, path, "bin", Constants.JavaExecutable))
             .Where(File.Exists);
     }
 

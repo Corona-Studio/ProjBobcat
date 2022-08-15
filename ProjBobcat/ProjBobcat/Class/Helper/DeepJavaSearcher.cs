@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 
@@ -7,22 +6,25 @@ namespace ProjBobcat.Class.Helper;
 
 public static class DeepJavaSearcher
 {
-    static IEnumerable<string> GetLogicalDrives()
-    {
-        return Environment.GetLogicalDrives();
-    }
-
     public static async IAsyncEnumerable<string> DeepSearch(string drive, string fileName)
     {
         var result = new HashSet<string>();
-        var psi = new ProcessStartInfo("where")
+        var psi = new ProcessStartInfo(Constants.WhereCommand)
         {
+#if WINDOWS
             ArgumentList =
             {
                 "/R",
                 $"{drive}\\",
                 fileName
             },
+#elif OSX || LINUX
+            ArgumentList =
+            {
+                "/b",
+                fileName
+            },
+#endif
             CreateNoWindow = true,
             RedirectStandardError = true,
             RedirectStandardOutput = true,
@@ -62,10 +64,15 @@ public static class DeepJavaSearcher
 
     public static async IAsyncEnumerable<string> DeepSearch()
     {
-        var drives = GetLogicalDrives();
+#if WINDOWS
+        var drives = Platforms.Windows.SystemInfoHelper.GetLogicalDrives();
 
         foreach (var drive in drives)
-        await foreach (var path in DeepSearch(drive, "javaw.exe"))
+            await foreach (var path in DeepSearch(drive, Constants.JavaExecutable))
+                yield return path;
+#elif OSX || LINUX
+        await foreach (var path in DeepSearch(string.Empty, Constants.JavaExecutable))
             yield return path;
+#endif
     }
 }

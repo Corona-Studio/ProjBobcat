@@ -61,27 +61,6 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
         if (!(arguments?.Any() ?? false))
             yield break;
 
-        /*
-        var pArgIndex = arguments.IndexOf("-p");
-        if (pArgIndex != -1)
-        {
-            if (arguments[pArgIndex + 1] is string pArg)
-            {
-                arguments[pArgIndex + 1] = $"\"{pArg}\"";
-            }
-        }
-
-        
-        var legacyLibPathIndex = arguments.IndexOf("-DlibraryDirectory=${library_directory}");
-        if (legacyLibPathIndex != -1)
-        {
-            if (arguments[legacyLibPathIndex] is string pArg)
-            {
-                arguments[legacyLibPathIndex] = pArg.Replace("${library_directory}", $"\"${{library_directory}}\"");
-            }
-        }
-        */
-
         foreach (var jvmRule in arguments)
         {
             if (jvmRule is not JObject jvmRuleObj)
@@ -89,39 +68,15 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                 yield return jvmRule.ToString();
                 continue;
             }
-
-            var flag = true;
-            if (jvmRuleObj.ContainsKey("rules"))
-                foreach (var rule in jvmRuleObj["rules"].Select(r => r.ToObject<JvmRules>()))
-                {
-                    if (rule.OperatingSystem.ContainsKey("arch"))
-                    {
-                        flag = rule.Action.Equals("allow", StringComparison.Ordinal) &&
-                               rule.OperatingSystem["arch"].Equals(SystemArch.CurrentArch.ToString(),
-                                   StringComparison.Ordinal);
-                        break;
-                    }
-
-                    if (!rule.OperatingSystem.ContainsKey("version"))
-                        flag = rule.Action.Equals("allow", StringComparison.Ordinal) &&
-                               rule.OperatingSystem["name"].Equals(Constants.OsSymbol, StringComparison.Ordinal);
-                    else
-                        flag = rule.Action.Equals("allow", StringComparison.Ordinal) &&
-                               rule.OperatingSystem["name"].Equals(Constants.OsSymbol, StringComparison.Ordinal) &&
-                               rule.OperatingSystem["version"].Equals($"^{WindowsSystemVersion.CurrentVersion}\\.",
-                                   StringComparison.Ordinal);
-                }
-
-            if (!flag) continue;
-
+            
+            if (!(jvmRuleObj["rules"]?.Select(r => r.ToObject<JvmRules>()).CheckAllow() ?? false)) continue;
             if (!jvmRuleObj.ContainsKey("value")) continue;
-
-            if (jvmRuleObj["value"].Type == JTokenType.Array)
+            if (jvmRuleObj["value"]?.Type == JTokenType.Array)
                 foreach (var arg in jvmRuleObj["value"])
                     yield return StringHelper.FixArgument(arg.ToString()); // arg.ToString();
             else
                 yield return
-                    StringHelper.FixArgument(jvmRuleObj["value"].ToString()); // jvmRuleObj["value"].ToString();
+                    StringHelper.FixArgument(jvmRuleObj["value"]?.ToString()); // jvmRuleObj["value"].ToString();
         }
     }
 
@@ -360,14 +315,6 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             if (inherits.Contains(null)) return null;
         }
 
-        // 生成一个随机的名字来防止重复。
-        // Generates a random name to avoid duplication.
-        /*
-        var rs = new RandomStringHelper().UseLower().UseUpper().UseNumbers().Shuffle(1);
-        var randomName =
-            $"{id}-{rs.Generate(5)}-{rs.Generate(5)}";
-        */
-
         var result = new VersionInfo
         {
             Assets = rawVersion.AssetsVersion,
@@ -486,12 +433,12 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
 
             var finalJvmArgs = result.JvmArguments?.ToList() ?? new List<string>();
             finalJvmArgs.AddRange(jvmArgList);
-            result.JvmArguments = finalJvmArgs; //.Distinct();
+            result.JvmArguments = finalJvmArgs;
 
             var finalGameArgs = result.GameArguments?.ToList() ?? new List<string>();
             finalGameArgs.AddRange(gameArgList);
             finalGameArgs = finalGameArgs.Select(arg => arg.Split(' ')).SelectMany(a => a).Distinct().ToList();
-            result.GameArguments = finalGameArgs; //.Distinct();
+            result.GameArguments = finalGameArgs;
 
             goto ProcessProfile;
         }
@@ -520,7 +467,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                 {
                     GameDir = gamePath,
                     LastVersionId = id,
-                    Name = id, // randomName,
+                    Name = id,
                     Created = DateTime.Now
                 });
             LauncherProfileParser.SaveProfile();

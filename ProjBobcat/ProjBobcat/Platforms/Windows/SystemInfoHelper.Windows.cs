@@ -135,4 +135,9 @@ class SystemInfoHelper
 
         return cpuTimes;
     }
+
+    public static IEnumerable<string> GetLogicalDrives()
+    {
+        return Environment.GetLogicalDrives();
+    }
 }

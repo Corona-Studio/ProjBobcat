@@ -130,15 +130,15 @@ public class LibraryInfoResolver : ResolverBase
             var uri = libType switch
             {
                 LibraryType.Forge when lL.Url?.StartsWith("https://maven.minecraftforge.net",
-                    StringComparison.OrdinalIgnoreCase) ?? false => $"{ForgeMavenUriRoot}{lL.Path.Replace('\\', '/')}",
+                    StringComparison.OrdinalIgnoreCase) ?? false => $"{ForgeMavenUriRoot}{lL.Path}",
                 LibraryType.Forge when lL.Url?.StartsWith("https://files.minecraftforge.net/maven/",
                                            StringComparison.OrdinalIgnoreCase) ??
-                                       false => $"{ForgeMavenOldUriRoot}{lL.Path.Replace('\\', '/')}",
-                LibraryType.Forge => $"{ForgeUriRoot}{lL.Path.Replace('\\', '/')}",
-                LibraryType.Fabric => $"{FabricMavenUriRoot}{lL.Path.Replace('\\', '/')}",
+                                       false => $"{ForgeMavenOldUriRoot}{lL.Path}",
+                LibraryType.Forge => $"{ForgeUriRoot}{lL.Path}",
+                LibraryType.Fabric => $"{FabricMavenUriRoot}{lL.Path}",
                 LibraryType.Quilt when !string.IsNullOrEmpty(lL.Url) =>
-                    $"{QuiltMavenUriRoot}{lL.Path.Replace('\\', '/')}",
-                LibraryType.Other => $"{LibraryUriRoot}{lL.Path.Replace('\\', '/')}",
+                    $"{QuiltMavenUriRoot}{lL.Path}",
+                LibraryType.Other => $"{LibraryUriRoot}{lL.Path}",
                 _ => string.Empty
             };
 

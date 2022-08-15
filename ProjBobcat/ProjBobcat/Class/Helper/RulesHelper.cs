@@ -1,7 +1,7 @@
-﻿using System;
+﻿using ProjBobcat.Class.Model;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using ProjBobcat.Class.Model;
 
 namespace ProjBobcat.Class.Helper;
 
@@ -24,13 +24,24 @@ public static class RulesHelper
         if (!jvmRules.Any()) return false;
 
         var ruleFlag = false;
+        var orderedRules = new List<JvmRules>();
 
-        foreach (var rule in jvmRules.Where(rule => rule.Action.Equals("allow", StringComparison.Ordinal)))
-            if (rule.OperatingSystem == null)
-                ruleFlag = rule.Action.Equals("allow", StringComparison.Ordinal);
-            else if (rule.OperatingSystem.ContainsKey("name"))
-                if (rule.OperatingSystem["name"].Equals("windows", StringComparison.Ordinal))
-                    ruleFlag = rule.Action.Equals("allow", StringComparison.Ordinal);
+        orderedRules.AddRange(rules.Where(r => r.Action == "disallow"));
+        orderedRules.AddRange(rules.Where(r => r.Action == "allow"));
+
+        foreach (var rule in orderedRules)
+        {
+            if (rule.OperatingSystem == null) return rule.Action == "allow";
+            if (rule.Action == "disallow")
+            {
+                if (rule.OperatingSystem.Name?.Equals(Constants.OsSymbol, StringComparison.OrdinalIgnoreCase) ?? false)
+                    return false;
+
+                continue;
+            }
+            
+            ruleFlag = ruleFlag || rule.OperatingSystem.IsAllow();
+        }
 
         return ruleFlag;
     }
