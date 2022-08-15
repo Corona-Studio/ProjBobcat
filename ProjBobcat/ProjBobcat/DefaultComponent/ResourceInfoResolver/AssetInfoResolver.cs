@@ -30,20 +30,20 @@ public class AssetInfoResolver : ResolverBase
 
     public List<VersionManifestVersionsModel> Versions { get; set; }
 
-    public override async Task<IEnumerable<IGameResource>> ResolveResourceAsync()
+    public override async IAsyncEnumerable<IGameResource> ResolveResourceAsync()
     {
-        if (!CheckLocalFiles) return Enumerable.Empty<IGameResource>();
+        if (!CheckLocalFiles) yield break;
 
         OnResolve("开始进行游戏资源(Asset)检查");
 
-        if (!(Versions?.Any() ?? false) && VersionInfo?.AssetInfo == null) return Enumerable.Empty<IGameResource>();
+        if (!(Versions?.Any() ?? false) && VersionInfo?.AssetInfo == null) yield break;
 
         var isAssetInfoNotExists =
             string.IsNullOrEmpty(VersionInfo?.AssetInfo?.Url) &&
             string.IsNullOrEmpty(VersionInfo?.AssetInfo?.Id);
         if (isAssetInfoNotExists &&
             string.IsNullOrEmpty(VersionInfo?.Assets))
-            return Enumerable.Empty<IGameResource>();
+            yield break;
 
         var assetIndexesDi =
             new DirectoryInfo(Path.Combine(BasePath, GamePathHelper.GetAssetsRoot(), "indexes"));
@@ -64,18 +64,18 @@ public class AssetInfoResolver : ResolverBase
             if (isAssetInfoNotExists)
             {
                 var versionObject = Versions?.FirstOrDefault(v => v.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
-                if (versionObject == default) return Enumerable.Empty<IGameResource>();
+                if (versionObject == default) yield break;
 
                 var jsonRes = await HttpHelper.Get(versionObject.Url);
                 var jsonStr = await jsonRes.Content.ReadAsStringAsync();
                 var versionModel = JsonConvert.DeserializeObject<RawVersionModel>(jsonStr);
 
-                if (versionModel == default) return Enumerable.Empty<IGameResource>();
+                if (versionModel == default) yield break;
 
                 assetIndexDownloadUri = versionModel.AssetIndex?.Url;
             }
 
-            if (string.IsNullOrEmpty(assetIndexDownloadUri)) return Enumerable.Empty<IGameResource>();
+            if (string.IsNullOrEmpty(assetIndexDownloadUri)) yield break;
 
             if (!string.IsNullOrEmpty(AssetIndexUriRoot))
             {
@@ -98,7 +98,7 @@ public class AssetInfoResolver : ResolverBase
             catch (Exception e)
             {
                 OnResolve($"解析Asset Indexes 文件失败！原因：{e.Message}");
-                return Enumerable.Empty<IGameResource>();
+                yield break;
             }
 
             OnResolve("Asset Indexes 文件下载完成", 100);
@@ -116,28 +116,22 @@ public class AssetInfoResolver : ResolverBase
         {
             OnResolve($"解析Asset Indexes 文件失败！原因：{ex.Message}");
             File.Delete(assetIndexesPath);
-            return Enumerable.Empty<IGameResource>();
+            yield break;
         }
 
         if (assetObject == null)
         {
             OnResolve("解析Asset Indexes 文件失败！原因：文件可能损坏或为空");
             File.Delete(assetIndexesPath);
-            return Enumerable.Empty<IGameResource>();
+            yield break;
         }
 
         var checkedObject = 0;
         var objectCount = assetObject.Objects.Count;
-        var result = new ConcurrentBag<IGameResource>();
 
         OnResolve("检索并验证 Asset 资源");
 
-        var filesBlock =
-            new TransformManyBlock<Dictionary<string, AssetFileInfo>, KeyValuePair<string, AssetFileInfo>>(
-                chunk => chunk,
-                new ExecutionDataflowBlockOptions());
-
-        var resolveActionBlock = new ActionBlock<KeyValuePair<string, AssetFileInfo>>(async obj =>
+        foreach (var obj in assetObject.Objects)
         {
             var (_, fi) = obj;
             var hash = fi.Hash;
@@ -153,10 +147,10 @@ public class AssetInfoResolver : ResolverBase
             {
                 var bytes = await File.ReadAllBytesAsync(filePath);
                 var computedHash = CryptoHelper.ToString(SHA1.HashData(bytes.AsSpan()));
-                if (computedHash.Equals(fi.Hash, StringComparison.OrdinalIgnoreCase)) return;
+                if (computedHash.Equals(fi.Hash, StringComparison.OrdinalIgnoreCase)) continue;
             }
 
-            result.Add(new AssetDownloadInfo
+            yield return new AssetDownloadInfo
             {
                 Title = hash,
                 Path = path,
@@ -165,25 +159,9 @@ public class AssetInfoResolver : ResolverBase
                 FileSize = fi.Size,
                 CheckSum = hash,
                 FileName = hash
-            });
-        }, new ExecutionDataflowBlockOptions
-        {
-            MaxDegreeOfParallelism = MaxDegreeOfParallelism,
-            BoundedCapacity = MaxDegreeOfParallelism
-        });
-
-        var linkOptions = new DataflowLinkOptions { PropagateCompletion = true };
-
-        filesBlock.LinkTo(resolveActionBlock, linkOptions);
-
-        filesBlock.Post(assetObject.Objects);
-        filesBlock.Complete();
-
-        await resolveActionBlock.Completion;
-        resolveActionBlock.Complete();
+            };
+        }
 
         OnResolve("Assets 解析完成", 100);
-
-        return result;
     }
 }

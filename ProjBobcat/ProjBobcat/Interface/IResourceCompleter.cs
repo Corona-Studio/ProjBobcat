@@ -19,6 +19,7 @@ public interface IResourceCompleter : IDisposable
     ///     下载分片数量
     /// </summary>
     int DownloadParts { get; set; }
+    int MaxDegreeOfParallelism { get; set; }
 
     /// <summary>
     ///     验证下载文件

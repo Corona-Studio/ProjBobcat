@@ -35,6 +35,24 @@ public static class DownloadHelper
     /// </summary>
     /// <param name="fileEnumerable">文件列表</param>
     /// <param name="downloadSettings"></param>
+    public static async Task AdvancedDownloadFile(DownloadFile df, DownloadSettings downloadSettings)
+    {
+        ProcessorHelper.SetMaxThreads();
+
+        if(!Directory.Exists(df.DownloadPath))
+            Directory.CreateDirectory(df.DownloadPath);
+
+        if (df.FileSize is >= 1048576 or 0)
+            await MultiPartDownloadTaskAsync(df, downloadSettings);
+        else
+            await DownloadData(df, downloadSettings);
+    }
+
+    /// <summary>
+    ///     下载文件方法（自动确定是否使用分片下载）
+    /// </summary>
+    /// <param name="fileEnumerable">文件列表</param>
+    /// <param name="downloadSettings"></param>
     public static async Task AdvancedDownloadListFile(IEnumerable<DownloadFile> fileEnumerable,
         DownloadSettings downloadSettings)
     {
@@ -106,8 +124,7 @@ public static class DownloadHelper
                 await using var stream = await res.Content.ReadAsStreamAsync(cts.Token);
 
                 using var hash = downloadSettings.GetHashAlgorithm();
-                await using var fs =
-                    File.Open(filePath, FileMode.Create, FileAccess.ReadWrite, FileShare.Read);
+                await using var fs = File.Create(filePath);
                 await using Stream outputStream =
                     downloadSettings.CheckFile && !string.IsNullOrEmpty(downloadFile.CheckSum)
                         ? new CryptoStream(fs, hash, CryptoStreamMode.Write)
@@ -339,8 +356,7 @@ public static class DownloadHelper
                     using var res = t.Item1;
 
                     await using var stream = await res.Content.ReadAsStreamAsync(cts.Token);
-                    await using var fileToWriteTo = File.Open(t.Item2.TempFileName, FileMode.Create,
-                        FileAccess.Write, FileShare.Read);
+                    await using var fileToWriteTo = File.Create(t.Item2.TempFileName);
                     using var rentMemory = Pool.Rent(1024);
 
                     var sw = new Stopwatch();
@@ -406,14 +422,11 @@ public static class DownloadHelper
                     continue;
                 }
 
-                await using (var outputStream =
-                             File.Open(filePath, FileMode.Create, FileAccess.ReadWrite, FileShare.Read))
+                await using (var outputStream = File.Create(filePath))
                 {
                     foreach (var inputFilePath in readRanges)
                     {
-                        await using var inputStream = File.Open(inputFilePath.TempFileName, FileMode.Open,
-                            FileAccess.Read,
-                            FileShare.Read);
+                        await using var inputStream = File.OpenRead(inputFilePath.TempFileName);
                         outputStream.Seek(inputFilePath.Start, SeekOrigin.Begin);
 
                         await inputStream.CopyToAsync(outputStream, cts.Token);

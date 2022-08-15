@@ -4,8 +4,10 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
+using ProjBobcat.DefaultComponent.ResourceInfoResolver;
 using ProjBobcat.Event;
 using ProjBobcat.Interface;
 
@@ -30,6 +32,7 @@ public class DefaultResourceCompleter : IResourceCompleter
 
     public TimeSpan TimeoutPerFile { get; set; } = TimeSpan.FromSeconds(10);
     public int DownloadParts { get; set; } = 16;
+    public int MaxDegreeOfParallelism { get; set; } = 1;
     public int TotalRetry { get; set; }
     public bool CheckFile { get; set; }
     public IEnumerable<IResourceInfoResolver>? ResourceInfoResolvers { get; set; }
@@ -62,53 +65,97 @@ public class DefaultResourceCompleter : IResourceCompleter
         if (!(ResourceInfoResolvers?.Any() ?? false))
             return new TaskResult<ResourceCompleterCheckResult?>(TaskResultStatus.Success, value: null);
 
-        var totalLostFiles = new List<IGameResource>();
-        foreach (var resolver in ResourceInfoResolvers)
+        NeedToDownload = 0;
+        _failedFiles.Clear();
+
+        var linkOptions = new DataflowLinkOptions { PropagateCompletion = true };
+        var gameResourceTransBlock =
+            new TransformBlock<IGameResource, DownloadFile>(f =>
+                {
+                    var dF = new DownloadFile
+                    {
+                        DownloadPath = f.Path,
+                        DownloadUri = f.Uri,
+                        FileName = f.FileName,
+                        FileSize = f.FileSize,
+                        CheckSum = f.CheckSum,
+                        FileType = f.Type
+                    };
+                    dF.Completed += WhenCompleted;
+
+                    return dF;
+                },
+                new ExecutionDataflowBlockOptions());
+        var downloadFileBlock = new ActionBlock<DownloadFile>(async df =>
         {
-            if (_listEventDelegates[ResolveEventKey] is EventHandler<GameResourceInfoResolveEventArgs> handler)
-                resolver.GameResourceInfoResolveEvent += handler;
-
-            totalLostFiles.AddRange(await resolver.ResolveResourceAsync());
-        }
-
-        if (!totalLostFiles.Any())
-            return new TaskResult<ResourceCompleterCheckResult?>(TaskResultStatus.Success, value: null);
-
-        totalLostFiles.Shuffle();
-        NeedToDownload = totalLostFiles.Count;
-
-        var downloadList = new List<DownloadFile>();
-        foreach (var f in totalLostFiles)
-        {
-            var dF = new DownloadFile
+            await DownloadHelper.AdvancedDownloadFile(df, new DownloadSettings
             {
-                DownloadPath = f.Path,
-                DownloadUri = f.Uri,
-                FileName = f.FileName,
-                FileSize = f.FileSize,
-                CheckSum = f.CheckSum,
-                FileType = f.Type
-            };
-            dF.Completed += WhenCompleted;
+                CheckFile = true,
+                DownloadParts = DownloadParts,
+                HashType = HashType.SHA1,
+                RetryCount = TotalRetry,
+                Timeout = (int)TimeoutPerFile.TotalMilliseconds
+            });
 
-            downloadList.Add(dF);
-        }
-
-        if (downloadList.First().FileType == ResourceType.GameJar)
-            downloadList.First().Changed += (_, args) =>
-            {
-                OnCompleted(downloadList.First(), new DownloadFileCompletedEventArgs(null, null, args.Speed));
-            };
-
-        var (item1, item2) = await DownloadFiles(downloadList);
-
-        foreach (var df in downloadList)
-        {
             df.Completed -= WhenCompleted;
             df.Dispose();
+        });
+
+        gameResourceTransBlock.LinkTo(downloadFileBlock, linkOptions);
+
+        async Task ReceiveGameResourceTask(IAsyncEnumerable<IGameResource> asyncEnumerable)
+        {
+            await foreach (var element in asyncEnumerable)
+            {
+                NeedToDownload++;
+                OnResolveComplete(this, new GameResourceInfoResolveEventArgs
+                {
+                    Progress = 114514,
+                    Status = $"发现未下载的 {element.FileName.Max()}({element.Type})，已加入下载队列"
+                });
+                gameResourceTransBlock.Post(element);
+            }
         }
 
-        return new TaskResult<ResourceCompleterCheckResult?>(item1, value: item2);
+        foreach (var resolver in ResourceInfoResolvers)
+        {
+            /*
+            if (_listEventDelegates[ResolveEventKey] is EventHandler<GameResourceInfoResolveEventArgs> handler)
+                resolver.GameResourceInfoResolveEvent += handler;
+            */
+
+            if (resolver is VersionInfoResolver or GameLoggingInfoResolver)
+            {
+                await ReceiveGameResourceTask(resolver.ResolveResourceAsync());
+                continue;
+            }
+
+            var asyncEnumerable = resolver.ResolveResourceAsync();
+            var tasks = new Task[MaxDegreeOfParallelism];
+            for (var i = 0; i < tasks.Length; i++)
+                tasks[i] = ReceiveGameResourceTask(asyncEnumerable);
+            
+            await Task.WhenAll(tasks);
+        }
+
+        gameResourceTransBlock.Complete();
+        await downloadFileBlock.Completion;
+
+        var isLibraryFailed = _failedFiles.Any(d => d.FileType == ResourceType.LibraryOrNative);
+        var result = _failedFiles switch
+        {
+            _ when isLibraryFailed => TaskResultStatus.Error,
+            _ when !_failedFiles.IsEmpty => TaskResultStatus.PartialSuccess,
+            _ => TaskResultStatus.Success
+        };
+
+        var resultTuple =  (result, new ResourceCompleterCheckResult
+        {
+            IsLibDownloadFailed = isLibraryFailed,
+            FailedFiles = _failedFiles
+        });
+
+        return new TaskResult<ResourceCompleterCheckResult?>(resultTuple.Item1, value: resultTuple.Item2);
     }
 
     public void Dispose()
@@ -116,6 +163,13 @@ public class DefaultResourceCompleter : IResourceCompleter
         // 不要更改此代码。请将清理代码放入“Dispose(bool disposing)”方法中
         Dispose(true);
         GC.SuppressFinalize(this);
+    }
+
+    void OnResolveComplete(object? sender, GameResourceInfoResolveEventArgs e)
+    {
+        var eventList = _listEventDelegates;
+        var @event = (EventHandler<GameResourceInfoResolveEventArgs>)eventList[ResolveEventKey]!;
+        @event?.Invoke(sender, e);
     }
 
     void OnCompleted(object? sender, DownloadFileCompletedEventArgs e)
@@ -146,35 +200,6 @@ public class DefaultResourceCompleter : IResourceCompleter
         TotalDownloaded++;
         OnChanged((double)TotalDownloaded / NeedToDownload, e.AverageSpeed);
         OnCompleted(sender, e);
-    }
-
-    async Task<(TaskResultStatus, ResourceCompleterCheckResult?)> DownloadFiles(
-        IEnumerable<DownloadFile> downloadList)
-    {
-        _failedFiles.Clear();
-
-        await DownloadHelper.AdvancedDownloadListFile(downloadList, new DownloadSettings
-        {
-            CheckFile = true,
-            DownloadParts = DownloadParts,
-            HashType = HashType.SHA1,
-            RetryCount = TotalRetry,
-            Timeout = (int)TimeoutPerFile.TotalMilliseconds
-        });
-
-        var isLibraryFailed = _failedFiles.Any(d => d.FileType == ResourceType.LibraryOrNative);
-        var result = _failedFiles switch
-        {
-            _ when isLibraryFailed => TaskResultStatus.Error,
-            _ when !_failedFiles.IsEmpty => TaskResultStatus.PartialSuccess,
-            _ => TaskResultStatus.Success
-        };
-
-        return (result, new ResourceCompleterCheckResult
-        {
-            IsLibDownloadFailed = isLibraryFailed,
-            FailedFiles = _failedFiles
-        });
     }
 
     protected virtual void Dispose(bool disposing)

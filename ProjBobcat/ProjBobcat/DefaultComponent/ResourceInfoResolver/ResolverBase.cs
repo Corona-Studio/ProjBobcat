@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Threading.Tasks;
+using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Event;
 using ProjBobcat.Interface;
@@ -23,13 +24,12 @@ public abstract class ResolverBase : IResourceInfoResolver
     public string BasePath { get; set; }
     public bool CheckLocalFiles { get; set; }
     public VersionInfo VersionInfo { get; set; }
-    public int MaxDegreeOfParallelism { get; init; } = 1;
 
-    public abstract Task<IEnumerable<IGameResource>> ResolveResourceAsync();
+    public abstract IAsyncEnumerable<IGameResource> ResolveResourceAsync();
 
     public virtual IEnumerable<IGameResource> ResolveResource()
     {
-        return ResolveResourceAsync().Result;
+        return ResolveResourceAsync().ToListAsync().Result;
     }
 
     // // TODO: 仅当“Dispose(bool disposing)”拥有用于释放未托管资源的代码时才替代终结器

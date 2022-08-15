@@ -13,32 +13,32 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver;
 
 public class GameLoggingInfoResolver : ResolverBase
 {
-    public override async Task<IEnumerable<IGameResource>> ResolveResourceAsync()
+    public override async IAsyncEnumerable<IGameResource> ResolveResourceAsync()
     {
-        if (!CheckLocalFiles) return Enumerable.Empty<IGameResource>();
-        if(VersionInfo.Logging?.Client == null) return Enumerable.Empty<IGameResource>();
-        if (VersionInfo.Logging?.Client?.File == null) return Enumerable.Empty<IGameResource>();
-        if (string.IsNullOrEmpty(VersionInfo.Logging?.Client?.File.Url)) return Enumerable.Empty<IGameResource>();
+        if (!CheckLocalFiles) yield break;
+        if(VersionInfo.Logging?.Client == null) yield break;
+        if (VersionInfo.Logging?.Client?.File == null) yield break;
+        if (string.IsNullOrEmpty(VersionInfo.Logging?.Client?.File.Url)) yield break;
 
         var fileName = Path.GetFileName(VersionInfo.Logging.Client.File?.Url);
 
-        if (string.IsNullOrEmpty(fileName)) return Enumerable.Empty<IGameResource>();
+        if (string.IsNullOrEmpty(fileName)) yield break;
 
         var loggingPath = GamePathHelper.GetLoggingPath(BasePath);
         var filePath = Path.Combine(loggingPath, fileName);
 
         if (File.Exists(filePath))
         {
-            if (string.IsNullOrEmpty(VersionInfo.Logging?.Client?.File?.Sha1)) return Enumerable.Empty<IGameResource>();
+            if (string.IsNullOrEmpty(VersionInfo.Logging?.Client?.File?.Sha1)) yield break;
 
             using var hash = SHA1.Create();
             var computedHash = await CryptoHelper.ComputeFileHashAsync(filePath, hash);
 
             if (computedHash.Equals(VersionInfo.Logging?.Client?.File?.Sha1, StringComparison.OrdinalIgnoreCase))
-                return Enumerable.Empty<IGameResource>();
+                yield break;
         }
 
-        var downloadInfo = new GameLoggingDownloadInfo
+        yield return new GameLoggingDownloadInfo
         {
             CheckSum = VersionInfo.Logging?.Client?.File?.Sha1,
             FileName = fileName,
@@ -48,7 +48,5 @@ public class GameLoggingInfoResolver : ResolverBase
             Type = ResourceType.Logging,
             Uri = VersionInfo.Logging?.Client?.File ?.Url
         };
-
-        return new[] { downloadInfo };
     }
 }

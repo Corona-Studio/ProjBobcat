@@ -11,8 +11,7 @@ public interface IResourceInfoResolver : IDisposable
     string BasePath { get; set; }
     bool CheckLocalFiles { get; set; }
     VersionInfo VersionInfo { get; set; }
-    int MaxDegreeOfParallelism { get; }
-    Task<IEnumerable<IGameResource>> ResolveResourceAsync();
+    IAsyncEnumerable<IGameResource> ResolveResourceAsync();
     IEnumerable<IGameResource> ResolveResource();
 
     event EventHandler<GameResourceInfoResolveEventArgs> GameResourceInfoResolveEvent;

@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' And '$(OS)' == 'Windows_NT' ">
+  <PropertyGroup Condition=" '$(OS)' == 'Windows_NT' ">
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
 
