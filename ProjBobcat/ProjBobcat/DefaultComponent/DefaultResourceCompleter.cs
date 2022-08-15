@@ -68,8 +68,7 @@ public class DefaultResourceCompleter : IResourceCompleter
             if (_listEventDelegates[ResolveEventKey] is EventHandler<GameResourceInfoResolveEventArgs> handler)
                 resolver.GameResourceInfoResolveEvent += handler;
 
-            var lostFiles = await resolver.ResolveResourceAsync();
-            totalLostFiles.AddRange(lostFiles);
+            totalLostFiles.AddRange(await resolver.ResolveResourceAsync());
         }
 
         if (!totalLostFiles.Any())

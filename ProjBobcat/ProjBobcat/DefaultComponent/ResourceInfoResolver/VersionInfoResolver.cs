@@ -30,7 +30,19 @@ public class VersionInfoResolver : ResolverBase
 
         var clientDownload = rawVersionModel.Downloads.Client;
         var jarPath = GamePathHelper.GetVersionJar(BasePath, id);
+        
 
+        if (File.Exists(jarPath))
+        {
+            if (string.IsNullOrEmpty(clientDownload.Sha1)) return Enumerable.Empty<IGameResource>();
+
+            using var hash = SHA1.Create();
+            var computedHash = await CryptoHelper.ComputeFileHashAsync(jarPath, hash);
+
+            if (computedHash.Equals(clientDownload.Sha1, StringComparison.OrdinalIgnoreCase))
+                return Enumerable.Empty<IGameResource>();
+        }
+        
         var downloadInfo = new VersionJarDownloadInfo
         {
             CheckSum = clientDownload.Sha1,
@@ -42,25 +54,6 @@ public class VersionInfoResolver : ResolverBase
             Uri = clientDownload.Url
         };
 
-        var result = new List<IGameResource>();
-
-        if (!File.Exists(jarPath))
-        {
-            result.Add(downloadInfo);
-        }
-        else
-        {
-            if (string.IsNullOrEmpty(clientDownload.Sha1)) return Enumerable.Empty<IGameResource>();
-
-            using var hash = SHA1.Create();
-            var computedHash = await CryptoHelper.ComputeFileHashAsync(jarPath, hash);
-
-            if (computedHash.Equals(clientDownload.Sha1, StringComparison.OrdinalIgnoreCase))
-                return Enumerable.Empty<IGameResource>();
-
-            result.Add(downloadInfo);
-        }
-
-        return result;
+        return new[] { downloadInfo };
     }
 }

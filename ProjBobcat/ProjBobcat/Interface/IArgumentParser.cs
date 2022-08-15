@@ -6,6 +6,12 @@ namespace ProjBobcat.Interface;
 public interface IArgumentParser
 {
     /// <summary>
+    /// 解析 Log4J 日志配置文件相关参数
+    /// </summary>
+    /// <returns></returns>
+    IEnumerable<string> ParseGameLoggingArguments();
+
+    /// <summary>
     ///     解析JVM核心启动参数（内存大小、Agent等）
     /// </summary>
     /// <returns>解析好的JVM核心启动参数</returns>

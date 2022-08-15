@@ -322,6 +322,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             MainClass = rawVersion.MainClass,
             Libraries = new List<FileInfo>(),
             Natives = new List<NativeFileInfo>(),
+            Logging = rawVersion.Logging,
             Id = rawVersion.Id,
             DirName = id,
             Name = id, //randomName,

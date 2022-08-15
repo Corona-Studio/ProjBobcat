@@ -8,6 +8,11 @@ namespace ProjBobcat.Class.Helper;
 /// </summary>
 public static class GamePathHelper
 {
+    public static string GetLoggingPath(string rootPath)
+    {
+        return Path.Combine(rootPath, "logging");
+    }
+
     /// <summary>
     ///     .minecraft/versions/
     /// </summary>

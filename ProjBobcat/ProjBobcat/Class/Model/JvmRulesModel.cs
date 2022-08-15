@@ -1,7 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using ProjBobcat.Class.Helper.SystemInfo;
+using System;
 
 namespace ProjBobcat.Class.Model;
 

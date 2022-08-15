@@ -5,5 +5,6 @@ public enum ResourceType
     Asset,
     LibraryOrNative,
     GameJar,
+    Logging,
     Other
 }

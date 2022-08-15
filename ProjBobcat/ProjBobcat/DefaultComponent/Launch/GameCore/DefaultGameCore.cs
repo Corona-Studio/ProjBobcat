@@ -258,9 +258,7 @@ public class DefaultGameCore : GameCoreBase
             #endregion
 
             #region 启动游戏 Launch
-
-            InvokeLaunchLogThenStart(string.Join(' ', arguments), ref prevSpan, ref stopwatch);
-
+            
             var rootPath = settings.VersionInsulation
                 ? Path.Combine(RootPath, GamePathHelper.GetGamePath(settings.Version))
                 : RootPath;

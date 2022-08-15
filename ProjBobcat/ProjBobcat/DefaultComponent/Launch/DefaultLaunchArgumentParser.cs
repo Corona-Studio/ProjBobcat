@@ -44,14 +44,8 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
         var sb = new StringBuilder();
         foreach (var lib in VersionInfo.Libraries)
         {
-            var path = lib.Path;
-
-#if WINDOWS
-            path = path.Replace('/', '\\');
-#endif
-
             sb.AppendFormat("{0};",
-                Path.Combine(RootPath, GamePathHelper.GetLibraryPath(path)));
+                Path.Combine(RootPath, GamePathHelper.GetLibraryPath(lib.Path)));
         }
 
 
@@ -78,32 +72,10 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
             throw new ArgumentNullException("重要参数为Null!");
 
         var gameArgs = LaunchSettings.GameArguments ?? LaunchSettings.FallBackGameArguments;
-        /*
-        var fallBack = LaunchSettings.FallBackGameArguments;
-        var major = LaunchSettings.GameArguments;
-        var gameSettings = new GameArguments {
-            JavaExecutable = string.IsNullOrEmpty(fallBack?.JavaExecutable) ? major.JavaExecutable : fallBack.JavaExecutable,
-            MinMemory = fallBack?.MinMemory > major?.MinMemory ? fallBack?.MinMemory : major?.MinMemory,
-            MaxMemory = 
-
-        };
-        */
 
         if (gameArgs.AddtionalJvmArguments?.Any() ?? false)
             foreach (var jvmArg in gameArgs.AddtionalJvmArguments)
                 yield return jvmArg;
-
-        /*
-        if (!string.IsNullOrEmpty(gameArgs.AgentPath))
-        {
-            var javaAgentStr = $"-javaagent:\"{gameArgs.AgentPath}\"";
-
-            if (!string.IsNullOrEmpty(gameArgs.JavaAgentAdditionPara))
-                javaAgentStr += $"={gameArgs.JavaAgentAdditionPara}";
-
-            yield return javaAgentStr;
-        }
-        */
 
         if (string.IsNullOrEmpty(GameProfile?.JavaArgs))
         {
@@ -225,6 +197,7 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
 
         arguments.AddRange(ParseJvmHeadArguments().Select(arg => arg.Trim()));
         arguments.AddRange(ParseJvmArguments().Select(arg => arg.Trim()));
+        arguments.AddRange(ParseGameLoggingArguments().Select(arg => arg.Trim()));
 
         arguments.Add(VersionInfo.MainClass);
 
@@ -277,5 +250,31 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
 
         yield return "--port";
         yield return serverSettings.Port.ToString();
+    }
+
+    /// <summary>
+    /// 解析 Log4J 日志配置文件相关参数
+    /// </summary>
+    /// <returns></returns>
+    public IEnumerable<string> ParseGameLoggingArguments()
+    {
+        if(VersionInfo.Logging?.Client == null) yield break;
+        if (string.IsNullOrEmpty(VersionInfo.Logging.Client.File?.Url)) yield break;
+        if(string.IsNullOrEmpty(VersionInfo.Logging?.Client?.Argument)) yield break;
+
+        var fileName = Path.GetFileName(VersionInfo.Logging.Client.File?.Url);
+
+        if(string.IsNullOrEmpty(fileName)) yield break;
+
+        var filePath = Path.Combine(GamePathHelper.GetLoggingPath(RootPath), fileName);
+
+        if(!File.Exists(filePath)) yield break;
+
+        var argumentsDic = new Dictionary<string, string>
+        {
+            { "${path}", $"\"{filePath}\"" }
+        };
+
+        yield return StringHelper.ReplaceByDic(VersionInfo.Logging.Client.Argument, argumentsDic);
     }
 }
