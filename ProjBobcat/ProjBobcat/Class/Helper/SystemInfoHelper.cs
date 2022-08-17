@@ -65,18 +65,8 @@ public static class SystemInfoHelper
 
     static IEnumerable<string> FindJavaInOfficialGamePath()
     {
-#if WINDOWS
-        var basePath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-#elif OSX
-        var path = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
-        var basePath = Path.Combine(path, "Application Support");
-#elif LINUX
-        var basePath = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
-#endif
-
-        basePath = Path.Combine(basePath, ".minecraft", "runtime");
-
-        var paths = new[] { "java-runtime-alpha", "java-runtime-beta", "jre-legacy" };
+        var basePath = Path.Combine(GamePathHelper.OfficialLauncherGamePath(), "runtime");
+        var paths = new[] { "java-runtime-gamma", "java-runtime-alpha", "java-runtime-beta", "jre-legacy" };
 
         return paths
             .Select(path => Path.Combine(basePath, path, "bin", Constants.JavaExecutable))

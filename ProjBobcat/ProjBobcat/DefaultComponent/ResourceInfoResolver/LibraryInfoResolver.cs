@@ -1,16 +1,13 @@
-﻿using System;
-using System.Collections.Concurrent;
+﻿using ProjBobcat.Class.Helper;
+using ProjBobcat.Class.Model;
+using ProjBobcat.Class.Model.GameResource;
+using ProjBobcat.Interface;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading;
-using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
-using ProjBobcat.Class.Helper;
-using ProjBobcat.Class.Model;
-using ProjBobcat.Class.Model.GameResource;
-using ProjBobcat.Interface;
 using FileInfo = ProjBobcat.Class.Model.FileInfo;
 
 namespace ProjBobcat.DefaultComponent.ResourceInfoResolver;
@@ -81,7 +78,8 @@ public class LibraryInfoResolver : ResolverBase
                 var progress = (double)checkedLib / libCount * 100;
                 OnResolve(string.Empty, progress);
 
-                var computedHash = CryptoHelper.ToString(SHA1.HashData(await File.ReadAllBytesAsync(filePath)));
+                var bytes = await File.ReadAllBytesAsync(filePath);
+                var computedHash = CryptoHelper.ToString(SHA1.HashData(bytes.AsSpan()));
 
                 if (computedHash.Equals(native.FileInfo.Sha1, StringComparison.OrdinalIgnoreCase)) continue;
             }

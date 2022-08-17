@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 
 namespace ProjBobcat.Class.Helper;
 
@@ -129,5 +130,25 @@ public static class GamePathHelper
     public static string GetLauncherAccountPath()
     {
         return "launcher_accounts.json";
+    }
+
+    /// <summary>
+    /// 官方启动器的 .minecraft 目录
+    /// </summary>
+    /// <returns></returns>
+    public static string OfficialLauncherGamePath()
+    {
+#if WINDOWS
+        var basePath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+#elif OSX
+        var path = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
+        var basePath = Path.Combine(path, "Application Support");
+#elif LINUX
+        var basePath = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
+#endif
+
+        basePath = Path.Combine(basePath, ".minecraft");
+
+        return basePath;
     }
 }

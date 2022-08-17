@@ -1,13 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Security.Cryptography;
-using System.Threading.Tasks;
-using ProjBobcat.Class.Helper;
+﻿using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.GameResource;
 using ProjBobcat.Interface;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Security.Cryptography;
 
 namespace ProjBobcat.DefaultComponent.ResourceInfoResolver;
 
@@ -30,9 +28,9 @@ public class GameLoggingInfoResolver : ResolverBase
         if (File.Exists(filePath))
         {
             if (string.IsNullOrEmpty(VersionInfo.Logging?.Client?.File?.Sha1)) yield break;
-
-            using var hash = SHA1.Create();
-            var computedHash = await CryptoHelper.ComputeFileHashAsync(filePath, hash);
+            
+            var bytes = await File.ReadAllBytesAsync(filePath);
+            var computedHash = CryptoHelper.ToString(SHA1.HashData(bytes.AsSpan()));
 
             if (computedHash.Equals(VersionInfo.Logging?.Client?.File?.Sha1, StringComparison.OrdinalIgnoreCase))
                 yield break;

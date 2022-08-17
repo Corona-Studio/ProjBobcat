@@ -43,7 +43,7 @@ public static class StringHelper
         return trim ? str.Trim() : str;
     }
 
-    public static string Max(this string str, int length = 8)
+    public static string CropStr(this string str, int length = 8)
     {
         return str.Length <= length ? str : $"{str[..length]}...";
     }

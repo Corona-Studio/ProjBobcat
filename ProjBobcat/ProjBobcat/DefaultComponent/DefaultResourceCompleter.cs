@@ -102,17 +102,19 @@ public class DefaultResourceCompleter : IResourceCompleter
         });
 
         gameResourceTransBlock.LinkTo(downloadFileBlock, linkOptions);
-
+        
         async Task ReceiveGameResourceTask(IAsyncEnumerable<IGameResource> asyncEnumerable)
         {
             await foreach (var element in asyncEnumerable)
             {
                 NeedToDownload++;
+
                 OnResolveComplete(this, new GameResourceInfoResolveEventArgs
                 {
                     Progress = 114514,
-                    Status = $"发现未下载的 {element.FileName.Max()}({element.Type})，已加入下载队列"
+                    Status = $"发现未下载的 {element.FileName.CropStr()}({element.Type})，已加入下载队列"
                 });
+
                 gameResourceTransBlock.Post(element);
             }
         }
@@ -124,18 +126,15 @@ public class DefaultResourceCompleter : IResourceCompleter
                 resolver.GameResourceInfoResolveEvent += handler;
             */
 
-            if (resolver is VersionInfoResolver or GameLoggingInfoResolver)
+            if (resolver is VersionInfoResolver or GameLoggingInfoResolver || MaxDegreeOfParallelism == 1)
             {
                 await ReceiveGameResourceTask(resolver.ResolveResourceAsync());
                 continue;
             }
 
             var asyncEnumerable = resolver.ResolveResourceAsync();
-            var tasks = new Task[MaxDegreeOfParallelism];
-            for (var i = 0; i < tasks.Length; i++)
-                tasks[i] = ReceiveGameResourceTask(asyncEnumerable);
-            
-            await Task.WhenAll(tasks);
+
+            await Task.WhenAll(Enumerable.Repeat(ReceiveGameResourceTask(asyncEnumerable), MaxDegreeOfParallelism));
         }
 
         gameResourceTransBlock.Complete();

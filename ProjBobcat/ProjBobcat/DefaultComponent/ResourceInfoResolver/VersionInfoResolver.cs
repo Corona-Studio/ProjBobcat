@@ -33,9 +33,9 @@ public class VersionInfoResolver : ResolverBase
         if (File.Exists(jarPath))
         {
             if (string.IsNullOrEmpty(clientDownload.Sha1)) yield break;
-
-            using var hash = SHA1.Create();
-            var computedHash = await CryptoHelper.ComputeFileHashAsync(jarPath, hash);
+            
+            var bytes = await File.ReadAllBytesAsync(jarPath);
+            var computedHash = CryptoHelper.ToString(SHA1.HashData(bytes.AsSpan()));
 
             if (computedHash.Equals(clientDownload.Sha1, StringComparison.OrdinalIgnoreCase))
                 yield break;
