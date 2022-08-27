@@ -119,7 +119,8 @@ public static class CurseForgeAPIHelper
     {
         var reqUrl = $"{BaseUrl}/mods/{addonId}/files/{fileId}/download-url";
 
-        using var res = await Client.SendAsync(Req(HttpMethod.Get, reqUrl));
+        using var req = Req(HttpMethod.Get, reqUrl);
+        using var res = await Client.SendAsync(req);
         res.EnsureSuccessStatusCode();
 
         var resContent = await res.Content.ReadAsStringAsync();
@@ -132,7 +133,8 @@ public static class CurseForgeAPIHelper
     {
         var reqUrl = $"{BaseUrl}/mods/{addonId}/description";
 
-        using var res = await Client.SendAsync(Req(HttpMethod.Get, reqUrl));
+        using var req = Req(HttpMethod.Get, reqUrl);
+        using var res = await Client.SendAsync(req);
         res.EnsureSuccessStatusCode();
 
         var resContent = await res.Content.ReadAsStringAsync();
