@@ -26,8 +26,8 @@ Currently we are working on the multi-platform support for ProjBobcat
 |Platform|Status|
 |:------:|:----:|
 |Windows |  ✅ |
-|macOS |  WIP |
-|Linux |  WIP |
+|macOS |  ✅   |
+|Linux |  WIP  |
 
 ### CodeQL
 
