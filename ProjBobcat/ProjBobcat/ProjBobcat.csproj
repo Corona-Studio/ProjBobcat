@@ -7,9 +7,12 @@
   <PropertyGroup>
     <TargetFrameworks>net5.0;net6.0</TargetFrameworks>
     <OutputType>Library</OutputType>
-    <IsWindows Condition="'$(RuntimeIdentifier)' == 'win-x64' Or '$(RuntimeIdentifier)' == 'win7-x64'">true</IsWindows>
-    <IsOSX Condition="'$(RuntimeIdentifier)' == 'osx-x64'">true</IsOSX>
-    <IsLinux Condition="'$(RuntimeIdentifier)' == 'linux-x64'">true</IsLinux>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <IsWindows Condition=" ( '$(OS)' == 'Windows_NT' And '$(Configuration)' == 'Debug' ) Or '$(RuntimeIdentifier)' == 'win-x64' Or '$(RuntimeIdentifier)' == 'win7-x64'">true</IsWindows>
+    <IsOSX Condition="( '$(OS)' == 'Unix' And '$(Configuration)' == 'Debug' ) Or '$(RuntimeIdentifier)' == 'osx-x64'">true</IsOSX>
+    <IsLinux Condition="( '$(OS)' == 'Unix' And $([System.IO.File]::Exists('/usr/lib/libc.dylib'))) And '$(RuntimeIdentifier)' == 'linux-x64'">true</IsLinux>
   </PropertyGroup>
 
   <!-- Symbol Definitions -->
