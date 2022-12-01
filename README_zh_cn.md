@@ -31,8 +31,8 @@
 |平台|状态|
 |:------:|:----:|
 |Windows |  ✅ |
-|macOS |  WIP |
-|Linux |  WIP |
+|macOS |  ✅ |
+|Linux |  制作中 |
 
 ### CodeQL
 
