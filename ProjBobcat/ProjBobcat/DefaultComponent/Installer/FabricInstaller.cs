@@ -14,7 +14,7 @@ namespace ProjBobcat.DefaultComponent.Installer;
 
 public class FabricInstaller : InstallerBase, IFabricInstaller
 {
-    public IVersionLocator VersionLocator { get; set; }
+    public IVersionLocator VersionLocator { get; init; }
     public FabricLoaderArtifactModel LoaderArtifact { get; set; }
 
     public string Install()

@@ -40,12 +40,12 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageIcon>Bobcat.png</PackageIcon>
     <RepositoryUrl>https://github.com/Corona-Studio/ProjBobcat</RepositoryUrl>
-    <Version>1.20.0</Version>
+    <Version>1.21.0</Version>
     <Authors>Corona Studio</Authors>
     <Company>Corona Studio</Company>
     <Product>ProjBobcat</Product>
     <Description>The next-generation Minecraft launcher core written in C# providing the freest, fastest and the most complete experience.</Description>
-    <Copyright>Copyright © 2021 Corona Studio</Copyright>
+    <Copyright>Copyright © 2022 Corona Studio</Copyright>
     <PackageIcon>Bobcat.png</PackageIcon>
     <RepositoryUrl>https://github.com/Corona-Studio/ProjBobcat</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
@@ -62,6 +62,8 @@ add support for Quilt installation
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/Corona-Studio/ProjBobcat</PackageProjectUrl>
+    <Title>$(AssemblyName)</Title>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -70,6 +72,10 @@ add support for Quilt installation
   </ItemGroup>
   
   <ItemGroup>
+    <None Include="..\..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
     <None Include="..\.editorconfig">
       <Link>.editorconfig</Link>
     </None>

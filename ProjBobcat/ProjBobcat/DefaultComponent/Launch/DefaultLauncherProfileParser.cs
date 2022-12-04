@@ -18,7 +18,7 @@ namespace ProjBobcat.DefaultComponent.Launch;
 /// </summary>
 public sealed class DefaultLauncherProfileParser : LauncherParserBase, ILauncherProfileParser
 {
-    readonly string FullLauncherProfilePath;
+    readonly string _fullLauncherProfilePath;
 
     /// <summary>
     ///     构造函数
@@ -28,9 +28,9 @@ public sealed class DefaultLauncherProfileParser : LauncherParserBase, ILauncher
     public DefaultLauncherProfileParser(string rootPath, Guid clientToken)
     {
         RootPath = rootPath;
-        FullLauncherProfilePath = Path.Combine(rootPath, GamePathHelper.GetLauncherProfilePath());
+        _fullLauncherProfilePath = Path.Combine(rootPath, GamePathHelper.GetLauncherProfilePath());
 
-        if (!File.Exists(FullLauncherProfilePath))
+        if (!File.Exists(_fullLauncherProfilePath))
         {
             var launcherProfile = new LauncherProfileModel
             {
@@ -51,12 +51,12 @@ public sealed class DefaultLauncherProfileParser : LauncherParserBase, ILauncher
             if (!Directory.Exists(RootPath))
                 Directory.CreateDirectory(RootPath);
 
-            File.WriteAllText(FullLauncherProfilePath, launcherProfileJson);
+            File.WriteAllText(_fullLauncherProfilePath, launcherProfileJson);
         }
         else
         {
             var launcherProfileJson =
-                File.ReadAllText(FullLauncherProfilePath, Encoding.UTF8);
+                File.ReadAllText(_fullLauncherProfilePath, Encoding.UTF8);
             LauncherProfile = JsonConvert.DeserializeObject<LauncherProfileModel>(launcherProfileJson);
         }
     }
@@ -100,13 +100,13 @@ public sealed class DefaultLauncherProfileParser : LauncherParserBase, ILauncher
 
     public void SaveProfile()
     {
-        if (File.Exists(FullLauncherProfilePath))
-            File.Delete(FullLauncherProfilePath);
+        if (File.Exists(_fullLauncherProfilePath))
+            File.Delete(_fullLauncherProfilePath);
 
         var launcherProfileJson =
             JsonConvert.SerializeObject(LauncherProfile, JsonHelper.CamelCasePropertyNamesSettings);
 
-        File.WriteAllText(FullLauncherProfilePath, launcherProfileJson);
+        File.WriteAllText(_fullLauncherProfilePath, launcherProfileJson);
     }
 
     public void SelectGameProfile(string name)
