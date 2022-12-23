@@ -1,4 +1,4 @@
-# ProjBobcat
+# ProjBobcat [![CodeQL](https://github.com/Corona-Studio/ProjBobcat/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/Corona-Studio/ProjBobcat/actions/workflows/codeql-analysis.yml)
 
 # [简体中文](https://github.com/Corona-Studio/ProjBobcat/blob/master/README_zh_cn.md)
 
@@ -28,10 +28,6 @@ Currently we are working on the multi-platform support for ProjBobcat
 |Windows |  ✅ |
 |macOS |  ✅   |
 |Linux |  WIP  |
-
-### CodeQL
-
-[![CodeQL](https://github.com/Corona-Studio/ProjBobcat/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/Corona-Studio/ProjBobcat/actions/workflows/codeql-analysis.yml)
 
 ## [Ad] An Awesome Typescript Launcher Core
 [Repo Link](https://github.com/Voxelum/minecraft-launcher-core-node)
