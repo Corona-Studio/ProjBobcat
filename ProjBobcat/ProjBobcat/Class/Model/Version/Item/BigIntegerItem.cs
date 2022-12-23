@@ -14,7 +14,7 @@ public class BigIntegerItem : IItem
 
     public int CompareTo(object obj)
     {
-        if (obj is not IItem item) return BigInteger.Zero == _value ? 0 : 1; // 1.0 == 1, 1.1 > 1
+        if (obj is not IItem item) return BigInteger.Zero.CompareTo(_value) == 0 ? 0 : 1; // 1.0 == 1, 1.1 > 1
 
         return item switch
         {
@@ -28,7 +28,7 @@ public class BigIntegerItem : IItem
 
     public bool IsNull()
     {
-        return _value == BigInteger.Zero;
+        return BigInteger.Zero.CompareTo(_value) == 0;
     }
 
     public override bool Equals(object obj)
