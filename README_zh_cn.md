@@ -1,4 +1,4 @@
-# ProjBobcat 中文文档
+# ProjBobcat 中文文档 [![CodeQL](https://github.com/Corona-Studio/ProjBobcat/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/Corona-Studio/ProjBobcat/actions/workflows/codeql-analysis.yml)
 
 # [English](https://github.com/Corona-Studio/ProjBobcat/)
 
@@ -33,10 +33,6 @@
 |Windows |  ✅ |
 |macOS |  ✅ |
 |Linux |  制作中 |
-
-### CodeQL
-
-[![CodeQL](https://github.com/Corona-Studio/ProjBobcat/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/Corona-Studio/ProjBobcat/actions/workflows/codeql-analysis.yml)
 
 ## [广告] 一个超牛逼的Typescript启动核心
 [仓库链接](https://github.com/Voxelum/minecraft-launcher-core-node)
