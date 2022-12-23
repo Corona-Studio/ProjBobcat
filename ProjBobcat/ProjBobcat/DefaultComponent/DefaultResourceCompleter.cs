@@ -33,8 +33,8 @@ public class DefaultResourceCompleter : IResourceCompleter
     public TimeSpan TimeoutPerFile { get; set; } = TimeSpan.FromSeconds(10);
     public int DownloadParts { get; set; } = 16;
     public int MaxDegreeOfParallelism { get; set; } = 1;
-    public int TotalRetry { get; set; }
-    public bool CheckFile { get; set; }
+    public int TotalRetry { get; set; } = 2;
+    public bool CheckFile { get; set; } = true;
     public IEnumerable<IResourceInfoResolver>? ResourceInfoResolvers { get; set; }
 
     public event EventHandler<GameResourceInfoResolveEventArgs> GameResourceInfoResolveStatus
@@ -90,7 +90,7 @@ public class DefaultResourceCompleter : IResourceCompleter
         {
             await DownloadHelper.AdvancedDownloadFile(df, new DownloadSettings
             {
-                CheckFile = true,
+                CheckFile = CheckFile,
                 DownloadParts = DownloadParts,
                 HashType = HashType.SHA1,
                 RetryCount = TotalRetry,
