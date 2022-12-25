@@ -157,7 +157,7 @@ public class MicrosoftAuthenticator : IAuthenticator
 
         #region STAGE 4
 
-        var ownResRes = await HttpHelper.Get(MojangOwnershipUrl,
+        using var ownResRes = await HttpHelper.Get(MojangOwnershipUrl,
             new Tuple<string, string>("Bearer", mcRes.AccessToken));
         var ownResStr = await ownResRes.Content.ReadAsStringAsync();
         var ownRes = JsonConvert.DeserializeObject<MojangOwnershipResponseModel>(ownResStr);
@@ -178,7 +178,7 @@ public class MicrosoftAuthenticator : IAuthenticator
 
         #region STAGE 5
 
-        var profileResRes =
+        using var profileResRes =
             await HttpHelper.Get(MojangProfileUrl, new Tuple<string, string>("Bearer", mcRes.AccessToken));
         var profileResStr = await profileResRes.Content.ReadAsStringAsync();
         var profileRes = JsonConvert.DeserializeObject<MojangProfileResponseModel>(profileResStr);

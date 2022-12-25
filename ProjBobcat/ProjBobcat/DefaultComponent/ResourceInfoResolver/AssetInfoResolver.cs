@@ -15,6 +15,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver;
 
 public class AssetInfoResolver : ResolverBase
 {
+    const string DefaultVersionManifestUrl = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
     readonly string _assetIndexUrlRoot;
 
     public string AssetIndexUriRoot
@@ -25,7 +26,7 @@ public class AssetInfoResolver : ResolverBase
 
     public string AssetUriRoot { get; init; } = "https://resources.download.minecraft.net/";
 
-    public List<VersionManifestVersionsModel> Versions { get; set; }
+    public List<VersionManifestVersionsModel>? Versions { get; init; }
 
     public override async IAsyncEnumerable<IGameResource> ResolveResourceAsync()
     {
@@ -33,7 +34,20 @@ public class AssetInfoResolver : ResolverBase
 
         OnResolve("开始进行游戏资源(Asset)检查");
 
-        if (!(Versions?.Any() ?? false) && VersionInfo?.AssetInfo == null) yield break;
+        if (VersionInfo?.AssetInfo == null) yield break;
+
+        var versions = Versions;
+        if (!(Versions?.Any() ?? false))
+        {
+            OnResolve("没有提供 Version Manifest， 开始下载");
+
+            using var vmJsonRes = await HttpHelper.Get(DefaultVersionManifestUrl);
+            var vmJson = await vmJsonRes.Content.ReadAsStringAsync();
+            var vm = JsonConvert.DeserializeObject<VersionManifest>(vmJson);
+
+            versions = vm?.Versions;
+        }
+        if(!(versions?.Any() ?? false)) yield break;
 
         var isAssetInfoNotExists =
             string.IsNullOrEmpty(VersionInfo?.AssetInfo?.Url) &&
@@ -54,16 +68,16 @@ public class AssetInfoResolver : ResolverBase
         var assetIndexesPath = Path.Combine(assetIndexesDi.FullName, $"{id}.json");
         if (!File.Exists(assetIndexesPath))
         {
-            OnResolve("没有发现Asset Indexes 文件， 开始下载");
+            OnResolve("没有发现 Asset Indexes 文件， 开始下载");
 
             var assetIndexDownloadUri = VersionInfo?.AssetInfo?.Url;
 
             if (isAssetInfoNotExists)
             {
-                var versionObject = Versions?.FirstOrDefault(v => v.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+                var versionObject = versions.FirstOrDefault(v => v.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
                 if (versionObject == default) yield break;
 
-                var jsonRes = await HttpHelper.Get(versionObject.Url);
+                using var jsonRes = await HttpHelper.Get(versionObject.Url);
                 var jsonStr = await jsonRes.Content.ReadAsStringAsync();
                 var versionModel = JsonConvert.DeserializeObject<RawVersionModel>(jsonStr);
 
