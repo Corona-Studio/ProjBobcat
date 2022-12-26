@@ -404,7 +404,7 @@ public class MicrosoftAuthenticator : IAuthenticator
                                     + $"&redirect_uri={redirectUri}");
     }
 
-    async Task<T> SendRequest<T>(string url, object model)
+    static async Task<T> SendRequest<T>(string url, object model)
     {
         var reqStr = JsonConvert.SerializeObject(model);
 

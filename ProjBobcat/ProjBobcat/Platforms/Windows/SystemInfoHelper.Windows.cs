@@ -6,6 +6,8 @@ using System.Management;
 using Microsoft.Win32;
 using ProjBobcat.Class.Model;
 
+#pragma warning disable CA1416
+
 namespace ProjBobcat.Platforms.Windows;
 
 class SystemInfoHelper

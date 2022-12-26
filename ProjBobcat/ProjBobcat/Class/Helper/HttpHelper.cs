@@ -14,8 +14,12 @@ namespace ProjBobcat.Class.Helper;
 /// </summary>
 public static class HttpHelper
 {
-    const string UriRegex =
+    const string UriRegexStr =
         "((([A-Za-z]{3,9}:(?:\\/\\/)?)(?:[-;:&=\\+$,\\w]+@)?[A-Za-z0-9.-]+(:[0-9]+)?|(?:ww‌​w.|[-;:&=\\+$,\\w]+@)[A-Za-z0-9.-]+)((?:\\/[\\+~%\\/.\\w-_]*)?\\??(?:[-\\+=&;%@.\\w_]*)#?‌​(?:[\\w]*))?)";
+
+#pragma warning disable SYSLIB1045 // 转换为“GeneratedRegexAttribute”。
+    static readonly Regex UriRegex = new(UriRegexStr, RegexOptions.Compiled);
+#pragma warning restore SYSLIB1045 // 转换为“GeneratedRegexAttribute”。
 
     static HttpClient Client => HttpClientHelper.GetNewClient(HttpClientHelper.DefaultClientName);
 
@@ -26,8 +30,7 @@ public static class HttpHelper
     /// <returns>匹配的Uri</returns>
     public static string RegexMatchUri(string uri)
     {
-        var r = new Regex(UriRegex);
-        return r.Match(uri).Value;
+        return UriRegex.Match(uri).Value;
     }
 
     /// <summary>

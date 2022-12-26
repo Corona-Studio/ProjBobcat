@@ -150,7 +150,7 @@ public class ComparableVersion : IComparable<ComparableVersion>
         }
     }
 
-    IItem ParseItem(bool isDigit, string buf)
+    static IItem ParseItem(bool isDigit, string buf)
     {
         if (isDigit)
         {

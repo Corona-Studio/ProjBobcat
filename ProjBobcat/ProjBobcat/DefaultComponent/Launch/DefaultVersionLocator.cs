@@ -158,9 +158,10 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             var isNative = lib.Natives?.Any() ?? false;
             if (isNative)
             {
-                var key = lib.Natives.ContainsKey(Constants.OsSymbol)
-                    ? lib.Natives[Constants.OsSymbol].Replace("${arch}", SystemArch.CurrentArch.ToString("{0}"))
-                    : $"natives-{Constants.OsSymbol}";
+                var key = 
+                    lib.Natives.TryGetValue(Constants.OsSymbol, out var value)
+                        ? value.Replace("${arch}", SystemArch.CurrentArch.ToString("{0}")) 
+                        : $"natives-{Constants.OsSymbol}";
 
                 FileInfo libFi;
                 if (lib.Downloads?.Classifiers?.ContainsKey(key) ?? false)

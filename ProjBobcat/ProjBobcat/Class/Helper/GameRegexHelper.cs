@@ -4,11 +4,14 @@ namespace ProjBobcat.Class.Helper;
 
 public static class GameRegexHelper
 {
-    public const string GameVersionRegexStr = "[0-9]{1,}.[0-9]{1,}[.]?[0-9]{0,}";
+    const string GameVersionRegexStr = "[0-9]{1,}.[0-9]{1,}[.]?[0-9]{0,}";
 
-    public const string ForgeLegacyJarRegexStr =
+    const string ForgeLegacyJarRegexStr =
         "forge-[0-9]{1,}.[0-9]{1,}[.]?[0-9]{0,}-[0-9]{1,}.[0-9]{1,}.[0-9]{1,}.[0-9]{4}-[0-9]{1,}.[0-9]{1,}[.]?[0-9]{0,}-universal.jar";
 
-    public static Regex GameVersionRegex => new(GameVersionRegexStr);
-    public static Regex ForgeLegacyJarRegex => new(ForgeLegacyJarRegexStr);
+#pragma warning disable SYSLIB1045 // 转换为“GeneratedRegexAttribute”。
+    public static readonly Regex GameVersionRegex = new(GameVersionRegexStr, RegexOptions.Compiled);
+
+    public static readonly Regex ForgeLegacyJarRegex = new(ForgeLegacyJarRegexStr, RegexOptions.Compiled);
+#pragma warning restore SYSLIB1045 // 转换为“GeneratedRegexAttribute”。
 }

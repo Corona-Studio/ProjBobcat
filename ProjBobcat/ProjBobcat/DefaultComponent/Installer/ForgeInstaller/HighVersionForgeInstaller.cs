@@ -39,6 +39,12 @@ public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
         return InstallForgeTaskAsync().Result;
     }
 
+    static readonly Regex
+#pragma warning disable SYSLIB1045 // 转换为“GeneratedRegexAttribute”。
+        PathRegex = new("^\\[.+\\]$", RegexOptions.Compiled),
+        VariableRegex = new("^{.+}$", RegexOptions.Compiled);
+#pragma warning restore SYSLIB1045 // 转换为“GeneratedRegexAttribute”。
+
     public async Task<ForgeInstallResult> InstallForgeTaskAsync()
     {
         if (string.IsNullOrEmpty(ForgeExecutablePath))
@@ -238,12 +244,9 @@ public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
         InvokeStatusChangedEvent("解析 Processor", 1);
 
-        var pathRegex = new Regex("^\\[.+\\]$");
-        var variableRegex = new Regex("^{.+}$");
-
         string ResolvePathRegex(string val)
         {
-            if (string.IsNullOrEmpty(val) || string.IsNullOrEmpty(pathRegex.Match(val).Value)) return val;
+            if (string.IsNullOrEmpty(val) || string.IsNullOrEmpty(PathRegex.Match(val).Value)) return val;
 
             var name = val[1..^1];
             var maven = name.ResolveMavenString();
@@ -273,7 +276,7 @@ public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
         string ResolveVariableRegex(string val)
         {
-            if (string.IsNullOrEmpty(val) || string.IsNullOrEmpty(variableRegex.Match(val).Value)) return val;
+            if (string.IsNullOrEmpty(val) || string.IsNullOrEmpty(VariableRegex.Match(val).Value)) return val;
 
             var key = val[1..^1];
             return variables[key].Client;

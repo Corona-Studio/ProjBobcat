@@ -7,36 +7,25 @@ namespace ProjBobcat.DefaultComponent.Logging;
 
 public class DefaultGameLogResolver : IGameLogResolver
 {
-    const string LogTypeRegex = "FATAL|ERROR|WARN|INFO|DEBUG";
-    const string LogTimeRegex = "(20|21|22|23|[0-1]\\d):[0-5]\\d:[0-5]\\d";
-    const string StackTraceAt = "(at .*)";
-    const string ExceptionRegex = "(?m)^.*?Exception.*";
+    const string LogTypeRegexStr = "FATAL|ERROR|WARN|INFO|DEBUG";
+    const string LogTimeRegexStr = "(20|21|22|23|[0-1]\\d):[0-5]\\d:[0-5]\\d";
+    const string StackTraceAtStr = "(at .*)";
+    const string ExceptionRegexStr = "(?m)^.*?Exception.*";
 
-    readonly Regex
-        _sourceAndTypeRegex,
-        _totalPrefixRegex,
-        _typeRegex,
-        _timeRegex,
-        _timeFullRegex,
-        _stackTraceAtRegex,
-        _exceptionRegex;
+    static readonly Regex
+#pragma warning disable SYSLIB1045 // 转换为“GeneratedRegexAttribute”。
+        SourceAndTypeRegex = new (LogSourceAndTypeRegex, RegexOptions.Compiled),
+        TotalPrefixRegex = new (LogTotalPrefixRegex, RegexOptions.Compiled),
+        TypeRegex = new (LogTypeRegexStr, RegexOptions.Compiled),
+        TimeRegex = new (LogTimeRegexStr, RegexOptions.Compiled),
+        TimeFullRegex = new (LogDateRegex, RegexOptions.Compiled),
+        StackTraceAtRegex = new (StackTraceAtStr, RegexOptions.Compiled),
+        ExceptionRegex = new (ExceptionRegexStr, RegexOptions.Compiled);
+#pragma warning restore SYSLIB1045 // 转换为“GeneratedRegexAttribute”。
 
-    public DefaultGameLogResolver()
-    {
-        _typeRegex = new Regex(LogTypeRegex);
-        _timeRegex = new Regex(LogTimeRegex);
-        _timeFullRegex = new Regex(LogDateRegex);
-
-        _sourceAndTypeRegex = new Regex(LogSourceAndTypeRegex);
-        _totalPrefixRegex = new Regex(LogTotalPrefixRegex);
-
-        _stackTraceAtRegex = new Regex(StackTraceAt);
-        _exceptionRegex = new Regex(ExceptionRegex);
-    }
-
-    string LogSourceAndTypeRegex => $"[\\w\\W\\s]{{2,}}/({LogTypeRegex})";
-    string LogDateRegex => $"\\[{LogTimeRegex}\\]";
-    string LogTotalPrefixRegex => $"\\[{LogTimeRegex}\\] \\[{LogSourceAndTypeRegex}\\]";
+    const string LogSourceAndTypeRegex = $"[\\w\\W\\s]{{2,}}/({LogTypeRegexStr})";
+    const string LogDateRegex = $"\\[{LogTimeRegexStr}\\]";
+    const string LogTotalPrefixRegex = $"\\[{LogTimeRegexStr}\\] \\[{LogSourceAndTypeRegex}\\]";
 
     public GameLogType ResolveLogType(string log)
     {
@@ -46,7 +35,7 @@ public class DefaultGameLogResolver : IGameLogResolver
         if (!string.IsNullOrEmpty(ResolveStackTrace(log)))
             return GameLogType.StackTrace;
 
-        return _typeRegex.Match(log).Value switch
+        return TypeRegex.Match(log).Value switch
         {
             "FATAL" => GameLogType.Fatal,
             "ERROR" => GameLogType.Error,
@@ -59,20 +48,20 @@ public class DefaultGameLogResolver : IGameLogResolver
 
     public string ResolveStackTrace(string log)
     {
-        var stackTrace = _stackTraceAtRegex.Match(log).Value;
+        var stackTrace = StackTraceAtRegex.Match(log).Value;
         return stackTrace;
     }
 
     public string ResolveExceptionMsg(string log)
     {
-        var exceptionMsg = _exceptionRegex.Match(log).Value;
+        var exceptionMsg = ExceptionRegex.Match(log).Value;
         return exceptionMsg;
     }
 
     public string ResolveSource(string log)
     {
-        var content = _sourceAndTypeRegex.Match(log).Value.Split('/').FirstOrDefault();
-        var date = _timeFullRegex.Match(log).Value;
+        var content = SourceAndTypeRegex.Match(log).Value.Split('/').FirstOrDefault();
+        var date = TimeFullRegex.Match(log).Value;
         var result = content?.Replace($"{date} [", string.Empty);
 
         return result;
@@ -80,11 +69,11 @@ public class DefaultGameLogResolver : IGameLogResolver
 
     public string ResolveTime(string log)
     {
-        return _timeRegex.Match(log).Value;
+        return TimeRegex.Match(log).Value;
     }
 
     public string ResolveTotalPrefix(string log)
     {
-        return _totalPrefixRegex.Match(log).Value;
+        return TotalPrefixRegex.Match(log).Value;
     }
 }

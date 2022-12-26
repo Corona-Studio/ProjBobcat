@@ -9,7 +9,7 @@ namespace ProjBobcat.Class.Model;
 
 [JsonConverter(typeof(JsonConverter))]
 [TypeConverter(typeof(TypeConverter))]
-public struct PlayerUUID : IFormattable, IComparable<PlayerUUID>, IEquatable<PlayerUUID>
+public readonly struct PlayerUUID : IFormattable, IComparable<PlayerUUID>, IEquatable<PlayerUUID>
 {
     readonly Guid _guid;
 
@@ -72,8 +72,7 @@ public struct PlayerUUID : IFormattable, IComparable<PlayerUUID>, IEquatable<Pla
 
     public static PlayerUUID FromOfflinePlayerName(string playerName, string prefix = "OfflinePlayer:")
     {
-        using var md5 = MD5.Create();
-        var data = md5.ComputeHash(Encoding.UTF8.GetBytes($"{prefix}{playerName}"));
+        var data = MD5.HashData(Encoding.UTF8.GetBytes($"{prefix}{playerName}"));
         return new PlayerUUID(data);
     }
 

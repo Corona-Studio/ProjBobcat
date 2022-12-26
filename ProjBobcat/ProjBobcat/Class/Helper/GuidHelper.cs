@@ -17,8 +17,7 @@ public static class GuidHelper
     /// <returns>生成结果。</returns>
     public static Guid ToGuidHash(this string str)
     {
-        using var md5 = MD5.Create();
-        var data = md5.ComputeHash(Encoding.UTF8.GetBytes(str));
+        var data = MD5.HashData(Encoding.UTF8.GetBytes(str));
         return new Guid(data);
     }
 
@@ -30,8 +29,7 @@ public static class GuidHelper
     /// <returns>生成结果。</returns>
     public static Guid ToGuidHashAsName(this string username)
     {
-        using var md5 = MD5.Create();
-        var data = md5.ComputeHash(Encoding.UTF8.GetBytes($"OfflinePlayer:{username}"));
+        var data = MD5.HashData(Encoding.UTF8.GetBytes($"OfflinePlayer:{username}"));
         return new Guid(data);
     }
 

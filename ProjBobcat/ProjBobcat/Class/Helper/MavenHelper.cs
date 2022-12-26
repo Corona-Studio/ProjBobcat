@@ -57,6 +57,10 @@ public static class MavenHelper
         };
     }
 
+#pragma warning disable SYSLIB1045 // 转换为“GeneratedRegexAttribute”。
+    static readonly Regex GroupPathRegex = new("\\.", RegexOptions.Compiled);
+#pragma warning restore SYSLIB1045 // 转换为“GeneratedRegexAttribute”。
+
     /// <summary>
     ///     获取Group Path
     /// </summary>
@@ -64,8 +68,7 @@ public static class MavenHelper
     /// <returns>处理好的Group Path</returns>
     public static string GetGroupPath(this string artifactId)
     {
-        var regex = new Regex("\\.");
-        return regex.Replace(artifactId, "/");
+        return GroupPathRegex.Replace(artifactId, "/");
     }
 
     /// <summary>
