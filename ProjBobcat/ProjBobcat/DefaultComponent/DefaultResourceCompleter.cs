@@ -154,7 +154,7 @@ public class DefaultResourceCompleter : IResourceCompleter
             FailedFiles = _failedFiles
         });
 
-        return new TaskResult<ResourceCompleterCheckResult?>(resultTuple.Item1, value: resultTuple.Item2);
+        return new TaskResult<ResourceCompleterCheckResult?>(resultTuple.result, value: resultTuple.Item2);
     }
 
     public void Dispose()
