@@ -1,15 +1,15 @@
-﻿using Newtonsoft.Json;
-using ProjBobcat.Class.Helper;
-using ProjBobcat.Class.Model;
-using ProjBobcat.Class.Model.GameResource;
-using ProjBobcat.Class.Model.Mojang;
-using ProjBobcat.Interface;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading;
+using Newtonsoft.Json;
+using ProjBobcat.Class.Helper;
+using ProjBobcat.Class.Model;
+using ProjBobcat.Class.Model.GameResource;
+using ProjBobcat.Class.Model.Mojang;
+using ProjBobcat.Interface;
 
 namespace ProjBobcat.DefaultComponent.ResourceInfoResolver;
 
@@ -47,7 +47,8 @@ public class AssetInfoResolver : ResolverBase
 
             versions = vm?.Versions;
         }
-        if(!(versions?.Any() ?? false)) yield break;
+
+        if (!(versions?.Any() ?? false)) yield break;
 
         var isAssetInfoNotExists =
             string.IsNullOrEmpty(VersionInfo?.AssetInfo?.Url) &&

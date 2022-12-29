@@ -1,5 +1,4 @@
-﻿using ProjBobcat.Class.Model;
-using System;
+﻿using System;
 using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -13,6 +12,7 @@ using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
+using ProjBobcat.Class.Model;
 
 namespace ProjBobcat.Class.Helper;
 
@@ -27,68 +27,6 @@ public static class DownloadHelper
     public static int DownloadThread { get; set; } = 8;
 
     static HttpClient DataClient => HttpClientHelper.GetNewClient(HttpClientHelper.DataClientName);
-
-    #region 下载一个列表中的文件（自动确定是否使用分片下载）
-
-    /// <summary>
-    ///     下载文件方法（自动确定是否使用分片下载）
-    /// </summary>
-    /// <param name="fileEnumerable">文件列表</param>
-    /// <param name="downloadSettings"></param>
-    public static async Task AdvancedDownloadFile(DownloadFile df, DownloadSettings downloadSettings)
-    {
-        ProcessorHelper.SetMaxThreads();
-
-        if(!Directory.Exists(df.DownloadPath))
-            Directory.CreateDirectory(df.DownloadPath);
-
-        if (df.FileSize is >= 1048576 or 0)
-            await MultiPartDownloadTaskAsync(df, downloadSettings);
-        else
-            await DownloadData(df, downloadSettings);
-    }
-
-    /// <summary>
-    ///     下载文件方法（自动确定是否使用分片下载）
-    /// </summary>
-    /// <param name="fileEnumerable">文件列表</param>
-    /// <param name="downloadSettings"></param>
-    public static async Task AdvancedDownloadListFile(IEnumerable<DownloadFile> fileEnumerable,
-        DownloadSettings downloadSettings)
-    {
-        ProcessorHelper.SetMaxThreads();
-
-        var filesBlock =
-            new TransformManyBlock<IEnumerable<DownloadFile>, DownloadFile>(d =>
-            {
-                foreach (var df in d.Where(df => !Directory.Exists(df.DownloadPath)))
-                    Directory.CreateDirectory(df.DownloadPath);
-
-                return d;
-            });
-
-        var actionBlock = new ActionBlock<DownloadFile>(async d =>
-        {
-            if (d.FileSize is >= 1048576 or 0)
-                await MultiPartDownloadTaskAsync(d, downloadSettings);
-            else
-                await DownloadData(d, downloadSettings);
-        }, new ExecutionDataflowBlockOptions
-        {
-            BoundedCapacity = DownloadThread,
-            MaxDegreeOfParallelism = DownloadThread
-        });
-
-        var linkOptions = new DataflowLinkOptions { PropagateCompletion = true };
-        filesBlock.LinkTo(actionBlock, linkOptions);
-        filesBlock.Post(fileEnumerable);
-        filesBlock.Complete();
-
-        await actionBlock.Completion;
-        actionBlock.Complete();
-    }
-
-    #endregion
 
     #region 下载数据
 
@@ -215,6 +153,68 @@ public static class DownloadHelper
             _ => bytesReceived / passedSeconds
         };
     }
+
+    #region 下载一个列表中的文件（自动确定是否使用分片下载）
+
+    /// <summary>
+    ///     下载文件方法（自动确定是否使用分片下载）
+    /// </summary>
+    /// <param name="fileEnumerable">文件列表</param>
+    /// <param name="downloadSettings"></param>
+    public static async Task AdvancedDownloadFile(DownloadFile df, DownloadSettings downloadSettings)
+    {
+        ProcessorHelper.SetMaxThreads();
+
+        if (!Directory.Exists(df.DownloadPath))
+            Directory.CreateDirectory(df.DownloadPath);
+
+        if (df.FileSize is >= 1048576 or 0)
+            await MultiPartDownloadTaskAsync(df, downloadSettings);
+        else
+            await DownloadData(df, downloadSettings);
+    }
+
+    /// <summary>
+    ///     下载文件方法（自动确定是否使用分片下载）
+    /// </summary>
+    /// <param name="fileEnumerable">文件列表</param>
+    /// <param name="downloadSettings"></param>
+    public static async Task AdvancedDownloadListFile(IEnumerable<DownloadFile> fileEnumerable,
+        DownloadSettings downloadSettings)
+    {
+        ProcessorHelper.SetMaxThreads();
+
+        var filesBlock =
+            new TransformManyBlock<IEnumerable<DownloadFile>, DownloadFile>(d =>
+            {
+                foreach (var df in d.Where(df => !Directory.Exists(df.DownloadPath)))
+                    Directory.CreateDirectory(df.DownloadPath);
+
+                return d;
+            });
+
+        var actionBlock = new ActionBlock<DownloadFile>(async d =>
+        {
+            if (d.FileSize is >= 1048576 or 0)
+                await MultiPartDownloadTaskAsync(d, downloadSettings);
+            else
+                await DownloadData(d, downloadSettings);
+        }, new ExecutionDataflowBlockOptions
+        {
+            BoundedCapacity = DownloadThread,
+            MaxDegreeOfParallelism = DownloadThread
+        });
+
+        var linkOptions = new DataflowLinkOptions { PropagateCompletion = true };
+        filesBlock.LinkTo(actionBlock, linkOptions);
+        filesBlock.Post(fileEnumerable);
+        filesBlock.Complete();
+
+        await actionBlock.Completion;
+        actionBlock.Complete();
+    }
+
+    #endregion
 
     #region 分片下载
 

@@ -102,7 +102,7 @@ public class DefaultResourceCompleter : IResourceCompleter
         });
 
         gameResourceTransBlock.LinkTo(downloadFileBlock, linkOptions);
-        
+
         async Task ReceiveGameResourceTask(IAsyncEnumerable<IGameResource> asyncEnumerable)
         {
             await foreach (var element in asyncEnumerable)
@@ -148,7 +148,7 @@ public class DefaultResourceCompleter : IResourceCompleter
             _ => TaskResultStatus.Success
         };
 
-        var resultTuple =  (result, new ResourceCompleterCheckResult
+        var resultTuple = (result, new ResourceCompleterCheckResult
         {
             IsLibDownloadFailed = isLibraryFailed,
             FailedFiles = _failedFiles

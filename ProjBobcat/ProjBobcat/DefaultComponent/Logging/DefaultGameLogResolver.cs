@@ -12,20 +12,20 @@ public class DefaultGameLogResolver : IGameLogResolver
     const string StackTraceAtStr = "(at .*)";
     const string ExceptionRegexStr = "(?m)^.*?Exception.*";
 
-    static readonly Regex
-#pragma warning disable SYSLIB1045 // 转换为“GeneratedRegexAttribute”。
-        SourceAndTypeRegex = new (LogSourceAndTypeRegex, RegexOptions.Compiled),
-        TotalPrefixRegex = new (LogTotalPrefixRegex, RegexOptions.Compiled),
-        TypeRegex = new (LogTypeRegexStr, RegexOptions.Compiled),
-        TimeRegex = new (LogTimeRegexStr, RegexOptions.Compiled),
-        TimeFullRegex = new (LogDateRegex, RegexOptions.Compiled),
-        StackTraceAtRegex = new (StackTraceAtStr, RegexOptions.Compiled),
-        ExceptionRegex = new (ExceptionRegexStr, RegexOptions.Compiled);
-#pragma warning restore SYSLIB1045 // 转换为“GeneratedRegexAttribute”。
-
     const string LogSourceAndTypeRegex = $"[\\w\\W\\s]{{2,}}/({LogTypeRegexStr})";
     const string LogDateRegex = $"\\[{LogTimeRegexStr}\\]";
     const string LogTotalPrefixRegex = $"\\[{LogTimeRegexStr}\\] \\[{LogSourceAndTypeRegex}\\]";
+
+    static readonly Regex
+#pragma warning disable SYSLIB1045 // 转换为“GeneratedRegexAttribute”。
+        SourceAndTypeRegex = new(LogSourceAndTypeRegex, RegexOptions.Compiled),
+        TotalPrefixRegex = new(LogTotalPrefixRegex, RegexOptions.Compiled),
+        TypeRegex = new(LogTypeRegexStr, RegexOptions.Compiled),
+        TimeRegex = new(LogTimeRegexStr, RegexOptions.Compiled),
+        TimeFullRegex = new(LogDateRegex, RegexOptions.Compiled),
+        StackTraceAtRegex = new(StackTraceAtStr, RegexOptions.Compiled),
+        ExceptionRegex = new(ExceptionRegexStr, RegexOptions.Compiled);
+#pragma warning restore SYSLIB1045 // 转换为“GeneratedRegexAttribute”。
 
     public GameLogType ResolveLogType(string log)
     {

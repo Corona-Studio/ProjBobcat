@@ -1,12 +1,12 @@
-﻿using Newtonsoft.Json;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Security.Cryptography;
+using Newtonsoft.Json;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.GameResource;
 using ProjBobcat.Interface;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Security.Cryptography;
 
 namespace ProjBobcat.DefaultComponent.ResourceInfoResolver;
 
@@ -28,12 +28,12 @@ public class VersionInfoResolver : ResolverBase
 
         var clientDownload = rawVersionModel.Downloads.Client;
         var jarPath = GamePathHelper.GetVersionJar(BasePath, id);
-        
+
 
         if (File.Exists(jarPath))
         {
             if (string.IsNullOrEmpty(clientDownload.Sha1)) yield break;
-            
+
             var bytes = await File.ReadAllBytesAsync(jarPath);
             var computedHash = CryptoHelper.ToString(SHA1.HashData(bytes.AsSpan()));
 

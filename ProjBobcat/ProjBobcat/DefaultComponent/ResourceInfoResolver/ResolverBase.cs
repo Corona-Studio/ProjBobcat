@@ -1,10 +1,10 @@
-﻿using ProjBobcat.Class.Helper;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Event;
 using ProjBobcat.Interface;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 
 namespace ProjBobcat.DefaultComponent.ResourceInfoResolver;
 
@@ -31,7 +31,7 @@ public abstract class ResolverBase : IResourceInfoResolver
         return ResolveResourceAsync().ToListAsync().Result;
     }
 
-    public void Dispose() 
+    public void Dispose()
     {
         // 不要更改此代码。请将清理代码放入“Dispose(bool disposing)”方法中
         Dispose(true);

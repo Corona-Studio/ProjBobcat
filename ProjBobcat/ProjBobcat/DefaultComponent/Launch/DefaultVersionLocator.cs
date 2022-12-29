@@ -68,7 +68,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                 yield return jvmRule.ToString();
                 continue;
             }
-            
+
             if (!(jvmRuleObj["rules"]?.Select(r => r.ToObject<JvmRules>()).CheckAllow() ?? false)) continue;
             if (!jvmRuleObj.ContainsKey("value")) continue;
             if (jvmRuleObj["value"]?.Type == JTokenType.Array)
@@ -158,9 +158,9 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             var isNative = lib.Natives?.Any() ?? false;
             if (isNative)
             {
-                var key = 
+                var key =
                     lib.Natives.TryGetValue(Constants.OsSymbol, out var value)
-                        ? value.Replace("${arch}", SystemArch.CurrentArch.ToString("{0}")) 
+                        ? value.Replace("${arch}", SystemArch.CurrentArch.ToString("{0}"))
                         : $"natives-{Constants.OsSymbol}";
 
                 FileInfo libFi;

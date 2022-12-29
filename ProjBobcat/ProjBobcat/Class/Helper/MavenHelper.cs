@@ -9,6 +9,9 @@ namespace ProjBobcat.Class.Helper;
 /// </summary>
 public static class MavenHelper
 {
+#pragma warning disable SYSLIB1045 // 转换为“GeneratedRegexAttribute”。
+    static readonly Regex GroupPathRegex = new("\\.", RegexOptions.Compiled);
+#pragma warning restore SYSLIB1045 // 转换为“GeneratedRegexAttribute”。
     /// <summary>
     ///     使用名字来解析Maven包信息。
     ///     Parse Maven package's info with its name.
@@ -56,10 +59,6 @@ public static class MavenHelper
             Path = fullPath
         };
     }
-
-#pragma warning disable SYSLIB1045 // 转换为“GeneratedRegexAttribute”。
-    static readonly Regex GroupPathRegex = new("\\.", RegexOptions.Compiled);
-#pragma warning restore SYSLIB1045 // 转换为“GeneratedRegexAttribute”。
 
     /// <summary>
     ///     获取Group Path

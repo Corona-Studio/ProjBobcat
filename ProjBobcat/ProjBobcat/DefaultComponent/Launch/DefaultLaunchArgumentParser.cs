@@ -43,9 +43,7 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
 
         var sb = new StringBuilder();
         foreach (var lib in VersionInfo.Libraries)
-        {
             sb.Append($"{Path.Combine(RootPath, GamePathHelper.GetLibraryPath(lib.Path))};");
-        }
 
 
         if (!VersionInfo.MainClass.Equals("cpw.mods.bootstraplauncher.BootstrapLauncher",
@@ -207,6 +205,32 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
     }
 
     /// <summary>
+    ///     解析 Log4J 日志配置文件相关参数
+    /// </summary>
+    /// <returns></returns>
+    public IEnumerable<string> ParseGameLoggingArguments()
+    {
+        if (VersionInfo.Logging?.Client == null) yield break;
+        if (string.IsNullOrEmpty(VersionInfo.Logging.Client.File?.Url)) yield break;
+        if (string.IsNullOrEmpty(VersionInfo.Logging?.Client?.Argument)) yield break;
+
+        var fileName = Path.GetFileName(VersionInfo.Logging.Client.File?.Url);
+
+        if (string.IsNullOrEmpty(fileName)) yield break;
+
+        var filePath = Path.Combine(GamePathHelper.GetLoggingPath(RootPath), fileName);
+
+        if (!File.Exists(filePath)) yield break;
+
+        var argumentsDic = new Dictionary<string, string>
+        {
+            { "${path}", $"\"{filePath}\"" }
+        };
+
+        yield return StringHelper.ReplaceByDic(VersionInfo.Logging.Client.Argument, argumentsDic);
+    }
+
+    /// <summary>
     ///     解析额外参数（分辨率，服务器地址）
     /// </summary>
     /// <returns></returns>
@@ -256,31 +280,5 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
             yield return "--port";
             yield return serverSettings.Port.ToString();
         }
-    }
-
-    /// <summary>
-    /// 解析 Log4J 日志配置文件相关参数
-    /// </summary>
-    /// <returns></returns>
-    public IEnumerable<string> ParseGameLoggingArguments()
-    {
-        if(VersionInfo.Logging?.Client == null) yield break;
-        if (string.IsNullOrEmpty(VersionInfo.Logging.Client.File?.Url)) yield break;
-        if(string.IsNullOrEmpty(VersionInfo.Logging?.Client?.Argument)) yield break;
-
-        var fileName = Path.GetFileName(VersionInfo.Logging.Client.File?.Url);
-
-        if(string.IsNullOrEmpty(fileName)) yield break;
-
-        var filePath = Path.Combine(GamePathHelper.GetLoggingPath(RootPath), fileName);
-
-        if(!File.Exists(filePath)) yield break;
-
-        var argumentsDic = new Dictionary<string, string>
-        {
-            { "${path}", $"\"{filePath}\"" }
-        };
-
-        yield return StringHelper.ReplaceByDic(VersionInfo.Logging.Client.Argument, argumentsDic);
     }
 }

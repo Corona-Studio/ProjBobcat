@@ -21,6 +21,11 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller;
 
 public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 {
+    static readonly Regex
+#pragma warning disable SYSLIB1045 // 转换为“GeneratedRegexAttribute”。
+        PathRegex = new("^\\[.+\\]$", RegexOptions.Compiled),
+        VariableRegex = new("^{.+}$", RegexOptions.Compiled);
+#pragma warning restore SYSLIB1045 // 转换为“GeneratedRegexAttribute”。
     readonly ConcurrentBag<DownloadFile> _failedFiles = new();
     int _totalDownloaded, _needToDownload, _totalProcessed, _needToProcess;
 
@@ -38,12 +43,6 @@ public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
     {
         return InstallForgeTaskAsync().Result;
     }
-
-    static readonly Regex
-#pragma warning disable SYSLIB1045 // 转换为“GeneratedRegexAttribute”。
-        PathRegex = new("^\\[.+\\]$", RegexOptions.Compiled),
-        VariableRegex = new("^{.+}$", RegexOptions.Compiled);
-#pragma warning restore SYSLIB1045 // 转换为“GeneratedRegexAttribute”。
 
     public async Task<ForgeInstallResult> InstallForgeTaskAsync()
     {

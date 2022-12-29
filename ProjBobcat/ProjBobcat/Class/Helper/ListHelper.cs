@@ -9,7 +9,7 @@ public static class ListHelper
     {
         var result = new List<T>();
 
-        await foreach(var element in asyncEnumerable)
+        await foreach (var element in asyncEnumerable)
             result.Add(element);
 
         return result;

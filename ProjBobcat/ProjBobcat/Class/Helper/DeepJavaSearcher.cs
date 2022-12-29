@@ -68,8 +68,8 @@ public static class DeepJavaSearcher
         var drives = Platforms.Windows.SystemInfoHelper.GetLogicalDrives();
 
         foreach (var drive in drives)
-            await foreach (var path in DeepSearch(drive, Constants.JavaExecutable))
-                yield return path;
+        await foreach (var path in DeepSearch(drive, Constants.JavaExecutable))
+            yield return path;
 #elif OSX || LINUX
         await foreach (var path in DeepSearch(string.Empty, Constants.JavaExecutable))
             yield return path;

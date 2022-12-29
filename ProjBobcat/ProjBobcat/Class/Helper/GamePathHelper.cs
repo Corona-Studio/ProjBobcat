@@ -133,7 +133,7 @@ public static class GamePathHelper
     }
 
     /// <summary>
-    /// 官方启动器的 .minecraft 目录
+    ///     官方启动器的 .minecraft 目录
     /// </summary>
     /// <returns></returns>
     public static string OfficialLauncherGamePath()

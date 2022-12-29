@@ -1,7 +1,7 @@
-﻿using ProjBobcat.Class.Model;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using ProjBobcat.Class.Model;
 
 namespace ProjBobcat.Class.Helper;
 
@@ -39,7 +39,7 @@ public static class RulesHelper
 
                 continue;
             }
-            
+
             ruleFlag = ruleFlag || rule.OperatingSystem.IsAllow();
         }
 
