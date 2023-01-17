@@ -13,7 +13,7 @@ using ProjBobcat.Interface;
 
 namespace ProjBobcat.DefaultComponent.ResourceInfoResolver;
 
-public class AssetInfoResolver : ResolverBase
+public sealed class AssetInfoResolver : ResolverBase
 {
     const string DefaultVersionManifestUrl = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
     readonly string _assetIndexUrlRoot;

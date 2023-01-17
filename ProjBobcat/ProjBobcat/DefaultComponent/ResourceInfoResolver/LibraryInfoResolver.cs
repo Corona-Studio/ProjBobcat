@@ -12,7 +12,7 @@ using FileInfo = ProjBobcat.Class.Model.FileInfo;
 
 namespace ProjBobcat.DefaultComponent.ResourceInfoResolver;
 
-public class LibraryInfoResolver : ResolverBase
+public sealed class LibraryInfoResolver : ResolverBase
 {
     public string LibraryUriRoot { get; init; } = "https://libraries.minecraft.net/";
     public string ForgeUriRoot { get; init; } = "https://files.minecraftforge.net/";

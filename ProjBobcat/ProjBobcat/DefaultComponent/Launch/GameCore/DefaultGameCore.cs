@@ -21,7 +21,7 @@ namespace ProjBobcat.DefaultComponent.Launch.GameCore;
 /// <summary>
 ///     表示一个默认的游戏核心。
 /// </summary>
-public class DefaultGameCore : GameCoreBase
+public sealed class DefaultGameCore : GameCoreBase
 {
     string _rootPath;
 

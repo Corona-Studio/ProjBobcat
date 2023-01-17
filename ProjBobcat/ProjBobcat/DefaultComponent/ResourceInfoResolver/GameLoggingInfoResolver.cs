@@ -9,7 +9,7 @@ using ProjBobcat.Interface;
 
 namespace ProjBobcat.DefaultComponent.ResourceInfoResolver;
 
-public class GameLoggingInfoResolver : ResolverBase
+public sealed class GameLoggingInfoResolver : ResolverBase
 {
     public override async IAsyncEnumerable<IGameResource> ResolveResourceAsync()
     {

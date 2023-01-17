@@ -10,7 +10,7 @@ using ProjBobcat.Interface;
 
 namespace ProjBobcat.DefaultComponent.ResourceInfoResolver;
 
-public class VersionInfoResolver : ResolverBase
+public sealed class VersionInfoResolver : ResolverBase
 {
     public override async IAsyncEnumerable<IGameResource> ResolveResourceAsync()
     {
