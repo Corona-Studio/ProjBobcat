@@ -64,6 +64,7 @@ add support for Quilt installation
     <PackageProjectUrl>https://github.com/Corona-Studio/ProjBobcat</PackageProjectUrl>
     <Title>$(AssemblyName)</Title>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
@@ -119,6 +120,9 @@ add support for Quilt installation
   </ItemGroup>
   <ItemGroup Condition=" '$(IsOSX)'=='true' ">
     <Compile Include="Platforms\MacOS\**\*.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Class\Model\GameResource\ResolvedInfo\" />
   </ItemGroup>
   <!-- Compile Options -->
 </Project>
