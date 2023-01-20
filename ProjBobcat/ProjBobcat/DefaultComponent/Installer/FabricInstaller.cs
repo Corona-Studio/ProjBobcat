@@ -26,11 +26,11 @@ public class FabricInstaller : InstallerBase, IFabricInstaller
     {
         InvokeStatusChangedEvent("开始安装", 0);
 
+        if (string.IsNullOrEmpty(RootPath))
+            throw new NullReferenceException("RootPath 字段为空");
+
         var mcVersion = LoaderArtifact.Intermediary.Version;
         var id = CustomId ?? $"{mcVersion}-fabric{LoaderArtifact.Loader.Version}";
-        var rawVersion = VersionLocator.GetGame(mcVersion);
-        if (rawVersion == null)
-            throw new UnknownGameNameException(mcVersion);
 
         var libraries = new List<Library>
         {

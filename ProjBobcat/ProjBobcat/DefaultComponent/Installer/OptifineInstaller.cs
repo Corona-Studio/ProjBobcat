@@ -16,9 +16,9 @@ namespace ProjBobcat.DefaultComponent.Installer;
 
 public class OptifineInstaller : InstallerBase, IOptifineInstaller
 {
-    public string JavaExecutablePath { get; set; }
-    public string OptifineJarPath { get; set; }
-    public OptifineDownloadVersionModel OptifineDownloadVersion { get; set; }
+    public string? JavaExecutablePath { get; set; }
+    public string? OptifineJarPath { get; set; }
+    public OptifineDownloadVersionModel? OptifineDownloadVersion { get; set; }
 
     public string Install()
     {
@@ -27,6 +27,13 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
 
     public async Task<string> InstallTaskAsync()
     {
+        if (string.IsNullOrEmpty(JavaExecutablePath))
+            throw new NullReferenceException("未指定 Java 运行时");
+        if (string.IsNullOrEmpty(OptifineJarPath))
+            throw new NullReferenceException("未指定 Optifine 安装包路径");
+        if (OptifineDownloadVersion == null)
+            throw new NullReferenceException("未指定 Optifine 下载信息");
+
         InvokeStatusChangedEvent("开始安装 Optifine", 0);
         var mcVersion = OptifineDownloadVersion.McVersion;
         var edition = OptifineDownloadVersion.Type;
@@ -118,7 +125,7 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
         }
 
         var gameJarPath = Path.Combine(RootPath,
-            GamePathHelper.GetGameExecutablePath(OptifineDownloadVersion.McVersion));
+            GamePathHelper.GetGameExecutablePath(InheritsFrom ?? OptifineDownloadVersion.McVersion));
         var optifineLibPath = Path.Combine(RootPath, GamePathHelper.GetLibraryRootPath(), "optifine", "Optifine",
             $"{OptifineDownloadVersion.McVersion}_{editionRelease}",
             $"Optifine-{OptifineDownloadVersion.McVersion}_{editionRelease}.jar");
