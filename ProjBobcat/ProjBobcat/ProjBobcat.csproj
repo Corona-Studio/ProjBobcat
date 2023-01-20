@@ -40,7 +40,7 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageIcon>Bobcat.png</PackageIcon>
     <RepositoryUrl>https://github.com/Corona-Studio/ProjBobcat</RepositoryUrl>
-    <Version>1.23.0</Version>
+    <Version>1.23.1</Version>
     <Authors>Corona Studio</Authors>
     <Company>Corona Studio</Company>
     <Product>ProjBobcat</Product>
@@ -52,6 +52,7 @@
     <PackageTags>minecraft-launcher minecraft launcher csharp</PackageTags>
     <PackageReleaseNotes>add GameResourcesResolveHelper  for resource resolve
 fix FabricInstaller bug
+fix OptifineInstaller bug
 more bug fix
 performance optimization
     </PackageReleaseNotes>
