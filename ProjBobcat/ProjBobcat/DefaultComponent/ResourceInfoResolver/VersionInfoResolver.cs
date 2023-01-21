@@ -49,7 +49,7 @@ public sealed class VersionInfoResolver : ResolverBase
             Path = Path.Combine(BasePath, GamePathHelper.GetGamePath(id)),
             Title = $"{id}.jar",
             Type = ResourceType.GameJar,
-            Uri = clientDownload.Url
+            Url = clientDownload.Url
         };
     }
 }

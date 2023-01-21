@@ -43,7 +43,7 @@ public sealed class GameLoggingInfoResolver : ResolverBase
             Path = loggingPath,
             Title = fileName,
             Type = ResourceType.Logging,
-            Uri = VersionInfo.Logging?.Client?.File?.Url
+            Url = VersionInfo.Logging?.Client?.File?.Url
         };
     }
 }

@@ -75,7 +75,7 @@ public class DefaultResourceCompleter : IResourceCompleter
                     var dF = new DownloadFile
                     {
                         DownloadPath = f.Path,
-                        DownloadUri = f.Uri,
+                        DownloadUri = f.Url,
                         FileName = f.FileName,
                         FileSize = f.FileSize,
                         CheckSum = f.CheckSum,

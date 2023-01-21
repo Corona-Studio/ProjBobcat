@@ -118,7 +118,7 @@ public sealed class LibraryInfoResolver : ResolverBase
             Path = path,
             Title = lL.Name.Split(':')[1],
             Type = ResourceType.LibraryOrNative,
-            Uri = uri,
+            Url = uri,
             FileSize = lL.Size,
             CheckSum = lL.Sha1,
             FileName = fileName
