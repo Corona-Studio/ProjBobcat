@@ -14,7 +14,7 @@ public interface IGameCore : IDisposable
     /// <summary>
     ///     获取或设置根目录。
     /// </summary>
-    string RootPath { get; set; }
+    string? RootPath { get; set; }
 
     /// <summary>
     ///     获取或设置客户端令牌。

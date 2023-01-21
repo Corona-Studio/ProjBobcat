@@ -32,7 +32,7 @@ public class ServerPingService : ProgressReportBase
         return RunAsync().Result;
     }
 
-    public async Task<ServerPingResult> RunAsync()
+    public async Task<ServerPingResult?> RunAsync()
     {
         using var client = new TcpClient
         {
@@ -62,7 +62,7 @@ public class ServerPingService : ProgressReportBase
         if (!client.Connected)
         {
             InvokeStatusChangedEvent("无法连接到服务器", 10);
-            return default;
+            return null;
         }
 
         _buffer = new List<byte>();
@@ -101,7 +101,7 @@ public class ServerPingService : ProgressReportBase
         do
         {
             var readLength = await _stream.ReadAsync(batch.AsMemory());
-            await ms.WriteAsync(batch.AsMemory(0, readLength));
+            await ms.WriteAsync(batch.AsMemory(0, readLength), cts.Token);
             if (!flag)
             {
                 var packetLength = ReadVarInt(ms.ToArray());
@@ -125,6 +125,9 @@ public class ServerPingService : ProgressReportBase
 
         var json = ReadString(buffer, jsonLength);
         var ping = JsonConvert.DeserializeObject<PingPayload>(json);
+
+        if (ping == null)
+            return null;
 
         return new ServerPingResult
         {

@@ -14,7 +14,7 @@ public interface IVersionLocator
     /// </summary>
     /// <param name="id">装有游戏版本的文件夹名。The game version folder's name.</param>
     /// <returns></returns>
-    VersionInfo GetGame(string id);
+    VersionInfo? GetGame(string id);
 
     /// <summary>
     ///     获取所有能够正常被解析的游戏信息。

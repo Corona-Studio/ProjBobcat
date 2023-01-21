@@ -57,7 +57,7 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
         var launchWrapperOfEntry =
             entries.FirstOrDefault(e => e.Key.Equals("launchwrapper-of.txt", StringComparison.OrdinalIgnoreCase));
 
-        if (launchWrapperOfEntry != default)
+        if (launchWrapperOfEntry != null)
         {
             await using var stream = launchWrapperOfEntry.OpenEntryStream();
             using var sr = new StreamReader(stream, Encoding.UTF8);
@@ -72,7 +72,7 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
         var versionModel = new RawVersionModel
         {
             Id = id,
-            InheritsFrom = string.IsNullOrEmpty(InheritsFrom) ? mcVersion : InheritsFrom,
+            InheritsFrom = InheritsFrom ?? mcVersion,
             Arguments = new Arguments
             {
                 Game = new List<object>
@@ -118,8 +118,10 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
 
         var launchWrapperPath = Path.Combine(librariesPath,
             $"launchwrapper-of-{launchWrapperVersion}.jar");
-        if (!File.Exists(launchWrapperPath) && launchWrapperEntry != default)
+        if (!File.Exists(launchWrapperPath) && launchWrapperEntry != null)
         {
+            InvokeStatusChangedEvent($"解压 launcherwrapper-{launchWrapperVersion} 数据", 65);
+
             await using var launchWrapperFs = File.OpenWrite(launchWrapperPath);
             launchWrapperEntry.WriteTo(launchWrapperFs);
         }

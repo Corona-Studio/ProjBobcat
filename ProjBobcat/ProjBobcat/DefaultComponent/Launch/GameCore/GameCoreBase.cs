@@ -16,7 +16,7 @@ public abstract class GameCoreBase : IGameCore
 
     protected readonly EventHandlerList ListEventDelegates = new();
     bool disposedValue;
-    public virtual string RootPath { get; set; }
+    public virtual string? RootPath { get; set; }
     public virtual Guid ClientToken { get; set; }
     public virtual VersionLocatorBase VersionLocator { get; set; }
     public virtual IGameLogResolver GameLogResolver { get; set; }

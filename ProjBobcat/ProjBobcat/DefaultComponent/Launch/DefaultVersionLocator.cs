@@ -50,13 +50,13 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
         }
     }
 
-    public override VersionInfo GetGame(string id)
+    public override VersionInfo? GetGame(string id)
     {
         var version = ToVersion(id);
         return version;
     }
 
-    public override IEnumerable<string> ParseJvmArguments(IEnumerable<object> arguments)
+    public override IEnumerable<string> ParseJvmArguments(IEnumerable<object>? arguments)
     {
         if (!(arguments?.Any() ?? false))
             yield break;
@@ -69,7 +69,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                 continue;
             }
 
-            if (!(jvmRuleObj["rules"]?.Select(r => r.ToObject<JvmRules>()).CheckAllow() ?? false)) continue;
+            if (!(jvmRuleObj["rules"]?.Select(r => r.ToObject<JvmRules>())?.CheckAllow() ?? false)) continue;
             if (!jvmRuleObj.ContainsKey("value")) continue;
             if (jvmRuleObj["value"]?.Type == JTokenType.Array)
                 foreach (var arg in jvmRuleObj["value"])
@@ -86,7 +86,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
     /// <param name="arguments"></param>
     /// <returns></returns>
     private protected override (IEnumerable<string>, Dictionary<string, string>) ParseGameArguments(
-        (string, List<object>) arguments)
+        (string?, List<object>?) arguments)
     {
         var argList = new List<string>();
         var availableArguments = new Dictionary<string, string>();
@@ -125,7 +125,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                 if (!gameRuleObj.ContainsKey("value")) continue;
                 ruleValue = gameRuleObj["value"].Type == JTokenType.String
                     ? gameRuleObj["value"].ToString()
-                    : string.Join(" ", gameRuleObj["value"]);
+                    : string.Join(' ', gameRuleObj["value"]);
             }
 
             if (!string.IsNullOrEmpty(ruleValue)) availableArguments.Add(ruleKey, ruleValue);
@@ -225,14 +225,14 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                 {
                     lib.Downloads.Artifact.Name = lib.Name;
 
-                    if (!result.Item2.Any(l => l.Name.Equals(lib.Name, StringComparison.OrdinalIgnoreCase)))
+                    if (!result.Item2.Any(l => l.Name!.Equals(lib.Name, StringComparison.OrdinalIgnoreCase)))
                         result.Item2.Add(lib.Downloads.Artifact);
                 }
             }
             else
             {
                 if (!(lib.Natives?.Any() ?? false))
-                    if (!result.Item2.Any(l => l.Name.Equals(lib.Name, StringComparison.OrdinalIgnoreCase)))
+                    if (!result.Item2.Any(l => l.Name!.Equals(lib.Name, StringComparison.OrdinalIgnoreCase)))
                         result.Item2.Add(new FileInfo
                         {
                             Name = lib.Name
@@ -249,7 +249,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
     /// </summary>
     /// <param name="id">游戏文件夹名。Name of the game's folder.</param>
     /// <returns></returns>
-    public override RawVersionModel ParseRawVersion(string id)
+    public override RawVersionModel? ParseRawVersion(string id)
     {
         // 预防I/O的错误。
         // Prevents errors related to I/O.
@@ -262,6 +262,8 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             JsonConvert.DeserializeObject<RawVersionModel>(
                 File.ReadAllText(GamePathHelper.GetGameJsonPath(RootPath, id)));
 
+        if(versionJson == null)
+            return null;
         if (string.IsNullOrEmpty(versionJson.MainClass))
             return null;
         if (string.IsNullOrEmpty(versionJson.MinecraftArguments) && versionJson.Arguments == null)
@@ -276,7 +278,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
     /// </summary>
     /// <param name="id">游戏文件夹名。Name of the game version's folder.</param>
     /// <returns>一个VersionInfo类。A VersionInfo class.</returns>
-    private protected override VersionInfo ToVersion(string id)
+    private protected override VersionInfo? ToVersion(string id)
     {
         // 反序列化。
         // Deserialize.
@@ -284,7 +286,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
         if (rawVersion == null)
             return null;
 
-        List<RawVersionModel> inherits = null;
+        List<RawVersionModel?>? inherits = null;
         // 检查游戏是否存在继承关系。
         // Check if there is inheritance.
         if (!string.IsNullOrEmpty(rawVersion.InheritsFrom))
@@ -292,7 +294,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             // 存在继承关系。
             // Inheritance exists.
 
-            inherits = new List<RawVersionModel>();
+            inherits = new List<RawVersionModel?>();
             var current = rawVersion;
             var first = true;
 
@@ -341,28 +343,28 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             var jvmArgList = new List<string>();
             var gameArgList = new List<string>();
 
-            result.RootVersion = inherits.Last().Id;
+            result.RootVersion = inherits.Last()!.Id;
 
             // 遍历所有的继承
             // Go through all inherits
             for (var i = inherits.Count - 1; i >= 0; i--)
             {
-                if (result.JavaVersion == null && inherits[i].JavaVersion != null)
-                    result.JavaVersion = inherits[i].JavaVersion;
-                if (result.AssetInfo == null && inherits[i].AssetIndex != null)
-                    result.AssetInfo = inherits[i].AssetIndex;
+                if (result.JavaVersion == null && inherits[i]!.JavaVersion != null)
+                    result.JavaVersion = inherits[i]!.JavaVersion;
+                if (result.AssetInfo == null && inherits[i]!.AssetIndex != null)
+                    result.AssetInfo = inherits[i]!.AssetIndex;
 
                 if (flag)
                 {
-                    var rootLibs = GetNatives(inherits[i].Libraries);
+                    var rootLibs = GetNatives(inherits[i]!.Libraries);
 
                     result.Libraries = rootLibs.Item2;
                     result.Natives = rootLibs.Item1;
 
-                    jvmArgList.AddRange(ParseJvmArguments(inherits[i].Arguments?.Jvm));
+                    jvmArgList.AddRange(ParseJvmArguments(inherits[i]!.Arguments?.Jvm));
 
-                    var rootArgs = ParseGameArguments((inherits[i].MinecraftArguments,
-                        inherits[i].Arguments?.Game));
+                    var rootArgs = ParseGameArguments((inherits[i]!.MinecraftArguments,
+                        inherits[i]!.Arguments?.Game));
 
                     gameArgList.AddRange(rootArgs.Item1);
                     result.AvailableGameArguments = rootArgs.Item2;
@@ -371,7 +373,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                     continue;
                 }
 
-                var middleLibs = GetNatives(inherits[i].Libraries);
+                var middleLibs = GetNatives(inherits[i]!.Libraries);
 
                 // result.Libraries.AddRange(middleLibs.Item2);
 
@@ -410,11 +412,11 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                 result.Natives.AddRange(moreMiddleNatives);
 
 
-                var jvmArgs = ParseJvmArguments(inherits[i].Arguments?.Jvm);
+                var jvmArgs = ParseJvmArguments(inherits[i]!.Arguments?.Jvm);
                 var middleGameArgs = ParseGameArguments(
-                    (inherits[i].MinecraftArguments, inherits[i].Arguments?.Game));
+                    (inherits[i]!.MinecraftArguments, inherits[i]!.Arguments?.Game));
 
-                if (string.IsNullOrEmpty(inherits[i].MinecraftArguments))
+                if (string.IsNullOrEmpty(inherits[i]!.MinecraftArguments))
                 {
                     jvmArgList.AddRange(jvmArgs);
                     gameArgList.AddRange(middleGameArgs.Item1);
@@ -429,8 +431,8 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                     result.AvailableGameArguments = middleGameArgs.Item2;
                 }
 
-                result.Id = inherits[i].Id ?? result.Id;
-                result.MainClass = inherits[i].MainClass ?? result.MainClass;
+                result.Id = inherits[i]!.Id ?? result.Id;
+                result.MainClass = inherits[i]!.MainClass ?? result.MainClass;
             }
 
             var finalJvmArgs = result.JvmArguments?.ToList() ?? new List<string>();

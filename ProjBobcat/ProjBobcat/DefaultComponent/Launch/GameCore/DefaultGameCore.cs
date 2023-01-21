@@ -23,7 +23,7 @@ namespace ProjBobcat.DefaultComponent.Launch.GameCore;
 /// </summary>
 public sealed class DefaultGameCore : GameCoreBase
 {
-    string _rootPath;
+    string? _rootPath;
 
     /// <summary>
     ///     启动参数解析器
@@ -33,7 +33,7 @@ public sealed class DefaultGameCore : GameCoreBase
     /// <summary>
     ///     .minecraft 目录
     /// </summary>
-    public override string RootPath
+    public override string? RootPath
     {
         get => _rootPath;
         set
@@ -323,7 +323,6 @@ public sealed class DefaultGameCore : GameCoreBase
                 return new LaunchResult
                 {
                     RunTime = stopwatch.Elapsed,
-                    GameProcess = launchWrapper.Process,
                     LaunchSettings = settings
                 };
             }

@@ -14,15 +14,15 @@ public class VersionInfo
     ///     该版本的真实id，例如1.14-forge-xxx
     ///     The real id of this version, like 1.14-forge-xxx
     /// </summary>
-    public string Id { get; set; }
+    public string? Id { get; set; }
 
     public string DirName { get; set; }
 
-    public JavaVersionModel JavaVersion { get; set; }
+    public JavaVersionModel? JavaVersion { get; set; }
 
-    public string MainClass { get; set; }
+    public string? MainClass { get; set; }
     public string Assets { get; set; }
-    public Asset AssetInfo { get; set; }
+    public Asset? AssetInfo { get; set; }
     public List<FileInfo> Libraries { get; set; }
     public List<NativeFileInfo> Natives { get; set; }
     public Logging Logging { get; set; }

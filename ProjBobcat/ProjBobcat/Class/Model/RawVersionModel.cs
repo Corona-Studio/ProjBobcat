@@ -11,7 +11,7 @@ namespace ProjBobcat.Class.Model;
 /// </summary>
 public class FileInfo
 {
-    [JsonIgnore] public string Name { get; set; }
+    [JsonIgnore] public string? Name { get; set; }
     [JsonProperty("path")] public string Path { get; set; }
 
     [JsonProperty("sha1")] public string Sha1 { get; set; }
@@ -71,13 +71,13 @@ public class Extract
 
 public class Downloads
 {
-    [JsonProperty("artifact")] public FileInfo Artifact { get; set; }
+    [JsonProperty("artifact")] public FileInfo? Artifact { get; set; }
     [JsonProperty("classifiers")] public Dictionary<string, FileInfo> Classifiers { get; set; }
 }
 
 public class Library
 {
-    [JsonProperty("downloads")] public Downloads Downloads { get; set; }
+    [JsonProperty("downloads")] public Downloads? Downloads { get; set; }
 
     [JsonProperty("name")] public string Name { get; set; }
 
@@ -134,13 +134,13 @@ public class RawVersionModel
     ///     Launch arguments
     /// </summary>
     [JsonProperty("arguments")]
-    public Arguments Arguments { get; set; }
+    public Arguments? Arguments { get; set; }
 
     /// <summary>
     ///     资源信息
     /// </summary>
     [JsonProperty("assetIndex")]
-    public Asset AssetIndex { get; set; }
+    public Asset? AssetIndex { get; set; }
 
     /// <summary>
     ///     资源版本
@@ -158,9 +158,9 @@ public class RawVersionModel
     ///     游戏版本
     /// </summary>
     [JsonProperty("id")]
-    public string Id { get; set; }
+    public string? Id { get; set; }
 
-    [JsonProperty("javaVersion")] public JavaVersionModel JavaVersion { get; set; }
+    [JsonProperty("javaVersion")] public JavaVersionModel? JavaVersion { get; set; }
 
     /// <summary>
     ///     继承于...（对于有些游戏版本如forge，其JSON配置会直接从另一个版本中继承，并且在继承基础上进行优先级更高的修改）
@@ -186,7 +186,7 @@ public class RawVersionModel
     ///     主类
     /// </summary>
     [JsonProperty("mainClass")]
-    public string MainClass { get; set; }
+    public string? MainClass { get; set; }
 
     /// <summary>
     ///     最小启动器版本
@@ -216,5 +216,5 @@ public class RawVersionModel
     ///     Jar 参数，LiteLoader 使用
     /// </summary>
     [JsonProperty("jar")]
-    public string JarFile { get; set; }
+    public string? JarFile { get; set; }
 }

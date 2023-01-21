@@ -25,7 +25,7 @@ public class AuthResultBase
     /// <summary>
     ///     选择的Profile
     /// </summary>
-    public ProfileInfoModel SelectedProfile { get; set; }
+    public ProfileInfoModel? SelectedProfile { get; set; }
 
     /// <summary>
     ///     用户信息

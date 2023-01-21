@@ -14,7 +14,6 @@ public sealed class GameLoggingInfoResolver : ResolverBase
     public override async IAsyncEnumerable<IGameResource> ResolveResourceAsync()
     {
         if (!CheckLocalFiles) yield break;
-        if (VersionInfo.Logging?.Client == null) yield break;
         if (VersionInfo.Logging?.Client?.File == null) yield break;
         if (string.IsNullOrEmpty(VersionInfo.Logging?.Client?.File.Url)) yield break;
 

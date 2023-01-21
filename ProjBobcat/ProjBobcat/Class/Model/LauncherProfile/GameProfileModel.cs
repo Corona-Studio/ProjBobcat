@@ -36,7 +36,7 @@ public class GameProfileModel
     ///     游戏窗口分辨率
     /// </summary>
     [JsonProperty("resolution")]
-    public ResolutionModel Resolution { get; set; }
+    public ResolutionModel? Resolution { get; set; }
 
     /// <summary>
     ///     游戏图标

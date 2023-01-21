@@ -20,9 +20,9 @@ public interface IGameResource
     ResourceType Type { get; set; }
 
     /// <summary>
-    ///     Uri
+    ///     Url
     /// </summary>
-    string Uri { get; set; }
+    string Url { get; set; }
 
     string FileName { get; set; }
 

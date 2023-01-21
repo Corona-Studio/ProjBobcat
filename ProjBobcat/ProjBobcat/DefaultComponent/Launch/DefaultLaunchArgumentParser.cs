@@ -151,7 +151,7 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
 
         const string preset =
             "[{rules: [{action: \"allow\",os:{name: \"osx\"}}],value: [\"-XstartOnFirstThread\"]},{rules: [{action: \"allow\",os:{name: \"windows\"}}],value: \"-XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump\"},{rules: [{action: \"allow\",os:{name: \"windows\",version: \"^10\\\\.\"}}],value: [\"-Dos.name=Windows 10\",\"-Dos.version=10.0\"]},\"-Djava.library.path=${natives_directory}\",\"-Dminecraft.launcher.brand=${launcher_name}\",\"-Dminecraft.launcher.version=${launcher_version}\",\"-cp\",\"${classpath}\"]";
-        var preJvmArguments = VersionLocator.ParseJvmArguments(JsonConvert.DeserializeObject<List<object>>(preset));
+        var preJvmArguments = VersionLocator.ParseJvmArguments(JsonConvert.DeserializeObject<List<object>>(preset)!);
 
         foreach (var preJvmArg in preJvmArguments)
             yield return StringHelper.ReplaceByDic(preJvmArg, jvmArgumentsDic);
@@ -192,14 +192,17 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
             javaPath
         };
 
-        arguments.AddRange(ParseJvmHeadArguments().Select(arg => arg.Trim()));
-        arguments.AddRange(ParseJvmArguments().Select(arg => arg.Trim()));
-        arguments.AddRange(ParseGameLoggingArguments().Select(arg => arg.Trim()));
+        arguments.AddRange(ParseJvmHeadArguments());
+        arguments.AddRange(ParseJvmArguments());
+        arguments.AddRange(ParseGameLoggingArguments());
 
         arguments.Add(VersionInfo.MainClass);
 
-        arguments.AddRange(ParseGameArguments(AuthResult).Select(arg => arg.Trim()));
-        arguments.AddRange(ParseAdditionalArguments().Select(arg => arg.Trim()));
+        arguments.AddRange(ParseGameArguments(AuthResult));
+        arguments.AddRange(ParseAdditionalArguments());
+
+        for(var i = 0; i < arguments.Count; i++)
+            arguments[i] = arguments[i].Trim();
 
         return arguments;
     }

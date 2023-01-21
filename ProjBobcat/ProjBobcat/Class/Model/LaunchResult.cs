@@ -10,5 +10,5 @@ public class LaunchResult
     public LaunchSettings LaunchSettings { get; set; }
     public ErrorModel Error { get; set; }
     public TimeSpan RunTime { get; set; }
-    public Process GameProcess { get; set; }
+    public Process? GameProcess { get; set; }
 }

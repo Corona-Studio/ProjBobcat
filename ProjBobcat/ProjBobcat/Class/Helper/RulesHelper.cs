@@ -15,19 +15,19 @@ public static class RulesHelper
     /// </summary>
     /// <param name="rules"></param>
     /// <returns></returns>
-    public static bool CheckAllow(this IEnumerable<JvmRules> rules)
+    public static bool CheckAllow(this IEnumerable<JvmRules?>? rules)
     {
         if (rules == null) return true;
 
-        var jvmRules = rules.ToList();
+        var jvmRules = rules.Where(r => r != null).Select(r => r!).ToList();
 
         if (!jvmRules.Any()) return false;
 
         var ruleFlag = false;
         var orderedRules = new List<JvmRules>();
 
-        orderedRules.AddRange(rules.Where(r => r.Action == "disallow"));
-        orderedRules.AddRange(rules.Where(r => r.Action == "allow"));
+        orderedRules.AddRange(jvmRules.Where(r => r.Action == "disallow"));
+        orderedRules.AddRange(jvmRules.Where(r => r.Action == "allow"));
 
         foreach (var rule in orderedRules)
         {

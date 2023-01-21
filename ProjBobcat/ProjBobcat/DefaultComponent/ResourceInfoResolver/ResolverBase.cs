@@ -12,7 +12,7 @@ public abstract class ResolverBase : IResourceInfoResolver
 {
     static readonly object ResolveEventKey = new();
     bool disposedValue;
-    protected EventHandlerList listEventDelegates = new();
+    EventHandlerList listEventDelegates = new();
 
     public event EventHandler<GameResourceInfoResolveEventArgs> GameResourceInfoResolveEvent
     {

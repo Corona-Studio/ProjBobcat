@@ -49,7 +49,7 @@ public class LaunchSettings
     public IVersionLocator VersionLocator { get; set; }
 
     public IAuthenticator Authenticator { get; set; }
-    public ProfileInfoModel SelectedProfile { get; set; }
+    public ProfileInfoModel? SelectedProfile { get; set; }
 
     public bool VersionInsulation { get; set; }
     public string LauncherName { get; set; }

@@ -167,7 +167,7 @@ public sealed class AssetInfoResolver : ResolverBase
                 Title = hash,
                 Path = path,
                 Type = ResourceType.Asset,
-                Uri = $"{AssetUriRoot}{twoDigitsHash}/{fi.Hash}",
+                Url = $"{AssetUriRoot}{twoDigitsHash}/{fi.Hash}",
                 FileSize = fi.Size,
                 CheckSum = hash,
                 FileName = hash
