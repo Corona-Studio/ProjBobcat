@@ -60,10 +60,10 @@ namespace Example
 
             var launchSettings = new LaunchSettings
             {
-                Version = selectedGame.Id, // 需要启动的游戏ID
+                Version = selectedGame.Id!, // 需要启动的游戏ID
                 VersionInsulation = false, // 版本隔离
-                GameResourcePath = _core.RootPath, // 资源根目录
-                GamePath = _core.RootPath, // 游戏根目录，如果有版本隔离则应该改为GamePathHelper.GetGamePath(Core.RootPath, versionId)
+                GameResourcePath = _core.RootPath!, // 资源根目录
+                GamePath = _core.RootPath!, // 游戏根目录，如果有版本隔离则应该改为GamePathHelper.GetGamePath(Core.RootPath, versionId)
                 VersionLocator = _core.VersionLocator, // 游戏定位器
                 GameName = gameList[0].Name,
                 GameArguments = new GameArguments // （可选）具体游戏启动参数
