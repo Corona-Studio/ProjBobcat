@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Text.Json;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Interface;
 
@@ -13,13 +14,13 @@ public abstract class VersionLocatorBase : LauncherParserBase, IVersionLocator
 
     public abstract IEnumerable<VersionInfo> GetAllGames();
 
-    public abstract IEnumerable<string> ParseJvmArguments(IEnumerable<object> arguments);
+    public abstract IEnumerable<string> ParseJvmArguments(IEnumerable<JsonElement> arguments);
     private protected abstract VersionInfo? ToVersion(string id);
 
     public abstract (List<NativeFileInfo>, List<FileInfo>) GetNatives(IEnumerable<Library> libraries);
 
     private protected abstract (IEnumerable<string>, Dictionary<string, string>) ParseGameArguments(
-        (string, List<object>) arguments);
+        (string, IEnumerable<JsonElement>) arguments);
 
     public abstract RawVersionModel? ParseRawVersion(string id);
 }

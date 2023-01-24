@@ -1,16 +1,16 @@
-﻿using System;
-using Newtonsoft.Json;
-using ProjBobcat.Class.Helper.SystemInfo;
+﻿using ProjBobcat.Class.Helper.SystemInfo;
+using System;
+using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model;
 
 public class OperatingSystemRules
 {
-    [JsonProperty("name")] public string Name { get; set; }
+    [JsonPropertyName("name")] public string Name { get; set; }
 
-    [JsonProperty("version")] public string Version { get; set; }
+    [JsonPropertyName("version")] public string Version { get; set; }
 
-    [JsonProperty("arch")] public string Arch { get; set; }
+    [JsonPropertyName("arch")] public string Arch { get; set; }
 
     public bool IsAllow()
     {
@@ -33,12 +33,12 @@ public class JvmRules
     /// <summary>
     ///     需要执行的操作
     /// </summary>
-    [JsonProperty("action")]
+    [JsonPropertyName("action")]
     public string? Action { get; set; }
 
     /// <summary>
     ///     使用的操作系统集合
     /// </summary>
-    [JsonProperty("os")]
+    [JsonPropertyName("os")]
     public OperatingSystemRules? OperatingSystem { get; set; }
 }

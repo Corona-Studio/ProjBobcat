@@ -2,8 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using System.Text.Json;
 using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Helper.SystemInfo;
@@ -56,27 +55,45 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
         return version;
     }
 
-    public override IEnumerable<string> ParseJvmArguments(IEnumerable<object>? arguments)
+    public override IEnumerable<string> ParseJvmArguments(IEnumerable<JsonElement>? arguments)
     {
         if (!(arguments?.Any() ?? false))
             yield break;
 
         foreach (var jvmRule in arguments)
         {
-            if (jvmRule is not JObject jvmRuleObj)
+            if (jvmRule.ValueKind == JsonValueKind.String)
             {
-                yield return jvmRule.ToString();
+                var str = jvmRule.GetString();
+                
+                if(!string.IsNullOrEmpty(str)) yield return str;
+
                 continue;
             }
 
-            if (!(jvmRuleObj["rules"]?.Select(r => r.ToObject<JvmRules>())?.CheckAllow() ?? false)) continue;
-            if (!jvmRuleObj.ContainsKey("value")) continue;
-            if (jvmRuleObj["value"]?.Type == JTokenType.Array)
-                foreach (var arg in jvmRuleObj["value"])
-                    yield return StringHelper.FixArgument(arg.ToString()); // arg.ToString();
-            else
-                yield return
-                    StringHelper.FixArgument(jvmRuleObj["value"]?.ToString()); // jvmRuleObj["value"].ToString();
+            if(jvmRule.TryGetProperty("rules", out var rules))
+                if (!(rules.Deserialize<JvmRules[]>()?.CheckAllow() ?? false)) continue;
+            if (!jvmRule.TryGetProperty("value", out var value)) continue;
+
+            switch (value.ValueKind)
+            {
+                case JsonValueKind.Array:
+                    var values = value.Deserialize<string[]>();
+
+                    if (!(values?.Any() ?? false)) continue;
+
+                    foreach (var val in values)
+                        yield return StringHelper.FixArgument(val);
+
+                    break;
+                case JsonValueKind.String:
+                    var valStr = value.GetString();
+
+                    if(!string.IsNullOrEmpty(valStr))
+                        yield return StringHelper.FixArgument(valStr);
+
+                    break;
+            }
         }
     }
 
@@ -86,7 +103,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
     /// <param name="arguments"></param>
     /// <returns></returns>
     private protected override (IEnumerable<string>, Dictionary<string, string>) ParseGameArguments(
-        (string?, List<object>?) arguments)
+        (string?, IEnumerable<JsonElement>?) arguments)
     {
         var argList = new List<string>();
         var availableArguments = new Dictionary<string, string>();
@@ -103,18 +120,26 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
 
         foreach (var gameRule in item2)
         {
-            if (gameRule is not JObject gameRuleObj)
+            if (gameRule.ValueKind == JsonValueKind.String)
             {
-                argList.Add(gameRule.ToString());
+                var val = gameRule.GetString();
+
+                if(!string.IsNullOrEmpty(val))
+                    argList.Add(val);
+
                 continue;
             }
-
-            if (!gameRuleObj.ContainsKey("rules")) continue;
+            
+            if (!gameRule.TryGetProperty("rules", out var rules)) continue;
 
             var ruleKey = string.Empty;
             var ruleValue = string.Empty;
 
-            foreach (var rule in gameRuleObj["rules"].Select(r => r.ToObject<GameRules>()))
+            var rulesArr = rules.Deserialize<GameRules[]>();
+
+            if(!(rulesArr?.Any() ?? false)) continue;
+
+            foreach (var rule in rulesArr)
             {
                 if (!rule.Action.Equals("allow", StringComparison.Ordinal)) continue;
                 if (!rule.Features.Any()) continue;
@@ -122,10 +147,13 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
 
                 ruleKey = rule.Features.First().Key;
 
-                if (!gameRuleObj.ContainsKey("value")) continue;
-                ruleValue = gameRuleObj["value"].Type == JTokenType.String
-                    ? gameRuleObj["value"].ToString()
-                    : string.Join(' ', gameRuleObj["value"]);
+                if(!gameRule.TryGetProperty("value", out var value)) continue;
+
+                ruleValue = value.ValueKind switch
+                {
+                    JsonValueKind.String => value.GetString(),
+                    JsonValueKind.Array => string.Join(' ', value.Deserialize<string[]>() ?? Array.Empty<string>())
+                };
             }
 
             if (!string.IsNullOrEmpty(ruleValue)) availableArguments.Add(ruleKey, ruleValue);
@@ -258,9 +286,8 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
         if (!File.Exists(GamePathHelper.GetGameJsonPath(RootPath, id)))
             return null;
 
-        var versionJson =
-            JsonConvert.DeserializeObject<RawVersionModel>(
-                File.ReadAllText(GamePathHelper.GetGameJsonPath(RootPath, id)));
+        using var fs = File.OpenRead(GamePathHelper.GetGameJsonPath(RootPath, id));
+        var versionJson = JsonSerializer.Deserialize<RawVersionModel>(fs);
 
         if(versionJson == null)
             return null;

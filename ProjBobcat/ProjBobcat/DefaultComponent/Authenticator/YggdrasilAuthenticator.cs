@@ -3,9 +3,10 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Http.Json;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Timers;
-using Newtonsoft.Json;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Auth;
@@ -115,7 +116,7 @@ public class YggdrasilAuthenticator : IAuthenticator
             Username = Email,
             Password = Password
         };
-        var requestJson = JsonConvert.SerializeObject(requestModel, JsonHelper.CamelCasePropertyNamesSettings);
+        var requestJson = JsonSerializer.Serialize(requestModel, JsonHelper.CamelCasePropertyNamesSettings);
 
         if (!_loginHistoryQueue.IsEmpty)
         {
@@ -126,12 +127,11 @@ public class YggdrasilAuthenticator : IAuthenticator
         }
 
         using var resultJson = await HttpHelper.Post(LoginAddress, requestJson);
-        var content = await resultJson.Content.ReadAsStringAsync();
-        var result = JsonConvert.DeserializeObject<AuthResponseModel>(content);
+        var result = await resultJson.Content.ReadFromJsonAsync<AuthResponseModel>();
 
         if (result == default || string.IsNullOrEmpty(result.AccessToken))
         {
-            var error = JsonConvert.DeserializeObject<ErrorModel>(content);
+            var error = await resultJson.Content.ReadFromJsonAsync<ErrorModel>();
 
             if (error is null)
                 return new YggdrasilAuthResult
@@ -198,7 +198,7 @@ public class YggdrasilAuthenticator : IAuthenticator
             Persistent = true,
             RemoteId = result.User.UUID.ToString(),
             Type = "Mojang",
-            UserProperites = (result.User?.Properties).ToAuthProperties(profiles).ToList(),
+            UserProperites = (result.User?.Properties)?.ToAuthProperties(profiles).ToArray() ?? Array.Empty<AuthPropertyModel>(),
             Username = Email
         };
 
@@ -285,16 +285,16 @@ public class YggdrasilAuthenticator : IAuthenticator
             {
                 AuthStatus = AuthStatus.Succeeded,
                 AccessToken = profile.AccessToken,
-                Profiles = new List<ProfileInfoModel>
+                Profiles = new[]
                 {
-                    new()
+                    new ProfileInfoModel
                     {
                         Name = profile.Username,
                         Properties = profile.UserProperites.Select(x => new PropertyModel
                         {
                             Name = x.Name,
                             Value = x.Value
-                        }).ToList(),
+                        }).ToArray(),
                         UUID = new PlayerUUID(profile.RemoteId)
                     }
                 },
@@ -324,11 +324,10 @@ public class YggdrasilAuthenticator : IAuthenticator
             RequestUser = userField,
             SelectedProfile = response.SelectedProfile
         };
-        var requestJson = JsonConvert.SerializeObject(requestModel, JsonHelper.CamelCasePropertyNamesSettings);
+        var requestJson = JsonSerializer.Serialize(requestModel, JsonHelper.CamelCasePropertyNamesSettings);
 
         using var resultJson = await HttpHelper.Post(RefreshAddress, requestJson);
-        var content = await resultJson.Content.ReadAsStringAsync();
-        var result = JsonConvert.DeserializeObject<object>(content);
+        var result = await resultJson.Content.ReadFromJsonAsync<object>();
 
         switch (result)
         {
@@ -375,7 +374,7 @@ public class YggdrasilAuthenticator : IAuthenticator
                     Persistent = true,
                     RemoteId = authResponse.User.UUID.ToString(),
                     Type = "Mojang",
-                    UserProperites = (authResponse.User?.Properties).ToAuthProperties(profiles).ToList(),
+                    UserProperites = (authResponse.User?.Properties)?.ToAuthProperties(profiles).ToArray() ?? Array.Empty<AuthPropertyModel>(),
                     Username = Email
                 };
 
@@ -425,7 +424,7 @@ public class YggdrasilAuthenticator : IAuthenticator
             AccessToken = accessToken,
             ClientToken = LauncherAccountParser.LauncherAccount.MojangClientToken
         };
-        var requestJson = JsonConvert.SerializeObject(requestModel, JsonHelper.CamelCasePropertyNamesSettings);
+        var requestJson = JsonSerializer.Serialize(requestModel, JsonHelper.CamelCasePropertyNamesSettings);
 
         using var result = await HttpHelper.Post(ValidateAddress, requestJson);
         return result.StatusCode.Equals(HttpStatusCode.NoContent);
@@ -438,7 +437,7 @@ public class YggdrasilAuthenticator : IAuthenticator
             AccessToken = accessToken,
             ClientToken = LauncherAccountParser.LauncherAccount.MojangClientToken
         };
-        var requestJson = JsonConvert.SerializeObject(requestModel, JsonHelper.CamelCasePropertyNamesSettings);
+        var requestJson = JsonSerializer.Serialize(requestModel, JsonHelper.CamelCasePropertyNamesSettings);
 
         using var x = await HttpHelper.Post(RevokeAddress, requestJson);
     }
@@ -455,7 +454,7 @@ public class YggdrasilAuthenticator : IAuthenticator
             Username = Email,
             Password = Password
         };
-        var requestJson = JsonConvert.SerializeObject(requestModel, JsonHelper.CamelCasePropertyNamesSettings);
+        var requestJson = JsonSerializer.Serialize(requestModel, JsonHelper.CamelCasePropertyNamesSettings);
 
         using var result = await HttpHelper.Post(SignOutAddress, requestJson);
         return result.StatusCode.Equals(HttpStatusCode.NoContent);

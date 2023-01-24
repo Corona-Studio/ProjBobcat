@@ -1,5 +1,5 @@
 ﻿using System;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.LauncherProfile;
 
@@ -11,60 +11,60 @@ public class GameProfileModel
     /// <summary>
     ///     名称
     /// </summary>
-    [JsonProperty("name")]
+    [JsonPropertyName("name")]
     public string Name { get; set; }
 
     /// <summary>
     ///     游戏目录
     /// </summary>
-    [JsonProperty("gameDir")]
+    [JsonPropertyName("gameDir")]
     public string GameDir { get; set; }
 
     /// <summary>
     ///     创建时间
     /// </summary>
-    [JsonProperty("created")]
+    [JsonPropertyName("created")]
     public DateTime Created { get; set; }
 
     /// <summary>
     ///     Java虚拟机路径
     /// </summary>
-    [JsonProperty("javaDir")]
+    [JsonPropertyName("javaDir")]
     public string JavaDir { get; set; }
 
     /// <summary>
     ///     游戏窗口分辨率
     /// </summary>
-    [JsonProperty("resolution")]
+    [JsonPropertyName("resolution")]
     public ResolutionModel? Resolution { get; set; }
 
     /// <summary>
     ///     游戏图标
     /// </summary>
-    [JsonProperty("icon")]
+    [JsonPropertyName("icon")]
     public string Icon { get; set; }
 
     /// <summary>
     ///     Java虚拟机启动参数
     /// </summary>
-    [JsonProperty("javaArgs")]
+    [JsonPropertyName("javaArgs")]
     public string JavaArgs { get; set; }
 
     /// <summary>
     ///     最后一次的版本Id
     /// </summary>
-    [JsonProperty("lastVersionId")]
+    [JsonPropertyName("lastVersionId")]
     public string LastVersionId { get; set; }
 
     /// <summary>
     ///     最后一次启动
     /// </summary>
-    [JsonProperty("lastUsed")]
+    [JsonPropertyName("lastUsed")]
     public DateTime LastUsed { get; set; }
 
     /// <summary>
     ///     版本类型
     /// </summary>
-    [JsonProperty("type")]
+    [JsonPropertyName("type")]
     public string Type { get; set; }
 }

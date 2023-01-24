@@ -1,10 +1,10 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model;
 
 public class JavaVersionModel
 {
-    [JsonProperty("component")] public string Component { get; set; }
+    [JsonPropertyName("component")] public string Component { get; set; }
 
-    [JsonProperty("majorVersion")] public int MajorVersion { get; set; }
+    [JsonPropertyName("majorVersion")] public int MajorVersion { get; set; }
 }

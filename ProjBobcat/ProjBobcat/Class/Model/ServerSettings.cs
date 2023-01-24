@@ -1,5 +1,5 @@
-﻿using Newtonsoft.Json;
-using ProjBobcat.Interface;
+﻿using ProjBobcat.Interface;
+using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model;
 

@@ -61,7 +61,7 @@ public class OfflineAuthenticator : IAuthenticator
             Persistent = true,
             RemoteId = GuidHelper.NewGuidString(),
             Type = "Mojang",
-            UserProperites = new List<AuthPropertyModel>
+            UserProperites = new[]
             {
                 authProperty
             },
@@ -93,9 +93,9 @@ public class OfflineAuthenticator : IAuthenticator
             User = new UserInfoModel
             {
                 UUID = uuid,
-                Properties = new List<PropertyModel>
+                Properties = new[]
                 {
-                    new()
+                    new PropertyModel
                     {
                         Name = authProperty.Name,
                         Value = authProperty.Value

@@ -1,14 +1,14 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.Quilt;
 
 public class QuiltLoaderModel
 {
-    [JsonProperty("separator")] public string Separator { get; set; }
+    [JsonPropertyName("separator")] public string Separator { get; set; }
 
-    [JsonProperty("build")] public int Build { get; set; }
+    [JsonPropertyName("build")] public int Build { get; set; }
 
-    [JsonProperty("maven")] public string Maven { get; set; }
+    [JsonPropertyName("maven")] public string Maven { get; set; }
 
-    [JsonProperty("version")] public string Version { get; set; }
+    [JsonPropertyName("version")] public string Version { get; set; }
 }

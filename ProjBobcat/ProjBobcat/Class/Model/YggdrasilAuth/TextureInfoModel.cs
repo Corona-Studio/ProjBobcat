@@ -1,10 +1,10 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.YggdrasilAuth;
 
 public class TextureInfoModel
 {
-    [JsonProperty("url")] public string Url { get; set; }
+    [JsonPropertyName("url")] public string Url { get; set; }
 
-    [JsonProperty("metadata")] public dynamic Metadata { get; set; }
+    [JsonPropertyName("metadata")] public dynamic Metadata { get; set; }
 }

@@ -1,37 +1,36 @@
-﻿using System;
-using System.Collections.Generic;
-using Newtonsoft.Json;
-using ProjBobcat.Class.Model.LauncherProfile;
+﻿using ProjBobcat.Class.Model.LauncherProfile;
+using System;
+using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.LauncherAccount;
 
 public class AccountModel
 {
-    [JsonProperty("accessToken")] public string AccessToken { get; set; }
+    [JsonPropertyName("accessToken")] public string AccessToken { get; set; }
 
-    [JsonProperty("accessTokenExpiresAt")] public DateTime AccessTokenExpiresAt { get; set; }
+    [JsonPropertyName("accessTokenExpiresAt")] public DateTime AccessTokenExpiresAt { get; set; }
 
-    [JsonProperty("avatar")] public string Avatar { get; set; }
+    [JsonPropertyName("avatar")] public string Avatar { get; set; }
 
-    [JsonProperty("eligibleForMigration")] public bool EligibleForMigration { get; set; }
+    [JsonPropertyName("eligibleForMigration")] public bool EligibleForMigration { get; set; }
 
-    [JsonProperty("hasMultipleProfiles")] public bool HasMultipleProfiles { get; set; }
+    [JsonPropertyName("hasMultipleProfiles")] public bool HasMultipleProfiles { get; set; }
 
-    [JsonProperty("legacy")] public bool Legacy { get; set; }
+    [JsonPropertyName("legacy")] public bool Legacy { get; set; }
 
-    [JsonProperty("localId")] public string LocalId { get; set; }
+    [JsonPropertyName("localId")] public string LocalId { get; set; }
 
-    [JsonProperty("minecraftProfile")] public AccountProfileModel MinecraftProfile { get; set; }
+    [JsonPropertyName("minecraftProfile")] public AccountProfileModel MinecraftProfile { get; set; }
 
-    [JsonProperty("persistent")] public bool Persistent { get; set; }
+    [JsonPropertyName("persistent")] public bool Persistent { get; set; }
 
-    [JsonProperty("remoteId")] public string RemoteId { get; set; }
+    [JsonPropertyName("remoteId")] public string RemoteId { get; set; }
 
-    [JsonProperty("type")] public string Type { get; set; }
+    [JsonPropertyName("type")] public string Type { get; set; }
 
-    [JsonProperty("userProperites")] public List<AuthPropertyModel> UserProperites { get; set; }
+    [JsonPropertyName("userProperites")] public AuthPropertyModel[] UserProperites { get; set; }
 
-    [JsonProperty("username")] public string Username { get; set; }
+    [JsonPropertyName("username")] public string Username { get; set; }
 
-    [JsonProperty("__id")] public Guid Id { get; set; }
+    [JsonPropertyName("__id")] public Guid Id { get; set; }
 }

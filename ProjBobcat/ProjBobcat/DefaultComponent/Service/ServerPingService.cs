@@ -4,9 +4,9 @@ using System.Diagnostics;
 using System.IO;
 using System.Net.Sockets;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.ServerPing;
 
@@ -124,7 +124,7 @@ public class ServerPingService : ProgressReportBase
         InvokeStatusChangedEvent($"收到包 0x{packet:X2} ， 长度为 {length}", 80);
 
         var json = ReadString(buffer, jsonLength);
-        var ping = JsonConvert.DeserializeObject<PingPayload>(json);
+        var ping = JsonSerializer.Deserialize<PingPayload>(json);
 
         if (ping == null)
             return null;

@@ -1,12 +1,12 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.YggdrasilAuth;
 
 public class PropertyModel
 {
-    [JsonProperty("name")] public string Name { get; set; }
+    [JsonPropertyName("name")] public string Name { get; set; }
 
-    [JsonProperty("value")] public string Value { get; set; }
+    [JsonPropertyName("value")] public string Value { get; set; }
 
-    [JsonProperty("signature")] public string Signature { get; set; }
+    [JsonPropertyName("signature")] public string Signature { get; set; }
 }

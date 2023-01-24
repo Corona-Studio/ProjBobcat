@@ -1,52 +1,52 @@
-﻿using Newtonsoft.Json;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.Fabric;
 
 public class FabricFileInfo
 {
-    [JsonProperty("file")] public string File { get; set; }
+    [JsonPropertyName("file")] public string File { get; set; }
 }
 
 public class ModUpdater
 {
-    [JsonProperty("strategy")] public string Strategy { get; set; }
+    [JsonPropertyName("strategy")] public string Strategy { get; set; }
 
-    [JsonProperty("url")] public string Url { get; set; }
+    [JsonPropertyName("url")] public string Url { get; set; }
 }
 
 public class Custom
 {
-    [JsonProperty("modUpdater")] public ModUpdater ModUpdater { get; set; }
+    [JsonPropertyName("modUpdater")] public ModUpdater ModUpdater { get; set; }
 }
 
 public class FabricModInfoModel
 {
-    [JsonProperty("schemaVersion")] public int SchemaVersion { get; set; }
+    [JsonPropertyName("schemaVersion")] public int SchemaVersion { get; set; }
 
-    [JsonProperty("id")] public string Id { get; set; }
+    [JsonPropertyName("id")] public string? Id { get; set; }
 
-    [JsonProperty("version")] public string Version { get; set; }
+    [JsonPropertyName("version")] public string? Version { get; set; }
 
-    [JsonProperty("environment")] public string Environment { get; set; }
+    [JsonPropertyName("environment")] public string Environment { get; set; }
 
-    [JsonProperty("entrypoints")] public Dictionary<string, List<string>> Entrypoints { get; set; }
+    [JsonPropertyName("entrypoints")] public Dictionary<string, string[]> Entrypoints { get; set; }
 
-    [JsonProperty("custom")] public Custom Custom { get; set; }
+    [JsonPropertyName("custom")] public Custom Custom { get; set; }
 
-    [JsonProperty("depends")] public Dictionary<string, string> Depends { get; set; }
+    [JsonPropertyName("depends")] public Dictionary<string, string> Depends { get; set; }
 
-    [JsonProperty("recommends")] public Dictionary<string, string> Recommends { get; set; }
+    [JsonPropertyName("recommends")] public Dictionary<string, string> Recommends { get; set; }
 
-    [JsonProperty("name")] public string Name { get; set; }
+    [JsonPropertyName("name")] public string Name { get; set; }
 
-    [JsonProperty("description")] public string Description { get; set; }
+    [JsonPropertyName("description")] public string Description { get; set; }
 
-    [JsonProperty("icon")] public string Icon { get; set; }
+    [JsonPropertyName("icon")] public string Icon { get; set; }
 
-    [JsonProperty("authors")] public List<string> Authors { get; set; }
+    [JsonPropertyName("authors")] public string[] Authors { get; set; }
 
-    [JsonProperty("contacts")] public Dictionary<string, string> Contacts { get; set; }
+    [JsonPropertyName("contacts")] public Dictionary<string, string> Contacts { get; set; }
 
-    [JsonProperty("jars")] public List<FabricFileInfo> Jars { get; set; }
+    [JsonPropertyName("jars")] public FabricFileInfo[] Jars { get; set; }
 }

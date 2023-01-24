@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model;
 
@@ -11,13 +11,13 @@ public class AssetFileInfo
     /// <summary>
     ///     Hash检验码
     /// </summary>
-    [JsonProperty("hash")]
+    [JsonPropertyName("hash")]
     public string Hash { get; set; }
 
     /// <summary>
     ///     文件大小
     /// </summary>
-    [JsonProperty("size")]
+    [JsonPropertyName("size")]
     public long Size { get; set; }
 }
 
@@ -29,6 +29,6 @@ public class AssetObjectModel
     /// <summary>
     ///     Asset Objects集合
     /// </summary>
-    [JsonProperty("objects")]
+    [JsonPropertyName("objects")]
     public Dictionary<string, AssetFileInfo> Objects { get; set; }
 }

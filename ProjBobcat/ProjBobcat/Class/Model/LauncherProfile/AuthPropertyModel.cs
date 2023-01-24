@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.LauncherProfile;
 
@@ -10,24 +10,24 @@ public class AuthPropertyModel
     /// <summary>
     ///     名称
     /// </summary>
-    [JsonProperty("name")]
+    [JsonPropertyName("name")]
     public string Name { get; set; }
 
     /// <summary>
     ///     Profile Id
     /// </summary>
-    [JsonProperty("profileId")]
+    [JsonPropertyName("profileId")]
     public string ProfileId { get; set; }
 
     /// <summary>
     ///     用户Id
     /// </summary>
-    [JsonProperty("userId")]
+    [JsonPropertyName("userId")]
     public PlayerUUID UserId { get; set; }
 
     /// <summary>
     ///     值
     /// </summary>
-    [JsonProperty("value")]
+    [JsonPropertyName("value")]
     public string Value { get; set; }
 }

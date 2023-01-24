@@ -1,29 +1,29 @@
-﻿using System.Collections.Generic;
-using Newtonsoft.Json;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.Modrinth;
 
 public class ModrinthProjectInfoBase
 {
-    [JsonProperty("project_type")] public string ProjectType { get; set; }
+    [JsonPropertyName("project_type")] public string ProjectType { get; set; }
 
-    [JsonProperty("slug")] public string Slug { get; set; }
+    [JsonPropertyName("slug")] public string Slug { get; set; }
 
-    [JsonProperty("title")] public string Title { get; set; }
+    [JsonPropertyName("title")] public string Title { get; set; }
 
-    [JsonProperty("description")] public string Description { get; set; }
+    [JsonPropertyName("description")] public string Description { get; set; }
 
-    [JsonProperty("categories")] public List<string> Categories { get; set; }
+    [JsonPropertyName("categories")] public string[] Categories { get; set; }
 
-    [JsonProperty("versions")] public List<string> Versions { get; set; }
+    [JsonPropertyName("versions")] public string[] Versions { get; set; }
 
-    [JsonProperty("downloads")] public int Downloads { get; set; }
+    [JsonPropertyName("downloads")] public int Downloads { get; set; }
 
-    [JsonProperty("icon_url")] public string IconUrl { get; set; }
+    [JsonPropertyName("icon_url")] public string IconUrl { get; set; }
 
-    [JsonProperty("client_side")] public string ClientSide { get; set; }
+    [JsonPropertyName("client_side")] public string ClientSide { get; set; }
 
-    [JsonProperty("server_side")] public string ServerSide { get; set; }
+    [JsonPropertyName("server_side")] public string ServerSide { get; set; }
 
-    [JsonProperty("gallery")] public List<object> Gallery { get; set; }
+    [JsonPropertyName("gallery")] public JsonElement[] Gallery { get; set; }
 }

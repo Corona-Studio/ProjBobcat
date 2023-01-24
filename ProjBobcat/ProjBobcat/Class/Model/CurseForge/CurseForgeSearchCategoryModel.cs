@@ -1,27 +1,27 @@
 ﻿using System;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.CurseForge;
 
 public class CurseForgeSearchCategoryModel
 {
-    [JsonProperty("id")] public int? Id { get; set; }
+    [JsonPropertyName("id")] public int? Id { get; set; }
 
-    [JsonProperty("name")] public string Name { get; set; }
+    [JsonPropertyName("name")] public string Name { get; set; }
 
-    [JsonProperty("slug")] public string Slug { get; set; }
+    [JsonPropertyName("slug")] public string Slug { get; set; }
 
-    [JsonProperty("url")] public string Url { get; set; }
+    [JsonPropertyName("url")] public string Url { get; set; }
 
-    [JsonProperty("iconUrl")] public string IconUrl { get; set; }
+    [JsonPropertyName("iconUrl")] public string IconUrl { get; set; }
 
-    [JsonProperty("dateModified")] public DateTime? DateModified { get; set; }
+    [JsonPropertyName("dateModified")] public DateTime? DateModified { get; set; }
 
-    [JsonProperty("parentCategoryId")] public int? ParentCategoryId { get; set; }
+    [JsonPropertyName("parentCategoryId")] public int? ParentCategoryId { get; set; }
 
-    [JsonProperty("rootCategoryId")] public int? RootCategoryId { get; set; }
+    [JsonPropertyName("rootCategoryId")] public int? RootCategoryId { get; set; }
 
-    [JsonProperty("gameId")] public int? GameId { get; set; }
+    [JsonPropertyName("gameId")] public int? GameId { get; set; }
 
-    [JsonProperty("isClass")] public bool? IsClass { get; set; }
+    [JsonPropertyName("isClass")] public bool? IsClass { get; set; }
 }

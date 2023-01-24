@@ -1,13 +1,13 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.Optifine;
 
 public class OptifineDownloadVersionModel
 {
-    [JsonProperty("_id")] public string Id { get; set; }
-    [JsonProperty("mcversion")] public string McVersion { get; set; }
-    [JsonProperty("patch")] public string Patch { get; set; }
-    [JsonProperty("type")] public string Type { get; set; }
-    [JsonProperty("__v")] public int VersionLocker { get; set; }
-    [JsonProperty("filename")] public string FileName { get; set; }
+    [JsonPropertyName("_id")] public string Id { get; set; }
+    [JsonPropertyName("mcversion")] public string McVersion { get; set; }
+    [JsonPropertyName("patch")] public string Patch { get; set; }
+    [JsonPropertyName("type")] public string Type { get; set; }
+    [JsonPropertyName("__v")] public int VersionLocker { get; set; }
+    [JsonPropertyName("filename")] public string FileName { get; set; }
 }

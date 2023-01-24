@@ -2,8 +2,8 @@
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
@@ -81,12 +81,10 @@ public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
             InvokeStatusChangedEvent("解压完成", 0.1);
 
             await using var stream = profileEntry.OpenEntryStream();
-            using var sR = new StreamReader(stream, Encoding.UTF8);
-            var content = await sR.ReadToEndAsync();
 
             InvokeStatusChangedEvent("解析安装文档", 0.35);
 
-            var profileModel = JsonConvert.DeserializeObject<LegacyForgeInstallProfile>(content);
+            var profileModel = await JsonSerializer.DeserializeAsync<LegacyForgeInstallProfile>(stream);
             if (profileModel == null)
                 throw new ArgumentNullException(nameof(profileModel));
 
@@ -120,7 +118,7 @@ public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
             await using var fs = File.OpenWrite(forgeLibPath);
             legacyJarEntry.WriteTo(fs);
 
-            var versionJsonString = JsonConvert.SerializeObject(profileModel.VersionInfo,
+            var versionJsonString = JsonSerializer.Serialize(profileModel.VersionInfo,
                 JsonHelper.CamelCasePropertyNamesSettings);
 
             await File.WriteAllTextAsync(jsonPath, versionJsonString);

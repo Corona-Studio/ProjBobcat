@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.Json;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Fabric;
-using ProjBobcat.Exceptions;
 using ProjBobcat.Interface;
 
 namespace ProjBobcat.DefaultComponent.Installer;
@@ -49,11 +47,11 @@ public class FabricInstaller : InstallerBase, IFabricInstaller
         libraries.AddRange(LoaderArtifact.LauncherMeta.Libraries.Common);
         libraries.AddRange(LoaderArtifact.LauncherMeta.Libraries.Client);
 
-        var mainClassJObject = (JObject)LoaderArtifact.LauncherMeta.MainClass;
-        var mainClass = mainClassJObject.Type switch
+        var mainClassJObject = LoaderArtifact.LauncherMeta.MainClass;
+        var mainClass = mainClassJObject.ValueKind switch
         {
-            JTokenType.String => mainClassJObject.ToObject<string>(),
-            JTokenType.Object => mainClassJObject.ToObject<Dictionary<string, string>>()
+            JsonValueKind.String => mainClassJObject.Deserialize<string>(),
+            JsonValueKind.Object => mainClassJObject.Deserialize<Dictionary<string, string>>()
                 ?.TryGetValue("client", out var outMainClass) ?? false
                 ? outMainClass
                 : string.Empty,
@@ -80,14 +78,14 @@ public class FabricInstaller : InstallerBase, IFabricInstaller
             Id = id,
             InheritsFrom = inheritsFrom,
             MainClass = mainClass,
-            Libraries = libraries,
+            Libraries = libraries.ToArray(),
             Arguments = new Arguments(),
             ReleaseTime = DateTime.Now,
             Time = DateTime.Now
         };
 
         var jsonPath = GamePathHelper.GetGameJsonPath(RootPath, id);
-        var jsonContent = JsonConvert.SerializeObject(resultModel, JsonHelper.CamelCasePropertyNamesSettings);
+        var jsonContent = JsonSerializer.Serialize(resultModel, JsonHelper.CamelCasePropertyNamesSettings);
 
         InvokeStatusChangedEvent("将版本 Json 写入文件", 90);
 

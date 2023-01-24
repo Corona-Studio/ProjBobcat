@@ -1,14 +1,14 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.YggdrasilAuth;
 
 public class AuthRefreshRequestModel
 {
-    [JsonProperty("accessToken")] public string AccessToken { get; set; }
+    [JsonPropertyName("accessToken")] public string AccessToken { get; set; }
 
-    [JsonProperty("clientToken")] public string ClientToken { get; set; }
+    [JsonPropertyName("clientToken")] public string ClientToken { get; set; }
 
-    [JsonProperty("requestUser")] public bool RequestUser { get; set; }
+    [JsonPropertyName("requestUser")] public bool RequestUser { get; set; }
 
-    [JsonProperty("selectedProfile")] public ProfileInfoModel SelectedProfile { get; set; }
+    [JsonPropertyName("selectedProfile")] public ProfileInfoModel SelectedProfile { get; set; }
 }

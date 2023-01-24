@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.LauncherProfile;
 
@@ -10,6 +10,6 @@ public class AuthProfileModel
     /// <summary>
     ///     显示名称
     /// </summary>
-    [JsonProperty("displayName")]
+    [JsonPropertyName("displayName")]
     public string DisplayName { get; set; }
 }

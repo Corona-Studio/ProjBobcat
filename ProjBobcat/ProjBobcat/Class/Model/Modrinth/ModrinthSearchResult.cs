@@ -1,15 +1,15 @@
 ﻿using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.Modrinth;
 
 public class ModrinthSearchResult
 {
-    [JsonProperty("hits")] public List<ModrinthProjectInfoSearchResult> Hits { get; set; }
+    [JsonPropertyName("hits")] public ModrinthProjectInfoSearchResult[] Hits { get; set; }
 
-    [JsonProperty("offset")] public int Offset { get; set; }
+    [JsonPropertyName("offset")] public int Offset { get; set; }
 
-    [JsonProperty("limit")] public int Limit { get; set; }
+    [JsonPropertyName("limit")] public int Limit { get; set; }
 
-    [JsonProperty("total_hits")] public int TotalHits { get; set; }
+    [JsonPropertyName("total_hits")] public int TotalHits { get; set; }
 }

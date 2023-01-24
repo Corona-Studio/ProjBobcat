@@ -1,17 +1,17 @@
 ﻿using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.Mojang;
 
 public class UrlModel
 {
-    [JsonProperty("url")] public string Url { get; set; }
+    [JsonPropertyName("url")] public string Url { get; set; }
 }
 
 public class UserProfilePropertyValue
 {
-    [JsonProperty("timestamp")] public long Timestamp { get; set; }
-    [JsonProperty("profileId")] public string ProfileId { get; set; }
-    [JsonProperty("profileName")] public string ProfileName { get; set; }
-    [JsonProperty("textures")] public Dictionary<string, UrlModel> Textures { get; set; }
+    [JsonPropertyName("timestamp")] public long Timestamp { get; set; }
+    [JsonPropertyName("profileId")] public string ProfileId { get; set; }
+    [JsonPropertyName("profileName")] public string ProfileName { get; set; }
+    [JsonPropertyName("textures")] public Dictionary<string, UrlModel> Textures { get; set; }
 }

@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.LiteLoader;
@@ -83,7 +83,7 @@ public class LiteLoaderInstaller : InstallerBase, ILiteLoaderInstaller
             Id = id,
             Time = time,
             ReleaseTime = time,
-            Libraries = libraries,
+            Libraries = libraries.ToArray(),
             MainClass = mainClass,
             InheritsFrom = string.IsNullOrEmpty(InheritsFrom) ? VersionModel.McVersion : InheritsFrom,
             BuildType = VersionModel.Type,
@@ -93,10 +93,10 @@ public class LiteLoaderInstaller : InstallerBase, ILiteLoaderInstaller
         if (InheritVersion.Arguments != null)
             resultModel.Arguments = new Arguments
             {
-                Game = new List<object>
+                Game = new []
                 {
-                    "--tweakClass",
-                    VersionModel.Build.TweakClass
+                    JsonSerializer.SerializeToElement("--tweakClass"),
+                    JsonSerializer.SerializeToElement(VersionModel.Build.TweakClass)
                 }
             };
         else
@@ -112,7 +112,7 @@ public class LiteLoaderInstaller : InstallerBase, ILiteLoaderInstaller
             DirectoryHelper.CleanDirectory(di.FullName);
 
         var jsonPath = GamePathHelper.GetGameJsonPath(RootPath, id);
-        var jsonContent = JsonConvert.SerializeObject(resultModel, JsonHelper.CamelCasePropertyNamesSettings);
+        var jsonContent = JsonSerializer.Serialize(resultModel, JsonHelper.CamelCasePropertyNamesSettings);
 
         await File.WriteAllTextAsync(jsonPath, jsonContent);
 

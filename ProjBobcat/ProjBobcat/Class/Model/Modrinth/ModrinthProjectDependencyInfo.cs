@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.Modrinth;
 
 public class ModrinthProjectDependencyInfo
 {
-    [JsonProperty("projects")] public List<ModrinthProjectInfo> Projects { get; set; }
+    [JsonPropertyName("projects")] public ModrinthProjectInfo[] Projects { get; set; }
 
-    [JsonProperty("versions")] public List<ModrinthVersionInfo> Versions { get; set; }
+    [JsonPropertyName("versions")] public ModrinthVersionInfo[] Versions { get; set; }
 }

@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http.Json;
 using System.Security.Cryptography;
+using System.Text.Json;
 using System.Threading;
-using Newtonsoft.Json;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.GameResource;
@@ -26,7 +27,7 @@ public sealed class AssetInfoResolver : ResolverBase
 
     public string AssetUriRoot { get; init; } = "https://resources.download.minecraft.net/";
 
-    public List<VersionManifestVersionsModel>? Versions { get; init; }
+    public IEnumerable<VersionManifestVersionsModel>? Versions { get; init; }
 
     public override async IAsyncEnumerable<IGameResource> ResolveResourceAsync()
     {
@@ -42,10 +43,9 @@ public sealed class AssetInfoResolver : ResolverBase
             OnResolve("没有提供 Version Manifest， 开始下载");
 
             using var vmJsonRes = await HttpHelper.Get(DefaultVersionManifestUrl);
-            var vmJson = await vmJsonRes.Content.ReadAsStringAsync();
-            var vm = JsonConvert.DeserializeObject<VersionManifest>(vmJson);
+            var vm = await vmJsonRes.Content.ReadFromJsonAsync<VersionManifest>();
 
-            versions = vm?.Versions;
+            versions = vm?.Versions?.ToList();
         }
 
         if (!(versions?.Any() ?? false)) yield break;
@@ -79,8 +79,7 @@ public sealed class AssetInfoResolver : ResolverBase
                 if (versionObject == default) yield break;
 
                 using var jsonRes = await HttpHelper.Get(versionObject.Url);
-                var jsonStr = await jsonRes.Content.ReadAsStringAsync();
-                var versionModel = JsonConvert.DeserializeObject<RawVersionModel>(jsonStr);
+                var versionModel = await jsonRes.Content.ReadFromJsonAsync<RawVersionModel>();
 
                 if (versionModel == default) yield break;
 
@@ -118,11 +117,11 @@ public sealed class AssetInfoResolver : ResolverBase
 
         OnResolve("开始解析Asset Indexes 文件...");
 
-        AssetObjectModel assetObject;
+        AssetObjectModel? assetObject;
         try
         {
-            var content = await File.ReadAllTextAsync(assetIndexesPath);
-            assetObject = JsonConvert.DeserializeObject<AssetObjectModel>(content);
+            await using var assetFs = File.OpenRead(assetIndexesPath);
+            assetObject = await JsonSerializer.DeserializeAsync<AssetObjectModel>(assetFs);
         }
         catch (Exception ex)
         {

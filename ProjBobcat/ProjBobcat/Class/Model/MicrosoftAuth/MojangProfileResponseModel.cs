@@ -1,34 +1,35 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.MicrosoftAuth;
 
 public class MojangSkinProfile
 {
-    [JsonProperty("id")] public string Id { get; set; }
+    [JsonPropertyName("id")] public string Id { get; set; }
 
-    [JsonProperty("state")] public string State { get; set; }
+    [JsonPropertyName("state")] public string State { get; set; }
 
-    [JsonProperty("url")] public string Url { get; set; }
+    [JsonPropertyName("url")] public string Url { get; set; }
 
-    [JsonProperty("variant")] public string Variant { get; set; }
+    [JsonPropertyName("variant")] public string Variant { get; set; }
 
-    [JsonProperty("alias")] public string Alias { get; set; }
+    [JsonPropertyName("alias")] public string Alias { get; set; }
 }
 
 public class MojangProfileResponseModel
 {
-    [JsonProperty("id")] public string Id { get; set; }
+    [JsonPropertyName("id")] public string Id { get; set; }
 
-    [JsonProperty("name")] public string Name { get; set; }
+    [JsonPropertyName("name")] public string Name { get; set; }
 
-    [JsonProperty("skins")] public List<MojangSkinProfile> Skins { get; set; }
+    [JsonPropertyName("skins")] public MojangSkinProfile[] Skins { get; set; }
 
-    [JsonProperty("capes")] public List<object> Capes { get; set; }
+    [JsonPropertyName("capes")] public JsonElement[] Capes { get; set; }
 
-    public MojangSkinProfile GetActiveSkin()
+    public MojangSkinProfile? GetActiveSkin()
     {
         return Skins?.FirstOrDefault(x => x.State.Equals("ACTIVE", StringComparison.OrdinalIgnoreCase));
     }

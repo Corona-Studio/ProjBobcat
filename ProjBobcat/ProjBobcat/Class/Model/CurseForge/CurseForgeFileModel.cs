@@ -1,12 +1,12 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.CurseForge;
 
 public class CurseForgeFileModel
 {
-    [JsonProperty("projectID")] public long ProjectId { get; set; }
+    [JsonPropertyName("projectID")] public long ProjectId { get; set; }
 
-    [JsonProperty("fileID")] public long FileId { get; set; }
+    [JsonPropertyName("fileID")] public long FileId { get; set; }
 
-    [JsonProperty("required")] public bool Required { get; set; }
+    [JsonPropertyName("required")] public bool Required { get; set; }
 }

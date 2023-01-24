@@ -1,12 +1,12 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.Modrinth;
 
 public class ModrinthCategoryInfo
 {
-    [JsonProperty("icon")] public string Icon { get; set; }
+    [JsonPropertyName("icon")] public string Icon { get; set; }
 
-    [JsonProperty("name")] public string Name { get; set; }
+    [JsonPropertyName("name")] public string Name { get; set; }
 
-    [JsonProperty("project_type")] public string ProjectType { get; set; }
+    [JsonPropertyName("project_type")] public string ProjectType { get; set; }
 }

@@ -1,66 +1,66 @@
 ﻿using System;
 using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.CurseForge;
 
 public class CurseForgeAddonInfo
 {
-    [JsonProperty("id")] public int Id { get; set; }
+    [JsonPropertyName("id")] public int Id { get; set; }
 
-    [JsonProperty("name")] public string Name { get; set; }
+    [JsonPropertyName("name")] public string Name { get; set; }
 
-    [JsonProperty("authors")] public List<CurseForgeAddonAuthorInfo> Authors { get; set; }
-    [JsonProperty("logo")] public CurseForgeAttachmentInfo Logo { get; set; }
+    [JsonPropertyName("authors")] public CurseForgeAddonAuthorInfo[] Authors { get; set; }
+    [JsonPropertyName("logo")] public CurseForgeAttachmentInfo Logo { get; set; }
 
-    [JsonProperty("screenshots")] public List<CurseForgeAttachmentInfo> Screenshots { get; set; }
+    [JsonPropertyName("screenshots")] public CurseForgeAttachmentInfo[] Screenshots { get; set; }
 
-    [JsonProperty("websiteUrl")] public string WebsiteUrl { get; set; }
+    [JsonPropertyName("websiteUrl")] public string WebsiteUrl { get; set; }
 
-    [JsonProperty("gameId")] public int GameId { get; set; }
+    [JsonPropertyName("gameId")] public int GameId { get; set; }
 
-    [JsonProperty("summary")] public string Summary { get; set; }
-    [JsonProperty("links")] public Dictionary<string, string> Links { get; set; }
+    [JsonPropertyName("summary")] public string Summary { get; set; }
+    [JsonPropertyName("links")] public Dictionary<string, string> Links { get; set; }
 
-    [JsonProperty("defaultFileId")] public int DefaultFileId { get; set; }
-    [JsonProperty("releaseType")] public int ReleaseType { get; set; }
+    [JsonPropertyName("defaultFileId")] public int DefaultFileId { get; set; }
+    [JsonPropertyName("releaseType")] public int ReleaseType { get; set; }
 
-    [JsonProperty("downloadCount")] public double DownloadCount { get; set; }
+    [JsonPropertyName("downloadCount")] public double DownloadCount { get; set; }
 
-    [JsonProperty("latestFiles")] public List<CurseForgeLatestFileModel> LatestFiles { get; set; }
+    [JsonPropertyName("latestFiles")] public CurseForgeLatestFileModel[] LatestFiles { get; set; }
 
-    [JsonProperty("categories")] public List<CurseForgeCategoryInfo> Categories { get; set; }
+    [JsonPropertyName("categories")] public CurseForgeCategoryInfo[] Categories { get; set; }
 
-    [JsonProperty("status")] public int Status { get; set; }
+    [JsonPropertyName("status")] public int Status { get; set; }
 
-    [JsonProperty("primaryCategoryId")] public int PrimaryCategoryId { get; set; }
+    [JsonPropertyName("primaryCategoryId")] public int PrimaryCategoryId { get; set; }
 
-    [JsonProperty("categorySection")] public CurseForgeCategorySectionInfo CategorySection { get; set; }
+    [JsonPropertyName("categorySection")] public CurseForgeCategorySectionInfo CategorySection { get; set; }
 
-    [JsonProperty("slug")] public string Slug { get; set; }
+    [JsonPropertyName("slug")] public string Slug { get; set; }
 
-    [JsonProperty("gameVersionLatestFiles")]
-    public List<CurseForgeGameVersionLatestFiles> GameVersionLatestFiles { get; set; }
+    [JsonPropertyName("gameVersionLatestFiles")]
+    public CurseForgeGameVersionLatestFiles[] GameVersionLatestFiles { get; set; }
 
-    [JsonProperty("isFeatured")] public bool IsFeatured { get; set; }
+    [JsonPropertyName("isFeatured")] public bool IsFeatured { get; set; }
 
-    [JsonProperty("gamePopularityRank")] public int GamePopularityRank { get; set; }
+    [JsonPropertyName("gamePopularityRank")] public int GamePopularityRank { get; set; }
 
-    [JsonProperty("primaryLanguage")] public string PrimaryLanguage { get; set; }
+    [JsonPropertyName("primaryLanguage")] public string PrimaryLanguage { get; set; }
 
-    [JsonProperty("gameSlug")] public string GameSlug { get; set; }
+    [JsonPropertyName("gameSlug")] public string GameSlug { get; set; }
 
-    [JsonProperty("gameName")] public string GameName { get; set; }
+    [JsonPropertyName("gameName")] public string GameName { get; set; }
 
-    [JsonProperty("portalName")] public string PortalName { get; set; }
+    [JsonPropertyName("portalName")] public string PortalName { get; set; }
 
-    [JsonProperty("dateModified")] public DateTime DateModified { get; set; }
+    [JsonPropertyName("dateModified")] public DateTime DateModified { get; set; }
 
-    [JsonProperty("dateCreated")] public DateTime DateCreated { get; set; }
+    [JsonPropertyName("dateCreated")] public DateTime DateCreated { get; set; }
 
-    [JsonProperty("dateReleased")] public DateTime DateReleased { get; set; }
+    [JsonPropertyName("dateReleased")] public DateTime DateReleased { get; set; }
 
-    [JsonProperty("isAvailable")] public bool IsAvailable { get; set; }
+    [JsonPropertyName("isAvailable")] public bool IsAvailable { get; set; }
 
-    [JsonProperty("isExperiemental")] public bool IsExperiemental { get; set; }
+    [JsonPropertyName("isExperiemental")] public bool IsExperiemental { get; set; }
 }

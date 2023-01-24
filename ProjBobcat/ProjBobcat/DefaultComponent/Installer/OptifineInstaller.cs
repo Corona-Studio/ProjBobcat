@@ -4,8 +4,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Optifine;
@@ -75,25 +75,25 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
             InheritsFrom = InheritsFrom ?? mcVersion,
             Arguments = new Arguments
             {
-                Game = new List<object>
+                Game = new[]
                 {
-                    "--tweakClass",
-                    "optifine.OptiFineTweaker"
+                    JsonSerializer.SerializeToElement("--tweakClass"),
+                    JsonSerializer.SerializeToElement("optifine.OptiFineTweaker")
                 },
-                Jvm = new List<object>()
+                Jvm = Array.Empty<JsonElement>()
             },
             ReleaseTime = DateTime.Now,
             Time = DateTime.Now,
             BuildType = "release",
-            Libraries = new List<Library>
+            Libraries = new[]
             {
-                new()
+                new Library
                 {
                     Name = launchWrapperVersion == "1.12"
                         ? "net.minecraft:launchwrapper:1.12"
                         : $"optifine:launchwrapper-of:{launchWrapperVersion}"
                 },
-                new()
+                new Library
                 {
                     Name = $"optifine:Optifine:{OptifineDownloadVersion.McVersion}_{editionRelease}"
                 }
@@ -103,7 +103,7 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
         };
 
         var versionJsonPath = GamePathHelper.GetGameJsonPath(RootPath, id);
-        var jsonStr = JsonConvert.SerializeObject(versionModel, JsonHelper.CamelCasePropertyNamesSettings);
+        var jsonStr = JsonSerializer.Serialize(versionModel, JsonHelper.CamelCasePropertyNamesSettings);
         await File.WriteAllTextAsync(versionJsonPath, jsonStr);
 
         var librariesPath = Path.Combine(RootPath, GamePathHelper.GetLibraryRootPath(), "optifine",

@@ -1,16 +1,17 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.CurseForge;
 
 public class CurseForgeGameVersionLatestFiles
 {
-    [JsonProperty("gameVersion")] public string GameVersion { get; set; }
+    [JsonPropertyName("gameVersion")] public string GameVersion { get; set; }
 
-    [JsonProperty("projectFileId")] public int ProjectFileId { get; set; }
+    [JsonPropertyName("projectFileId")] public int ProjectFileId { get; set; }
 
-    [JsonProperty("projectFileName")] public string ProjectFileName { get; set; }
+    [JsonPropertyName("projectFileName")] public string ProjectFileName { get; set; }
 
-    [JsonProperty("fileType")] public int FileType { get; set; }
+    [JsonPropertyName("fileType")] public int FileType { get; set; }
 
-    [JsonProperty("gameVersionFlavor")] public object GameVersionFlavor { get; set; }
+    [JsonPropertyName("gameVersionFlavor")] public JsonElement GameVersionFlavor { get; set; }
 }

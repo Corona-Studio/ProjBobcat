@@ -1,16 +1,17 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.ServerPing;
 
 public class PingPayload
 {
-    [JsonProperty("version")] public VersionPayload Version { get; set; }
+    [JsonPropertyName("version")] public VersionPayload Version { get; set; }
 
-    [JsonProperty("players")] public PlayersPayload Players { get; set; }
+    [JsonPropertyName("players")] public PlayersPayload Players { get; set; }
 
-    [JsonProperty("description")] public object Description { get; set; }
+    [JsonPropertyName("description")] public JsonElement Description { get; set; }
 
-    [JsonProperty("modinfo")] public ServerPingModInfo ModInfo { get; set; }
+    [JsonPropertyName("modinfo")] public ServerPingModInfo ModInfo { get; set; }
 
-    [JsonProperty("favicon")] public string Icon { get; set; }
+    [JsonPropertyName("favicon")] public string Icon { get; set; }
 }

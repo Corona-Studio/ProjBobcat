@@ -1,17 +1,19 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.CurseForge;
 
 public class CurseForgeDependencyModelComparer : IEqualityComparer<CurseForgeDependencyModel>
 {
-    public bool Equals(CurseForgeDependencyModel x, CurseForgeDependencyModel y)
+    public bool Equals(CurseForgeDependencyModel? x, CurseForgeDependencyModel? y)
     {
+        if(x == null && y == null) return false;
+        if (x == null || y == null) return false;
+
         return x.ModId == y.ModId;
     }
 
-    public int GetHashCode([DisallowNull] CurseForgeDependencyModel obj)
+    public int GetHashCode(CurseForgeDependencyModel obj)
     {
         return obj.ModId.GetHashCode();
     }
@@ -19,6 +21,6 @@ public class CurseForgeDependencyModelComparer : IEqualityComparer<CurseForgeDep
 
 public class CurseForgeDependencyModel
 {
-    [JsonProperty("modId")] public int ModId { get; set; }
-    [JsonProperty("relationType")] public int RelationType { get; set; }
+    [JsonPropertyName("modId")] public int ModId { get; set; }
+    [JsonPropertyName("relationType")] public int RelationType { get; set; }
 }

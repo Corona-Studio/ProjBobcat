@@ -1,23 +1,22 @@
-﻿using System.Collections.Generic;
-using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.CurseForge;
 
 public class CurseForgeManifestModel
 {
-    [JsonProperty("minecraft")] public CurseForgeMineCraftModel MineCraft { get; set; }
+    [JsonPropertyName("minecraft")] public CurseForgeMineCraftModel MineCraft { get; set; }
 
-    [JsonProperty("manifestType")] public string ManifestType { get; set; }
+    [JsonPropertyName("manifestType")] public string ManifestType { get; set; }
 
-    [JsonProperty("manifestVersion")] public int ManifestVersion { get; set; }
+    [JsonPropertyName("manifestVersion")] public int ManifestVersion { get; set; }
 
-    [JsonProperty("name")] public string Name { get; set; }
+    [JsonPropertyName("name")] public string Name { get; set; }
 
-    [JsonProperty("version")] public string Version { get; set; }
+    [JsonPropertyName("version")] public string Version { get; set; }
 
-    [JsonProperty("author")] public string Author { get; set; }
+    [JsonPropertyName("author")] public string Author { get; set; }
 
-    [JsonProperty("files")] public List<CurseForgeFileModel> Files { get; set; }
+    [JsonPropertyName("files")] public CurseForgeFileModel[] Files { get; set; }
 
-    [JsonProperty("overrides")] public string Overrides { get; set; }
+    [JsonPropertyName("overrides")] public string Overrides { get; set; }
 }

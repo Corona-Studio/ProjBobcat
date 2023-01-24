@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Text.Json;
 using ProjBobcat.Class.Model;
 
 namespace ProjBobcat.Interface;
@@ -28,5 +29,5 @@ public interface IVersionLocator
     /// </summary>
     /// <param name="arguments"></param>
     /// <returns></returns>
-    IEnumerable<string> ParseJvmArguments(IEnumerable<object> arguments);
+    IEnumerable<string> ParseJvmArguments(IEnumerable<JsonElement> arguments);
 }

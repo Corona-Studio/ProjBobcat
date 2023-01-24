@@ -1,18 +1,17 @@
-﻿using System.Collections.Generic;
-using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.CurseForge;
 
 public class CurseForgeModLoaderModel
 {
-    [JsonProperty("id")] public string Id { get; set; }
+    [JsonPropertyName("id")] public string Id { get; set; }
 
-    [JsonProperty("primary")] public bool IsPrimary { get; set; }
+    [JsonPropertyName("primary")] public bool IsPrimary { get; set; }
 }
 
 public class CurseForgeMineCraftModel
 {
-    [JsonProperty("version")] public string Version { get; set; }
+    [JsonPropertyName("version")] public string Version { get; set; }
 
-    [JsonProperty("modLoaders")] public List<CurseForgeModLoaderModel> ModLoaders { get; set; }
+    [JsonPropertyName("modLoaders")] public CurseForgeModLoaderModel[] ModLoaders { get; set; }
 }

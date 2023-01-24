@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography;
-using Newtonsoft.Json;
+using System.Text.Json;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.GameResource;
@@ -21,8 +21,8 @@ public sealed class VersionInfoResolver : ResolverBase
 
         if (!File.Exists(versionJson)) yield break;
 
-        var fileContent = await File.ReadAllTextAsync(versionJson);
-        var rawVersionModel = JsonConvert.DeserializeObject<RawVersionModel>(fileContent);
+        await using var fs = File.OpenRead(versionJson);
+        var rawVersionModel = await JsonSerializer.DeserializeAsync<RawVersionModel>(fs);
 
         if (rawVersionModel?.Downloads?.Client == null) yield break;
 

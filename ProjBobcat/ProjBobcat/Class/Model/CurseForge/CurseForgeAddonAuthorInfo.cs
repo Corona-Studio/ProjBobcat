@@ -1,22 +1,23 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.CurseForge;
 
 public class CurseForgeAddonAuthorInfo
 {
-    [JsonProperty("name")] public string Name { get; set; }
+    [JsonPropertyName("name")] public string Name { get; set; }
 
-    [JsonProperty("url")] public string Url { get; set; }
+    [JsonPropertyName("url")] public string Url { get; set; }
 
-    [JsonProperty("projectId")] public int ProjectId { get; set; }
+    [JsonPropertyName("projectId")] public int ProjectId { get; set; }
 
-    [JsonProperty("id")] public int Id { get; set; }
+    [JsonPropertyName("id")] public int Id { get; set; }
 
-    [JsonProperty("projectTitleId")] public object ProjectTitleId { get; set; }
+    [JsonPropertyName("projectTitleId")] public JsonElement ProjectTitleId { get; set; }
 
-    [JsonProperty("projectTitleTitle")] public object ProjectTitleTitle { get; set; }
+    [JsonPropertyName("projectTitleTitle")] public JsonElement ProjectTitleTitle { get; set; }
 
-    [JsonProperty("userId")] public int UserId { get; set; }
+    [JsonPropertyName("userId")] public int UserId { get; set; }
 
-    [JsonProperty("twitchId")] public int? TwitchId { get; set; }
+    [JsonPropertyName("twitchId")] public int? TwitchId { get; set; }
 }

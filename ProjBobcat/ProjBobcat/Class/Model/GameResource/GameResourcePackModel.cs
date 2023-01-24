@@ -1,15 +1,15 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.GameResource;
 
 public class Pack
 {
-    [JsonProperty("pack_format")] public int PackFormat { get; set; }
+    [JsonPropertyName("pack_format")] public int PackFormat { get; set; }
 
-    [JsonProperty("description")] public string? Description { get; set; }
+    [JsonPropertyName("description")] public string? Description { get; set; }
 }
 
 public class GameResourcePackModel
 {
-    [JsonProperty("pack")] public Pack? Pack { get; set; }
+    [JsonPropertyName("pack")] public Pack? Pack { get; set; }
 }

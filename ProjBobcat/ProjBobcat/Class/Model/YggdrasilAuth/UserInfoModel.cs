@@ -1,13 +1,12 @@
-﻿using System.Collections.Generic;
-using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.YggdrasilAuth;
 
 public class UserInfoModel
 {
-    [JsonProperty("id")] public PlayerUUID UUID { get; set; }
+    [JsonPropertyName("id")] public PlayerUUID UUID { get; set; }
 
-    [JsonProperty("username")] public string UserName { get; set; }
+    [JsonPropertyName("username")] public string UserName { get; set; }
 
-    [JsonProperty("properties")] public List<PropertyModel> Properties { get; set; }
+    [JsonPropertyName("properties")] public PropertyModel[] Properties { get; set; }
 }

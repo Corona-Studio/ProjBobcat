@@ -5,9 +5,9 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
@@ -97,9 +97,7 @@ public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             };
 
         await using var stream = versionJsonEntry.OpenEntryStream();
-        using var sr = new StreamReader(stream, Encoding.UTF8);
-        var versionJsonContent = await sr.ReadToEndAsync();
-        var versionJsonModel = JsonConvert.DeserializeObject<RawVersionModel>(versionJsonContent);
+        var versionJsonModel = await JsonSerializer.DeserializeAsync<RawVersionModel>(stream);
 
         var forgeVersion = versionJsonModel.Id.Replace("-forge-", "-");
         var id = string.IsNullOrEmpty(CustomId) ? versionJsonModel.Id : CustomId;
@@ -109,7 +107,7 @@ public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             versionJsonModel.InheritsFrom = InheritsFrom;
 
         var jsonPath = GamePathHelper.GetGameJsonPath(RootPath, id);
-        var jsonContent = JsonConvert.SerializeObject(versionJsonModel,
+        var jsonContent = JsonSerializer.Serialize(versionJsonModel,
             JsonHelper.CamelCasePropertyNamesSettings);
 
         await File.WriteAllTextAsync(jsonPath, jsonContent);
@@ -125,9 +123,7 @@ public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
                 e.Key.Equals("install_profile.json", StringComparison.OrdinalIgnoreCase));
 
         await using var ipStream = installProfileEntry.OpenEntryStream();
-        using var ipSr = new StreamReader(ipStream, Encoding.UTF8);
-        var ipContent = await ipSr.ReadToEndAsync();
-        var ipModel = JsonConvert.DeserializeObject<ForgeInstallProfile>(ipContent);
+        var ipModel = await JsonSerializer.DeserializeAsync<ForgeInstallProfile>(ipStream);
 
         #endregion
 
@@ -327,7 +323,7 @@ public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
         _failedFiles.Clear();
 
-        var libs = ipModel.Libraries;
+        var libs = ipModel.Libraries.ToList();
         libs.AddRange(versionJsonModel.Libraries);
 
         var resolvedLibs = VersionLocator.GetNatives(libs).Item2;
@@ -424,7 +420,7 @@ public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
                     where lineSp[0].Equals("Main-Class", StringComparison.OrdinalIgnoreCase)
                     select lineSp[1].Trim()).First();
 
-            var totalLibs = processor.Processor.ClassPath;
+            var totalLibs = processor.Processor.ClassPath.ToList();
             totalLibs.Add(processor.Processor.Jar);
 
             var cp = totalLibs.Select(MavenHelper.ResolveMavenString)

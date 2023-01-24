@@ -1,10 +1,10 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.LauncherProfile;
 
 public class LauncherVersionModel
 {
-    [JsonProperty("name")] public string Name { get; set; }
+    [JsonPropertyName("name")] public string Name { get; set; }
 
-    [JsonProperty("format")] public int Format { get; set; }
+    [JsonPropertyName("format")] public int Format { get; set; }
 }

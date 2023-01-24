@@ -1,20 +1,20 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.CurseForge;
 
 public class CurseForgeAttachmentInfo
 {
-    [JsonProperty("projectId")] public int ProjectId { get; set; }
+    [JsonPropertyName("projectId")] public int ProjectId { get; set; }
 
-    [JsonProperty("id")] public int Id { get; set; }
+    [JsonPropertyName("id")] public int Id { get; set; }
 
-    [JsonProperty("description")] public string Description { get; set; }
+    [JsonPropertyName("description")] public string Description { get; set; }
 
-    [JsonProperty("thumbnailUrl")] public string ThumbnailUrl { get; set; }
+    [JsonPropertyName("thumbnailUrl")] public string ThumbnailUrl { get; set; }
 
-    [JsonProperty("title")] public string Title { get; set; }
+    [JsonPropertyName("title")] public string Title { get; set; }
 
-    [JsonProperty("url")] public string Url { get; set; }
+    [JsonPropertyName("url")] public string Url { get; set; }
 
-    [JsonProperty("status")] public int Status { get; set; }
+    [JsonPropertyName("status")] public int Status { get; set; }
 }

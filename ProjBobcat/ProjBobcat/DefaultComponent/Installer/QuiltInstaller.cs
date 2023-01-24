@@ -2,8 +2,9 @@
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Json;
+using System.Text.Json;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Quilt;
@@ -39,9 +40,8 @@ public class QuiltInstaller : InstallerBase, IQuiltInstaller
         using var res = await Client.SendAsync(req);
 
         res.EnsureSuccessStatusCode();
-
-        var resStr = await res.Content.ReadAsStringAsync();
-        var versionModel = JsonConvert.DeserializeObject<RawVersionModel>(resStr);
+        
+        var versionModel = await res.Content.ReadFromJsonAsync<RawVersionModel>();
 
         InvokeStatusChangedEvent("生成版本总成", 70);
 
@@ -53,7 +53,7 @@ public class QuiltInstaller : InstallerBase, IQuiltInstaller
 
         if (hashed != default)
         {
-            var index = versionModel.Libraries.IndexOf(hashed);
+            var index = Array.IndexOf(versionModel.Libraries, hashed);
 
             hashed.Name = hashed.Name.Replace("org.quiltmc:hashed", "net.fabricmc:intermediary");
 
@@ -75,7 +75,7 @@ public class QuiltInstaller : InstallerBase, IQuiltInstaller
             DirectoryHelper.CleanDirectory(di.FullName);
 
         var jsonPath = GamePathHelper.GetGameJsonPath(RootPath, id);
-        var jsonContent = JsonConvert.SerializeObject(versionModel, JsonHelper.CamelCasePropertyNamesSettings);
+        var jsonContent = JsonSerializer.Serialize(versionModel, JsonHelper.CamelCasePropertyNamesSettings);
 
         InvokeStatusChangedEvent("将版本 Json 写入文件", 90);
 

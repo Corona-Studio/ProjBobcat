@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -7,9 +6,9 @@ using System.Threading.Tasks;
 using System.Threading;
 using System;
 using System.Collections.Immutable;
+using System.Text.Json;
 using ProjBobcat.Class.Model.GameResource;
 using ProjBobcat.Class.Model.GameResource.ResolvedInfo;
-using Newtonsoft.Json.Linq;
 using ProjBobcat.Class.Helper.TOMLParser;
 using ProjBobcat.Class.Model.Fabric;
 using SharpCompress.Archives;
@@ -75,27 +74,30 @@ public static class GameResourcesResolveHelper
                 return new GameModResolvedInfo(author?.Value, file, null, title, version?.Value, "Forge", isEnabled);
             }
 
-            async Task<GameModResolvedInfo> GetNewModInfo(IArchiveEntry entry)
+            async Task<GameModResolvedInfo?> GetNewModInfo(IArchiveEntry entry)
             {
                 await using var stream = entry.OpenEntryStream();
-                using var sR = new StreamReader(stream);
-                var content = await sR.ReadToEndAsync();
-                var tempModel = JsonConvert.DeserializeObject<object>(content);
+                var doc = await JsonDocument.ParseAsync(stream);
 
-                var model = new List<GameModInfoModel>();
-                switch (tempModel)
+                List<GameModInfoModel>? model = null;
+                switch (doc.RootElement.ValueKind)
                 {
-                    case JObject jObj:
-                        var obj = jObj.ToObject<GameModInfoModel>();
+                    case JsonValueKind.Object:
+                        var val = doc.RootElement.Deserialize<GameModInfoModel>();
 
-                        if (obj == null) break;
-
-                        model.Add(obj);
+                        if (val != null)
+                        {
+                            model = new List<GameModInfoModel>{val};
+                        }
+                        
                         break;
-                    case JArray jArr:
-                        model = jArr.ToObject<List<GameModInfoModel>>() ?? new List<GameModInfoModel>();
+                    case JsonValueKind.Array:
+                        model = doc.RootElement.Deserialize<List<GameModInfoModel>>();
                         break;
                 }
+
+                if (!(model?.Any() ?? false))
+                    return null;
 
                 var authors = new HashSet<string>();
                 foreach (var author in model.Where(m => m.AuthorList != null).SelectMany(m => m.AuthorList!))
@@ -127,9 +129,7 @@ public static class GameResourcesResolveHelper
             async Task<GameModResolvedInfo> GetFabricModInfo(IArchiveEntry entry)
             {
                 await using var stream = entry.OpenEntryStream();
-                using var sR = new StreamReader(stream);
-                var content = await sR.ReadToEndAsync();
-                var tempModel = JsonConvert.DeserializeObject<FabricModInfoModel>(content);
+                var tempModel = await JsonSerializer.DeserializeAsync<FabricModInfoModel>(stream);
 
                 var author = tempModel?.Authors?.Any() ?? false
                     ? string.Join(',', tempModel.Authors)
@@ -208,9 +208,7 @@ public static class GameResourcesResolveHelper
             if (packInfoEntry != null)
             {
                 await using var stream = packInfoEntry.OpenEntryStream();
-                using var sR = new StreamReader(stream);
-                var content = await sR.ReadToEndAsync();
-                var model = JsonConvert.DeserializeObject<GameResourcePackModel>(content);
+                var model = await JsonSerializer.DeserializeAsync<GameResourcePackModel>(stream);
 
                 description = model?.Pack?.Description;
                 version = model?.Pack?.PackFormat ?? -1;
@@ -233,8 +231,8 @@ public static class GameResourcesResolveHelper
 
             if (File.Exists(infoPath))
             {
-                var content = await File.ReadAllTextAsync(infoPath, ct);
-                var model = JsonConvert.DeserializeObject<GameResourcePackModel>(content);
+                await using var contentStream = File.OpenRead(infoPath);
+                var model = await JsonSerializer.DeserializeAsync<GameResourcePackModel>(contentStream);
 
                 description = model?.Pack?.Description;
                 version = model?.Pack?.PackFormat ?? -1;

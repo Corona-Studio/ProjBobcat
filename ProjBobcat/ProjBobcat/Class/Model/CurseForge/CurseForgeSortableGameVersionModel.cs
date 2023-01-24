@@ -1,16 +1,16 @@
 ﻿using System;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.CurseForge;
 
 public class CurseForgeSortableGameVersionModel
 {
-    [JsonProperty("gameVersionPadded")] public string GameVersionPadded { get; set; }
+    [JsonPropertyName("gameVersionPadded")] public string GameVersionPadded { get; set; }
 
-    [JsonProperty("gameVersion")] public string GameVersion { get; set; }
+    [JsonPropertyName("gameVersion")] public string GameVersion { get; set; }
 
-    [JsonProperty("gameVersionReleaseDate")]
+    [JsonPropertyName("gameVersionReleaseDate")]
     public DateTime GameVersionReleaseDate { get; set; }
 
-    [JsonProperty("gameVersionName")] public string GameVersionName { get; set; }
+    [JsonPropertyName("gameVersionName")] public string GameVersionName { get; set; }
 }

@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using Newtonsoft.Json;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.CurseForge;
@@ -42,7 +42,7 @@ public class CurseForgeInstaller : InstallerBase, ICurseForgeInstaller
         if (!di.Exists)
             di.Create();
 
-        _needToDownload = manifest.Files.Count;
+        _needToDownload = manifest.Files.Length;
 
         var urlBlock = new TransformManyBlock<IEnumerable<CurseForgeFileModel>, (long, long)>(urls =>
         {
@@ -136,7 +136,7 @@ public class CurseForgeInstaller : InstallerBase, ICurseForgeInstaller
         InvokeStatusChangedEvent("安装完成", 100);
     }
 
-    public async Task<CurseForgeManifestModel> ReadManifestTask()
+    public async Task<CurseForgeManifestModel?> ReadManifestTask()
     {
         using var archive = ArchiveFactory.Open(Path.GetFullPath(ModPackPath));
         var manifestEntry =
@@ -146,10 +146,8 @@ public class CurseForgeInstaller : InstallerBase, ICurseForgeInstaller
             return default;
 
         await using var stream = manifestEntry.OpenEntryStream();
-        using var sr = new StreamReader(stream, Encoding.UTF8);
-        var content = await sr.ReadToEndAsync();
 
-        var manifestModel = JsonConvert.DeserializeObject<CurseForgeManifestModel>(content);
+        var manifestModel = await JsonSerializer.DeserializeAsync<CurseForgeManifestModel>(stream);
 
         return manifestModel;
     }

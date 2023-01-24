@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Json;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 using ProjBobcat.Class.Model.Modrinth;
 
 namespace ProjBobcat.Class.Helper;
@@ -10,72 +12,70 @@ public static class ModrinthAPIHelper
 {
     const string BaseUrl = "https://api.modrinth.com/v2";
 
-    static async Task<string> Get(string reqUrl)
+    static async Task<HttpResponseMessage> Get(string reqUrl)
     {
-        using var req = await HttpHelper.Get(reqUrl);
+        var req = await HttpHelper.Get(reqUrl);
         req.EnsureSuccessStatusCode();
 
-        var resContent = await req.Content.ReadAsStringAsync();
-
-        return resContent;
+        return req;
     }
 
-    public static async Task<List<string>> GetCategories()
+    public static async Task<string[]> GetCategories()
     {
         const string reqUrl = $"{BaseUrl}/tag/category";
 
-        var resContent = await Get(reqUrl);
-        var resModel = JsonConvert.DeserializeObject<List<ModrinthCategoryInfo>>(resContent);
+        using var res = await Get(reqUrl);
+        var resModel = await res.Content.ReadFromJsonAsync<List<ModrinthCategoryInfo>>();
 
-        return resModel == null ? new List<string>() : resModel.Select(c => c.Name).ToList();
+        return resModel == null ? Array.Empty<string>() : resModel.Select(c => c.Name).ToArray();
     }
 
-    public static async Task<ModrinthProjectDependencyInfo> GetProjectDependenciesInfo(string projectId)
+    public static async Task<ModrinthProjectDependencyInfo?> GetProjectDependenciesInfo(string projectId)
     {
         var reqUrl = $"{BaseUrl}/project/{projectId}/dependencies";
 
-        var resContent = await Get(reqUrl);
-        var resModel = JsonConvert.DeserializeObject<ModrinthProjectDependencyInfo>(resContent);
+        using var res = await Get(reqUrl);
+        var resModel = await res.Content.ReadFromJsonAsync<ModrinthProjectDependencyInfo>();
 
         return resModel;
     }
 
-    public static async Task<ModrinthProjectInfo> GetProject(string projectId)
+    public static async Task<ModrinthProjectInfo?> GetProject(string projectId)
     {
         var reqUrl = $"{BaseUrl}/project/{projectId}";
 
-        var resContent = await Get(reqUrl);
-        var resModel = JsonConvert.DeserializeObject<ModrinthProjectInfo>(resContent);
+        using var res = await Get(reqUrl);
+        var resModel = await res.Content.ReadFromJsonAsync<ModrinthProjectInfo>();
 
         return resModel;
     }
 
-    public static async Task<ModrinthSearchResult> GetFeaturedMods()
+    public static async Task<ModrinthSearchResult?> GetFeaturedMods()
     {
         const string reqUrl = $"{BaseUrl}/search";
 
-        var resContent = await Get(reqUrl);
-        var resModel = JsonConvert.DeserializeObject<ModrinthSearchResult>(resContent);
+        using var res = await Get(reqUrl);
+        var resModel = await res.Content.ReadFromJsonAsync<ModrinthSearchResult>();
 
         return resModel;
     }
 
-    public static async Task<ModrinthSearchResult> SearchMod(ModrinthSearchOptions searchOptions)
+    public static async Task<ModrinthSearchResult?> SearchMod(ModrinthSearchOptions searchOptions)
     {
         var reqUrl = $"{BaseUrl}/search{searchOptions}";
 
-        var resContent = await Get(reqUrl);
-        var resModel = JsonConvert.DeserializeObject<ModrinthSearchResult>(resContent);
+        using var res = await Get(reqUrl);
+        var resModel = await res.Content.ReadFromJsonAsync<ModrinthSearchResult>();
 
         return resModel;
     }
 
-    public static async Task<List<ModrinthVersionInfo>> GetProjectVersions(string projectId)
+    public static async Task<ModrinthVersionInfo[]?> GetProjectVersions(string projectId)
     {
         var reqUrl = $"{BaseUrl}/project/{projectId}/version";
 
-        var resContent = await Get(reqUrl);
-        var resModel = JsonConvert.DeserializeObject<List<ModrinthVersionInfo>>(resContent);
+        using var res = await Get(reqUrl);
+        var resModel = await res.Content.ReadFromJsonAsync<ModrinthVersionInfo[]>();
 
         return resModel;
     }

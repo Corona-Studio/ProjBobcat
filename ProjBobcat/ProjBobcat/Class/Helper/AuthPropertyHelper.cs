@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Newtonsoft.Json;
+using System.Text.Json;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.YggdrasilAuth;
@@ -26,7 +26,7 @@ public static class AuthPropertyHelper
                 item => item.Name,
                 item => new[] { item.Value });
 
-        return JsonConvert.SerializeObject(keyValues);
+        return JsonSerializer.Serialize(keyValues);
     }
 
 

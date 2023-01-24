@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using Newtonsoft.Json;
+using System.Text.Json;
 using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model.LauncherAccount;
@@ -36,7 +36,7 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
             LauncherAccount = launcherAccount;
 
             var launcherProfileJson =
-                JsonConvert.SerializeObject(launcherAccount, JsonHelper.CamelCasePropertyNamesSettings);
+                JsonSerializer.Serialize(launcherAccount, JsonHelper.CamelCasePropertyNamesSettings);
 
             if (!Directory.Exists(RootPath))
                 Directory.CreateDirectory(RootPath);
@@ -47,7 +47,7 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
         {
             var launcherProfileJson =
                 File.ReadAllText(FullLauncherAccountPath, Encoding.UTF8);
-            LauncherAccount = JsonConvert.DeserializeObject<LauncherAccountModel>(launcherProfileJson);
+            LauncherAccount = JsonSerializer.Deserialize<LauncherAccountModel>(launcherProfileJson);
         }
     }
 
@@ -139,7 +139,7 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
             File.Delete(FullLauncherAccountPath);
 
         var launcherProfileJson =
-            JsonConvert.SerializeObject(LauncherAccount, JsonHelper.CamelCasePropertyNamesSettings);
+            JsonSerializer.Serialize(LauncherAccount, JsonHelper.CamelCasePropertyNamesSettings);
 
         File.WriteAllText(FullLauncherAccountPath, launcherProfileJson);
     }

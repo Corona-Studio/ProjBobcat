@@ -7,7 +7,7 @@ public interface ICurseForgeInstaller : IInstaller
 {
     string GameId { get; set; }
     string ModPackPath { get; set; }
-    Task<CurseForgeManifestModel> ReadManifestTask();
+    Task<CurseForgeManifestModel?> ReadManifestTask();
     void Install();
     Task InstallTaskAsync();
 }

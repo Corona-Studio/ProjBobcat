@@ -3,12 +3,40 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model;
 
-[JsonConverter(typeof(JsonConverter))]
-[TypeConverter(typeof(TypeConverter))]
+public class PlayerUUIDJsonConverter : JsonConverter<PlayerUUID>
+{
+    public override PlayerUUID Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        return new PlayerUUID(reader.GetString() ?? Guid.Empty.ToString());
+    }
+
+    public override void Write(Utf8JsonWriter writer, PlayerUUID value, JsonSerializerOptions options)
+    {
+        writer.WriteStringValue(value.ToGuid());
+    }
+}
+
+class PlayerUUIDTypeConverter : TypeConverter
+{
+    public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
+    {
+        return sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
+    }
+
+    public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+    {
+        if (value is string str) return new PlayerUUID(str);
+        return base.ConvertFrom(context, culture, value);
+    }
+}
+
+[JsonConverter(typeof(PlayerUUIDJsonConverter))]
+[TypeConverter(typeof(PlayerUUIDTypeConverter))]
 public readonly struct PlayerUUID : IFormattable, IComparable<PlayerUUID>, IEquatable<PlayerUUID>
 {
     readonly Guid _guid;
@@ -84,35 +112,6 @@ public readonly struct PlayerUUID : IFormattable, IComparable<PlayerUUID>, IEqua
     public override string ToString()
     {
         return _guid.ToString("N");
-    }
-
-    class TypeConverter : System.ComponentModel.TypeConverter
-    {
-        public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
-        {
-            return sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
-        }
-
-        public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
-        {
-            if (value is string str) return new PlayerUUID(str);
-            return base.ConvertFrom(context, culture, value);
-        }
-    }
-
-    class JsonConverter : JsonConverter<PlayerUUID>
-    {
-        public override PlayerUUID ReadJson(JsonReader reader, Type objectType,
-            PlayerUUID existingValue, bool hasExistingValue, JsonSerializer serializer)
-        {
-            var s = serializer.Deserialize<string>(reader);
-            return new PlayerUUID(s);
-        }
-
-        public override void WriteJson(JsonWriter writer, PlayerUUID value, JsonSerializer serializer)
-        {
-            serializer.Serialize(writer, value.ToString());
-        }
     }
 
     public static PlayerUUID Random()

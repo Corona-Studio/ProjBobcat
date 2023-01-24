@@ -1,10 +1,10 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.ServerPing;
 
 public class VersionPayload
 {
-    [JsonProperty("protocol")] public int Protocol { get; set; }
+    [JsonPropertyName("protocol")] public int Protocol { get; set; }
 
-    [JsonProperty("name")] public string Name { get; set; }
+    [JsonPropertyName("name")] public string Name { get; set; }
 }

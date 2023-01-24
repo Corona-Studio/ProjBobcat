@@ -1,20 +1,19 @@
-﻿using System.Collections.Generic;
-using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.MicrosoftAuth;
 
 public class OwnershipItem
 {
-    [JsonProperty("name")] public string Name { get; set; }
+    [JsonPropertyName("name")] public string Name { get; set; }
 
-    [JsonProperty("signature")] public string Signature { get; set; }
+    [JsonPropertyName("signature")] public string Signature { get; set; }
 }
 
 public class MojangOwnershipResponseModel
 {
-    [JsonProperty("items")] public List<OwnershipItem> Items { get; set; }
+    [JsonPropertyName("items")] public OwnershipItem[] Items { get; set; }
 
-    [JsonProperty("signature")] public string Signature { get; set; }
+    [JsonPropertyName("signature")] public string Signature { get; set; }
 
-    [JsonProperty("keyId")] public string KeyId { get; set; }
+    [JsonPropertyName("keyId")] public string KeyId { get; set; }
 }
