@@ -7,7 +7,9 @@ public class LauncherAccountModel
 {
     [JsonPropertyName("accounts")] public Dictionary<string, AccountModel> Accounts { get; set; }
 
-    [JsonPropertyName("activeAccountLocalId")] public string ActiveAccountLocalId { get; set; }
+    [JsonPropertyName("activeAccountLocalId")]
+    public string ActiveAccountLocalId { get; set; }
 
-    [JsonPropertyName("mojangClientToken")] public string MojangClientToken { get; set; }
+    [JsonPropertyName("mojangClientToken")]
+    public string MojangClientToken { get; set; }
 }

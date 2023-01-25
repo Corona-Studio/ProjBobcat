@@ -247,7 +247,7 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
         arguments.AddRange(ParseGameArguments(AuthResult));
         arguments.AddRange(ParseAdditionalArguments());
 
-        for(var i = 0; i < arguments.Count; i++)
+        for (var i = 0; i < arguments.Count; i++)
             arguments[i] = arguments[i].Trim();
 
         return arguments;

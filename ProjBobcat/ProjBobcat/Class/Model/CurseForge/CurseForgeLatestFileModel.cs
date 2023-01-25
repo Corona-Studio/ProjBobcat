@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Text.Json;
-using System.Text.Json.Serialization; 
+using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.CurseForge;
 
@@ -32,7 +32,8 @@ public class CurseForgeLatestFileModel
 
     [JsonPropertyName("modules")] public CurseForgeModuleModel[] Modules { get; set; }
 
-    [JsonPropertyName("packageFingerprint")] public long PackageFingerprint { get; set; }
+    [JsonPropertyName("packageFingerprint")]
+    public long PackageFingerprint { get; set; }
 
     [JsonPropertyName("gameVersions")] public string[] GameVersions { get; set; }
 
@@ -58,25 +59,30 @@ public class CurseForgeLatestFileModel
 
     [JsonPropertyName("renderCacheId")] public int RenderCacheId { get; set; }
 
-    [JsonPropertyName("fileLegacyMappingId")] public JsonElement FileLegacyMappingId { get; set; }
+    [JsonPropertyName("fileLegacyMappingId")]
+    public JsonElement FileLegacyMappingId { get; set; }
 
     [JsonPropertyName("projectId")] public int ProjectId { get; set; }
 
-    [JsonPropertyName("parentProjectFileId")] public JsonElement ParentProjectFileId { get; set; }
+    [JsonPropertyName("parentProjectFileId")]
+    public JsonElement ParentProjectFileId { get; set; }
 
     [JsonPropertyName("parentFileLegacyMappingId")]
     public JsonElement ParentFileLegacyMappingId { get; set; }
 
     [JsonPropertyName("fileTypeId")] public JsonElement FileTypeId { get; set; }
 
-    [JsonPropertyName("exposeAsAlternative")] public JsonElement ExposeAsAlternative { get; set; }
+    [JsonPropertyName("exposeAsAlternative")]
+    public JsonElement ExposeAsAlternative { get; set; }
 
-    [JsonPropertyName("packageFingerprintId")] public long PackageFingerprintId { get; set; }
+    [JsonPropertyName("packageFingerprintId")]
+    public long PackageFingerprintId { get; set; }
 
     [JsonPropertyName("gameVersionDateReleased")]
     public DateTime GameVersionDateReleased { get; set; }
 
-    [JsonPropertyName("gameVersionMappingId")] public int GameVersionMappingId { get; set; }
+    [JsonPropertyName("gameVersionMappingId")]
+    public int GameVersionMappingId { get; set; }
 
     [JsonPropertyName("gameVersionId")] public int GameVersionId { get; set; }
 
@@ -86,5 +92,6 @@ public class CurseForgeLatestFileModel
 
     [JsonPropertyName("serverPackFileId")] public JsonElement ServerPackFileId { get; set; }
 
-    [JsonPropertyName("gameVersionFlavor")] public JsonElement GameVersionFlavor { get; set; }
+    [JsonPropertyName("gameVersionFlavor")]
+    public JsonElement GameVersionFlavor { get; set; }
 }

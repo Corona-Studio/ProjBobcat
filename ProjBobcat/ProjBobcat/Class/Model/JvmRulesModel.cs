@@ -1,6 +1,6 @@
-﻿using ProjBobcat.Class.Helper.SystemInfo;
-using System;
+﻿using System;
 using System.Text.Json.Serialization;
+using ProjBobcat.Class.Helper.SystemInfo;
 
 namespace ProjBobcat.Class.Model;
 

@@ -93,7 +93,7 @@ public class LiteLoaderInstaller : InstallerBase, ILiteLoaderInstaller
         if (InheritVersion.Arguments != null)
             resultModel.Arguments = new Arguments
             {
-                Game = new []
+                Game = new[]
                 {
                     JsonSerializer.SerializeToElement("--tweakClass"),
                     JsonSerializer.SerializeToElement(VersionModel.Build.TweakClass)

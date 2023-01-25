@@ -29,7 +29,7 @@ public static class DirectoryHelper
     }
 
     /// <summary>
-    /// 获取一个目录下所有文件和文件夹
+    ///     获取一个目录下所有文件和文件夹
     /// </summary>
     /// <param name="path">需要获取的路径</param>
     /// <returns>（路径，是否是文件夹）</returns>

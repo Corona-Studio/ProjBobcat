@@ -340,7 +340,7 @@ public class TomlDateTime : TomlNode, IFormattable
 
 public class TomlArray : TomlNode
 {
-    private List<TomlNode> values;
+    List<TomlNode> values;
 
     public override bool HasValue { get; } = true;
     public override bool IsArray { get; } = true;
@@ -456,7 +456,7 @@ public class TomlArray : TomlNode
 
 public class TomlTable : TomlNode
 {
-    private Dictionary<string, TomlNode> children;
+    Dictionary<string, TomlNode> children;
 
     public override bool HasValue { get; } = false;
     public override bool IsTable { get; } = true;
@@ -530,7 +530,7 @@ public class TomlTable : TomlNode
         return sb.ToString();
     }
 
-    private Dictionary<string, TomlNode> CollectCollapsedItems(out HashSet<string> nonCollapsibleItems,
+    Dictionary<string, TomlNode> CollectCollapsedItems(out HashSet<string> nonCollapsibleItems,
         string prefix = "",
         Dictionary<string, TomlNode> nodes = null,
         int level = 0)
@@ -678,10 +678,10 @@ public class TomlTable : TomlNode
     }
 }
 
-internal class TomlLazy : TomlNode
+class TomlLazy : TomlNode
 {
-    private readonly TomlNode parent;
-    private TomlNode replacement;
+    readonly TomlNode parent;
+    TomlNode replacement;
 
     public TomlLazy(TomlNode parent)
     {
@@ -715,7 +715,7 @@ internal class TomlLazy : TomlNode
         Set<TomlArray>().AddRange(nodes);
     }
 
-    private TomlNode Set<T>() where T : TomlNode, new()
+    TomlNode Set<T>() where T : TomlNode, new()
     {
         if (replacement != null) return replacement;
 
@@ -761,10 +761,10 @@ public class TOMLParser : IDisposable
         Table
     }
 
-    private readonly TextReader reader;
-    private ParseState currentState;
-    private int line, col;
-    private List<TomlSyntaxException> syntaxErrors;
+    readonly TextReader reader;
+    ParseState currentState;
+    int line, col;
+    List<TomlSyntaxException> syntaxErrors;
 
     public TOMLParser(TextReader reader)
     {
@@ -984,7 +984,7 @@ public class TOMLParser : IDisposable
         return rootNode;
     }
 
-    private bool AddError(string message)
+    bool AddError(string message)
     {
         syntaxErrors.Add(new TomlSyntaxException(message, currentState, line, col));
         // Skip the whole line in hope that it was only a single faulty value (and non-multiline one at that)
@@ -994,13 +994,13 @@ public class TOMLParser : IDisposable
         return false;
     }
 
-    private void AdvanceLine(int startCol = -1)
+    void AdvanceLine(int startCol = -1)
     {
         line++;
         col = startCol;
     }
 
-    private int ConsumeChar()
+    int ConsumeChar()
     {
         col++;
         return reader.Read();
@@ -1017,7 +1017,7 @@ public class TOMLParser : IDisposable
          * foo = "bar"  ==> foo = "bar"
          * ^                           ^
          */
-    private TomlNode ReadKeyValuePair(List<string> keyParts)
+    TomlNode ReadKeyValuePair(List<string> keyParts)
     {
         int cur;
         while ((cur = reader.Peek()) >= 0)
@@ -1066,7 +1066,7 @@ public class TOMLParser : IDisposable
          * "test"  ==> "test"
          * ^                 ^
          */
-    private TomlNode ReadValue(bool skipNewlines = false)
+    TomlNode ReadValue(bool skipNewlines = false)
     {
         int cur;
         while ((cur = reader.Peek()) >= 0)
@@ -1142,7 +1142,7 @@ public class TOMLParser : IDisposable
          * [ foo . bar ] ==>  [ foo . bar ]     (`skipWhitespace = true`, `until = ']'`)
          * ^                             ^
          */
-    private bool ReadKeyName(ref List<string> parts, char until, bool skipWhitespace = false)
+    bool ReadKeyName(ref List<string> parts, char until, bool skipWhitespace = false)
     {
         var buffer = new StringBuilder();
         var quoted = false;
@@ -1233,7 +1233,7 @@ public class TOMLParser : IDisposable
          * 1_0_0_0  ==>  1_0_0_0
          * ^                    ^
          */
-    private string ReadRawValue()
+    string ReadRawValue()
     {
         var result = new StringBuilder();
         int cur;
@@ -1260,7 +1260,7 @@ public class TOMLParser : IDisposable
          *     ==>  1_0_0_0 # This is a comment
          *     ^                                                  ^
          */
-    private TomlNode ReadTomlValue()
+    TomlNode ReadTomlValue()
     {
         var value = ReadRawValue();
         TomlNode node = value switch
@@ -1341,7 +1341,7 @@ public class TOMLParser : IDisposable
          * [1, 2, 3]  ==>  [1, 2, 3]
          * ^                        ^
          */
-    private TomlArray ReadArray()
+    TomlArray ReadArray()
     {
         // Consume the start of array character
         ConsumeChar();
@@ -1418,7 +1418,7 @@ public class TOMLParser : IDisposable
          * { test = "foo", value = 1 }  ==>  { test = "foo", value = 1 }
          * ^                                                            ^
          */
-    private TomlNode ReadInlineTable()
+    TomlNode ReadInlineTable()
     {
         ConsumeChar();
         var result = new TomlTable { IsInline = true };
@@ -1500,7 +1500,7 @@ public class TOMLParser : IDisposable
          * ""  ==>  ""        (returns the extra `"` through the `excess` variable)
          * ^          ^
          */
-    private bool IsTripleQuote(char quote, out char excess)
+    bool IsTripleQuote(char quote, out char excess)
     {
         // Copypasta, but it's faster...
 
@@ -1532,7 +1532,7 @@ public class TOMLParser : IDisposable
     /**
          * A convenience method to process a single character within a quote.
          */
-    private bool ProcessQuotedValueCharacter(char quote,
+    bool ProcessQuotedValueCharacter(char quote,
         bool isNonLiteral,
         char c,
         StringBuilder sb,
@@ -1567,7 +1567,7 @@ public class TOMLParser : IDisposable
          * "test"  ==>  "test"
          * ^                 ^
          */
-    private string ReadQuotedValueSingleLine(char quote, char initialData = '\0')
+    string ReadQuotedValueSingleLine(char quote, char initialData = '\0')
     {
         var isNonLiteral = quote == TomlSyntax.BASIC_STRING_SYMBOL;
         var sb = new StringBuilder();
@@ -1606,7 +1606,7 @@ public class TOMLParser : IDisposable
          * """test"""  ==>  """test"""
          * ^                       ^
          */
-    private string ReadQuotedValueMultiLine(char quote)
+    string ReadQuotedValueMultiLine(char quote)
     {
         var isBasic = quote == TomlSyntax.BASIC_STRING_SYMBOL;
         var sb = new StringBuilder();
@@ -1692,7 +1692,7 @@ public class TOMLParser : IDisposable
 
     #region Node creation
 
-    private bool InsertNode(TomlNode node, TomlNode root, IList<string> path)
+    bool InsertNode(TomlNode node, TomlNode root, IList<string> path)
     {
         var latestNode = root;
         if (path.Count > 1)
@@ -1720,7 +1720,7 @@ public class TOMLParser : IDisposable
         return true;
     }
 
-    private TomlTable CreateTable(TomlNode root, IList<string> path, bool arrayTable)
+    TomlTable CreateTable(TomlNode root, IList<string> path, bool arrayTable)
     {
         if (path.Count == 0) return null;
         var latestNode = root;
@@ -1866,7 +1866,7 @@ public class TomlSyntaxException : Exception
 
 #region Parse utilities
 
-internal static partial class TomlSyntax
+static class TomlSyntax
 {
     #region Type Patterns
 
@@ -2041,12 +2041,14 @@ internal static partial class TomlSyntax
     /**
     * A pattern to verify the integer value according to the TOML specification.
     */
-    static readonly Regex IntegerPattern = new ("^(\\+|-)?(?!_)(0|(?!0)(_?\\d)*)$", RegexOptions.Compiled);
+    static readonly Regex IntegerPattern = new("^(\\+|-)?(?!_)(0|(?!0)(_?\\d)*)$", RegexOptions.Compiled);
 
     /**
     * A pattern to verify the float value according to the TOML specification.
     */
-    static readonly Regex FloatPattern = new ("^(\\+|-)?(?!_)(0|(?!0)(_?\\d)+)(((e(\\+|-)?(?!_)(_?\\d)+)?)|(\\.(?!_)(_?\\d)+(e(\\+|-)?(?!_)(_?\\d)+)?))$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    static readonly Regex FloatPattern =
+        new("^(\\+|-)?(?!_)(0|(?!0)(_?\\d)+)(((e(\\+|-)?(?!_)(_?\\d)+)?)|(\\.(?!_)(_?\\d)+(e(\\+|-)?(?!_)(_?\\d)+)?))$",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
 
     /**
@@ -2058,7 +2060,7 @@ internal static partial class TomlSyntax
     #endregion
 }
 
-internal static class StringUtils
+static class StringUtils
 {
     public static string AsKey(this string key)
     {

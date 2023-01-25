@@ -29,7 +29,8 @@ public class ModrinthProjectInfo : ModrinthProjectInfoBase
 
     [JsonPropertyName("status")] public string Status { get; set; }
 
-    [JsonPropertyName("moderator_message")] public string ModeratorMessage { get; set; }
+    [JsonPropertyName("moderator_message")]
+    public string ModeratorMessage { get; set; }
 
     [JsonPropertyName("license")] public LicenseInfo License { get; set; }
 

@@ -1,6 +1,4 @@
-﻿using System.Collections.Immutable;
-
-namespace ProjBobcat.Class.Model.GameResource.ResolvedInfo;
+﻿namespace ProjBobcat.Class.Model.GameResource.ResolvedInfo;
 
 public record GameResourcePackResolvedInfo(
     string FileName,

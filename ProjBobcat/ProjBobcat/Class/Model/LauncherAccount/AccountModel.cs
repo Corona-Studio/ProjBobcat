@@ -1,6 +1,6 @@
-﻿using ProjBobcat.Class.Model.LauncherProfile;
-using System;
+﻿using System;
 using System.Text.Json.Serialization;
+using ProjBobcat.Class.Model.LauncherProfile;
 
 namespace ProjBobcat.Class.Model.LauncherAccount;
 
@@ -8,13 +8,16 @@ public class AccountModel
 {
     [JsonPropertyName("accessToken")] public string AccessToken { get; set; }
 
-    [JsonPropertyName("accessTokenExpiresAt")] public DateTime AccessTokenExpiresAt { get; set; }
+    [JsonPropertyName("accessTokenExpiresAt")]
+    public DateTime AccessTokenExpiresAt { get; set; }
 
     [JsonPropertyName("avatar")] public string Avatar { get; set; }
 
-    [JsonPropertyName("eligibleForMigration")] public bool EligibleForMigration { get; set; }
+    [JsonPropertyName("eligibleForMigration")]
+    public bool EligibleForMigration { get; set; }
 
-    [JsonPropertyName("hasMultipleProfiles")] public bool HasMultipleProfiles { get; set; }
+    [JsonPropertyName("hasMultipleProfiles")]
+    public bool HasMultipleProfiles { get; set; }
 
     [JsonPropertyName("legacy")] public bool Legacy { get; set; }
 

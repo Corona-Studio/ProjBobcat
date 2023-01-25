@@ -1,23 +1,24 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
-using System.Threading;
-using System;
-using System.Collections.Immutable;
 using System.Text.Json;
-using ProjBobcat.Class.Model.GameResource;
-using ProjBobcat.Class.Model.GameResource.ResolvedInfo;
+using System.Threading;
+using System.Threading.Tasks;
 using ProjBobcat.Class.Helper.TOMLParser;
 using ProjBobcat.Class.Model.Fabric;
+using ProjBobcat.Class.Model.GameResource;
+using ProjBobcat.Class.Model.GameResource.ResolvedInfo;
 using SharpCompress.Archives;
 
 namespace ProjBobcat.Class.Helper;
 
 public static class GameResourcesResolveHelper
 {
-    public static async IAsyncEnumerable<GameModResolvedInfo> ResolveModListAsync(IEnumerable<string> files, [EnumeratorCancellation] CancellationToken ct)
+    public static async IAsyncEnumerable<GameModResolvedInfo> ResolveModListAsync(IEnumerable<string> files,
+        [EnumeratorCancellation] CancellationToken ct)
     {
         foreach (var file in files)
         {
@@ -85,11 +86,8 @@ public static class GameResourcesResolveHelper
                     case JsonValueKind.Object:
                         var val = doc.RootElement.Deserialize<GameModInfoModel>();
 
-                        if (val != null)
-                        {
-                            model = new List<GameModInfoModel>{val};
-                        }
-                        
+                        if (val != null) model = new List<GameModInfoModel> { val };
+
                         break;
                     case JsonValueKind.Array:
                         model = doc.RootElement.Deserialize<List<GameModInfoModel>>();
@@ -160,10 +158,7 @@ public static class GameResourcesResolveHelper
                 goto ReturnResult;
             }
 
-            if (fabricModInfoEntry != null)
-            {
-                result = await GetFabricModInfo(fabricModInfoEntry);
-            }
+            if (fabricModInfoEntry != null) result = await GetFabricModInfo(fabricModInfoEntry);
 
             ReturnResult:
             if (result != null)
@@ -171,7 +166,8 @@ public static class GameResourcesResolveHelper
         }
     }
 
-    public static async IAsyncEnumerable<GameResourcePackResolvedInfo> ResolveResourcePackAsync(IEnumerable<(string, bool)> files,
+    public static async IAsyncEnumerable<GameResourcePackResolvedInfo> ResolveResourcePackAsync(
+        IEnumerable<(string, bool)> files,
         [EnumeratorCancellation] CancellationToken ct)
     {
         async Task<GameResourcePackResolvedInfo?> ResolveResPackFile(string file)
@@ -264,7 +260,8 @@ public static class GameResourcesResolveHelper
         }
     }
 
-    public static IEnumerable<GameShaderPackResolvedInfo> ResolveShaderPack(IEnumerable<(string, bool)> paths, CancellationToken ct)
+    public static IEnumerable<GameShaderPackResolvedInfo> ResolveShaderPack(IEnumerable<(string, bool)> paths,
+        CancellationToken ct)
     {
         GameShaderPackResolvedInfo? ResolveShaderPackFile(string file)
         {

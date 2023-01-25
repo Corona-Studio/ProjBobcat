@@ -4,7 +4,7 @@ namespace ProjBobcat.Class.Helper;
 
 public static class JsonHelper
 {
-    public static readonly JsonSerializerOptions CamelCasePropertyNamesSettings = new ()
+    public static readonly JsonSerializerOptions CamelCasePropertyNamesSettings = new()
     {
         WriteIndented = true,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,

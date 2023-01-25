@@ -7,7 +7,7 @@ public class CurseForgeDependencyModelComparer : IEqualityComparer<CurseForgeDep
 {
     public bool Equals(CurseForgeDependencyModel? x, CurseForgeDependencyModel? y)
     {
-        if(x == null && y == null) return false;
+        if (x == null && y == null) return false;
         if (x == null || y == null) return false;
 
         return x.ModId == y.ModId;

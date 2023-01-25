@@ -40,7 +40,7 @@ public class QuiltInstaller : InstallerBase, IQuiltInstaller
         using var res = await Client.SendAsync(req);
 
         res.EnsureSuccessStatusCode();
-        
+
         var versionModel = await res.Content.ReadFromJsonAsync<RawVersionModel>();
 
         InvokeStatusChangedEvent("生成版本总成", 70);

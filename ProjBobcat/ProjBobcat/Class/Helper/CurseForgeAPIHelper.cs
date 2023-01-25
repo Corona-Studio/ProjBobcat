@@ -98,7 +98,7 @@ public static class CurseForgeAPIHelper
 
         using var res = await Client.SendAsync(req);
         res.EnsureSuccessStatusCode();
-        
+
         return (await res.Content.ReadFromJsonAsync<DataModel<CurseForgeFeaturedAddonModel>>())?.Data;
     }
 

@@ -1,5 +1,5 @@
-﻿using ProjBobcat.Interface;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
+using ProjBobcat.Interface;
 
 namespace ProjBobcat.Class.Model;
 

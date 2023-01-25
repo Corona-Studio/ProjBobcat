@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http.Json;
@@ -198,7 +197,8 @@ public class YggdrasilAuthenticator : IAuthenticator
             Persistent = true,
             RemoteId = result.User.UUID.ToString(),
             Type = "Mojang",
-            UserProperites = (result.User?.Properties)?.ToAuthProperties(profiles).ToArray() ?? Array.Empty<AuthPropertyModel>(),
+            UserProperites = result.User?.Properties?.ToAuthProperties(profiles).ToArray() ??
+                             Array.Empty<AuthPropertyModel>(),
             Username = Email
         };
 
@@ -374,7 +374,8 @@ public class YggdrasilAuthenticator : IAuthenticator
                     Persistent = true,
                     RemoteId = authResponse.User.UUID.ToString(),
                     Type = "Mojang",
-                    UserProperites = (authResponse.User?.Properties)?.ToAuthProperties(profiles).ToArray() ?? Array.Empty<AuthPropertyModel>(),
+                    UserProperites = authResponse.User?.Properties?.ToAuthProperties(profiles).ToArray() ??
+                                     Array.Empty<AuthPropertyModel>(),
                     Username = Email
                 };
 

@@ -1,7 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using System;
 
 namespace ProjBobcat.Class.Helper.TOMLParser;
 
@@ -140,7 +140,7 @@ public static class TommyExtensions
                 // If we see an invalid symbol, let the next parser handle it
                 throw new Exception($"Unexpected symbol {c}");
 
-            consume_character:
+                consume_character:
                 reader.Read();
             }
 
@@ -184,27 +184,27 @@ public static class TommyExtensions
         switch (self)
         {
             case TomlTable tbl when with is TomlTable withTbl:
-                {
-                    foreach (var keyValuePair in withTbl.RawTable)
-                        if (tbl.TryGetNode(keyValuePair.Key, out var node))
-                            node.MergeWith(keyValuePair.Value, mergeNewValues);
-                        else if (mergeNewValues)
-                            tbl[keyValuePair.Key] = node;
-                }
+            {
+                foreach (var keyValuePair in withTbl.RawTable)
+                    if (tbl.TryGetNode(keyValuePair.Key, out var node))
+                        node.MergeWith(keyValuePair.Value, mergeNewValues);
+                    else if (mergeNewValues)
+                        tbl[keyValuePair.Key] = node;
+            }
                 break;
             case TomlArray arr when with is TomlArray withArr:
-                {
-                    if (arr.ChildrenCount != 0 &&
-                        withArr.ChildrenCount != 0 &&
-                        arr[0].GetType() != withArr[0].GetType())
-                        return self;
+            {
+                if (arr.ChildrenCount != 0 &&
+                    withArr.ChildrenCount != 0 &&
+                    arr[0].GetType() != withArr[0].GetType())
+                    return self;
 
-                    for (var i = 0; i < withArr.RawArray.Count; i++)
-                        if (i < arr.RawArray.Count)
-                            arr.RawArray[i].MergeWith(withArr.RawArray[i], mergeNewValues);
-                        else
-                            arr.RawArray.Add(withArr.RawArray[i]);
-                }
+                for (var i = 0; i < withArr.RawArray.Count; i++)
+                    if (i < arr.RawArray.Count)
+                        arr.RawArray[i].MergeWith(withArr.RawArray[i], mergeNewValues);
+                    else
+                        arr.RawArray.Add(withArr.RawArray[i]);
+            }
                 break;
             case TomlBoolean bl when with is TomlBoolean withBl:
                 bl.Value = withBl.Value;

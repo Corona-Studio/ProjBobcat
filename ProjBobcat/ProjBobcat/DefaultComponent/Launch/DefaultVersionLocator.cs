@@ -65,14 +65,15 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             if (jvmRule.ValueKind == JsonValueKind.String)
             {
                 var str = jvmRule.GetString();
-                
-                if(!string.IsNullOrEmpty(str)) yield return str;
+
+                if (!string.IsNullOrEmpty(str)) yield return str;
 
                 continue;
             }
 
-            if(jvmRule.TryGetProperty("rules", out var rules))
-                if (!(rules.Deserialize<JvmRules[]>()?.CheckAllow() ?? false)) continue;
+            if (jvmRule.TryGetProperty("rules", out var rules))
+                if (!(rules.Deserialize<JvmRules[]>()?.CheckAllow() ?? false))
+                    continue;
             if (!jvmRule.TryGetProperty("value", out var value)) continue;
 
             switch (value.ValueKind)
@@ -89,7 +90,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                 case JsonValueKind.String:
                     var valStr = value.GetString();
 
-                    if(!string.IsNullOrEmpty(valStr))
+                    if (!string.IsNullOrEmpty(valStr))
                         yield return StringHelper.FixArgument(valStr);
 
                     break;
@@ -124,12 +125,12 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             {
                 var val = gameRule.GetString();
 
-                if(!string.IsNullOrEmpty(val))
+                if (!string.IsNullOrEmpty(val))
                     argList.Add(val);
 
                 continue;
             }
-            
+
             if (!gameRule.TryGetProperty("rules", out var rules)) continue;
 
             var ruleKey = string.Empty;
@@ -137,7 +138,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
 
             var rulesArr = rules.Deserialize<GameRules[]>();
 
-            if(!(rulesArr?.Any() ?? false)) continue;
+            if (!(rulesArr?.Any() ?? false)) continue;
 
             foreach (var rule in rulesArr)
             {
@@ -147,7 +148,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
 
                 ruleKey = rule.Features.First().Key;
 
-                if(!gameRule.TryGetProperty("value", out var value)) continue;
+                if (!gameRule.TryGetProperty("value", out var value)) continue;
 
                 ruleValue = value.ValueKind switch
                 {
@@ -289,7 +290,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
         using var fs = File.OpenRead(GamePathHelper.GetGameJsonPath(RootPath, id));
         var versionJson = JsonSerializer.Deserialize<RawVersionModel>(fs);
 
-        if(versionJson == null)
+        if (versionJson == null)
             return null;
         if (string.IsNullOrEmpty(versionJson.MainClass))
             return null;

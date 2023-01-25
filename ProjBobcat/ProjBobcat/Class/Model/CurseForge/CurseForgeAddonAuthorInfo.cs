@@ -15,7 +15,8 @@ public class CurseForgeAddonAuthorInfo
 
     [JsonPropertyName("projectTitleId")] public JsonElement ProjectTitleId { get; set; }
 
-    [JsonPropertyName("projectTitleTitle")] public JsonElement ProjectTitleTitle { get; set; }
+    [JsonPropertyName("projectTitleTitle")]
+    public JsonElement ProjectTitleTitle { get; set; }
 
     [JsonPropertyName("userId")] public int UserId { get; set; }
 

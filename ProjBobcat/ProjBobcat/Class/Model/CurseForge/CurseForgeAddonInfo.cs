@@ -33,7 +33,8 @@ public class CurseForgeAddonInfo
 
     [JsonPropertyName("status")] public int Status { get; set; }
 
-    [JsonPropertyName("primaryCategoryId")] public int PrimaryCategoryId { get; set; }
+    [JsonPropertyName("primaryCategoryId")]
+    public int PrimaryCategoryId { get; set; }
 
     [JsonPropertyName("categorySection")] public CurseForgeCategorySectionInfo CategorySection { get; set; }
 
@@ -44,7 +45,8 @@ public class CurseForgeAddonInfo
 
     [JsonPropertyName("isFeatured")] public bool IsFeatured { get; set; }
 
-    [JsonPropertyName("gamePopularityRank")] public int GamePopularityRank { get; set; }
+    [JsonPropertyName("gamePopularityRank")]
+    public int GamePopularityRank { get; set; }
 
     [JsonPropertyName("primaryLanguage")] public string PrimaryLanguage { get; set; }
 

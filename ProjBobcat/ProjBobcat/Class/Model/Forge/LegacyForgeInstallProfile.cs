@@ -51,7 +51,8 @@ public class VersionInfo
 
     [JsonPropertyName("type")] public string Type { get; set; }
 
-    [JsonPropertyName("minecraftArguments")] public string MinecraftArguments { get; set; }
+    [JsonPropertyName("minecraftArguments")]
+    public string MinecraftArguments { get; set; }
 
     [JsonPropertyName("mainClass")] public string MainClass { get; set; }
 

@@ -138,7 +138,7 @@ public class MicrosoftAuthenticator : IAuthenticator
                 Error = err
             };
         }
-        
+
         var xStsRes = await xStsMessage.Content.ReadFromJsonAsync<AuthXSTSResponseModel>();
 
         #endregion
@@ -407,7 +407,7 @@ public class MicrosoftAuthenticator : IAuthenticator
         using var res = await HttpHelper.Post(url, reqStr);
 
         if (!res.IsSuccessStatusCode) return default;
-        
+
         var result = await res.Content.ReadFromJsonAsync<T>();
 
         return result;

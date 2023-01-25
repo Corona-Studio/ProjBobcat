@@ -7,7 +7,8 @@ public class GraphResponseErrorModel
 {
     [JsonPropertyName("error")] public string ErrorType { get; set; }
 
-    [JsonPropertyName("error_description")] public string ErrorDescription { get; set; }
+    [JsonPropertyName("error_description")]
+    public string ErrorDescription { get; set; }
 
     [JsonPropertyName("error_codes")] public int[] ErrorCodes { get; set; }
 

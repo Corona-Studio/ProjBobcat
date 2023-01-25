@@ -8,7 +8,8 @@ public class AuthResponseModel
 
     [JsonPropertyName("clientToken")] public string ClientToken { get; set; }
 
-    [JsonPropertyName("availableProfiles")] public ProfileInfoModel[] AvailableProfiles { get; set; }
+    [JsonPropertyName("availableProfiles")]
+    public ProfileInfoModel[] AvailableProfiles { get; set; }
 
     [JsonPropertyName("selectedProfile")] public ProfileInfoModel SelectedProfile { get; set; }
 

@@ -5,7 +5,8 @@ namespace ProjBobcat.Class.Model.CurseForge;
 
 public class CurseForgeSortableGameVersionModel
 {
-    [JsonPropertyName("gameVersionPadded")] public string GameVersionPadded { get; set; }
+    [JsonPropertyName("gameVersionPadded")]
+    public string GameVersionPadded { get; set; }
 
     [JsonPropertyName("gameVersion")] public string GameVersion { get; set; }
 
