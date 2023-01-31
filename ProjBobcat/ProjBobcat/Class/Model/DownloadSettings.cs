@@ -1,5 +1,8 @@
 ﻿using System;
+using System.IO;
 using System.Security.Cryptography;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace ProjBobcat.Class.Model;
 
@@ -37,6 +40,23 @@ public class DownloadSettings
             HashType.SHA256 => SHA256.Create(),
             HashType.SHA384 => SHA384.Create(),
             HashType.SHA512 => SHA512.Create(),
+            _ => throw new NotSupportedException()
+        };
+    }
+
+    public async Task<byte[]> HashDataAsync(string filePath, CancellationToken? token)
+    {
+        token ??= CancellationToken.None;
+        
+        var bytes = await File.ReadAllBytesAsync(filePath, token.Value);
+
+        return HashType switch
+        {
+            HashType.MD5 => MD5.HashData(bytes),
+            HashType.SHA1 => SHA1.HashData(bytes),
+            HashType.SHA256 => SHA256.HashData(bytes),
+            HashType.SHA384 => SHA384.HashData(bytes),
+            HashType.SHA512 => SHA512.HashData(bytes),
             _ => throw new NotSupportedException()
         };
     }

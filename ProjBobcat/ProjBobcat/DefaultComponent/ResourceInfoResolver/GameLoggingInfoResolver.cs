@@ -29,7 +29,7 @@ public sealed class GameLoggingInfoResolver : ResolverBase
             if (string.IsNullOrEmpty(VersionInfo.Logging?.Client?.File?.Sha1)) yield break;
 
             var bytes = await File.ReadAllBytesAsync(filePath);
-            var computedHash = CryptoHelper.ToString(SHA1.HashData(bytes.AsSpan()));
+            var computedHash = SHA1.HashData(bytes.AsSpan()).BytesToString();
 
             if (computedHash.Equals(VersionInfo.Logging?.Client?.File?.Sha1, StringComparison.OrdinalIgnoreCase))
                 yield break;

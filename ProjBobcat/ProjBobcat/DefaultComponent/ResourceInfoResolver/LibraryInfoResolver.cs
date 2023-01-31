@@ -52,7 +52,7 @@ public sealed class LibraryInfoResolver : ResolverBase
                 if (string.IsNullOrEmpty(lib.Sha1)) continue;
 
                 var bytes = await File.ReadAllBytesAsync(filePath);
-                var computedHash = CryptoHelper.ToString(SHA1.HashData(bytes.AsSpan()));
+                var computedHash = SHA1.HashData(bytes.AsSpan()).BytesToString();
 
                 if (computedHash.Equals(lib.Sha1, StringComparison.OrdinalIgnoreCase)) continue;
             }
@@ -79,7 +79,7 @@ public sealed class LibraryInfoResolver : ResolverBase
                 OnResolve(string.Empty, progress);
 
                 var bytes = await File.ReadAllBytesAsync(filePath);
-                var computedHash = CryptoHelper.ToString(SHA1.HashData(bytes.AsSpan()));
+                var computedHash = SHA1.HashData(bytes.AsSpan()).BytesToString();
 
                 if (computedHash.Equals(native.FileInfo.Sha1, StringComparison.OrdinalIgnoreCase)) continue;
             }

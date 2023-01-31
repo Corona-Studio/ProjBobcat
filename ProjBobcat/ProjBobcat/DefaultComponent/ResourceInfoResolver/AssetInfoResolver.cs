@@ -157,7 +157,7 @@ public sealed class AssetInfoResolver : ResolverBase
             if (File.Exists(filePath))
             {
                 var bytes = await File.ReadAllBytesAsync(filePath);
-                var computedHash = CryptoHelper.ToString(SHA1.HashData(bytes.AsSpan()));
+                var computedHash = SHA1.HashData(bytes.AsSpan()).BytesToString();
                 if (computedHash.Equals(fi.Hash, StringComparison.OrdinalIgnoreCase)) continue;
             }
 

@@ -101,10 +101,10 @@ public class DownloadFile : IDisposable
         });
     }
 
-    public void OnCompleted(bool? success, Exception ex, double averageSpeed)
+    public void OnCompleted(bool? success, Exception? ex, double averageSpeed)
     {
         var eventList = ListEventDelegates;
-        var @event = (EventHandler<DownloadFileCompletedEventArgs>)eventList[CompletedEventKey];
+        var @event = (EventHandler<DownloadFileCompletedEventArgs>?)eventList[CompletedEventKey];
         @event?.Invoke(this, new DownloadFileCompletedEventArgs(success, ex, averageSpeed));
     }
 

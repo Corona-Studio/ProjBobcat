@@ -109,9 +109,9 @@ public static class DownloadHelper
 
                 if (downloadSettings.CheckFile && !string.IsNullOrEmpty(downloadFile.CheckSum))
                 {
-                    var checkSum = CryptoHelper.ToString(hash.Hash);
+                    var checkSum = hash.Hash?.BytesToString();
 
-                    if (!checkSum.Equals(downloadFile.CheckSum, StringComparison.OrdinalIgnoreCase))
+                    if (!(checkSum?.Equals(downloadFile.CheckSum, StringComparison.OrdinalIgnoreCase) ?? false))
                     {
                         downloadFile.RetryCount++;
                         continue;
@@ -435,10 +435,7 @@ public static class DownloadHelper
 
                 if (downloadSettings.CheckFile && !string.IsNullOrEmpty(downloadFile.CheckSum))
                 {
-                    using var hash = downloadSettings.GetHashAlgorithm();
-
-                    var checkSum =
-                        CryptoHelper.ToString(await hash.ComputeHashAsync(File.OpenRead(filePath), cts.Token));
+                    var checkSum = (await downloadSettings.HashDataAsync(filePath, cts.Token)).BytesToString();
 
                     if (!checkSum.Equals(downloadFile.CheckSum, StringComparison.OrdinalIgnoreCase))
                     {

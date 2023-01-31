@@ -48,7 +48,7 @@ public class MicrosoftAuthenticator : IAuthenticator
     static HttpClient DefaultClient => HttpClientHelper.GetNewClient(HttpClientHelper.DefaultClientName);
 
     public string Email { get; set; }
-    public Func<Task<(bool, GraphAuthResultModel)>> CacheTokenProvider { get; init; }
+    public Func<Task<(bool, GraphAuthResultModel?)>> CacheTokenProvider { get; init; }
     public ILauncherAccountParser LauncherAccountParser { get; set; }
 
     public AuthResultBase Auth(bool userField = false)

@@ -4,7 +4,7 @@ namespace ProjBobcat.Event;
 
 public class DownloadFileCompletedEventArgs : EventArgs
 {
-    public DownloadFileCompletedEventArgs(bool? success, Exception ex, double averageSpeed)
+    public DownloadFileCompletedEventArgs(bool? success, Exception? ex, double averageSpeed)
     {
         Success = success;
         Error = ex;
@@ -12,8 +12,6 @@ public class DownloadFileCompletedEventArgs : EventArgs
     }
 
     public double AverageSpeed { get; set; }
-#nullable enable
     public bool? Success { get; }
-#nullable restore
-    public Exception Error { get; }
+    public Exception? Error { get; }
 }
