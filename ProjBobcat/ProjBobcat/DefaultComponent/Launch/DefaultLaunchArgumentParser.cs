@@ -208,6 +208,18 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
         var gameDir = _launchSettings.VersionInsulation
             ? Path.Combine(RootPath, GamePathHelper.GetGamePath(LaunchSettings.Version))
             : RootPath;
+        var clientIdUpper = (VersionLocator?.LauncherProfileParser?.LauncherProfile?.ClientToken ?? Guid.Empty.ToString("D"))
+            .Replace("-", string.Empty).ToUpper();
+        var clientIdBytes = Encoding.ASCII.GetBytes(clientIdUpper);
+        var clientId = Convert.ToBase64String(clientIdBytes);
+
+        var userType = authResult switch
+        {
+            MicrosoftAuthResult => "msa",
+            _ => "Mojang"
+        };
+        var xuid = authResult is MicrosoftAuthResult microsoftAuthResult ? microsoftAuthResult.XBoxUid : Guid.Empty.ToString("N");
+
         var mcArgumentsDic = new Dictionary<string, string>
         {
             { "${version_name}", $"\"{LaunchSettings.Version}\"" },
@@ -219,7 +231,9 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
             { "${auth_uuid}", authResult?.SelectedProfile?.UUID.ToString() },
             { "${auth_access_token}", authResult?.AccessToken },
             { "${user_properties}", "{}" }, //authResult?.User?.Properties.ResolveUserProperties() },
-            { "${user_type}", "Mojang" } // use default value as placeholder
+            { "${user_type}", userType }, // use default value as placeholder
+            { "${clientid}", clientId },
+            { "${auth_xuid}", xuid }
         };
 
         foreach (var gameArg in VersionInfo.GameArguments)

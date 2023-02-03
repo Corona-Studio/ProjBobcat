@@ -14,6 +14,7 @@ using ProjBobcat.Class.Model.Microsoft.Graph;
 using ProjBobcat.Class.Model.MicrosoftAuth;
 using ProjBobcat.Class.Model.YggdrasilAuth;
 using ProjBobcat.Interface;
+using ProjBobcat.JsonConverter;
 
 namespace ProjBobcat.DefaultComponent.Authenticator;
 
@@ -143,11 +144,51 @@ public class MicrosoftAuthenticator : IAuthenticator
 
         #endregion
 
+        #region STAGE 2.5 (FETCH XBOX UID)
+
+        var xUidReqStr = JsonSerializer.Serialize(AuthXSTSRequestModel.Get(xBoxLiveToken.Token, "http://xboxlive.com"));
+        using var xUidMessage = await HttpHelper.Post(MSAuthXSTSUrl, xUidReqStr);
+
+        var xuid = Guid.Empty.ToString("N");
+        if (xUidMessage.IsSuccessStatusCode)
+        {
+            var xUidRes = await xUidMessage.Content.ReadFromJsonAsync<AuthXSTSResponseModel>();
+
+            if (xUidRes != null)
+            {
+                var isXUidXUiExists = xUidRes.DisplayClaims.TryGetProperty("xui", out var xuidXui);
+                JsonElement? firstXuidXui = isXUidXUiExists ? xuidXui[0] : null;
+
+                if (firstXuidXui.HasValue && firstXuidXui.Value.TryGetProperty("xid", out var xid) && xid.ValueKind == JsonValueKind.String && !string.IsNullOrEmpty(xid.GetString()))
+                {
+                    xuid = xid.GetString()!;
+                }
+            }
+        }
+
+        #endregion
+
         #region STAGE 3
 
+        var isXUiExists = xStsRes!.DisplayClaims.TryGetProperty("xui", out var xui);
+        JsonElement? firstXui = isXUiExists ? xui[0] : null;
+        if (!firstXui.HasValue || !firstXui.Value.TryGetProperty("uhs", out var uhs) || uhs.ValueKind != JsonValueKind.String || string.IsNullOrEmpty(uhs.GetString()))
+        {
+            return new MicrosoftAuthResult
+            {
+                AuthStatus = AuthStatus.Failed,
+                Error = new ErrorModel
+                {
+                    Cause = "无法从认证结果中获取 UHS 值",
+                    Error = "XSTS 认证失败，原因：无法从认证结果中获取 UHS 值"
+                }
+            };
+        }
+
+        var uhsValue = uhs.GetString()!;
         var mcReqModel = new
         {
-            identityToken = $"XBL3.0 x={xStsRes.DisplayClaims["xui"].First()["uhs"]};{xStsRes.Token}"
+            identityToken = $"XBL3.0 x={uhsValue};{xStsRes.Token}"
         };
         var mcRes = await SendRequest<AuthMojangResponseModel>(MojangAuthUrl, mcReqModel);
 
@@ -273,7 +314,8 @@ public class MicrosoftAuthenticator : IAuthenticator
                 UUID = sPUuid,
                 UserName = profileRes.Name
             },
-            Email = Email
+            Email = Email,
+            XBoxUid = xuid
         };
     }
 
@@ -315,9 +357,16 @@ public class MicrosoftAuthenticator : IAuthenticator
     public static object? ResolveMSGraphResult<T>(string content)
     {
         var jsonObj = JsonDocument.Parse(content).RootElement;
+        var options = new JsonSerializerOptions
+        {
+            Converters =
+            {
+                new DateTimeConverterUsingDateTimeParse()
+            }
+        };
 
         if (jsonObj.TryGetProperty("error", out _) && jsonObj.TryGetProperty("error_description", out _))
-            return JsonSerializer.Deserialize<GraphResponseErrorModel>(content);
+            return JsonSerializer.Deserialize<GraphResponseErrorModel>(content, options);
 
         return JsonSerializer.Deserialize<T>(content);
     }
@@ -326,10 +375,10 @@ public class MicrosoftAuthenticator : IAuthenticator
     {
         #region SEND DEVICE TOKEN REQUEST
 
-        var deviceTokenRequestDic = new List<KeyValuePair<string, string>>
+        var deviceTokenRequestDic = new[]
         {
-            new("client_id", ApiSettings.ClientId),
-            new("scope", string.Join(' ', ApiSettings.Scopes))
+            new KeyValuePair<string, string>("client_id", ApiSettings.ClientId),
+            new KeyValuePair<string, string>("scope", string.Join(' ', ApiSettings.Scopes))
         };
 
         using var deviceTokenReq = new HttpRequestMessage(HttpMethod.Post, MSDeviceTokenRequestUrl)
@@ -349,14 +398,14 @@ public class MicrosoftAuthenticator : IAuthenticator
 
         #region FETCH USER AUTH RESULT
 
-        var userAuthResultDic = new List<KeyValuePair<string, string>>
+        var userAuthResultDic = new[] 
         {
-            new("grant_type", MSGrantType),
-            new("client_id", ApiSettings.ClientId),
-            new("device_code", deviceTokenResModel.DeviceCode)
+            new KeyValuePair<string, string>("grant_type", MSGrantType),
+            new KeyValuePair<string, string>("client_id", ApiSettings.ClientId),
+            new KeyValuePair<string, string>("device_code", deviceTokenResModel.DeviceCode)
         };
 
-        GraphAuthResultModel result;
+        GraphAuthResultModel? result;
         while (true)
         {
             await Task.Delay(TimeSpan.FromSeconds(deviceTokenResModel.Interval));
@@ -382,7 +431,7 @@ public class MicrosoftAuthenticator : IAuthenticator
                             return null;
                     }
 
-            result = (GraphAuthResultModel)userAuthResultModel;
+            result = (GraphAuthResultModel?)userAuthResultModel;
             break;
         }
 

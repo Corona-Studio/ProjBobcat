@@ -20,6 +20,11 @@ public class MicrosoftAuthResult : AuthResultBase
     public DateTime CurrentAuthTime { get; set; }
 
     /// <summary>
+    /// XBox UID
+    /// </summary>
+    public string XBoxUid { get; set; }
+
+    /// <summary>
     ///     Token 失效时间
     /// </summary>
     public int ExpiresIn { get; set; }
