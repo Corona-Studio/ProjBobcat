@@ -30,14 +30,14 @@ public static class CurseForgeAPIHelper
         ApiKey = apiKey;
     }
 
-    public static async Task<DataModelWithPagination<List<CurseForgeAddonInfo>>?> SearchAddons(SearchOptions options)
+    public static async Task<DataModelWithPagination<CurseForgeAddonInfo[]>?> SearchAddons(SearchOptions options)
     {
         var reqUrl = $"{BaseUrl}/mods/search{options}";
 
         using var req = Req(HttpMethod.Get, reqUrl);
         using var res = await Client.SendAsync(req);
 
-        return await res.Content.ReadFromJsonAsync<DataModelWithPagination<List<CurseForgeAddonInfo>>>();
+        return await res.Content.ReadFromJsonAsync<DataModelWithPagination<CurseForgeAddonInfo[]>>();
     }
 
     public static async Task<CurseForgeAddonInfo?> GetAddon(int addonId)
@@ -50,7 +50,7 @@ public static class CurseForgeAPIHelper
         return (await res.Content.ReadFromJsonAsync<DataModel<CurseForgeAddonInfo>>())?.Data;
     }
 
-    public static async Task<List<CurseForgeAddonInfo>?> GetAddons(IEnumerable<int> addonIds)
+    public static async Task<CurseForgeAddonInfo[]?> GetAddons(IEnumerable<int> addonIds)
     {
         const string reqUrl = $"{BaseUrl}/mods";
         var data = JsonSerializer.Serialize(new
@@ -65,27 +65,27 @@ public static class CurseForgeAPIHelper
 
         res.EnsureSuccessStatusCode();
 
-        return (await res.Content.ReadFromJsonAsync<DataModel<List<CurseForgeAddonInfo>>>())?.Data;
+        return (await res.Content.ReadFromJsonAsync<DataModel<CurseForgeAddonInfo[]>>())?.Data;
     }
 
-    public static async Task<List<CurseForgeLatestFileModel>?> GetAddonFiles(int addonId)
+    public static async Task<CurseForgeLatestFileModel[]?> GetAddonFiles(int addonId)
     {
         var reqUrl = $"{BaseUrl}/mods/{addonId}/files";
 
         using var req = Req(HttpMethod.Get, reqUrl);
         using var res = await Client.SendAsync(req);
 
-        return (await res.Content.ReadFromJsonAsync<DataModel<List<CurseForgeLatestFileModel>>>())?.Data;
+        return (await res.Content.ReadFromJsonAsync<DataModel<CurseForgeLatestFileModel[]>>())?.Data;
     }
 
-    public static async Task<List<CurseForgeSearchCategoryModel>?> GetCategories(int gameId = 432)
+    public static async Task<CurseForgeSearchCategoryModel[]?> GetCategories(int gameId = 432)
     {
         var reqUrl = $"{BaseUrl}/categories?gameId={gameId}";
 
         using var req = Req(HttpMethod.Get, reqUrl);
         using var res = await Client.SendAsync(req);
 
-        return (await res.Content.ReadFromJsonAsync<DataModel<List<CurseForgeSearchCategoryModel>>>())?.Data;
+        return (await res.Content.ReadFromJsonAsync<DataModel<CurseForgeSearchCategoryModel[]>>())?.Data;
     }
 
     public static async Task<CurseForgeFeaturedAddonModel?> GetFeaturedAddons(FeaturedQueryOptions options)

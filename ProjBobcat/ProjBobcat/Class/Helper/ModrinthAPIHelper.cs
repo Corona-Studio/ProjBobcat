@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
+﻿using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 using ProjBobcat.Class.Model.Modrinth;
@@ -20,14 +17,14 @@ public static class ModrinthAPIHelper
         return req;
     }
 
-    public static async Task<string[]> GetCategories()
+    public static async Task<ModrinthCategoryInfo[]?> GetCategories()
     {
         const string reqUrl = $"{BaseUrl}/tag/category";
 
         using var res = await Get(reqUrl);
-        var resModel = await res.Content.ReadFromJsonAsync<List<ModrinthCategoryInfo>>();
+        var resModel = await res.Content.ReadFromJsonAsync<ModrinthCategoryInfo[]>();
 
-        return resModel == null ? Array.Empty<string>() : resModel.Select(c => c.Name).ToArray();
+        return resModel;
     }
 
     public static async Task<ModrinthProjectDependencyInfo?> GetProjectDependenciesInfo(string projectId)
