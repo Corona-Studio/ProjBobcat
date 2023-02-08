@@ -121,6 +121,7 @@ performance optimization
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Class\Model\GameResource\ResolvedInfo\" />
+    <Folder Include="DefaultComponent\LogAnalysis\AnalysisReport\" />
   </ItemGroup>
   <!-- Compile Options -->
 </Project>

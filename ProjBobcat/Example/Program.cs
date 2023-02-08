@@ -10,6 +10,7 @@ using ProjBobcat.DefaultComponent.Authenticator;
 using ProjBobcat.DefaultComponent.Logging;
 using ProjBobcat.DefaultComponent.Launch.GameCore;
 using System.Collections.Generic;
+using ProjBobcat.DefaultComponent.LogAnalysis;
 
 namespace Example
 {
@@ -19,6 +20,18 @@ namespace Example
 
         static async Task Main()
         {
+            var a = new DefaultLogAnalyzer
+            {
+                GameId = "1.19.2-aaaa",
+                RootPath = ".minecraft",
+                VersionIsolation = true,
+                LogFileLastWriteTimeLimit = 100
+            };
+
+            var x = a.GenerateReport().ToList();
+
+            Console.WriteLine(x);
+            
             var jl = SystemInfoHelper.FindJava();
             var javaResult = new List<string>();
             var jIndex = 0;
