@@ -80,7 +80,7 @@ After the step above is completed, you need to add two lines of code into your p
 | Resource Auto Completion (Multi-thread downloader) | ✅ |
 | Minecraft: Windows 10 Edition Support (Detector and launcher) | ✅ |
 | Game log resolver | ✅ |
-| Game crashing detector | WIP |
+| Game crashing detector | ✅ |
 
 ## Instruction
 
