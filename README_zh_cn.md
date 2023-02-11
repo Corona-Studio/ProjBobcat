@@ -92,7 +92,7 @@ All you need for minecraft launcher in typescript. https://voxelum.github.io/min
 | 资源自动补全（多线程下载） | ✅ |
 | Windows 10 版 Minecraft 支持（检测和启动） | ✅ |
 | 游戏日志解析器 | ✅ |
-| 游戏崩溃探测器 | 制作中 |
+| 游戏崩溃探测器 | ✅ |
 
 ## 使用说明
 
