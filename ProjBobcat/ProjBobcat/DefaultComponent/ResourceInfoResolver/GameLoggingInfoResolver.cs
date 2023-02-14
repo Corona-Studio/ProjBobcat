@@ -28,8 +28,13 @@ public sealed class GameLoggingInfoResolver : ResolverBase
         {
             if (string.IsNullOrEmpty(VersionInfo.Logging?.Client?.File?.Sha1)) yield break;
 
+#if NET7_0_OR_GREATER
+            await using var fs = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            var computedHash = (await SHA1.HashDataAsync(fs)).BytesToString();
+#elif NET6_0_OR_GREATER
             var bytes = await File.ReadAllBytesAsync(filePath);
             var computedHash = SHA1.HashData(bytes.AsSpan()).BytesToString();
+#endif
 
             if (computedHash.Equals(VersionInfo.Logging?.Client?.File?.Sha1, StringComparison.OrdinalIgnoreCase))
                 yield break;

@@ -231,7 +231,7 @@ public static class DownloadHelper
     /// <param name="downloadFile"></param>
     /// <param name="downloadSettings"></param>
     /// <returns></returns>
-    public static async Task MultiPartDownloadTaskAsync(DownloadFile downloadFile,
+    public static async Task MultiPartDownloadTaskAsync(DownloadFile? downloadFile,
         DownloadSettings? downloadSettings = null)
     {
         if (downloadFile == null) return;
@@ -246,7 +246,7 @@ public static class DownloadHelper
         var timeout = TimeSpan.FromMilliseconds(downloadSettings.Timeout * 2);
 
         var isLatestFileCheckSucceeded = true;
-        List<DownloadRange> readRanges = null;
+        List<DownloadRange>? readRanges = null;
 
         for (var r = 0; r <= downloadSettings.RetryCount; r++)
         {

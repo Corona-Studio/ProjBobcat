@@ -16,6 +16,8 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
 {
     readonly LaunchSettings _launchSettings;
 
+    public bool EnableXmlLoggingOutput { get; init; }
+
     /// <summary>
     ///     构造函数
     /// </summary>
@@ -70,8 +72,8 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
 
         var gameArgs = LaunchSettings.GameArguments ?? LaunchSettings.FallBackGameArguments;
 
-        if (gameArgs.AddtionalJvmArguments?.Any() ?? false)
-            foreach (var jvmArg in gameArgs.AddtionalJvmArguments)
+        if (gameArgs.AdditionalJvmArguments?.Any() ?? false)
+            foreach (var jvmArg in gameArgs.AdditionalJvmArguments)
                 yield return jvmArg;
 
         if (string.IsNullOrEmpty(GameProfile?.JavaArgs))
@@ -254,7 +256,9 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
 
         arguments.AddRange(ParseJvmHeadArguments());
         arguments.AddRange(ParseJvmArguments());
-        arguments.AddRange(ParseGameLoggingArguments());
+
+        if(EnableXmlLoggingOutput)
+            arguments.AddRange(ParseGameLoggingArguments());
 
         arguments.Add(VersionInfo.MainClass);
 

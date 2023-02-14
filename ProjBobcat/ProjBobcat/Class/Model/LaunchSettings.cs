@@ -17,14 +17,14 @@ public class GameArguments
     public uint MaxMemory { get; set; }
     public ResolutionModel Resolution { get; set; }
     public GcType GcType { get; set; }
-    public IEnumerable<string> AddtionalJvmArguments { get; set; }
+    public IEnumerable<string>? AdditionalJvmArguments { get; set; }
     public ServerSettings ServerSettings { get; set; }
     public string AdvanceArguments { get; set; }
 }
 
 public class LaunchSettings
 {
-    public string GameName { get; set; }
+    public string? GameName { get; set; }
 
     /// <summary>
     ///     Real game root, should be the root of /saves, /logs

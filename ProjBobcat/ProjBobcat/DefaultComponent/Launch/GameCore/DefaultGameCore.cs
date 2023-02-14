@@ -45,6 +45,8 @@ public sealed class DefaultGameCore : GameCoreBase
         }
     }
 
+    public bool EnableXmlLoggingOutput { get; init; }
+
     public override async Task<LaunchResult> LaunchTaskAsync(LaunchSettings settings)
     {
         try
@@ -157,7 +159,10 @@ public sealed class DefaultGameCore : GameCoreBase
                 };
 
             var argumentParser = new DefaultLaunchArgumentParser(settings, VersionLocator.LauncherProfileParser,
-                VersionLocator, authResult, RootPath, version.RootVersion);
+                VersionLocator, authResult, RootPath, version.RootVersion)
+            {
+                EnableXmlLoggingOutput = EnableXmlLoggingOutput
+            };
 
             //以字符串数组形式生成启动参数。
             //Generates launch cmd arguments in string[].

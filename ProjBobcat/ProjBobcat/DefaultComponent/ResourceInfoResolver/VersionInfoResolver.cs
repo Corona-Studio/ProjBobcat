@@ -7,6 +7,7 @@ using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.GameResource;
 using ProjBobcat.Interface;
+using SharpCompress.Common;
 
 namespace ProjBobcat.DefaultComponent.ResourceInfoResolver;
 
@@ -34,8 +35,13 @@ public sealed class VersionInfoResolver : ResolverBase
         {
             if (string.IsNullOrEmpty(clientDownload.Sha1)) yield break;
 
+#if NET7_0_OR_GREATER
+            await using var jarFs = File.Open(jarPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            var computedHash = (await SHA1.HashDataAsync(jarFs)).BytesToString();
+#elif NET6_0_OR_GREATER
             var bytes = await File.ReadAllBytesAsync(jarPath);
             var computedHash = SHA1.HashData(bytes.AsSpan()).BytesToString();
+#endif
 
             if (computedHash.Equals(clientDownload.Sha1, StringComparison.OrdinalIgnoreCase))
                 yield break;
