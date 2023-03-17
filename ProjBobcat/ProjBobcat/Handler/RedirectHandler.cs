@@ -27,10 +27,10 @@ public class RedirectHandler : DelegatingHandler
         _maxRetries = maxRetries;
     }
 
-    async Task<HttpResponseMessage> CreateRedirectResponse(HttpRequestMessage request,
-        HttpResponseMessage response, CancellationToken cancellationToken)
+    async Task<HttpResponseMessage?> CreateRedirectResponse(HttpRequestMessage request,
+        HttpResponseMessage? response, CancellationToken cancellationToken)
     {
-        var redirectUri = response.Headers.Location;
+        var redirectUri = response?.Headers?.Location;
 
         if (redirectUri == null) return null;
         if (request.RequestUri == null) return null;
@@ -44,7 +44,7 @@ public class RedirectHandler : DelegatingHandler
         return await base.SendAsync(newRequest, cancellationToken);
     }
 
-    protected override async Task<HttpResponseMessage> SendAsync(
+    protected override async Task<HttpResponseMessage?> SendAsync(
         HttpRequestMessage request,
         CancellationToken cancellationToken)
     {

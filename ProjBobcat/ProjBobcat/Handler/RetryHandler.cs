@@ -27,7 +27,7 @@ public class RetryHandler : DelegatingHandler
         HttpRequestMessage request,
         CancellationToken cancellationToken)
     {
-        HttpResponseMessage response = null;
+        HttpResponseMessage? response = null;
 
         for (var i = 0; i < _maxRetries; i++)
         {
@@ -46,7 +46,7 @@ public class RetryHandler : DelegatingHandler
             return response;
         }
 
-        return response;
+        return response!;
     }
 
     static bool IsNetworkError(Exception ex)
