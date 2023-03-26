@@ -95,7 +95,7 @@ class SystemInfoHelper
     ///     获取 系统的内存信息
     /// </summary>
     /// <returns></returns>
-    public static MemoryInfo GetWindowsMemoryStatus()
+    public static MemoryInfo? GetWindowsMemoryStatus()
     {
         using var wmiObject = new ManagementObjectSearcher("select * from Win32_OperatingSystem");
 

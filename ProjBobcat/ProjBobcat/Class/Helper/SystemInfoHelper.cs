@@ -12,7 +12,7 @@ namespace ProjBobcat.Class.Helper;
 /// </summary>
 public static class SystemInfoHelper
 {
-    public static CPUInfo GetProcessorUsage()
+    public static CPUInfo? GetProcessorUsage()
     {
 #if WINDOWS
         return Platforms.Windows.SystemInfoHelper.GetWindowsCpuUsage()
@@ -26,7 +26,7 @@ public static class SystemInfoHelper
 #endif
     }
 
-    public static MemoryInfo GetMemoryUsage()
+    public static MemoryInfo? GetMemoryUsage()
     {
 #if WINDOWS
         return Platforms.Windows.SystemInfoHelper.GetWindowsMemoryStatus();
