@@ -57,7 +57,7 @@ public class YggdrasilAuthenticator : IAuthenticator
     ///     获取或设置验证服务器。
     ///     这个属性允许为 null 。
     /// </summary>
-    public string AuthServer { get; init; }
+    public string? AuthServer { get; init; }
 
     /// <summary>
     ///     获取登录Api地址。

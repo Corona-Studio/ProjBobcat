@@ -20,7 +20,7 @@ public class AuthResultBase
     /// <summary>
     ///     错误信息
     /// </summary>
-    public ErrorModel Error { get; set; }
+    public ErrorModel? Error { get; set; }
 
     /// <summary>
     ///     选择的Profile
