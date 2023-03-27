@@ -26,23 +26,6 @@ public class YggdrasilAuthenticator : IAuthenticator
     /// </summary>
     const string OfficialAuthServer = "https://authserver.mojang.com";
 
-    static readonly ConcurrentQueue<string> _loginHistoryQueue = new();
-
-    static readonly Timer _loginTimer = new(5000)
-    {
-        AutoReset = true,
-        Enabled = true
-    };
-
-    static YggdrasilAuthenticator()
-    {
-        _loginTimer.Elapsed += (_, _) =>
-        {
-            if (_loginHistoryQueue.IsEmpty) return;
-            _loginHistoryQueue.TryDequeue(out _);
-        };
-    }
-
     /// <summary>
     ///     获取或设置邮箱。
     /// </summary>
@@ -117,15 +100,19 @@ public class YggdrasilAuthenticator : IAuthenticator
         };
         var requestJson = JsonSerializer.Serialize(requestModel, JsonHelper.CamelCasePropertyNamesSettings);
 
-        if (!_loginHistoryQueue.IsEmpty)
-        {
-            var authInfo = _loginHistoryQueue.FirstOrDefault();
-            if (!string.IsNullOrEmpty(authInfo))
-                if (authInfo.Equals($"{Email}_{Password}", StringComparison.OrdinalIgnoreCase))
-                    await Task.Delay(5500);
-        }
-
         using var resultJson = await HttpHelper.Post(LoginAddress, requestJson);
+
+        if(!resultJson.IsSuccessStatusCode)
+            return new YggdrasilAuthResult
+            {
+                AuthStatus = AuthStatus.Failed,
+                Error = new ErrorModel
+                {
+                    Cause = "网络请求失败",
+                    Error = $"验证请求返回了失败的状态码：{resultJson.StatusCode}"
+                }
+            };
+
         var result = await resultJson.Content.ReadFromJsonAsync<AuthResponseModel>();
 
         if (result == default || string.IsNullOrEmpty(result.AccessToken))
@@ -242,8 +229,6 @@ public class YggdrasilAuthenticator : IAuthenticator
                     ErrorMessage = "请检查 launcher_accounts.json 的权限"
                 }
             };
-
-        _loginHistoryQueue.Enqueue($"{Email}_{Password}");
 
         return new YggdrasilAuthResult
         {

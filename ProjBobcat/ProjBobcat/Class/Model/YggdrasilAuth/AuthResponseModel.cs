@@ -11,7 +11,7 @@ public class AuthResponseModel
     [JsonPropertyName("availableProfiles")]
     public ProfileInfoModel[] AvailableProfiles { get; set; }
 
-    [JsonPropertyName("selectedProfile")] public ProfileInfoModel SelectedProfile { get; set; }
+    [JsonPropertyName("selectedProfile")] public ProfileInfoModel? SelectedProfile { get; set; }
 
     [JsonPropertyName("user")] public UserInfoModel User { get; set; }
 }
