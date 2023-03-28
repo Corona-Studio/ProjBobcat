@@ -22,7 +22,6 @@ public enum CrashCauses
 
     #region GPU
 
-    
     UnableToSetPixelFormat,
     UnsupportedIntelDriver, // https://bugs.mojang.com/browse/MC-32606
     UnsupportedAmdDriver, // https://bugs.mojang.com/browse/MC-31618

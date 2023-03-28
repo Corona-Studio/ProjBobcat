@@ -7,6 +7,8 @@ namespace ProjBobcat.Class.Helper;
 /// </summary>
 public static class CryptoHelper
 {
-    
-    public static string BytesToString(this byte[] bytes) => BitConverter.ToString(bytes).Replace("-", string.Empty);
+    public static string BytesToString(this byte[] bytes)
+    {
+        return BitConverter.ToString(bytes).Replace("-", string.Empty);
+    }
 }

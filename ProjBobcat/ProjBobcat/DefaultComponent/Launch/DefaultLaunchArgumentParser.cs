@@ -16,8 +16,6 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
 {
     readonly LaunchSettings _launchSettings;
 
-    public bool EnableXmlLoggingOutput { get; init; }
-
     /// <summary>
     ///     构造函数
     /// </summary>
@@ -63,6 +61,8 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
         ClassPath = sb.ToString();
         LastAuthResult = LaunchSettings.Authenticator.GetLastAuthResult();
     }
+
+    public bool EnableXmlLoggingOutput { get; init; }
 
     public IEnumerable<string> ParseJvmHeadArguments()
     {
@@ -210,7 +210,8 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
         var gameDir = _launchSettings.VersionInsulation
             ? Path.Combine(RootPath, GamePathHelper.GetGamePath(LaunchSettings.Version))
             : RootPath;
-        var clientIdUpper = (VersionLocator?.LauncherProfileParser?.LauncherProfile?.ClientToken ?? Guid.Empty.ToString("D"))
+        var clientIdUpper = (VersionLocator?.LauncherProfileParser?.LauncherProfile?.ClientToken ??
+                             Guid.Empty.ToString("D"))
             .Replace("-", string.Empty).ToUpper();
         var clientIdBytes = Encoding.ASCII.GetBytes(clientIdUpper);
         var clientId = Convert.ToBase64String(clientIdBytes);
@@ -220,7 +221,9 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
             MicrosoftAuthResult => "msa",
             _ => "Mojang"
         };
-        var xuid = authResult is MicrosoftAuthResult microsoftAuthResult ? microsoftAuthResult.XBoxUid : Guid.Empty.ToString("N");
+        var xuid = authResult is MicrosoftAuthResult microsoftAuthResult
+            ? microsoftAuthResult.XBoxUid
+            : Guid.Empty.ToString("N");
 
         var mcArgumentsDic = new Dictionary<string, string>
         {
@@ -257,7 +260,7 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
         arguments.AddRange(ParseJvmHeadArguments());
         arguments.AddRange(ParseJvmArguments());
 
-        if(EnableXmlLoggingOutput)
+        if (EnableXmlLoggingOutput)
             arguments.AddRange(ParseGameLoggingArguments());
 
         arguments.Add(VersionInfo.MainClass);

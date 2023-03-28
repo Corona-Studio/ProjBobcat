@@ -11,8 +11,8 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver;
 public abstract class ResolverBase : IResourceInfoResolver
 {
     static readonly object ResolveEventKey = new();
-    bool disposedValue;
     readonly EventHandlerList listEventDelegates = new();
+    bool disposedValue;
 
     public event EventHandler<GameResourceInfoResolveEventArgs> GameResourceInfoResolveEvent
     {

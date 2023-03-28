@@ -1,7 +1,7 @@
-﻿using System.Diagnostics;
-using System.Text.Json.Serialization;
+﻿using System;
+using System.Diagnostics;
 using System.Text.Json;
-using System;
+using System.Text.Json.Serialization;
 
 namespace ProjBobcat.JsonConverter;
 

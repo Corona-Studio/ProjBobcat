@@ -112,7 +112,7 @@ static class SystemInfoHelper
         var total = GC.GetGCMemoryInfo().TotalAvailableMemoryBytes / Math.Pow(1024, 2);
         var used = total - free;
         var percentage = MemUsagePercentageCounter.NextValue();
-        
+
         var result = new MemoryInfo
         {
             Free = free,

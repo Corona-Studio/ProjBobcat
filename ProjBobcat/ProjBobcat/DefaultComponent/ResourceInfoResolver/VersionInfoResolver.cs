@@ -7,7 +7,6 @@ using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.GameResource;
 using ProjBobcat.Interface;
-using SharpCompress.Common;
 
 namespace ProjBobcat.DefaultComponent.ResourceInfoResolver;
 

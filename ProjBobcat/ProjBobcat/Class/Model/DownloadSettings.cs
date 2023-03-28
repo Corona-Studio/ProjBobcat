@@ -47,7 +47,7 @@ public class DownloadSettings
     public async Task<byte[]> HashDataAsync(string filePath, CancellationToken? token)
     {
         token ??= CancellationToken.None;
-        
+
         var bytes = await File.ReadAllBytesAsync(filePath, token.Value);
 
         return HashType switch

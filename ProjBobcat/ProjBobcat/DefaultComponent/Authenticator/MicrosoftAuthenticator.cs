@@ -159,10 +159,9 @@ public class MicrosoftAuthenticator : IAuthenticator
                 var isXUidXUiExists = xUidRes.DisplayClaims.TryGetProperty("xui", out var xuidXui);
                 JsonElement? firstXuidXui = isXUidXUiExists ? xuidXui[0] : null;
 
-                if (firstXuidXui.HasValue && firstXuidXui.Value.TryGetProperty("xid", out var xid) && xid.ValueKind == JsonValueKind.String && !string.IsNullOrEmpty(xid.GetString()))
-                {
-                    xuid = xid.GetString()!;
-                }
+                if (firstXuidXui.HasValue && firstXuidXui.Value.TryGetProperty("xid", out var xid) &&
+                    xid.ValueKind == JsonValueKind.String &&
+                    !string.IsNullOrEmpty(xid.GetString())) xuid = xid.GetString()!;
             }
         }
 
@@ -172,8 +171,8 @@ public class MicrosoftAuthenticator : IAuthenticator
 
         var isXUiExists = xStsRes!.DisplayClaims.TryGetProperty("xui", out var xui);
         JsonElement? firstXui = isXUiExists ? xui[0] : null;
-        if (!firstXui.HasValue || !firstXui.Value.TryGetProperty("uhs", out var uhs) || uhs.ValueKind != JsonValueKind.String || string.IsNullOrEmpty(uhs.GetString()))
-        {
+        if (!firstXui.HasValue || !firstXui.Value.TryGetProperty("uhs", out var uhs) ||
+            uhs.ValueKind != JsonValueKind.String || string.IsNullOrEmpty(uhs.GetString()))
             return new MicrosoftAuthResult
             {
                 AuthStatus = AuthStatus.Failed,
@@ -183,7 +182,6 @@ public class MicrosoftAuthenticator : IAuthenticator
                     Error = "XSTS 认证失败，原因：无法从认证结果中获取 UHS 值"
                 }
             };
-        }
 
         var uhsValue = uhs.GetString()!;
         var mcReqModel = new
@@ -398,7 +396,7 @@ public class MicrosoftAuthenticator : IAuthenticator
 
         #region FETCH USER AUTH RESULT
 
-        var userAuthResultDic = new[] 
+        var userAuthResultDic = new[]
         {
             new KeyValuePair<string, string>("grant_type", MSGrantType),
             new KeyValuePair<string, string>("client_id", ApiSettings.ClientId),

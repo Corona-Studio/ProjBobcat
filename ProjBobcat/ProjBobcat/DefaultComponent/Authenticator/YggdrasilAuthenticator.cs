@@ -100,7 +100,7 @@ public class YggdrasilAuthenticator : IAuthenticator
 
         using var resultJson = await HttpHelper.Post(LoginAddress, requestJson);
 
-        if(!resultJson.IsSuccessStatusCode)
+        if (!resultJson.IsSuccessStatusCode)
             return new YggdrasilAuthResult
             {
                 AuthStatus = AuthStatus.Failed,

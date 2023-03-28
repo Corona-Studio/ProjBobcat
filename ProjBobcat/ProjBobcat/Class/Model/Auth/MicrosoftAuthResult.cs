@@ -20,7 +20,7 @@ public class MicrosoftAuthResult : AuthResultBase
     public DateTime CurrentAuthTime { get; set; }
 
     /// <summary>
-    /// XBox UID
+    ///     XBox UID
     /// </summary>
     public string XBoxUid { get; set; }
 
