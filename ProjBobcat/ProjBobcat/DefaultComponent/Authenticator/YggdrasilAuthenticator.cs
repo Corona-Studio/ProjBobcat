@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Linq;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
-using System.Timers;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Auth;
@@ -285,7 +283,7 @@ public class YggdrasilAuthenticator : IAuthenticator
                 },
                 SelectedProfile = new ProfileInfoModel
                 {
-                    Name = profile.MinecraftProfile.Name,
+                    Name = profile.MinecraftProfile?.Name ?? Email,
                     UUID = new PlayerUUID()
                 }
             };

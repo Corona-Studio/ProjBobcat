@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Management;
 using Microsoft.Win32;
 using ProjBobcat.Class.Model;
 
@@ -10,8 +9,20 @@ using ProjBobcat.Class.Model;
 
 namespace ProjBobcat.Platforms.Windows;
 
-class SystemInfoHelper
+static class SystemInfoHelper
 {
+    static readonly PerformanceCounter FreeMemCounter = new("Memory", "Available MBytes");
+    static readonly PerformanceCounter MemUsagePercentageCounter = new("Memory", "% Committed Bytes In Use");
+    static readonly PerformanceCounter CpuCounter = new("Processor Information", "% Processor Utility", "_Total");
+
+    static SystemInfoHelper()
+    {
+        // Performance Counter Pre-Heat
+        FreeMemCounter.NextValue();
+        MemUsagePercentageCounter.NextValue();
+        CpuCounter.NextValue();
+    }
+
     /// <summary>
     ///     判断是否安装了 UWP 版本的 Minecraft 。
     /// </summary>
@@ -95,25 +106,19 @@ class SystemInfoHelper
     ///     获取 系统的内存信息
     /// </summary>
     /// <returns></returns>
-    public static MemoryInfo? GetWindowsMemoryStatus()
+    public static MemoryInfo GetWindowsMemoryStatus()
     {
-        using var wmiObject = new ManagementObjectSearcher("select * from Win32_OperatingSystem");
-
-        var memoryValue = wmiObject.Get().Cast<ManagementObject>().Select(mo => new
-        {
-            Free = double.Parse(mo["FreePhysicalMemory"].ToString()) / 1024,
-            Total = double.Parse(mo["TotalVisibleMemorySize"].ToString()) / 1024
-        }).FirstOrDefault();
-
-        if (memoryValue == default) return null;
-
-        var percent = (memoryValue.Total - memoryValue.Free) / memoryValue.Total;
+        var free = FreeMemCounter.NextValue();
+        var total = GC.GetGCMemoryInfo().TotalAvailableMemoryBytes / Math.Pow(1024, 2);
+        var used = total - free;
+        var percentage = MemUsagePercentageCounter.NextValue();
+        
         var result = new MemoryInfo
         {
-            Free = memoryValue.Free,
-            Percentage = percent,
-            Total = memoryValue.Total,
-            Used = memoryValue.Total - memoryValue.Free
+            Free = free,
+            Percentage = percentage,
+            Total = total,
+            Used = used
         };
 
         return result;
@@ -123,19 +128,15 @@ class SystemInfoHelper
     ///     获取系统 Cpu 信息
     /// </summary>
     /// <returns></returns>
-    public static IEnumerable<CPUInfo> GetWindowsCpuUsage()
+    public static CPUInfo GetWindowsCpuUsage()
     {
-        using var searcher = new ManagementObjectSearcher("select * from Win32_PerfFormattedData_PerfOS_Processor");
-        var cpuTimes = searcher.Get()
-            .Cast<ManagementObject>()
-            .ToDictionary(k => k["Name"].ToString(), v => Convert.ToDouble(v["PercentProcessorTime"]))
-            .Select(p => new CPUInfo
-            {
-                Name = p.Key,
-                Usage = p.Value
-            });
+        var percentage = CpuCounter.NextValue();
 
-        return cpuTimes;
+        return new CPUInfo
+        {
+            Name = "Total %",
+            Usage = percentage
+        };
     }
 
     public static IEnumerable<string> GetLogicalDrives()
