@@ -24,3 +24,8 @@ public class VersionManifest
 
     [JsonPropertyName("versions")] public VersionManifestVersionsModel[] Versions { get; set; }
 }
+
+[JsonSerializable(typeof(VersionManifest))]
+partial class VersionManifestContext : JsonSerializerContext
+{
+}

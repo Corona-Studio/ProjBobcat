@@ -12,3 +12,8 @@ public class AuthRefreshRequestModel
 
     [JsonPropertyName("selectedProfile")] public ProfileInfoModel SelectedProfile { get; set; }
 }
+
+[JsonSerializable(typeof(AuthRefreshRequestModel))]
+partial class AuthRefreshRequestModelContext : JsonSerializerContext
+{
+}

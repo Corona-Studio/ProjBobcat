@@ -16,3 +16,8 @@ public class DeviceIdResponseModel
 
     [JsonPropertyName("message")] public string Message { get; set; }
 }
+
+[JsonSerializable(typeof(DeviceIdResponseModel))]
+partial class DeviceIdResponseModelContext : JsonSerializerContext
+{
+}

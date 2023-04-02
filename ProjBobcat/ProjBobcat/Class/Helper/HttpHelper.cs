@@ -21,7 +21,7 @@ public static class HttpHelper
     static readonly Regex UriRegex = new(UriRegexStr, RegexOptions.Compiled);
 #pragma warning restore SYSLIB1045 // 转换为“GeneratedRegexAttribute”。
 
-    static HttpClient Client => HttpClientHelper.GetNewClient(HttpClientHelper.DefaultClientName);
+    static HttpClient Client => HttpClientHelper.DefaultClient;
 
     /// <summary>
     ///     正则匹配Uri

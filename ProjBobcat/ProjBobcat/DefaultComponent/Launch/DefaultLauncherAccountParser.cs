@@ -36,7 +36,7 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
             LauncherAccount = launcherAccount;
 
             var launcherProfileJson =
-                JsonSerializer.Serialize(launcherAccount, JsonHelper.CamelCasePropertyNamesSettings);
+                JsonSerializer.Serialize(launcherAccount, typeof(LauncherAccountModel), new LauncherAccountModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
             if (!Directory.Exists(RootPath))
                 Directory.CreateDirectory(RootPath);
@@ -47,7 +47,7 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
         {
             var launcherProfileJson =
                 File.ReadAllText(FullLauncherAccountPath, Encoding.UTF8);
-            LauncherAccount = JsonSerializer.Deserialize<LauncherAccountModel>(launcherProfileJson);
+            LauncherAccount = JsonSerializer.Deserialize(launcherProfileJson, LauncherAccountModelContext.Default.LauncherAccountModel);
         }
     }
 
@@ -139,7 +139,7 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
             File.Delete(FullLauncherAccountPath);
 
         var launcherProfileJson =
-            JsonSerializer.Serialize(LauncherAccount, JsonHelper.CamelCasePropertyNamesSettings);
+            JsonSerializer.Serialize(LauncherAccount, typeof(LauncherAccountModel), new LauncherAccountModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
         File.WriteAllText(FullLauncherAccountPath, launcherProfileJson);
     }

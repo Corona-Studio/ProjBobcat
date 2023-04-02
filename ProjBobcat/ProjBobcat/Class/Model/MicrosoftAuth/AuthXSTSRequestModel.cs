@@ -1,4 +1,6 @@
-﻿namespace ProjBobcat.Class.Model.MicrosoftAuth;
+﻿using System.Text.Json.Serialization;
+
+namespace ProjBobcat.Class.Model.MicrosoftAuth;
 
 public class XSTSProperties
 {
@@ -28,4 +30,9 @@ public class AuthXSTSRequestModel
             TokenType = "JWT"
         };
     }
+}
+
+[JsonSerializable(typeof(AuthXSTSRequestModel))]
+partial class AuthXSTSRequestModelContext : JsonSerializerContext
+{
 }

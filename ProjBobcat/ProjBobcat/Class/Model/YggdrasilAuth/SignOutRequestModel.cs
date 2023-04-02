@@ -8,3 +8,8 @@ public class SignOutRequestModel
 
     [JsonPropertyName("password")] public string Password { get; set; }
 }
+
+[JsonSerializable(typeof(SignOutRequestModel))]
+partial class SignOutRequestModelContext : JsonSerializerContext
+{
+}

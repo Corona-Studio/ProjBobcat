@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Helper.SystemInfo;
 using ProjBobcat.Class.Model;
+using ProjBobcat.Class.Model.JsonContexts;
 using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.Version;
 using FileInfo = ProjBobcat.Class.Model.FileInfo;
@@ -72,14 +74,14 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             }
 
             if (jvmRule.TryGetProperty("rules", out var rules))
-                if (!(rules.Deserialize<JvmRules[]>()?.CheckAllow() ?? false))
+                if (!(rules.Deserialize(JvmRulesContext.Default.JvmRulesArray)?.CheckAllow() ?? false))
                     continue;
             if (!jvmRule.TryGetProperty("value", out var value)) continue;
 
             switch (value.ValueKind)
             {
                 case JsonValueKind.Array:
-                    var values = value.Deserialize<string[]>();
+                    var values = value.Deserialize(StringContext.Default.StringArray);
 
                     if (!(values?.Any() ?? false)) continue;
 
@@ -136,7 +138,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             var ruleKey = string.Empty;
             var ruleValue = string.Empty;
 
-            var rulesArr = rules.Deserialize<GameRules[]>();
+            var rulesArr = rules.Deserialize(GameRulesContext.Default.GameRulesArray);
 
             if (!(rulesArr?.Any() ?? false)) continue;
 
@@ -153,7 +155,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                 ruleValue = value.ValueKind switch
                 {
                     JsonValueKind.String => value.GetString(),
-                    JsonValueKind.Array => string.Join(' ', value.Deserialize<string[]>() ?? Array.Empty<string>())
+                    JsonValueKind.Array => string.Join(' ', value.Deserialize(StringContext.Default.StringArray) ?? Array.Empty<string>())
                 };
             }
 
@@ -280,7 +282,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
     /// <returns></returns>
     public override RawVersionModel? ParseRawVersion(string id)
     {
-        // 预防I/O的错误。
+        // 预防 I/O 的错误。
         // Prevents errors related to I/O.
         if (!Directory.Exists(Path.Combine(RootPath, GamePathHelper.GetGamePath(id))))
             return null;
@@ -288,7 +290,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             return null;
 
         using var fs = File.OpenRead(GamePathHelper.GetGameJsonPath(RootPath, id));
-        var versionJson = JsonSerializer.Deserialize<RawVersionModel>(fs);
+        var versionJson = JsonSerializer.Deserialize(fs, RawVersionModelContext.Default.RawVersionModel);
 
         if (versionJson == null)
             return null;

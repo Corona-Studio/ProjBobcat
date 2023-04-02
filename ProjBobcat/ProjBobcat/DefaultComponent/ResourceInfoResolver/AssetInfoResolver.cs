@@ -43,7 +43,7 @@ public sealed class AssetInfoResolver : ResolverBase
             OnResolve("没有提供 Version Manifest， 开始下载");
 
             using var vmJsonRes = await HttpHelper.Get(DefaultVersionManifestUrl);
-            var vm = await vmJsonRes.Content.ReadFromJsonAsync<VersionManifest>();
+            var vm = await vmJsonRes.Content.ReadFromJsonAsync(VersionManifestContext.Default.VersionManifest);
 
             versions = vm?.Versions?.ToList();
         }
@@ -79,7 +79,7 @@ public sealed class AssetInfoResolver : ResolverBase
                 if (versionObject == default) yield break;
 
                 using var jsonRes = await HttpHelper.Get(versionObject.Url);
-                var versionModel = await jsonRes.Content.ReadFromJsonAsync<RawVersionModel>();
+                var versionModel = await jsonRes.Content.ReadFromJsonAsync(RawVersionModelContext.Default.RawVersionModel);
 
                 if (versionModel == default) yield break;
 
@@ -121,7 +121,7 @@ public sealed class AssetInfoResolver : ResolverBase
         try
         {
             await using var assetFs = File.OpenRead(assetIndexesPath);
-            assetObject = await JsonSerializer.DeserializeAsync<AssetObjectModel>(assetFs);
+            assetObject = await JsonSerializer.DeserializeAsync(assetFs, AssetObjectModelContext.Default.AssetObjectModel);
         }
         catch (Exception ex)
         {

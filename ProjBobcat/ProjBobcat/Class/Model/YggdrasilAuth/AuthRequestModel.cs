@@ -26,3 +26,8 @@ public class AuthRequestModel
         Version = 1
     };
 }
+
+[JsonSerializable(typeof(AuthRequestModel))]
+partial class AuthRequestModelContext : JsonSerializerContext
+{
+}

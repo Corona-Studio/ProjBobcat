@@ -32,3 +32,8 @@ public class AssetObjectModel
     [JsonPropertyName("objects")]
     public Dictionary<string, AssetFileInfo> Objects { get; set; }
 }
+
+[JsonSerializable(typeof(AssetObjectModel))]
+partial class AssetObjectModelContext : JsonSerializerContext
+{
+}

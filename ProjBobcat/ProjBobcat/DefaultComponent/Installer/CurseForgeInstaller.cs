@@ -146,7 +146,7 @@ public class CurseForgeInstaller : InstallerBase, ICurseForgeInstaller
 
         await using var stream = manifestEntry.OpenEntryStream();
 
-        var manifestModel = await JsonSerializer.DeserializeAsync<CurseForgeManifestModel>(stream);
+        var manifestModel = await JsonSerializer.DeserializeAsync(stream, CurseForgeManifestModelContext.Default.CurseForgeManifestModel);
 
         return manifestModel;
     }

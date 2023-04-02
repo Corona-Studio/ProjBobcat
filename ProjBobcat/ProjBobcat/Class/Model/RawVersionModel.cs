@@ -219,3 +219,8 @@ public class RawVersionModel
     [JsonPropertyName("jar")]
     public string? JarFile { get; set; }
 }
+
+[JsonSerializable(typeof(RawVersionModel))]
+partial class RawVersionModelContext : JsonSerializerContext
+{
+}

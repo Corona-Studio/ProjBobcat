@@ -26,7 +26,7 @@ public static class DownloadHelper
     /// </summary>
     public static int DownloadThread { get; set; } = 8;
 
-    static HttpClient DataClient => HttpClientHelper.GetNewClient(HttpClientHelper.DataClientName);
+    static HttpClient DataClient => HttpClientHelper.DataClient;
 
     #region 下载数据
 
@@ -218,10 +218,9 @@ public static class DownloadHelper
 
     #region 分片下载
 
-    static HttpClient HeadClient => HttpClientHelper.GetNewClient(HttpClientHelper.HeadClientName);
+    static HttpClient HeadClient => HttpClientHelper.HeadClient;
 
-    static HttpClient MultiPartClient =>
-        HttpClientHelper.GetNewClient(HttpClientHelper.MultiPartClientName);
+    static HttpClient MultiPartClient => HttpClientHelper.MultiPartClient;
 
     static readonly MemoryPool<byte> Pool = MemoryPool<byte>.Shared;
 

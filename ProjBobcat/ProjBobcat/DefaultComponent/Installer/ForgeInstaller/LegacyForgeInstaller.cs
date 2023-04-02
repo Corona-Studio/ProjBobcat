@@ -10,6 +10,7 @@ using ProjBobcat.Class.Model.Forge;
 using ProjBobcat.Class.Model.YggdrasilAuth;
 using ProjBobcat.Interface;
 using SharpCompress.Archives;
+using VersionInfo = ProjBobcat.Class.Model.Forge.VersionInfo;
 
 namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller;
 
@@ -83,7 +84,7 @@ public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
 
             InvokeStatusChangedEvent("解析安装文档", 0.35);
 
-            var profileModel = await JsonSerializer.DeserializeAsync<LegacyForgeInstallProfile>(stream);
+            var profileModel = await JsonSerializer.DeserializeAsync(stream, LegacyForgeInstallProfileContext.Default.LegacyForgeInstallProfile);
             if (profileModel == null)
                 throw new ArgumentNullException(nameof(profileModel));
 
@@ -117,8 +118,8 @@ public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
             await using var fs = File.OpenWrite(forgeLibPath);
             legacyJarEntry.WriteTo(fs);
 
-            var versionJsonString = JsonSerializer.Serialize(profileModel.VersionInfo,
-                JsonHelper.CamelCasePropertyNamesSettings);
+            var versionJsonString = JsonSerializer.Serialize(profileModel.VersionInfo, typeof(VersionInfo),
+                new LegacyForgeInstallVersionInfoContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
             await File.WriteAllTextAsync(jsonPath, versionJsonString);
             InvokeStatusChangedEvent("文件写入完成", 1);

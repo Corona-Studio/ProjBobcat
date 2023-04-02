@@ -13,3 +13,8 @@ public class LauncherProfileModel
 
     [JsonPropertyName("launcherVersion")] public LauncherVersionModel LauncherVersion { get; set; }
 }
+
+[JsonSerializable(typeof(LauncherProfileModel))]
+partial class LauncherProfileModelContext : JsonSerializerContext
+{
+}

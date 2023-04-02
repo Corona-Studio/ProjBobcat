@@ -78,19 +78,19 @@ public static class GameResourcesResolveHelper
             async Task<GameModResolvedInfo?> GetNewModInfo(IArchiveEntry entry)
             {
                 await using var stream = entry.OpenEntryStream();
-                var doc = await JsonDocument.ParseAsync(stream);
+                var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
 
                 List<GameModInfoModel>? model = null;
                 switch (doc.RootElement.ValueKind)
                 {
                     case JsonValueKind.Object:
-                        var val = doc.RootElement.Deserialize<GameModInfoModel>();
+                        var val = doc.RootElement.Deserialize(GameModInfoModelContext.Default.GameModInfoModel);
 
                         if (val != null) model = new List<GameModInfoModel> { val };
 
                         break;
                     case JsonValueKind.Array:
-                        model = doc.RootElement.Deserialize<List<GameModInfoModel>>();
+                        model = doc.RootElement.Deserialize(GameModInfoModelContext.Default.ListGameModInfoModel) ?? new List<GameModInfoModel>();
                         break;
                 }
 
@@ -127,7 +127,7 @@ public static class GameResourcesResolveHelper
             async Task<GameModResolvedInfo> GetFabricModInfo(IArchiveEntry entry)
             {
                 await using var stream = entry.OpenEntryStream();
-                var tempModel = await JsonSerializer.DeserializeAsync<FabricModInfoModel>(stream);
+                var tempModel = await JsonSerializer.DeserializeAsync(stream, FabricModInfoModelContext.Default.FabricModInfoModel, ct);
 
                 var author = tempModel?.Authors?.Any() ?? false
                     ? string.Join(',', tempModel.Authors)
@@ -204,7 +204,7 @@ public static class GameResourcesResolveHelper
             if (packInfoEntry != null)
             {
                 await using var stream = packInfoEntry.OpenEntryStream();
-                var model = await JsonSerializer.DeserializeAsync<GameResourcePackModel>(stream);
+                var model = await JsonSerializer.DeserializeAsync(stream, GameResourcePackModelContext.Default.GameResourcePackModel, ct);
 
                 description = model?.Pack?.Description;
                 version = model?.Pack?.PackFormat ?? -1;
@@ -228,7 +228,7 @@ public static class GameResourcesResolveHelper
             if (File.Exists(infoPath))
             {
                 await using var contentStream = File.OpenRead(infoPath);
-                var model = await JsonSerializer.DeserializeAsync<GameResourcePackModel>(contentStream);
+                var model = await JsonSerializer.DeserializeAsync(contentStream, GameResourcePackModelContext.Default.GameResourcePackModel, ct);
 
                 description = model?.Pack?.Description;
                 version = model?.Pack?.PackFormat ?? -1;

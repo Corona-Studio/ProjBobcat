@@ -20,9 +20,9 @@
 
 由日冕工作室开发和维护。
 
-## Stats
+## Native AOT （提前编译为本地代码） 支持
 
-![Alt](https://repobeats.axiom.co/api/embed/d8d56d4c2023d90ea067d5b3ca83ed5da4979289.svg "Repobeats analytics image")
+ProjBobcat 为 [NativeAot](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/) 提供全面支持。Native AOT 应用程序启动非常快，并且使用较少的内存。应用程序的用户可以在没有安装 .NET 运行时的机器上运行它。如果你想在你的项目中使用Native AOT，请将你的目标框架切换到 **net7.0 或更高版本**。
 
 ## 跨平台支持
 
@@ -257,6 +257,10 @@ launchSettings.Authenticator = new YggdrasilAuthenticator
 var result = await Core.LaunchTaskAsync(launchSettings).ConfigureAwait(true); // 返回游戏启动结果，以及异常信息（如果存在）
 
 ```
+
+## 统计
+
+![Alt](https://repobeats.axiom.co/api/embed/d8d56d4c2023d90ea067d5b3ca83ed5da4979289.svg "Repobeats analytics image")
 
 ## 免责声明
 ProjBobcat 不隶属于Mojang以及其附属软件的任何一部分。

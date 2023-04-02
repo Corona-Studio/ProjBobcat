@@ -16,3 +16,8 @@ public class GraphAuthResultModel
 
     [JsonPropertyName("id_token")] public string IdToken { get; set; }
 }
+
+[JsonSerializable(typeof(GraphAuthResultModel))]
+public partial class GraphAuthResultModelContext : JsonSerializerContext
+{
+}

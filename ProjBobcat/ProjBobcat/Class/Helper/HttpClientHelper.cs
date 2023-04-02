@@ -1,5 +1,5 @@
-﻿using System.Net.Http;
-using Microsoft.Extensions.DependencyInjection;
+﻿using System;
+using System.Net.Http;
 using ProjBobcat.Handler;
 
 namespace ProjBobcat.Class.Helper;
@@ -9,18 +9,39 @@ namespace ProjBobcat.Class.Helper;
 /// </summary>
 public static class HttpClientHelper
 {
-    public const string DefaultClientName = "DefaultClient";
-    public const string DataClientName = "DataClient";
-    public const string HeadClientName = "HeadClient";
-    public const string MultiPartClientName = "MultiPartClient";
+    static readonly Lazy<HttpClient> DefaultClientFactory = new (HttpClientFactory);
+    static readonly Lazy<HttpClient> DataClientFactory = new(HttpClientFactory);
+    static readonly Lazy<HttpClient> HeadClientFactory = new(HttpClientFactory);
+    static readonly Lazy<HttpClient> MultiPartClientFactory = new(() =>
+    {
+        var client = HttpClientFactory();
+
+        client.DefaultRequestHeaders.ConnectionClose = false;
+
+        return client;
+    });
+
+    public static HttpClient DefaultClient => DefaultClientFactory.Value;
+    public static HttpClient DataClient => DataClientFactory.Value;
+    public static HttpClient HeadClient => HeadClientFactory.Value;
+    public static HttpClient MultiPartClient => MultiPartClientFactory.Value;
+
+    static HttpClient HttpClientFactory()
+    {
+        var handlers = new RedirectHandler(new RetryHandler(new HttpClientHandler { AllowAutoRedirect = false }));
+        var httpClient = new HttpClient(handlers);
+
+        httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(Ua);
+
+        return httpClient;
+    }
 
     /// <summary>
     ///     获取或设置用户代理信息。
     /// </summary>
     public static string Ua { get; set; } = "ProjBobcat";
-
-    public static IHttpClientFactory HttpClientFactory { get; private set; }
-
+    
+    /*
     public static void Init()
     {
         var arr = new[] { DefaultClientName, DataClientName, HeadClientName, MultiPartClientName };
@@ -53,4 +74,5 @@ public static class HttpClientHelper
     {
         return HttpClientFactory.CreateClient(name);
     }
+    */
 }

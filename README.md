@@ -17,8 +17,9 @@ The next-generation Minecraft launcher core written in C# providing the freest, 
 
 Developed and maintained by Corona Studio.
 
-## Stats
-![Alt](https://repobeats.axiom.co/api/embed/d8d56d4c2023d90ea067d5b3ca83ed5da4979289.svg "Repobeats analytics image")
+## NativeAOT (ahead-of-time compilation) Support
+
+ProjBobcat provide fully support for [NativeAot](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/). Native AOT apps start up very quickly and use less memory. Users of the application can run it on a machine that doesn't have the .NET runtime installed. If you want to use NativeAot in your project, please switch your target framework to **net7.0 or higher**.
 
 ## Multi-Platform Support
 
@@ -246,6 +247,9 @@ launchSettings.Authenticator = new YggdrasilAuthenticator
 var result = await Core.LaunchTaskAsync(launchSettings).ConfigureAwait(true); // Returns the launch result
 
 ```
+
+## Stats
+![Alt](https://repobeats.axiom.co/api/embed/d8d56d4c2023d90ea067d5b3ca83ed5da4979289.svg "Repobeats analytics image")
 
 ## License
 MIT. This means that you can modify or use our code for any purpose, however copyright notice and permission notice shall be included in all copies or substantial portions of your software.

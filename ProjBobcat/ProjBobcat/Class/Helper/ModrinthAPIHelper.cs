@@ -22,7 +22,7 @@ public static class ModrinthAPIHelper
         const string reqUrl = $"{BaseUrl}/tag/category";
 
         using var res = await Get(reqUrl);
-        var resModel = await res.Content.ReadFromJsonAsync<ModrinthCategoryInfo[]>();
+        var resModel = await res.Content.ReadFromJsonAsync(ModrinthCategoryInfoContext.Default.ModrinthCategoryInfoArray);
 
         return resModel;
     }
@@ -32,7 +32,7 @@ public static class ModrinthAPIHelper
         var reqUrl = $"{BaseUrl}/project/{projectId}/dependencies";
 
         using var res = await Get(reqUrl);
-        var resModel = await res.Content.ReadFromJsonAsync<ModrinthProjectDependencyInfo>();
+        var resModel = await res.Content.ReadFromJsonAsync(ModrinthProjectDependencyInfoContext.Default.ModrinthProjectDependencyInfo);
 
         return resModel;
     }
@@ -42,7 +42,7 @@ public static class ModrinthAPIHelper
         var reqUrl = $"{BaseUrl}/project/{projectId}";
 
         using var res = await Get(reqUrl);
-        var resModel = await res.Content.ReadFromJsonAsync<ModrinthProjectInfo>();
+        var resModel = await res.Content.ReadFromJsonAsync(ModrinthProjectInfoContext.Default.ModrinthProjectInfo);
 
         return resModel;
     }
@@ -52,7 +52,7 @@ public static class ModrinthAPIHelper
         const string reqUrl = $"{BaseUrl}/search";
 
         using var res = await Get(reqUrl);
-        var resModel = await res.Content.ReadFromJsonAsync<ModrinthSearchResult>();
+        var resModel = await res.Content.ReadFromJsonAsync(ModrinthSearchResultContext.Default.ModrinthSearchResult);
 
         return resModel;
     }
@@ -62,7 +62,7 @@ public static class ModrinthAPIHelper
         var reqUrl = $"{BaseUrl}/search{searchOptions}";
 
         using var res = await Get(reqUrl);
-        var resModel = await res.Content.ReadFromJsonAsync<ModrinthSearchResult>();
+        var resModel = await res.Content.ReadFromJsonAsync(ModrinthSearchResultContext.Default.ModrinthSearchResult);
 
         return resModel;
     }
@@ -72,7 +72,7 @@ public static class ModrinthAPIHelper
         var reqUrl = $"{BaseUrl}/project/{projectId}/version";
 
         using var res = await Get(reqUrl);
-        var resModel = await res.Content.ReadFromJsonAsync<ModrinthVersionInfo[]>();
+        var resModel = await res.Content.ReadFromJsonAsync(ModrinthVersionInfoContext.Default.ModrinthVersionInfoArray);
 
         return resModel;
     }

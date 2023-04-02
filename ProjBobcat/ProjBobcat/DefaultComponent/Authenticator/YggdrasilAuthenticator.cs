@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Auth;
+using ProjBobcat.Class.Model.JsonContexts;
 using ProjBobcat.Class.Model.LauncherAccount;
 using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.YggdrasilAuth;
@@ -96,7 +97,7 @@ public class YggdrasilAuthenticator : IAuthenticator
             Username = Email,
             Password = Password
         };
-        var requestJson = JsonSerializer.Serialize(requestModel, JsonHelper.CamelCasePropertyNamesSettings);
+        var requestJson = JsonSerializer.Serialize(requestModel, typeof(AuthRequestModel), new AuthRequestModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
         using var resultJson = await HttpHelper.Post(LoginAddress, requestJson);
 
@@ -111,11 +112,11 @@ public class YggdrasilAuthenticator : IAuthenticator
                 }
             };
 
-        var result = await resultJson.Content.ReadFromJsonAsync<AuthResponseModel>();
+        var result = await resultJson.Content.ReadFromJsonAsync(AuthResponseModelContext.Default.AuthResponseModel);
 
         if (result == default || string.IsNullOrEmpty(result.AccessToken))
         {
-            var error = await resultJson.Content.ReadFromJsonAsync<ErrorModel>();
+            var error = await resultJson.Content.ReadFromJsonAsync(ErrorModelContext.Default.ErrorModel);
 
             if (error is null)
                 return new YggdrasilAuthResult
@@ -307,10 +308,13 @@ public class YggdrasilAuthenticator : IAuthenticator
             RequestUser = userField,
             SelectedProfile = response.SelectedProfile
         };
-        var requestJson = JsonSerializer.Serialize(requestModel, JsonHelper.CamelCasePropertyNamesSettings);
+        var requestJson = JsonSerializer.Serialize(requestModel, typeof(AuthRefreshRequestModel), new AuthRefreshRequestModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
         using var resultJson = await HttpHelper.Post(RefreshAddress, requestJson);
-        var result = await resultJson.Content.ReadFromJsonAsync<object>();
+        var resultJsonElement = await resultJson.Content.ReadFromJsonAsync(JsonElementContext.Default.JsonElement);
+        object? result = resultJsonElement.TryGetProperty("cause", out _)
+            ? resultJsonElement.Deserialize(ErrorModelContext.Default.ErrorModel)
+            : resultJsonElement.Deserialize(AuthResponseModelContext.Default.AuthResponseModel);
 
         switch (result)
         {
@@ -408,7 +412,7 @@ public class YggdrasilAuthenticator : IAuthenticator
             AccessToken = accessToken,
             ClientToken = LauncherAccountParser.LauncherAccount.MojangClientToken
         };
-        var requestJson = JsonSerializer.Serialize(requestModel, JsonHelper.CamelCasePropertyNamesSettings);
+        var requestJson = JsonSerializer.Serialize(requestModel, typeof(AuthTokenRequestModel), new AuthTokenRequestModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
         using var result = await HttpHelper.Post(ValidateAddress, requestJson);
         return result.StatusCode.Equals(HttpStatusCode.NoContent);
@@ -421,7 +425,7 @@ public class YggdrasilAuthenticator : IAuthenticator
             AccessToken = accessToken,
             ClientToken = LauncherAccountParser.LauncherAccount.MojangClientToken
         };
-        var requestJson = JsonSerializer.Serialize(requestModel, JsonHelper.CamelCasePropertyNamesSettings);
+        var requestJson = JsonSerializer.Serialize(requestModel, typeof(AuthTokenRequestModel), new AuthTokenRequestModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
         using var x = await HttpHelper.Post(RevokeAddress, requestJson);
     }
@@ -438,7 +442,7 @@ public class YggdrasilAuthenticator : IAuthenticator
             Username = Email,
             Password = Password
         };
-        var requestJson = JsonSerializer.Serialize(requestModel, JsonHelper.CamelCasePropertyNamesSettings);
+        var requestJson = JsonSerializer.Serialize(requestModel, typeof(SignOutRequestModel), new SignOutRequestModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
         using var result = await HttpHelper.Post(SignOutAddress, requestJson);
         return result.StatusCode.Equals(HttpStatusCode.NoContent);

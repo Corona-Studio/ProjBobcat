@@ -42,3 +42,9 @@ public class JvmRules
     [JsonPropertyName("os")]
     public OperatingSystemRules? OperatingSystem { get; set; }
 }
+
+[JsonSerializable(typeof(JvmRules))]
+[JsonSerializable(typeof(JvmRules[]))]
+partial class JvmRulesContext : JsonSerializerContext
+{
+}

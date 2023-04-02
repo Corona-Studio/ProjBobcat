@@ -56,3 +56,9 @@ public class ModrinthVersionInfo
 
     [JsonPropertyName("game_versions")] public string[] GameVersion { get; set; }
 }
+
+[JsonSerializable(typeof(ModrinthVersionInfo))]
+[JsonSerializable(typeof(ModrinthVersionInfo[]))]
+partial class ModrinthVersionInfoContext : JsonSerializerContext
+{
+}

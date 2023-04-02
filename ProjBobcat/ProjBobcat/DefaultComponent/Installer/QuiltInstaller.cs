@@ -16,7 +16,7 @@ public class QuiltInstaller : InstallerBase, IQuiltInstaller
 {
     const string DefaultMetaUrl = "https://meta.quiltmc.org";
 
-    static HttpClient Client => HttpClientHelper.GetNewClient(HttpClientHelper.DefaultClientName);
+    static HttpClient Client => HttpClientHelper.DefaultClient;
 
     public QuiltLoaderModel LoaderArtifact { get; set; }
 
@@ -41,7 +41,7 @@ public class QuiltInstaller : InstallerBase, IQuiltInstaller
 
         res.EnsureSuccessStatusCode();
 
-        var versionModel = await res.Content.ReadFromJsonAsync<RawVersionModel>();
+        var versionModel = await res.Content.ReadFromJsonAsync(RawVersionModelContext.Default.RawVersionModel);
 
         InvokeStatusChangedEvent("生成版本总成", 70);
 
@@ -75,7 +75,7 @@ public class QuiltInstaller : InstallerBase, IQuiltInstaller
             DirectoryHelper.CleanDirectory(di.FullName);
 
         var jsonPath = GamePathHelper.GetGameJsonPath(RootPath, id);
-        var jsonContent = JsonSerializer.Serialize(versionModel, JsonHelper.CamelCasePropertyNamesSettings);
+        var jsonContent = JsonSerializer.Serialize(versionModel, typeof(RawVersionModel), new RawVersionModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
         InvokeStatusChangedEvent("将版本 Json 写入文件", 90);
 

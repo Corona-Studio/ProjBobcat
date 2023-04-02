@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Text.Json;
+using ProjBobcat.Class.Model.JsonContexts;
 
 namespace ProjBobcat.Class.Helper;
 
@@ -12,8 +13,9 @@ public static class JwtTokenHelper
     {
         var payload = jwt.Split('.')[1];
         var jsonBytes = Convert.FromBase64String(ReformatBase64String(payload));
-        var keyValuePairs = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonBytes);
-        return keyValuePairs.Select(kvp => new Claim(kvp.Key, kvp.Value.ToString()));
+        var keyValuePairs = JsonSerializer.Deserialize(jsonBytes, JsonElementContext.Default.JsonElement);
+        
+        return keyValuePairs.EnumerateObject().Select(p => new Claim(p.Name, p.Value.ToString()));
     }
 
     static string ReformatBase64String(string str)

@@ -13,3 +13,8 @@ public class LauncherAccountModel
     [JsonPropertyName("mojangClientToken")]
     public string MojangClientToken { get; set; }
 }
+
+[JsonSerializable(typeof(LauncherAccountModel))]
+partial class LauncherAccountModelContext : JsonSerializerContext
+{
+}

@@ -67,6 +67,8 @@ public class VersionInfo
     [JsonPropertyName("libraries")] public ForgeLibraries[] Libraries { get; set; }
 }
 
+
+
 public class Optional
 {
     [JsonPropertyName("name")] public string Name { get; set; }
@@ -96,4 +98,14 @@ public class LegacyForgeInstallProfile
     [JsonPropertyName("versionInfo")] public VersionInfo VersionInfo { get; set; }
 
     [JsonPropertyName("optionals")] public Optional[] OptionalList { get; set; }
+}
+
+[JsonSerializable(typeof(VersionInfo))]
+partial class LegacyForgeInstallVersionInfoContext : JsonSerializerContext
+{
+}
+
+[JsonSerializable(typeof(LegacyForgeInstallProfile))]
+partial class LegacyForgeInstallProfileContext : JsonSerializerContext
+{
 }

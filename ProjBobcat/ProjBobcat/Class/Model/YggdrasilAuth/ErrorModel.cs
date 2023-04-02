@@ -13,3 +13,8 @@ public class ErrorModel
 
     [JsonIgnore] public Exception Exception { get; set; }
 }
+
+[JsonSerializable(typeof(ErrorModel))]
+partial class ErrorModelContext : JsonSerializerContext
+{
+}

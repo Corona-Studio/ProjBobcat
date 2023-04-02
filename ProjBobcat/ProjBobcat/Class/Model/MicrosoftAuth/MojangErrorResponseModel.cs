@@ -14,3 +14,8 @@ public class MojangErrorResponseModel
 
     [JsonPropertyName("developerMessage")] public string DeveloperMessage { get; set; }
 }
+
+[JsonSerializable(typeof(MojangErrorResponseModel))]
+partial class MojangErrorResponseModelContext : JsonSerializerContext
+{
+}

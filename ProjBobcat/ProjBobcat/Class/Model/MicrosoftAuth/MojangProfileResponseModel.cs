@@ -33,3 +33,8 @@ public class MojangProfileResponseModel
         return Skins?.FirstOrDefault(x => x.State.Equals("ACTIVE", StringComparison.OrdinalIgnoreCase));
     }
 }
+
+[JsonSerializable(typeof(MojangProfileResponseModel))]
+partial class MojangProfileResponseModelContext : JsonSerializerContext
+{
+}

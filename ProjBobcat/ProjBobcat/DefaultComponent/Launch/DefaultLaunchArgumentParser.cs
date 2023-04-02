@@ -8,6 +8,7 @@ using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Auth;
+using ProjBobcat.Class.Model.JsonContexts;
 using ProjBobcat.Interface;
 
 namespace ProjBobcat.DefaultComponent.Launch;
@@ -199,7 +200,8 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
                 "${classpath}"
             ]
             """;
-        var preJvmArguments = VersionLocator.ParseJvmArguments(JsonSerializer.Deserialize<JsonElement[]>(preset)!);
+        
+        var preJvmArguments = VersionLocator.ParseJvmArguments(JsonSerializer.Deserialize(preset, JsonElementContext.Default.JsonElementArray)!);
 
         foreach (var preJvmArg in preJvmArguments)
             yield return StringHelper.ReplaceByDic(preJvmArg, jvmArgumentsDic);

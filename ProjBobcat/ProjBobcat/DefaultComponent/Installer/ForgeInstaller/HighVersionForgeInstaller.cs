@@ -97,7 +97,7 @@ public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             };
 
         await using var stream = versionJsonEntry.OpenEntryStream();
-        var versionJsonModel = await JsonSerializer.DeserializeAsync<RawVersionModel>(stream);
+        var versionJsonModel = await JsonSerializer.DeserializeAsync(stream, RawVersionModelContext.Default.RawVersionModel);
 
         var forgeVersion = versionJsonModel.Id.Replace("-forge-", "-");
         var id = string.IsNullOrEmpty(CustomId) ? versionJsonModel.Id : CustomId;
@@ -107,8 +107,7 @@ public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             versionJsonModel.InheritsFrom = InheritsFrom;
 
         var jsonPath = GamePathHelper.GetGameJsonPath(RootPath, id);
-        var jsonContent = JsonSerializer.Serialize(versionJsonModel,
-            JsonHelper.CamelCasePropertyNamesSettings);
+        var jsonContent = JsonSerializer.Serialize(versionJsonModel, typeof(RawVersionModel), new RawVersionModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
         await File.WriteAllTextAsync(jsonPath, jsonContent);
 
@@ -123,7 +122,7 @@ public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
                 e.Key.Equals("install_profile.json", StringComparison.OrdinalIgnoreCase));
 
         await using var ipStream = installProfileEntry.OpenEntryStream();
-        var ipModel = await JsonSerializer.DeserializeAsync<ForgeInstallProfile>(ipStream);
+        var ipModel = await JsonSerializer.DeserializeAsync(ipStream, ForgeInstallProfileContext.Default.ForgeInstallProfile);
 
         #endregion
 
