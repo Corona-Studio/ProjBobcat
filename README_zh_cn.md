@@ -54,24 +54,23 @@ All you need for minecraft launcher in typescript. https://voxelum.github.io/min
 ## 安装前提醒
 + 由于 Projbobcat 使用了来自 .NET Core 和 .NET 5.0+ 的诸多最新语言特性。如果您想使用本项目，您需要将您的项目框架版本设置为 **.NET 5 或更高版本**。
 + 由于.NET的默认连接数限制，您需要手动覆盖掉默认的连接数才能保证 <DownloadHelper> 中的部分方法正常执行，您可以在App.xaml.cs或程序入口点添加下面的代码来完成修改（最大值不宜超过1024）
+
   ```c#
+
   using System.Net;
   
   ServicePointManager.DefaultConnectionLimit = 512;
+
   ```
 
 ## 安装方法
 * 复制本项目源代码至您的解决方案中，然后在您的主项目添加引用。
 * 直接通过 Nuget 包管理器安装 ProjBobcat 或在包管理器控制台中执行以下命令
+
   ```
   Install-Package ProjBobcat
+  
   ```
-* 你需要在主程序入口处添加以下两行代码 (通常是 App.xaml.cs 或其他):
-  ```c#
-  ServiceHelper.Init();
-  HttpClientHelper.Init();
-  ```
-
 
 ## 功能列表
 
@@ -117,7 +116,9 @@ ProjBobcat提供了3大必要组件和一个核心总成来支撑起整个核心
 #### 扫描 Java
 
 ```csharp
+
 var javaList = ProjBobcat.Class.Helper.SystemInfoHelper.FindJava(); // 返回一个表，包含了从注册表中检索到的系统中 Java 安装的全部信息
+
 ```
 
 #### 初始化核心
@@ -139,6 +140,7 @@ var core = new DefaultGameCore
 ```
 
 #### 扫描全部游戏
+
 ```csharp
 
 List<VersionInfo> gameList = core.VersionLocator.GetAllGames().ToList();
@@ -146,7 +148,9 @@ List<VersionInfo> gameList = core.VersionLocator.GetAllGames().ToList();
 ```
 
 #### 资源补全
+
 ```csharp
+
 // 这里使用mcbbs源，请自行修改以满足您的需求。
 var drc = new DefaultResourceCompleter
 {
@@ -242,12 +246,14 @@ launchSettings.Authenticator = new OfflineAuthenticator
 在线验证模型：
 
 ```csharp
+
 launchSettings.Authenticator = new YggdrasilAuthenticator
 {
     LauncherAccountParser = core.VersionLocator.LauncherAccountParser
     Email = "example@example.com", // 在膜江验证服务器上注册的正版账号邮箱地址。
     Password = "password" // 填写明文密码。
 };
+
 ```
 
 #### 启动游戏

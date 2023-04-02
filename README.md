@@ -41,9 +41,11 @@ All you need for minecraft launcher in typescript. https://voxelum.github.io/min
 + Due to the limitation of the default number of connections in .NET, you need to manually override the default number of connections to ensure that some methods in <DownloadHelper> are executed normally. You can add the following code in App.xaml.cs or the entry point of the program to complete the modification (The maximum value should not exceed 1024)
 
   ```c#
+
    using System.Net;
   
    ServicePointManager.DefaultConnectionLimit = 512;
+   
   ```
 
 ## Installation
@@ -51,16 +53,13 @@ All you need for minecraft launcher in typescript. https://voxelum.github.io/min
 There are two methods for the first step:
 * Clone and copy ProjBobcat's source code to your solution folder, then add ProjBobcat's reference to your project.
 * Directly install ProjBobcat via Nuget Package Manager or simply execute 
+
   ```
+
   Install-Package ProjBobcat
+
   ```
   in Package Manager Console.
-
-After the step above is completed, you need to add two lines of code into your program's entry point (App.xaml.cs or something else):
-  ```c#
-  ServiceHelper.Init();
-  HttpClientHelper.Init();
-  ```
 
 ## Roadmap
 
@@ -108,7 +107,9 @@ Selective components:
 #### Java Detection
 
 ```csharp
+
 var javaList = ProjBobcat.Class.Helper.SystemInfoHelper.FindJava(); // Returns a list of all java installations found in registry.
+
 ```
 
 #### Core Initialization
@@ -130,6 +131,7 @@ var core = new DefaultGameCore
 ```
 
 #### Game Scaning
+
 ```csharp
 
 List<VersionInfo> gameList = core.VersionLocator.GetAllGames().ToList();
@@ -137,6 +139,7 @@ List<VersionInfo> gameList = core.VersionLocator.GetAllGames().ToList();
 ```
 
 #### Resource Completion
+
 ```csharp
 //Here we use mcbbs' download source, change the uri to meet your need.
 var drc = new DefaultResourceCompleter
@@ -232,12 +235,14 @@ launchSettings.Authenticator = new OfflineAuthenticator
 Online:
 
 ```csharp
+
 launchSettings.Authenticator = new YggdrasilAuthenticator
 {
     LauncherAccountParser = core.VersionLocator.LauncherAccountParser
     Email = "example@example.com", // Registered E-mail address on Mojang authentication server.
     Password = "password"
 };
+
 ```
 
 #### Launch!
