@@ -45,21 +45,21 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageIcon>Bobcat.png</PackageIcon>
     <RepositoryUrl>https://github.com/Corona-Studio/ProjBobcat</RepositoryUrl>
-    <Version>1.23.1</Version>
+    <Version>1.26.0</Version>
     <Authors>Corona Studio</Authors>
     <Company>Corona Studio</Company>
     <Product>ProjBobcat</Product>
     <Description>The next-generation Minecraft launcher core written in C# providing the freest, fastest and the most complete experience.</Description>
-    <Copyright>Copyright © 2022 Corona Studio</Copyright>
+    <Copyright>Copyright © 2023 Corona Studio</Copyright>
     <PackageIcon>Bobcat.png</PackageIcon>
     <RepositoryUrl>https://github.com/Corona-Studio/ProjBobcat</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>minecraft-launcher minecraft launcher csharp</PackageTags>
-    <PackageReleaseNotes>add GameResourcesResolveHelper  for resource resolve
-fix FabricInstaller bug
-fix OptifineInstaller bug
-more bug fix
-performance optimization
+    <PackageReleaseNotes>add support for NativeAOT
+JSON performance improvements
+minor bug fix
+remove unused packages
+change HttpClientHelper usage
     </PackageReleaseNotes>
   </PropertyGroup>
 
