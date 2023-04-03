@@ -8,8 +8,34 @@ using ProjBobcat.Interface;
 
 namespace ProjBobcat.DefaultComponent.LogAnalysis;
 
-public class DefaultLogAnalyzer : ILogAnalyzer
+public partial class DefaultLogAnalyzer : ILogAnalyzer
 {
+    
+#if NET7_0_OR_GREATER
+
+    [GeneratedRegex(@"(?<=\]: Warnings were found! ?[\n]+)[\w\W]+?(?=[\n]+\[)")]
+    private static partial Regex WarningsMatch();
+    
+    [GeneratedRegex("(?<=Failed to create mod instance. ModID: )[^,]+")]
+    private static partial Regex ModInstanceMatch1();
+    
+    [GeneratedRegex(@"(?<=Failed to create mod instance. ModId )[^\n]+(?= for )")]
+    private static partial Regex ModInstanceMatch2();
+    
+    [GeneratedRegex(@"(?<=\tBlock: Block\{)[^\}]+")]
+    private static partial Regex BlockMatch();
+    
+    [GeneratedRegex(@"(?<=\tBlock location: World: )\([^\)]+\)")]
+    private static partial Regex BlockLocationMatch();
+    
+    [GeneratedRegex(@"(?<=\tEntity Type: )[^\n]+(?= \()")]
+    private static partial Regex EntityMatch();
+    
+    [GeneratedRegex(@"(?<=\tEntity's Exact location: )[^\n]+")]
+    private static partial Regex EntityLocationMatch();
+    
+#else
+
     static readonly Regex WarningsMatch =
         new(@"(?<=\]: Warnings were found! ?[\n]+)[\w\W]+?(?=[\n]+\[)", RegexOptions.Compiled);
 
@@ -26,6 +52,12 @@ public class DefaultLogAnalyzer : ILogAnalyzer
     static readonly Regex EntityMatch = new(@"(?<=\tEntity Type: )[^\n]+(?= \()", RegexOptions.Compiled);
 
     static readonly Regex EntityLocationMatch = new(@"(?<=\tEntity's Exact location: )[^\n]+", RegexOptions.Compiled);
+    
+#endif
+    
+    /// <summary>
+    /// 日志文件最后写入时间限制（分钟）
+    /// </summary>
     public double LogFileLastWriteTimeLimit { get; init; } = 10;
     public string? RootPath { get; init; }
     public string? GameId { get; init; }
@@ -130,7 +162,7 @@ public class DefaultLogAnalyzer : ILogAnalyzer
         }
     }
 
-    static IEnumerable<IAnalysisReport> AnalysisLogs(Dictionary<LogFileType, List<(string, string)>> logs)
+    static IEnumerable<IAnalysisReport> AnalysisLogs(IReadOnlyDictionary<LogFileType, List<(string, string)>> logs)
     {
         var hasGameLogs = logs.TryGetValue(LogFileType.GameLog, out var gameLogs);
         var hasHsErrors = logs.TryGetValue(LogFileType.HsError, out var hsLogs);
@@ -140,6 +172,16 @@ public class DefaultLogAnalyzer : ILogAnalyzer
             foreach (var (fileName, subLogs) in gameLogs!)
             {
                 // 找不到或无法加载主类
+#if NET7_0_OR_GREATER
+                if (MainClassMatch1().IsMatch(subLogs) ||
+                    (MainClassMatch2().IsMatch(subLogs) &&
+                     !subLogs.Contains("at net.")) || (subLogs.Contains("/INFO]") &&
+                                                       !(hasHsErrors && hsLogs!.Any()) &&
+                                                       !(hasCrashes && crashes!.Any()) &&
+                                                       subLogs.Length < 500))
+                    yield return
+                        new AnalysisReport.AnalysisReport(CrashCauses.IncorrectPathEncodingOrMainClassNotFound);
+#else
                 if (MainClassMatch1.IsMatch(subLogs) ||
                     (MainClassMatch2.IsMatch(subLogs) &&
                      !subLogs.Contains("at net.")) || (subLogs.Contains("/INFO]") &&
@@ -148,6 +190,7 @@ public class DefaultLogAnalyzer : ILogAnalyzer
                                                        subLogs.Length < 500))
                     yield return
                         new AnalysisReport.AnalysisReport(CrashCauses.IncorrectPathEncodingOrMainClassNotFound);
+#endif
 
                 foreach (var report in ProcessGameLogs(subLogs))
                     yield return report with { From = fileName };
@@ -175,7 +218,12 @@ public class DefaultLogAnalyzer : ILogAnalyzer
                 if (log.Contains("]: Warnings were found!"))
                     yield return new AnalysisReport.AnalysisReport(CrashCauses.FabricError)
                     {
+#if NET7_0_OR_GREATER
+                        Details = new[] { WarningsMatch().Match(log).Value },
+#else
                         Details = new[] { WarningsMatch.Match(log).Value },
+#endif
+                        
                         From = from
                     };
 
@@ -184,8 +232,13 @@ public class DefaultLogAnalyzer : ILogAnalyzer
                     {
                         Details = new[]
                         {
+#if NET7_0_OR_GREATER
+                            ModInstanceMatch1().Match(log).Value,
+                            ModInstanceMatch2().Match(log).Value
+#else
                             ModInstanceMatch1.Match(log).Value,
                             ModInstanceMatch2.Match(log).Value
+#endif
                         },
                         From = from
                     };
@@ -199,8 +252,13 @@ public class DefaultLogAnalyzer : ILogAnalyzer
                     {
                         Details = new[]
                         {
+#if NET7_0_OR_GREATER
+                            BlockMatch().Match(log).Value,
+                            BlockLocationMatch().Match(log).Value
+#else
                             BlockMatch.Match(log).Value,
                             BlockLocationMatch.Match(log).Value
+#endif
                         },
                         From = from
                     };
@@ -210,8 +268,13 @@ public class DefaultLogAnalyzer : ILogAnalyzer
                     {
                         Details = new[]
                         {
+#if NET7_0_OR_GREATER
+                            EntityMatch().Match(log).Value,
+                            EntityLocationMatch().Match(log).Value
+#else
                             EntityMatch.Match(log).Value,
                             EntityLocationMatch.Match(log).Value
+#endif
                         },
                         From = from
                     };
@@ -271,6 +334,46 @@ public class DefaultLogAnalyzer : ILogAnalyzer
             CrashCauses.IncompatibleForgeAndOptifine
         }
     };
+    
+#if NET7_0_OR_GREATER
+
+    [GeneratedRegex("(?<=class \")[^']+(?=\"'s signer information)")]
+    private static partial Regex PackSignerMatch();
+    
+    [GeneratedRegex(@"(?<=the game will display an error screen and halt[\s\S]+?Exception: )[\s\S]+?(?=\n\tat)")]
+    private static partial Regex ForgeErrorMatch();
+    
+    [GeneratedRegex(@"(?<=A potential solution has been determined:\n)((\t)+ - [^\n]+\n)+")]
+    private static partial Regex FabricSolutionMatch();
+    
+    [GeneratedRegex(@"(?<=\n\t[\w]+ : [A-Z]{1}:[^\n]+(/|\\))[^/\\\n]+?.jar", RegexOptions.IgnoreCase)]
+    private static partial Regex GameModMatch1();
+    
+    [GeneratedRegex(@"Found a duplicate mod[^\n]+", RegexOptions.IgnoreCase)]
+    private static partial Regex GameModMatch2();
+    
+    [GeneratedRegex(@"ModResolutionException: Duplicate[^\n]+", RegexOptions.IgnoreCase)]
+    private static partial Regex GameModMatch3();
+    
+    [GeneratedRegex("(?<=in )[^./ ]+(?=.mixins.json.+failed injection check)")]
+    private static partial Regex ModIdMatch1();
+    
+    [GeneratedRegex("(?<= failed .+ in )[^./ ]+(?=.mixins.json)")]
+    private static partial Regex ModIdMatch2();
+    
+    [GeneratedRegex(@"(?<= in config \[)[^./ ]+(?=.mixins.json\] FAILED during )")]
+    private static partial Regex ModIdMatch3();
+    
+    [GeneratedRegex("(?<= in callback )[^./ ]+(?=.mixins.json:)")]
+    private static partial Regex ModIdMatch4();
+    
+    [GeneratedRegex(@"^[^\n.]+.\w+.[^\n]+\n\[$")]
+    private static partial Regex MainClassMatch1();
+    
+    [GeneratedRegex(@"^\[[^\]]+\] [^\n.]+.\w+.[^\n]+\n\[")]
+    private static partial Regex MainClassMatch2();
+    
+#else
 
     static readonly Regex PackSignerMatch =
         new("(?<=class \")[^']+(?=\"'s signer information)", RegexOptions.Compiled);
@@ -303,6 +406,8 @@ public class DefaultLogAnalyzer : ILogAnalyzer
 
     static readonly Regex MainClassMatch2 = new(@"^\[[^\]]+\] [^\n.]+.\w+.[^\n]+\n\[", RegexOptions.Compiled);
 
+#endif
+
     static IEnumerable<AnalysisReport.AnalysisReport> ProcessGameLogs(string logs)
     {
         foreach (var causeMap in GameLogsCausesMap)
@@ -316,19 +421,31 @@ public class DefaultLogAnalyzer : ILogAnalyzer
         if (logs.Contains("signer information does not match signer information of other classes in the same package"))
             yield return new AnalysisReport.AnalysisReport(CrashCauses.ContentValidationFailed)
             {
+#if NET7_0_OR_GREATER
+                Details = new[] { PackSignerMatch().Match(logs).Value }
+#else
                 Details = new[] { PackSignerMatch.Match(logs).Value }
+#endif
             };
 
         if (logs.Contains("An exception was thrown, the game will display an error screen and halt."))
             yield return new AnalysisReport.AnalysisReport(CrashCauses.ForgeError)
             {
+#if NET7_0_OR_GREATER
+                Details = new[] { ForgeErrorMatch().Match(logs).Value }
+#else
                 Details = new[] { ForgeErrorMatch.Match(logs).Value }
+#endif
             };
 
         if (logs.Contains("A potential solution has been determined:"))
             yield return new AnalysisReport.AnalysisReport(CrashCauses.FabricErrorWithSolution)
             {
+#if NET7_0_OR_GREATER
+                Details = new[] { FabricSolutionMatch().Match(logs).Value }
+#else
                 Details = new[] { FabricSolutionMatch.Match(logs).Value }
+#endif
             };
 
         if (logs.Contains(
@@ -348,20 +465,32 @@ public class DefaultLogAnalyzer : ILogAnalyzer
         if (logs.Contains("DuplicateModsFoundException"))
             yield return new AnalysisReport.AnalysisReport(CrashCauses.DuplicateMod)
             {
+#if NET7_0_OR_GREATER
+                Details = new[] { GameModMatch1().Match(logs).Value }
+#else
                 Details = new[] { GameModMatch1.Match(logs).Value }
+#endif
             };
 
 
         if (logs.Contains("Found a duplicate mod"))
             yield return new AnalysisReport.AnalysisReport(CrashCauses.DuplicateMod)
             {
+#if NET7_0_OR_GREATER
+                Details = new[] { GameModMatch2().Match(logs).Value }
+#else
                 Details = new[] { GameModMatch2.Match(logs).Value }
+#endif
             };
 
         if (logs.Contains("ModResolutionException: Duplicate"))
             yield return new AnalysisReport.AnalysisReport(CrashCauses.DuplicateMod)
             {
+#if NET7_0_OR_GREATER
+                Details = new[] { GameModMatch3().Match(logs).Value }
+#else
                 Details = new[] { GameModMatch3.Match(logs).Value }
+#endif
             };
 
         // Mod 导致的崩溃
@@ -370,6 +499,16 @@ public class DefaultLogAnalyzer : ILogAnalyzer
             || logs.Contains("mixin.injection.throwables.")
             || logs.Contains(".mixins.json] FAILED during )"))
         {
+#if NET7_0_OR_GREATER
+            var modId = ModIdMatch1().Match(logs).Value;
+
+            if (string.IsNullOrEmpty(modId))
+                modId = ModIdMatch2().Match(logs).Value;
+            if (string.IsNullOrEmpty(modId))
+                modId = ModIdMatch3().Match(logs).Value;
+            if (string.IsNullOrEmpty(modId))
+                modId = ModIdMatch4().Match(logs).Value;
+#else
             var modId = ModIdMatch1.Match(logs).Value;
 
             if (string.IsNullOrEmpty(modId))
@@ -378,7 +517,8 @@ public class DefaultLogAnalyzer : ILogAnalyzer
                 modId = ModIdMatch3.Match(logs).Value;
             if (string.IsNullOrEmpty(modId))
                 modId = ModIdMatch4.Match(logs).Value;
-
+#endif
+            
             yield return new AnalysisReport.AnalysisReport(CrashCauses.ModMixinFailed)
             {
                 Details = string.IsNullOrEmpty(modId) ? null : new[] { modId }
@@ -429,6 +569,31 @@ public class DefaultLogAnalyzer : ILogAnalyzer
         { "Manually triggered debug crash", CrashCauses.ManuallyTriggeredDebugCrash }
     };
 
+#if NET7_0_OR_GREATER
+
+    [GeneratedRegex("(?<=Mod File: ).+")]
+    private static partial Regex ModFileMatch();
+    
+    [GeneratedRegex(@"(?<=Failure message: )[\w\W]+?(?=\tMod)")]
+    private static partial Regex ModLoaderMatch();
+    
+    [GeneratedRegex("(?<=Multiple entries with same key: )[^=]+")]
+    private static partial Regex MultipleEntriesMatch();
+    
+    [GeneratedRegex("(?<=due to errors, provided by ')[^']+")]
+    private static partial Regex ProvidedByMatch();
+    
+    [GeneratedRegex(@"(?<=LoaderExceptionModCrash: Caught exception from )[^\n]+")]
+    private static partial Regex ModCausedCrashMatch();
+    
+    [GeneratedRegex(@"(?<=Failed loading config file .+ for modid )[^\n]+")]
+    private static partial Regex ConfigFileMatch1();
+    
+    [GeneratedRegex("(?<=Failed loading config file ).+(?= of type)")]
+    private static partial Regex ConfigFileMatch2();
+    
+#else
+
     static readonly Regex ModFileMatch = new("(?<=Mod File: ).+", RegexOptions.Compiled);
     static readonly Regex ModLoaderMatch = new(@"(?<=Failure message: )[\w\W]+?(?=\tMod)", RegexOptions.Compiled);
 
@@ -446,6 +611,8 @@ public class DefaultLogAnalyzer : ILogAnalyzer
     static readonly Regex ConfigFileMatch2 =
         new("(?<=Failed loading config file ).+(?= of type)", RegexOptions.Compiled);
 
+#endif
+    
     static IEnumerable<AnalysisReport.AnalysisReport> ProcessCrashReports(string logs)
     {
         foreach (var causeMap in CrashCausesMap)
@@ -463,38 +630,66 @@ public class DefaultLogAnalyzer : ILogAnalyzer
             if (modLogs.Contains("Failure message: MISSING"))
                 yield return new AnalysisReport.AnalysisReport(CrashCauses.ModCausedGameCrash)
                 {
+#if NET7_0_OR_GREATER
+                    Details = new[] { ModFileMatch().Match(logs).Value }
+#else
                     Details = new[] { ModFileMatch.Match(logs).Value }
+#endif
                 };
             else
                 yield return new AnalysisReport.AnalysisReport(CrashCauses.ModLoaderError)
                 {
+#if NET7_0_OR_GREATER
+                    Details = new[] { ModLoaderMatch().Match(logs).Value }
+#else
                     Details = new[] { ModLoaderMatch.Match(logs).Value }
+#endif
                 };
         }
 
         if (logs.Contains("Multiple entries with same key: "))
             yield return new AnalysisReport.AnalysisReport(CrashCauses.ModCausedGameCrash)
             {
+#if NET7_0_OR_GREATER
+                Details = new[] { MultipleEntriesMatch().Match(logs).Value }
+#else
                 Details = new[] { MultipleEntriesMatch.Match(logs).Value }
+#endif
             };
         if (logs.Contains("due to errors, provided by "))
             yield return new AnalysisReport.AnalysisReport(CrashCauses.ModCausedGameCrash)
             {
+#if NET7_0_OR_GREATER
+                Details = new[] { ProvidedByMatch().Match(logs).Value }
+#else
                 Details = new[] { ProvidedByMatch.Match(logs).Value }
+#endif
             };
         if (logs.Contains("LoaderExceptionModCrash: Caught exception from "))
             yield return new AnalysisReport.AnalysisReport(CrashCauses.ModCausedGameCrash)
             {
+#if NET7_0_OR_GREATER
+                Details = new[] { ModCausedCrashMatch().Match(logs).Value }
+#else
                 Details = new[] { ModCausedCrashMatch.Match(logs).Value }
+#endif
             };
         if (logs.Contains("Failed loading config file "))
             yield return new AnalysisReport.AnalysisReport(CrashCauses.IncorrectModConfig)
             {
+#if NET7_0_OR_GREATER
+                Details = new[]
+                {
+                    ConfigFileMatch1().Match(logs).Value,
+                    ConfigFileMatch2().Match(logs).Value
+                }
+#else
                 Details = new[]
                 {
                     ConfigFileMatch1.Match(logs).Value,
                     ConfigFileMatch2.Match(logs).Value
                 }
+#endif
             };
     }
 

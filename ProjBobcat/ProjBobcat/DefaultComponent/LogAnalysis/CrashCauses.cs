@@ -39,7 +39,6 @@ public enum CrashCauses
     ModInitFailed,
     ModIdExceeded,
     DuplicateMod,
-    ModNameFoundInStackAnalysis,
 
     #endregion
 
@@ -71,8 +70,6 @@ public enum CrashCauses
     IncorrectPathEncodingOrMainClassNotFound,
     ManuallyTriggeredDebugCrash,
     ContentValidationFailed,
-    KeywordFoundInStackAnalysis,
-    KeywordFoundInGameStackAnalysis,
     BlockCausedGameCrash,
     EntityCausedGameCrash,
     LogFileNotFound,

@@ -19,13 +19,25 @@ using SharpCompress.Archives;
 
 namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller;
 
-public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
+public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 {
+    
+#if NET7_0_OR_GREATER
+
+    [GeneratedRegex("^\\[.+\\]$")]
+    private static partial Regex PathRegex();
+
+    [GeneratedRegex("^{.+}$")]
+    private static partial Regex VariableRegex();
+    
+#else
+
     static readonly Regex
-#pragma warning disable SYSLIB1045 // 转换为“GeneratedRegexAttribute”。
         PathRegex = new("^\\[.+\\]$", RegexOptions.Compiled),
         VariableRegex = new("^{.+}$", RegexOptions.Compiled);
-#pragma warning restore SYSLIB1045 // 转换为“GeneratedRegexAttribute”。
+
+#endif
+    
     readonly ConcurrentBag<DownloadFile> _failedFiles = new();
     int _totalDownloaded, _needToDownload, _totalProcessed, _needToProcess;
 
@@ -240,7 +252,12 @@ public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
         string ResolvePathRegex(string val)
         {
+            
+#if NET7_0_OR_GREATER
+            if (string.IsNullOrEmpty(val) || string.IsNullOrEmpty(PathRegex().Match(val).Value)) return val;
+#else
             if (string.IsNullOrEmpty(val) || string.IsNullOrEmpty(PathRegex.Match(val).Value)) return val;
+#endif
 
             var name = val[1..^1];
             var maven = name.ResolveMavenString();
@@ -270,8 +287,12 @@ public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
         string ResolveVariableRegex(string val)
         {
+#if NET7_0_OR_GREATER
+            if (string.IsNullOrEmpty(val) || string.IsNullOrEmpty(VariableRegex().Match(val).Value)) return val;
+#else
             if (string.IsNullOrEmpty(val) || string.IsNullOrEmpty(VariableRegex.Match(val).Value)) return val;
-
+#endif
+            
             var key = val[1..^1];
             return variables[key].Client;
         }

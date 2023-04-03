@@ -7,18 +7,23 @@ namespace ProjBobcat.Class.Helper;
 /// <summary>
 ///     Maven解析工具类
 /// </summary>
-public static class MavenHelper
+public static partial class MavenHelper
 {
-#pragma warning disable SYSLIB1045 // 转换为“GeneratedRegexAttribute”。
+    
+#if NET7_0_OR_GREATER
+    [GeneratedRegex("\\.")]
+    private static partial Regex GroupPathRegex();
+#else
     static readonly Regex GroupPathRegex = new("\\.", RegexOptions.Compiled);
-#pragma warning restore SYSLIB1045 // 转换为“GeneratedRegexAttribute”。
+#endif
+    
     /// <summary>
     ///     使用名字来解析Maven包信息。
     ///     Parse Maven package's info with its name.
     /// </summary>
     /// <param name="mavenString">Maven包的名称。Maven package's name.</param>
     /// <returns></returns>
-    public static MavenInfo ResolveMavenString(this string mavenString)
+    public static MavenInfo? ResolveMavenString(this string mavenString)
     {
         if (string.IsNullOrEmpty(mavenString))
             return null;
@@ -67,7 +72,11 @@ public static class MavenHelper
     /// <returns>处理好的Group Path</returns>
     public static string GetGroupPath(this string artifactId)
     {
+#if NET7_0_OR_GREATER
+        return GroupPathRegex().Replace(artifactId, "/");
+#else
         return GroupPathRegex.Replace(artifactId, "/");
+#endif
     }
 
     /// <summary>
@@ -75,7 +84,7 @@ public static class MavenHelper
     /// </summary>
     /// <param name="mavenInfo">Maven 信息实例</param>
     /// <returns>拼接出来的Maven全称</returns>
-    public static string GetMavenFullName(this MavenInfo mavenInfo)
+    public static string GetMavenFullName(this MavenInfo? mavenInfo)
     {
         return mavenInfo is null ? string.Empty : $"{mavenInfo.OrganizationName}.{mavenInfo.ArtifactId}";
     }

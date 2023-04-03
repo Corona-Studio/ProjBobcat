@@ -44,7 +44,7 @@ public class LaunchSettings
     /// <summary>
     ///     游戏窗口标题
     /// </summary>
-    public string WindowTitle { get; set; }
+    public string? WindowTitle { get; set; }
 
     public IVersionLocator VersionLocator { get; set; }
 
