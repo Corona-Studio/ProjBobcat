@@ -37,7 +37,7 @@ public sealed class VersionInfoResolver : ResolverBase
 #if NET7_0_OR_GREATER
             await using var jarFs = File.Open(jarPath, FileMode.Open, FileAccess.Read, FileShare.Read);
             var computedHash = (await SHA1.HashDataAsync(jarFs)).BytesToString();
-#elif NET6_0_OR_GREATER
+#else
             var bytes = await File.ReadAllBytesAsync(jarPath);
             var computedHash = SHA1.HashData(bytes.AsSpan()).BytesToString();
 #endif

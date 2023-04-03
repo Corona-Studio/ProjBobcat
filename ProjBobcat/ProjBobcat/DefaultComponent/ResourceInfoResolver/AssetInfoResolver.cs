@@ -159,7 +159,7 @@ public sealed class AssetInfoResolver : ResolverBase
 #if NET7_0_OR_GREATER
                 await using var fs = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
                 var computedHash = (await SHA1.HashDataAsync(fs)).BytesToString();
-#elif NET6_0_OR_GREATER
+#else
                 var bytes = await File.ReadAllBytesAsync(filePath);
                 var computedHash = SHA1.HashData(bytes.AsSpan()).BytesToString();
 #endif

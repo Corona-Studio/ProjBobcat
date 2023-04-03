@@ -48,6 +48,19 @@ public class DownloadSettings
     {
         token ??= CancellationToken.None;
 
+#if NET7_0_OR_GREATER
+        await using var fs = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+
+        return HashType switch
+        {
+            HashType.MD5 => await MD5.HashDataAsync(fs, token.Value),
+            HashType.SHA1 => await SHA1.HashDataAsync(fs, token.Value),
+            HashType.SHA256 => await SHA256.HashDataAsync(fs, token.Value),
+            HashType.SHA384 => await SHA384.HashDataAsync(fs, token.Value),
+            HashType.SHA512 => await SHA512.HashDataAsync(fs, token.Value),
+            _ => throw new NotSupportedException()
+        };
+#else
         var bytes = await File.ReadAllBytesAsync(filePath, token.Value);
 
         return HashType switch
@@ -59,5 +72,6 @@ public class DownloadSettings
             HashType.SHA512 => SHA512.HashData(bytes),
             _ => throw new NotSupportedException()
         };
+#endif
     }
 }

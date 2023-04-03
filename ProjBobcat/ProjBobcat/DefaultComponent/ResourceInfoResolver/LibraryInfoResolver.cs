@@ -51,8 +51,13 @@ public sealed class LibraryInfoResolver : ResolverBase
             {
                 if (string.IsNullOrEmpty(lib.Sha1)) continue;
 
+#if NET7_0_OR_GREATER
+                await using var fs = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                var computedHash = (await SHA1.HashDataAsync(fs)).BytesToString();
+#else
                 var bytes = await File.ReadAllBytesAsync(filePath);
                 var computedHash = SHA1.HashData(bytes.AsSpan()).BytesToString();
+#endif
 
                 if (computedHash.Equals(lib.Sha1, StringComparison.OrdinalIgnoreCase)) continue;
             }
@@ -81,7 +86,7 @@ public sealed class LibraryInfoResolver : ResolverBase
 #if NET7_0_OR_GREATER
                 await using var fs = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
                 var computedHash = (await SHA1.HashDataAsync(fs)).BytesToString();
-#elif NET6_0_OR_GREATER
+#else
                 var bytes = await File.ReadAllBytesAsync(filePath);
                 var computedHash = SHA1.HashData(bytes.AsSpan()).BytesToString();
 #endif
