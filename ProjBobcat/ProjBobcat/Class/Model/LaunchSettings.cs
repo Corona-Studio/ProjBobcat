@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Text;
+using System.Text.Json.Serialization;
 using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.YggdrasilAuth;
 using ProjBobcat.Interface;
@@ -69,8 +70,7 @@ public class LaunchSettings
 
         return sb.ToString();
     }
-#nullable enable
+
     public GameArguments? FallBackGameArguments { get; set; }
     public GameArguments? GameArguments { get; set; }
-#nullable restore
 }

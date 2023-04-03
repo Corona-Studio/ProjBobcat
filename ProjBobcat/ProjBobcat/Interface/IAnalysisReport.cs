@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using ProjBobcat.DefaultComponent.LogAnalysis;
+﻿using ProjBobcat.DefaultComponent.LogAnalysis;
+using System.Collections.Generic;
 
 namespace ProjBobcat.Interface;
 

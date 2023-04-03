@@ -2,16 +2,15 @@
 
   <PropertyGroup Condition=" '$(OS)' == 'Windows_NT' ">
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-    <TargetFramework>net7.0</TargetFramework>
   </PropertyGroup>
 
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
     <OutputType>Library</OutputType>
+    <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
   </PropertyGroup>
 
   <PropertyGroup>
-    <IsWindows Condition=" ( '$(OS)' == 'Windows_NT' And '$(Configuration)' == 'Debug' ) Or '$(RuntimeIdentifier)' == 'win-x64' Or '$(RuntimeIdentifier)' == 'win7-x64'">true</IsWindows>
+    <IsWindows Condition=" ( '$(OS)' == 'Windows_NT' And '$(Configuration)' == 'Debug' ) Or '$(RuntimeIdentifier)' == 'win-x64' Or '$(RuntimeIdentifier)' == 'win7-x64' Or '$(RuntimeIdentifier)' == 'win10-arm64'">true</IsWindows>
     <IsOSX Condition="( '$(OS)' == 'Unix' And '$(Configuration)' == 'Debug' ) Or '$(RuntimeIdentifier)' == 'osx-x64'">true</IsOSX>
     <IsLinux Condition="( '$(OS)' == 'Unix' And $([System.IO.File]::Exists('/usr/lib/libc.dylib'))) And '$(RuntimeIdentifier)' == 'linux-x64'">true</IsLinux>
   </PropertyGroup>
@@ -75,7 +74,6 @@ change HttpClientHelper usage
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="FodyWeavers.xml" />
     <None Remove="ProjBobcat.GeneratedMSBuildEditorConfig.editorconfig" />
   </ItemGroup>
   
@@ -123,10 +121,6 @@ change HttpClientHelper usage
   </ItemGroup>
   <ItemGroup Condition=" '$(IsOSX)'=='true' ">
     <Compile Include="Platforms\MacOS\**\*.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Class\Model\GameResource\ResolvedInfo\" />
-    <Folder Include="DefaultComponent\LogAnalysis\AnalysisReport\" />
   </ItemGroup>
   <!-- Compile Options -->
 </Project>
