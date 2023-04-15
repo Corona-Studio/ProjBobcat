@@ -102,7 +102,7 @@ change HttpClientHelper usage
     </PackageReference>
   </ItemGroup>
   <ItemGroup Condition=" '$(IsWindows)'=='true' ">
-    <PackageReference Include="System.Management" Version="7.0.0" />
+    <PackageReference Include="System.Management" Version="7.0.1" />
     <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
     <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="7.0.0" />
   </ItemGroup>
