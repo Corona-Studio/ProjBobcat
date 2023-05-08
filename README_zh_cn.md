@@ -56,11 +56,9 @@ All you need for minecraft launcher in typescript. https://voxelum.github.io/min
 + 由于.NET的默认连接数限制，您需要手动覆盖掉默认的连接数才能保证 <DownloadHelper> 中的部分方法正常执行，您可以在App.xaml.cs或程序入口点添加下面的代码来完成修改（最大值不宜超过1024）
 
   ```c#
-
   using System.Net;
   
   ServicePointManager.DefaultConnectionLimit = 512;
-
   ```
 
 ## 安装方法
@@ -69,7 +67,6 @@ All you need for minecraft launcher in typescript. https://voxelum.github.io/min
 
   ```
   Install-Package ProjBobcat
-  
   ```
 
 ## 功能列表
@@ -116,15 +113,12 @@ ProjBobcat提供了3大必要组件和一个核心总成来支撑起整个核心
 #### 扫描 Java
 
 ```csharp
-
 var javaList = ProjBobcat.Class.Helper.SystemInfoHelper.FindJava(); // 返回一个表，包含了从注册表中检索到的系统中 Java 安装的全部信息
-
 ```
 
 #### 初始化核心
 
 ```csharp
-
 var core = new DefaultGameCore
 {
   ClientToken = clientToken, // 游戏客户端识别码，你可以设置成你喜欢的任何GUID，例如88888888-8888-8888-8888-888888888888，或者自己随机生成一个！
@@ -136,21 +130,17 @@ var core = new DefaultGameCore
   },
   GameLogResolver = new DefaultGameLogResolver()
 };
-
 ```
 
 #### 扫描全部游戏
 
 ```csharp
-
 List<VersionInfo> gameList = core.VersionLocator.GetAllGames().ToList();
-
 ```
 
 #### 资源补全
 
 ```csharp
-
 // 这里使用mcbbs源，请自行修改以满足您的需求。
 var drc = new DefaultResourceCompleter
 {
@@ -173,7 +163,6 @@ var drc = new DefaultResourceCompleter
 };
 
 await drc.CheckAndDownloadTaskAsync().ConfigureAwait(false);
-
 ```
 
 这里是一些您可以绑定的事件：
@@ -188,7 +177,6 @@ await drc.CheckAndDownloadTaskAsync().ConfigureAwait(false);
 #### 启动游戏前配置
 
 ```csharp
-
 var launchSettings = new LaunchSettings
 {
     FallBackGameArguments = new GameArguments // 游戏启动参数缺省值，适用于以该启动设置启动的所有游戏，对于具体的某个游戏，可以设置（见下）具体的启动参数，如果所设置的具体参数出现缺失，将使用这个补全
@@ -218,7 +206,6 @@ launchSettings.GameArguments = new GameArguments // （可选）具体游戏启�
     MinMemory = specificMinMemory, // 最小内存
     MaxMemory = specificMaxMemory // 最大内存
 };
-
 ```
 
 您可以在启动核心内注册以下事件来实现完整的日志记录
@@ -234,34 +221,28 @@ launchSettings.GameArguments = new GameArguments // （可选）具体游戏启�
 离线验证模型：
 
 ```csharp
-
 launchSettings.Authenticator = new OfflineAuthenticator
 {
     Username = "您的游戏名"
     LauncherAccountParser = core.VersionLocator.LauncherAccountParser // launcher_profiles.json解析组件
 };
-
 ```
 
 在线验证模型：
 
 ```csharp
-
 launchSettings.Authenticator = new YggdrasilAuthenticator
 {
     LauncherAccountParser = core.VersionLocator.LauncherAccountParser
     Email = "example@example.com", // 在膜江验证服务器上注册的正版账号邮箱地址。
     Password = "password" // 填写明文密码。
 };
-
 ```
 
 #### 启动游戏
 
 ```csharp
-
 var result = await Core.LaunchTaskAsync(launchSettings).ConfigureAwait(true); // 返回游戏启动结果，以及异常信息（如果存在）
-
 ```
 
 ## 统计
