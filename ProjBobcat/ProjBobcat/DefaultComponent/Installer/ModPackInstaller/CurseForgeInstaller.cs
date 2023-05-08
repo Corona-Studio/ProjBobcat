@@ -9,17 +9,13 @@ using System.Threading.Tasks.Dataflow;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.CurseForge;
-using ProjBobcat.Event;
 using ProjBobcat.Interface;
 using SharpCompress.Archives;
 
-namespace ProjBobcat.DefaultComponent.Installer;
+namespace ProjBobcat.DefaultComponent.Installer.ModPackInstaller;
 
-public class CurseForgeInstaller : InstallerBase, ICurseForgeInstaller
+public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInstaller
 {
-    readonly ConcurrentBag<DownloadFile> _failedFiles = new();
-    int _totalDownloaded, _needToDownload;
-
     public string ModPackPath { get; set; }
     public string GameId { get; set; }
 
@@ -33,6 +29,10 @@ public class CurseForgeInstaller : InstallerBase, ICurseForgeInstaller
         InvokeStatusChangedEvent("开始安装", 0);
 
         var manifest = await ReadManifestTask();
+
+        if(manifest == default)
+            throw new Exception("无法读取到 CurseForge 的 manifest 文件");
+
         var idPath = Path.Combine(RootPath, GamePathHelper.GetGamePath(GameId));
         var downloadPath = Path.Combine(Path.GetFullPath(idPath), "mods");
 
@@ -41,7 +41,7 @@ public class CurseForgeInstaller : InstallerBase, ICurseForgeInstaller
         if (!di.Exists)
             di.Create();
 
-        _needToDownload = manifest.Files.Length;
+        NeedToDownload = manifest.Files.Length;
 
         var urlBlock = new TransformManyBlock<IEnumerable<CurseForgeFileModel>, (long, long)>(urls =>
         {
@@ -65,9 +65,9 @@ public class CurseForgeInstaller : InstallerBase, ICurseForgeInstaller
 
             urlBags.Add(downloadFile);
 
-            _totalDownloaded++;
+            TotalDownloaded++;
 
-            var progress = (double)_totalDownloaded / _needToDownload * 100;
+            var progress = (double)TotalDownloaded / NeedToDownload * 100;
 
             InvokeStatusChangedEvent($"成功解析 MOD [{t.Item1}] 的下载地址",
                 progress);
@@ -84,7 +84,7 @@ public class CurseForgeInstaller : InstallerBase, ICurseForgeInstaller
 
         await actionBlock.Completion;
 
-        _totalDownloaded = 0;
+        TotalDownloaded = 0;
         await DownloadHelper.AdvancedDownloadListFile(urlBags, new DownloadSettings
         {
             DownloadParts = 4,
@@ -92,13 +92,13 @@ public class CurseForgeInstaller : InstallerBase, ICurseForgeInstaller
             Timeout = (int)TimeSpan.FromMinutes(1).TotalMilliseconds
         });
 
-        if (!_failedFiles.IsEmpty)
-            throw new NullReferenceException("未能下载全部的 Mods");
+        if (!FailedFiles.IsEmpty)
+            throw new Exception("未能下载全部的 Mods");
 
         using var archive = ArchiveFactory.Open(Path.GetFullPath(ModPackPath));
 
-        _totalDownloaded = 0;
-        _needToDownload = archive.Entries.Count();
+        TotalDownloaded = 0;
+        NeedToDownload = archive.Entries.Count();
 
         foreach (var entry in archive.Entries)
         {
@@ -124,12 +124,12 @@ public class CurseForgeInstaller : InstallerBase, ICurseForgeInstaller
                 ? $"...{subPath[(subPathLength - 15)..]}"
                 : subPath;
 
-            InvokeStatusChangedEvent($"解压缩安装文件：{subPathName}", (double)_totalDownloaded / _needToDownload * 100);
+            InvokeStatusChangedEvent($"解压缩安装文件：{subPathName}", (double)TotalDownloaded / NeedToDownload * 100);
 
             await using var fs = File.OpenWrite(path);
             entry.WriteTo(fs);
 
-            _totalDownloaded++;
+            TotalDownloaded++;
         }
 
         InvokeStatusChangedEvent("安装完成", 100);
@@ -149,23 +149,5 @@ public class CurseForgeInstaller : InstallerBase, ICurseForgeInstaller
         var manifestModel = await JsonSerializer.DeserializeAsync(stream, CurseForgeManifestModelContext.Default.CurseForgeManifestModel);
 
         return manifestModel;
-    }
-
-    void WhenCompleted(object? sender, DownloadFileCompletedEventArgs e)
-    {
-        if (sender is not DownloadFile file) return;
-
-        _totalDownloaded++;
-
-        var progress = (double)_totalDownloaded / _needToDownload * 100;
-        var retryStr = file.RetryCount > 0 ? $"[重试 - {file.RetryCount}] " : string.Empty;
-        var fileName = file.FileName.Length > 20
-            ? $"{file.FileName[..20]}..."
-            : file.FileName;
-
-        InvokeStatusChangedEvent($"{retryStr}下载整合包中的 Mods - {fileName} ({_totalDownloaded} / {_needToDownload})",
-            progress);
-
-        if (!(e.Success ?? false)) _failedFiles.Add(file);
     }
 }
