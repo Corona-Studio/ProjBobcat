@@ -41,11 +41,9 @@ All you need for minecraft launcher in typescript. https://voxelum.github.io/min
 + Due to the limitation of the default number of connections in .NET, you need to manually override the default number of connections to ensure that some methods in <DownloadHelper> are executed normally. You can add the following code in App.xaml.cs or the entry point of the program to complete the modification (The maximum value should not exceed 1024)
 
   ```c#
-
    using System.Net;
   
    ServicePointManager.DefaultConnectionLimit = 512;
-   
   ```
 
 ## Installation
@@ -55,9 +53,7 @@ There are two methods for the first step:
 * Directly install ProjBobcat via Nuget Package Manager or simply execute 
 
   ```
-
   Install-Package ProjBobcat
-
   ```
   in Package Manager Console.
 
@@ -107,15 +103,12 @@ Selective components:
 #### Java Detection
 
 ```csharp
-
 var javaList = ProjBobcat.Class.Helper.SystemInfoHelper.FindJava(); // Returns a list of all java installations found in registry.
-
 ```
 
 #### Core Initialization
 
 ```csharp
-
 var core = new DefaultGameCore
 {
   ClientToken = clientToken,
@@ -127,15 +120,12 @@ var core = new DefaultGameCore
   },
   GameLogResolver = new DefaultGameLogResolver()
 };
-
 ```
 
 #### Game Scaning
 
 ```csharp
-
 List<VersionInfo> gameList = core.VersionLocator.GetAllGames().ToList();
-
 ```
 
 #### Resource Completion
@@ -163,7 +153,6 @@ var drc = new DefaultResourceCompleter
 };
 
 await drc.CheckAndDownloadTaskAsync().ConfigureAwait(false);
-
 ```
 
 Here are some events which you could bind to your program.
@@ -177,7 +166,6 @@ Here are some events which you could bind to your program.
 #### Launch Configuration
 
 ```csharp
-
 var launchSettings = new LaunchSettings
 {
     FallBackGameArguments = new GameArguments // Default game arguments for all games in .minecraft/ as the fallback of specific game launch.
@@ -207,7 +195,6 @@ launchSettings.GameArguments = new GameArguments // (Optional) The arguments of 
     MinMemory = specificMinMemory, // Minimum Memory
     MaxMemory = specificMaxMemory // Maximum Memory
 };
-
 ```
 
 Here are some events which you could bind to your program.
@@ -223,34 +210,28 @@ Here are some events which you could bind to your program.
 Offline:
 
 ```csharp
-
 launchSettings.Authenticator = new OfflineAuthenticator
 {
     Username = "Username"
     LauncherAccountParser = core.VersionLocator.LauncherAccountParser // launcher_profiles.json parser
 },
-
 ```
 
 Online:
 
 ```csharp
-
 launchSettings.Authenticator = new YggdrasilAuthenticator
 {
     LauncherAccountParser = core.VersionLocator.LauncherAccountParser
     Email = "example@example.com", // Registered E-mail address on Mojang authentication server.
     Password = "password"
 };
-
 ```
 
 #### Launch!
 
 ```csharp
-
 var result = await Core.LaunchTaskAsync(launchSettings).ConfigureAwait(true); // Returns the launch result
-
 ```
 
 ## Stats
