@@ -15,7 +15,7 @@
     <IsLinux Condition="( '$(OS)' == 'Unix' And $([System.IO.File]::Exists('/usr/lib/libc.dylib'))) And '$(RuntimeIdentifier)' == 'linux-x64'">true</IsLinux>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(TargetFramework)'=='net7.0'">
+  <PropertyGroup Condition="'$(TargetFramework)'=='net8.0' OR ('$(TargetFramework)'=='net7.0' AND ('$(IsWindows)'=='true' OR '$(IsLinux)'=='true'))">
     <PublishAot>true</PublishAot>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
   </PropertyGroup>
