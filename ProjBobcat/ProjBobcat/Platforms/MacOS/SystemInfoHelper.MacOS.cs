@@ -2,6 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace ProjBobcat.Platforms.MacOS
 {
@@ -12,7 +14,7 @@ namespace ProjBobcat.Platforms.MacOS
         /// </summary>
         /// <returns>The percentange value with the '%' sign. e.g. if the usage is 30.1234 %,
         /// then it will return 30.12.</returns>
-        public static IEnumerable<CPUInfo> GetOSXCpuUsage()
+        public static CPUInfo GetOSXCpuUsage()
         {
             var info = new ProcessStartInfo
             {
@@ -23,8 +25,27 @@ namespace ProjBobcat.Platforms.MacOS
             };
 
             using var process = Process.Start(info);
-            var output = process.StandardOutput.ReadToEnd();
+
+            if (process == null)
+            {
+                return new CPUInfo
+                {
+                    Name = "Overrall",
+                    Usage = -1
+                };
+            }
+            
+            var output = process.StandardOutput?.ReadToEnd();
             process.WaitForExit();
+
+            if (string.IsNullOrEmpty(output))
+            {
+                return new CPUInfo
+                {
+                    Name = "Overrall",
+                    Usage = -1
+                };
+            }
 
             var cpu = output.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
@@ -32,36 +53,91 @@ namespace ProjBobcat.Platforms.MacOS
             var sysUsage = double.TryParse(cpu[4].TrimEnd('%'), out var sysOut) ? sysOut : 0;
             var totalUsage = userUsage + sysUsage;
 
-            yield return new CPUInfo
+            return new CPUInfo
             {
                 Name = "Overrall",
                 Usage = totalUsage
             };
+        }
+        
+        private static ulong GetTotalMemory()
+        {
+            var info = new ProcessStartInfo
+            {
+                FileName = "/usr/sbin/sysctl",
+                Arguments = "hw.memsize",
+                RedirectStandardOutput = true
+            };
+            
+            using var process = Process.Start(info);
+
+            if (process == null) return 0;
+            
+            var output = process.StandardOutput?.ReadToEnd();
+            process.WaitForExit();
+
+            if (string.IsNullOrEmpty(output)) return 0;
+
+            var split = output.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var value = split.Last();
+
+            return ulong.TryParse(value, out var outVal) ? outVal : 0;
         }
 
         /// <summary>
 		///     获取 系统的内存信息
 		/// </summary>
 		/// <returns></returns>
-        public static MemoryInfo GetOSXMemoryStatus()
+        public static MemoryInfo GetOsxMemoryStatus()
         {
             var info = new ProcessStartInfo
             {
                 FileName = "/bin/bash",
-                Arguments = "-c \"top -l 1 -s 0 | grep PhysMem\"",
+                Arguments = $"-c \"vm_stat\"",
                 RedirectStandardOutput = true
             };
 
             using var process = Process.Start(info);
+
+            if (process == null)
+            {
+                return new MemoryInfo
+                {
+                    Total = -1,
+                    Used = -1,
+                    Free = -1,
+                    Percentage = -1
+                };
+            }
+            
             var output = process.StandardOutput.ReadToEnd();
             process.WaitForExit();
-            // Console.WriteLine(output);
 
-            var memory = output.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (string.IsNullOrEmpty(output))
+            {
+                return new MemoryInfo
+                {
+                    Total = -1,
+                    Used = -1,
+                    Free = -1,
+                    Percentage = -1
+                };
+            }
 
-            var used = double.TryParse(memory[1].TrimEnd('M'), out var usedOut) ? usedOut : 0;
-            var free = double.TryParse(memory[5].TrimEnd('M'), out var freeOut) ? freeOut : 0;
-            var total = used + free;
+            var split = output.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            var infoDic = split
+                .Skip(1)
+                .Select(line => line.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+                .Select(lineSplit => (lineSplit.Take(lineSplit.Length - 1), lineSplit.Last().TrimEnd('.')))
+                .Select(pair => (string.Join(' ', pair.Item1).TrimEnd(':'), double.TryParse(pair.Item2, out var outVal) ? outVal : 0))
+                .ToDictionary(pair => pair.Item1, pair2 => pair2.Item2);
+
+            var pageSize = uint.TryParse(Regex.Match(split[0], "\\d+").Value, out var pageSizeOut) ? pageSizeOut : 0;
+            var active = (infoDic.TryGetValue("Pages active", out var activeOut) ? activeOut : 0) * pageSize;
+
+            var used = active / Math.Pow(1024, 2);
+            var total = GetTotalMemory() / Math.Pow(1024, 2);
+            var free = total - used;
             var percentage = used / total;
 
             var metrics = new MemoryInfo
@@ -69,7 +145,7 @@ namespace ProjBobcat.Platforms.MacOS
                 Total = total,
                 Used = used,
                 Free = free,
-                Percentage = percentage
+                Percentage = percentage * 100
             };
 
             return metrics;

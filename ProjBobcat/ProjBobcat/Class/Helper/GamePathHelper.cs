@@ -142,7 +142,7 @@ public static class GamePathHelper
         var basePath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
 #elif OSX
         var path = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
-        var basePath = Path.Combine(path, "Application Support");
+        var basePath = Path.Combine(path, "Library", "Application Support");
 #elif LINUX
         var basePath = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
 #endif

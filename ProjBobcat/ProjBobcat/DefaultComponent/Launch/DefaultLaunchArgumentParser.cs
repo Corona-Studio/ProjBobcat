@@ -44,7 +44,7 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
 
         var sb = new StringBuilder();
         foreach (var lib in VersionInfo.Libraries)
-            sb.Append($"{Path.Combine(RootPath, GamePathHelper.GetLibraryPath(lib.Path))};");
+            sb.Append($"{Path.Combine(RootPath, GamePathHelper.GetLibraryPath(lib.Path))}{Path.PathSeparator}");
 
 
         if (!VersionInfo.MainClass.Equals("cpw.mods.bootstraplauncher.BootstrapLauncher",
@@ -132,7 +132,7 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
             { "${launcher_name}", $"\"{LaunchSettings.LauncherName}\"" },
             { "${launcher_version}", "32" },
             { "${classpath}", $"\"{ClassPath}\"" },
-            { "${classpath_separator}", ";" },
+            { "${classpath_separator}", Path.PathSeparator.ToString() },
             { "${library_directory}", $"\"{Path.Combine(RootPath, GamePathHelper.GetLibraryRootPath())}\"" }
         };
 

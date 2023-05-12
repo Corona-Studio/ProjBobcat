@@ -17,7 +17,7 @@ public static class SystemInfoHelper
 #if WINDOWS
         return Platforms.Windows.SystemInfoHelper.GetWindowsCpuUsage();
 #elif OSX
-        return Platforms.MacOS.SystemInfoHelper.GetOSXCpuUsage().FirstOrDefault();
+        return Platforms.MacOS.SystemInfoHelper.GetOSXCpuUsage();
 #elif LINUX
         return Platforms.Linux.SystemInfoHelper.GetLinuxCpuUsage().FirstOrDefault();
 #else
@@ -30,7 +30,7 @@ public static class SystemInfoHelper
 #if WINDOWS
         return Platforms.Windows.SystemInfoHelper.GetWindowsMemoryStatus();
 #elif OSX
-        return Platforms.MacOS.SystemInfoHelper.GetOSXMemoryStatus();
+        return Platforms.MacOS.SystemInfoHelper.GetOsxMemoryStatus();
 #elif LINUX
         return Platforms.Linux.SystemInfoHelper.GetLinuxMemoryStatus();
 #else
