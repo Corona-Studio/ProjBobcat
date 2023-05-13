@@ -25,7 +25,7 @@ public class DefaultResourceCompleter : IResourceCompleter
     readonly ConcurrentBag<DownloadFile> _failedFiles = new();
     readonly EventHandlerList _listEventDelegates = new();
 
-    bool disposedValue;
+    bool _disposedValue;
 
     public int TotalDownloaded { get; private set; }
     public int NeedToDownload { get; private set; }
@@ -68,6 +68,7 @@ public class DefaultResourceCompleter : IResourceCompleter
         NeedToDownload = 0;
         _failedFiles.Clear();
 
+        var processorCount = Environment.ProcessorCount;
         var linkOptions = new DataflowLinkOptions { PropagateCompletion = true };
         var gameResourceTransBlock =
             new TransformBlock<IGameResource, DownloadFile>(f =>
@@ -85,7 +86,11 @@ public class DefaultResourceCompleter : IResourceCompleter
 
                     return dF;
                 },
-                new ExecutionDataflowBlockOptions());
+                new ExecutionDataflowBlockOptions
+                {
+                    BoundedCapacity = processorCount,
+                    MaxDegreeOfParallelism = processorCount
+                });
         var downloadFileBlock = new ActionBlock<DownloadFile>(async df =>
         {
             await DownloadHelper.AdvancedDownloadFile(df, new DownloadSettings
@@ -99,6 +104,10 @@ public class DefaultResourceCompleter : IResourceCompleter
 
             df.Completed -= WhenCompleted;
             df.Dispose();
+        }, new ExecutionDataflowBlockOptions
+        {
+            BoundedCapacity = processorCount,
+            MaxDegreeOfParallelism = processorCount
         });
 
         gameResourceTransBlock.LinkTo(downloadFileBlock, linkOptions);
@@ -133,8 +142,11 @@ public class DefaultResourceCompleter : IResourceCompleter
             }
 
             var asyncEnumerable = resolver.ResolveResourceAsync();
+            var tasks = new Task[MaxDegreeOfParallelism];
+            for (var i = 0; i < MaxDegreeOfParallelism; i++)
+                tasks[i] = ReceiveGameResourceTask(asyncEnumerable);
 
-            await Task.WhenAll(Enumerable.Repeat(ReceiveGameResourceTask(asyncEnumerable), MaxDegreeOfParallelism));
+            await Task.WhenAll(tasks);
         }
 
         gameResourceTransBlock.Complete();
@@ -203,13 +215,13 @@ public class DefaultResourceCompleter : IResourceCompleter
 
     protected virtual void Dispose(bool disposing)
     {
-        if (!disposedValue)
+        if (!_disposedValue)
         {
             if (disposing) _listEventDelegates.Dispose();
 
             // TODO: 释放未托管的资源(未托管的对象)并重写终结器
             // TODO: 将大型字段设置为 null
-            disposedValue = true;
+            _disposedValue = true;
         }
     }
 }

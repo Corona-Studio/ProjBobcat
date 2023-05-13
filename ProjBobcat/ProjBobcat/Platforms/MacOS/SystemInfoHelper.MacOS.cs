@@ -16,7 +16,7 @@ namespace ProjBobcat.Platforms.MacOS
 
             foreach (var dir in Directory.EnumerateDirectories(rootPath))
             {
-                var filePath = $"{dir}/Contents/Home/bin/java";
+                var filePath = $"{dir}/{Constants.JavaExecutablePath}";
                 if (File.Exists(filePath))
                 {
 #if NET7_0_OR_GREATER

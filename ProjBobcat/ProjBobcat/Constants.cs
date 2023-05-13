@@ -11,7 +11,7 @@ public static class Constants
 #elif OSX
     public const string WhereCommand = "whereis";
     public const string JavaExecutable = "java";
-    public const string JavaExecutablePath = $"jre.bundle/Contents/Home/bin/{JavaExecutable}";
+    public const string JavaExecutablePath = $"Contents/Home/bin/{JavaExecutable}";
     public const string JavaExecutableExtension = "*";
     public const string OsSymbol = "osx";
 #elif LINUX

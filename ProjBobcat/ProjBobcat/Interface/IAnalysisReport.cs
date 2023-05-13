@@ -8,4 +8,5 @@ public interface IAnalysisReport
     CrashCauses Cause { get; }
     IReadOnlyCollection<string>? Details { get; }
     string? From { get; set; }
+    bool HasDetails { get; }
 }
