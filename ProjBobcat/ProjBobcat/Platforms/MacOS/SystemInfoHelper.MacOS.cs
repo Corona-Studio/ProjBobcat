@@ -2,13 +2,35 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace ProjBobcat.Platforms.MacOS
 {
-    class SystemInfoHelper
+    static class SystemInfoHelper
     {
+        public static IEnumerable<string> FindJavaMacOS()
+        {
+            const string rootPath = "/Library/Java/JavaVirtualMachines";
+
+            foreach (var dir in Directory.EnumerateDirectories(rootPath))
+            {
+                var filePath = $"{dir}/Contents/Home/bin/java";
+                if (File.Exists(filePath))
+                {
+#if NET7_0_OR_GREATER
+                    var flag = File.GetUnixFileMode(filePath);
+
+                    if (flag.HasFlag(UnixFileMode.GroupExecute) && flag.HasFlag(UnixFileMode.UserExecute))
+                        yield return filePath;
+#else
+                    yield return filePath;
+#endif
+                }
+            }
+        }
+
         /// <summary>
         /// Get the system overall CPU usage percentage.
         /// </summary>

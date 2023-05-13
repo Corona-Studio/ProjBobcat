@@ -12,7 +12,7 @@ public class ForgeInstallProfileData
 
 public class ForgeInstallProfileProcessor
 {
-    [JsonPropertyName("sides")] public string[] Sides { get; set; }
+    [JsonPropertyName("sides")] public string[]? Sides { get; set; }
 
     [JsonPropertyName("jar")] public string Jar { get; set; }
 

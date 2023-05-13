@@ -49,6 +49,9 @@ public static class SystemInfoHelper
 #if WINDOWS
         foreach (var path in Platforms.Windows.SystemInfoHelper.FindJavaWindows())
             result.Add(path);
+#elif OSX
+        foreach (var path in Platforms.MacOS.SystemInfoHelper.FindJavaMacOS())
+            result.Add(path);
 #endif
 
         foreach (var path in result)
@@ -59,7 +62,7 @@ public static class SystemInfoHelper
         var evJava = FindJavaUsingEnvironmentVariable();
 
         if (!string.IsNullOrEmpty(evJava))
-            yield return Path.Combine(evJava, "bin", Constants.JavaExecutable);
+            yield return Path.Combine(evJava, Constants.JavaExecutablePath);
     }
 
     static IEnumerable<string> FindJavaInOfficialGamePath()
@@ -68,11 +71,11 @@ public static class SystemInfoHelper
         var paths = new[] { "java-runtime-gamma", "java-runtime-alpha", "java-runtime-beta", "jre-legacy" };
 
         return paths
-            .Select(path => Path.Combine(basePath, path, "bin", Constants.JavaExecutable))
+            .Select(path => Path.Combine(basePath, path, Constants.JavaExecutablePath))
             .Where(File.Exists);
     }
 
-    static string FindJavaUsingEnvironmentVariable()
+    static string? FindJavaUsingEnvironmentVariable()
     {
         try
         {
@@ -84,7 +87,7 @@ public static class SystemInfoHelper
         }
         catch (Exception)
         {
-            return string.Empty;
+            return null;
         }
     }
 }

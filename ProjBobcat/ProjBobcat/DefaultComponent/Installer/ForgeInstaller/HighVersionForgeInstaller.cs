@@ -326,6 +326,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
                 .Select(arg => StringHelper.ReplaceByDic(arg, argsReplaceList))
                 .Select(ResolvePathRegex)
                 .Select(ResolveVariableRegex)
+                .Select(StringHelper.FixPathArgument)
                 .ToList();
             var model = new ForgeInstallProcessorModel
             {
@@ -445,7 +446,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
             var cp = totalLibs.Select(MavenHelper.ResolveMavenString)
                 .Select(m => Path.Combine(RootPath, GamePathHelper.GetLibraryPath(m.Path)));
-            var cpStr = string.Join(';', cp);
+            var cpStr = string.Join(Path.PathSeparator, cp);
             var parameter = new List<string>
             {
                 "-cp",
@@ -465,6 +466,20 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             };
 
             using var p = Process.Start(pi);
+
+            if (p == null)
+            {
+                return new ForgeInstallResult
+                {
+                    Error = new ErrorModel
+                    {
+                        Cause = "无法启动安装进程导致安装失败",
+                        ErrorMessage = "安装过程中出现了错误"
+                    },
+                    Succeeded = false
+                };
+            }
+            
             var logSb = new StringBuilder();
             var errSb = new StringBuilder();
 
@@ -498,7 +513,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
                     : data;
 
 
-                InvokeStatusChangedEvent($"{data} <错误> ( {_totalProcessed} / {_needToProcess} )", progress);
+                InvokeStatusChangedEvent($"{dataStr} <错误> ( {_totalProcessed} / {_needToProcess} )", progress);
             };
 
             p.BeginOutputReadLine();

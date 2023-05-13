@@ -8,6 +8,13 @@ namespace ProjBobcat.Class.Helper;
 /// </summary>
 public static class StringHelper
 {
+    public static string FixPathArgument(string arg)
+    {
+        if (!arg.Contains(' ')) return arg;
+
+        return $"\"{arg}\"";
+    }
+    
     /// <summary>
     ///     修复+转义参数字符串
     /// </summary>
