@@ -1866,7 +1866,7 @@ public class TomlSyntaxException : Exception
 
 #region Parse utilities
 
-static partial class TomlSyntax
+static class TomlSyntax
 {
     #region Type Patterns
 
@@ -1920,13 +1920,13 @@ static partial class TomlSyntax
     public static bool IsIntegerWithBase(string s, out int numberBase)
     {
         numberBase = 10;
-        
+
 #if NET7_0_OR_GREATER
         var match = BasedIntegerPattern().Match(s);
 #else
         var match = BasedIntegerPattern.Match(s);
 #endif
-        
+
         if (!match.Success) return false;
         IntegerBases.TryGetValue(match.Groups["base"].Value, out numberBase);
         return true;
@@ -2051,9 +2051,8 @@ static partial class TomlSyntax
     {
         return c is ITEM_SEPARATOR or ARRAY_END_SYMBOL or INLINE_TABLE_END_SYMBOL;
     }
-    
-#if NET7_0_OR_GREATER
 
+#if NET7_0_OR_GREATER
     [GeneratedRegex("^(\\+|-)?(?!_)(0|(?!0)(_?\\d)*)$")]
     private static partial Regex IntegerPattern();
 

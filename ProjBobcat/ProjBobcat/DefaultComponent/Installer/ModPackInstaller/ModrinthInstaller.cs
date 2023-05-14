@@ -21,14 +21,16 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
     {
         using var archive = ArchiveFactory.Open(Path.GetFullPath(ModPackPath));
         var manifestEntry =
-            archive.Entries.FirstOrDefault(x => x.Key.Equals("modrinth.index.json", StringComparison.OrdinalIgnoreCase));
+            archive.Entries.FirstOrDefault(x =>
+                x.Key.Equals("modrinth.index.json", StringComparison.OrdinalIgnoreCase));
 
         if (manifestEntry == default)
             return default;
 
         await using var stream = manifestEntry.OpenEntryStream();
 
-        var manifestModel = await JsonSerializer.DeserializeAsync(stream, ModrinthModPackIndexModelContext.Default.ModrinthModPackIndexModel);
+        var manifestModel = await JsonSerializer.DeserializeAsync(stream,
+            ModrinthModPackIndexModelContext.Default.ModrinthModPackIndexModel);
 
         return manifestModel;
     }
@@ -60,7 +62,7 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
         foreach (var file in index.Files)
         {
             if (string.IsNullOrEmpty(file.Path)) continue;
-            if(file.Downloads.Length == 0) continue;
+            if (file.Downloads.Length == 0) continue;
 
             var fullPath = Path.Combine(idPath, file.Path);
             var downloadDir = Path.GetDirectoryName(fullPath);

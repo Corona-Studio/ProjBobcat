@@ -46,7 +46,8 @@ public sealed class DefaultLauncherProfileParser : LauncherParserBase, ILauncher
             LauncherProfile = launcherProfile;
 
             var launcherProfileJson =
-                JsonSerializer.Serialize(launcherProfile, typeof(LauncherProfileModel), new LauncherProfileModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
+                JsonSerializer.Serialize(launcherProfile, typeof(LauncherProfileModel),
+                    new LauncherProfileModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
             if (!Directory.Exists(RootPath))
                 Directory.CreateDirectory(RootPath);
@@ -57,7 +58,8 @@ public sealed class DefaultLauncherProfileParser : LauncherParserBase, ILauncher
         {
             var launcherProfileJson =
                 File.ReadAllText(_fullLauncherProfilePath, Encoding.UTF8);
-            LauncherProfile = JsonSerializer.Deserialize(launcherProfileJson, LauncherProfileModelContext.Default.LauncherProfileModel);
+            LauncherProfile = JsonSerializer.Deserialize(launcherProfileJson,
+                LauncherProfileModelContext.Default.LauncherProfileModel);
         }
     }
 
@@ -104,7 +106,8 @@ public sealed class DefaultLauncherProfileParser : LauncherParserBase, ILauncher
             File.Delete(_fullLauncherProfilePath);
 
         var launcherProfileJson =
-            JsonSerializer.Serialize(LauncherProfile, typeof(LauncherProfileModel), new LauncherProfileModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
+            JsonSerializer.Serialize(LauncherProfile, typeof(LauncherProfileModel),
+                new LauncherProfileModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
         File.WriteAllText(_fullLauncherProfilePath, launcherProfileJson);
     }

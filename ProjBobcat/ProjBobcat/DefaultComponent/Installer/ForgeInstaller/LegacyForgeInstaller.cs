@@ -84,7 +84,8 @@ public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
 
             InvokeStatusChangedEvent("解析安装文档", 0.35);
 
-            var profileModel = await JsonSerializer.DeserializeAsync(stream, LegacyForgeInstallProfileContext.Default.LegacyForgeInstallProfile);
+            var profileModel = await JsonSerializer.DeserializeAsync(stream,
+                LegacyForgeInstallProfileContext.Default.LegacyForgeInstallProfile);
             if (profileModel == null)
                 throw new ArgumentNullException(nameof(profileModel));
 

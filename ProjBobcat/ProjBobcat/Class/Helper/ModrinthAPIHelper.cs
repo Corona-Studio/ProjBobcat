@@ -22,7 +22,8 @@ public static class ModrinthAPIHelper
         const string reqUrl = $"{BaseUrl}/tag/category";
 
         using var res = await Get(reqUrl);
-        var resModel = await res.Content.ReadFromJsonAsync(ModrinthCategoryInfoContext.Default.ModrinthCategoryInfoArray);
+        var resModel =
+            await res.Content.ReadFromJsonAsync(ModrinthCategoryInfoContext.Default.ModrinthCategoryInfoArray);
 
         return resModel;
     }
@@ -32,7 +33,9 @@ public static class ModrinthAPIHelper
         var reqUrl = $"{BaseUrl}/project/{projectId}/dependencies";
 
         using var res = await Get(reqUrl);
-        var resModel = await res.Content.ReadFromJsonAsync(ModrinthProjectDependencyInfoContext.Default.ModrinthProjectDependencyInfo);
+        var resModel =
+            await res.Content.ReadFromJsonAsync(ModrinthProjectDependencyInfoContext.Default
+                .ModrinthProjectDependencyInfo);
 
         return resModel;
     }

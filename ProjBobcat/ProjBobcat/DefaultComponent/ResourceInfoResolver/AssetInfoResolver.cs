@@ -79,7 +79,8 @@ public sealed class AssetInfoResolver : ResolverBase
                 if (versionObject == default) yield break;
 
                 using var jsonRes = await HttpHelper.Get(versionObject.Url);
-                var versionModel = await jsonRes.Content.ReadFromJsonAsync(RawVersionModelContext.Default.RawVersionModel);
+                var versionModel =
+                    await jsonRes.Content.ReadFromJsonAsync(RawVersionModelContext.Default.RawVersionModel);
 
                 if (versionModel == default) yield break;
 
@@ -121,7 +122,8 @@ public sealed class AssetInfoResolver : ResolverBase
         try
         {
             await using var assetFs = File.OpenRead(assetIndexesPath);
-            assetObject = await JsonSerializer.DeserializeAsync(assetFs, AssetObjectModelContext.Default.AssetObjectModel);
+            assetObject =
+                await JsonSerializer.DeserializeAsync(assetFs, AssetObjectModelContext.Default.AssetObjectModel);
         }
         catch (Exception ex)
         {

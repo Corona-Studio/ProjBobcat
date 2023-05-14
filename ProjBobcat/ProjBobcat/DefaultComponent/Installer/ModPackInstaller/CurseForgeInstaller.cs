@@ -30,7 +30,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
         var manifest = await ReadManifestTask();
 
-        if(manifest == default)
+        if (manifest == default)
             throw new Exception("无法读取到 CurseForge 的 manifest 文件");
 
         var idPath = Path.Combine(RootPath, GamePathHelper.GetGamePath(GameId));
@@ -146,7 +146,9 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
         await using var stream = manifestEntry.OpenEntryStream();
 
-        var manifestModel = await JsonSerializer.DeserializeAsync(stream, CurseForgeManifestModelContext.Default.CurseForgeManifestModel);
+        var manifestModel =
+            await JsonSerializer.DeserializeAsync(stream,
+                CurseForgeManifestModelContext.Default.CurseForgeManifestModel);
 
         return manifestModel;
     }

@@ -5,7 +5,7 @@ using ProjBobcat.Interface;
 
 namespace ProjBobcat.DefaultComponent.Logging;
 
-public partial class DefaultGameLogResolver : IGameLogResolver
+public class DefaultGameLogResolver : IGameLogResolver
 {
     const string LogTypeRegexStr = "FATAL|ERROR|WARN|INFO|DEBUG";
     const string LogTimeRegexStr = "(20|21|22|23|[0-1]\\d):[0-5]\\d:[0-5]\\d";
@@ -15,9 +15,8 @@ public partial class DefaultGameLogResolver : IGameLogResolver
     const string LogSourceAndTypeRegex = $"[\\w\\W\\s]{{2,}}/({LogTypeRegexStr})";
     const string LogDateRegex = $"\\[{LogTimeRegexStr}\\]";
     const string LogTotalPrefixRegex = $"\\[{LogTimeRegexStr}\\] \\[{LogSourceAndTypeRegex}\\]";
-    
-#if NET7_0_OR_GREATER
 
+#if NET7_0_OR_GREATER
     [GeneratedRegex(LogSourceAndTypeRegex)]
     private static partial Regex SourceAndTypeRegex();
     
@@ -38,7 +37,7 @@ public partial class DefaultGameLogResolver : IGameLogResolver
     
     [GeneratedRegex(ExceptionRegexStr)]
     private static partial Regex ExceptionRegex();
-        
+
 #else
 
     static readonly Regex
@@ -51,7 +50,7 @@ public partial class DefaultGameLogResolver : IGameLogResolver
         ExceptionRegex = new(ExceptionRegexStr, RegexOptions.Compiled);
 
 #endif
-    
+
     public GameLogType ResolveLogType(string log)
     {
         if (!string.IsNullOrEmpty(ResolveExceptionMsg(log)))
@@ -59,7 +58,7 @@ public partial class DefaultGameLogResolver : IGameLogResolver
 
         if (!string.IsNullOrEmpty(ResolveStackTrace(log)))
             return GameLogType.StackTrace;
-        
+
 #if NET7_0_OR_GREATER
         return TypeRegex().Match(log).Value switch
         {
@@ -101,7 +100,7 @@ public partial class DefaultGameLogResolver : IGameLogResolver
 #else
         var exceptionMsg = ExceptionRegex.Match(log).Value;
 #endif
-        
+
         return exceptionMsg;
     }
 
@@ -114,7 +113,7 @@ public partial class DefaultGameLogResolver : IGameLogResolver
         var content = SourceAndTypeRegex.Match(log).Value.Split('/').FirstOrDefault();
         var date = TimeFullRegex.Match(log).Value;
 #endif
-        
+
         var result = content?.Replace($"{date} [", string.Empty);
 
         return result;

@@ -36,7 +36,8 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
             LauncherAccount = launcherAccount;
 
             var launcherProfileJson =
-                JsonSerializer.Serialize(launcherAccount, typeof(LauncherAccountModel), new LauncherAccountModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
+                JsonSerializer.Serialize(launcherAccount, typeof(LauncherAccountModel),
+                    new LauncherAccountModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
             if (!Directory.Exists(RootPath))
                 Directory.CreateDirectory(RootPath);
@@ -47,7 +48,8 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
         {
             var launcherProfileJson =
                 File.ReadAllText(FullLauncherAccountPath, Encoding.UTF8);
-            LauncherAccount = JsonSerializer.Deserialize(launcherProfileJson, LauncherAccountModelContext.Default.LauncherAccountModel);
+            LauncherAccount = JsonSerializer.Deserialize(launcherProfileJson,
+                LauncherAccountModelContext.Default.LauncherAccountModel);
         }
     }
 
@@ -94,7 +96,7 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
         */
         {
             var findResult = Find(account.Id);
-            if (findResult is { Key: { }, Value: { } })
+            if (findResult is { Key: not null, Value: not null })
             {
                 newId = account.Id;
                 LauncherAccount.Accounts[findResult.Value.Key] = account;
@@ -139,7 +141,8 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
             File.Delete(FullLauncherAccountPath);
 
         var launcherProfileJson =
-            JsonSerializer.Serialize(LauncherAccount, typeof(LauncherAccountModel), new LauncherAccountModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
+            JsonSerializer.Serialize(LauncherAccount, typeof(LauncherAccountModel),
+                new LauncherAccountModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
         File.WriteAllText(FullLauncherAccountPath, launcherProfileJson);
     }

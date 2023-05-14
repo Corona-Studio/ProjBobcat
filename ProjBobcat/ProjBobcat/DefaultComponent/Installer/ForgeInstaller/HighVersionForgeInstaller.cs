@@ -19,17 +19,15 @@ using SharpCompress.Archives;
 
 namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller;
 
-public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
+public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 {
-    
 #if NET7_0_OR_GREATER
-
     [GeneratedRegex("^\\[.+\\]$")]
     private static partial Regex PathRegex();
 
     [GeneratedRegex("^{.+}$")]
     private static partial Regex VariableRegex();
-    
+
 #else
 
     static readonly Regex
@@ -37,7 +35,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
         VariableRegex = new("^{.+}$", RegexOptions.Compiled);
 
 #endif
-    
+
     readonly ConcurrentBag<DownloadFile> _failedFiles = new();
     int _totalDownloaded, _needToDownload, _totalProcessed, _needToProcess;
 
@@ -109,7 +107,8 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             };
 
         await using var stream = versionJsonEntry.OpenEntryStream();
-        var versionJsonModel = await JsonSerializer.DeserializeAsync(stream, RawVersionModelContext.Default.RawVersionModel);
+        var versionJsonModel =
+            await JsonSerializer.DeserializeAsync(stream, RawVersionModelContext.Default.RawVersionModel);
 
         var forgeVersion = versionJsonModel.Id.Replace("-forge-", "-");
         var id = string.IsNullOrEmpty(CustomId) ? versionJsonModel.Id : CustomId;
@@ -119,7 +118,8 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             versionJsonModel.InheritsFrom = InheritsFrom;
 
         var jsonPath = GamePathHelper.GetGameJsonPath(RootPath, id);
-        var jsonContent = JsonSerializer.Serialize(versionJsonModel, typeof(RawVersionModel), new RawVersionModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
+        var jsonContent = JsonSerializer.Serialize(versionJsonModel, typeof(RawVersionModel),
+            new RawVersionModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
         await File.WriteAllTextAsync(jsonPath, jsonContent);
 
@@ -134,7 +134,8 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
                 e.Key.Equals("install_profile.json", StringComparison.OrdinalIgnoreCase));
 
         await using var ipStream = installProfileEntry.OpenEntryStream();
-        var ipModel = await JsonSerializer.DeserializeAsync(ipStream, ForgeInstallProfileContext.Default.ForgeInstallProfile);
+        var ipModel =
+            await JsonSerializer.DeserializeAsync(ipStream, ForgeInstallProfileContext.Default.ForgeInstallProfile);
 
         #endregion
 
@@ -252,7 +253,6 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
         string ResolvePathRegex(string val)
         {
-            
 #if NET7_0_OR_GREATER
             if (string.IsNullOrEmpty(val) || string.IsNullOrEmpty(PathRegex().Match(val).Value)) return val;
 #else
@@ -292,7 +292,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 #else
             if (string.IsNullOrEmpty(val) || string.IsNullOrEmpty(VariableRegex.Match(val).Value)) return val;
 #endif
-            
+
             var key = val[1..^1];
             return variables[key].Client;
         }
@@ -468,7 +468,6 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             using var p = Process.Start(pi);
 
             if (p == null)
-            {
                 return new ForgeInstallResult
                 {
                     Error = new ErrorModel
@@ -478,8 +477,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
                     },
                     Succeeded = false
                 };
-            }
-            
+
             var logSb = new StringBuilder();
             var errSb = new StringBuilder();
 

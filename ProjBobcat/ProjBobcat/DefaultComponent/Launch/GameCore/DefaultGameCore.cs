@@ -28,7 +28,11 @@ public sealed class DefaultGameCore : GameCoreBase
     /// <summary>
     ///     启动参数解析器
     /// </summary>
-    public IArgumentParser LaunchArgumentParser { get => throw new InvalidOperationException(); set => throw new InvalidOperationException(); }
+    public IArgumentParser LaunchArgumentParser
+    {
+        get => throw new InvalidOperationException();
+        set => throw new InvalidOperationException();
+    }
 
     /// <summary>
     ///     .minecraft 目录

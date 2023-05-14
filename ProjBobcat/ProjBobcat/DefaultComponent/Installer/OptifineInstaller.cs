@@ -104,7 +104,8 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
         };
 
         var versionJsonPath = GamePathHelper.GetGameJsonPath(RootPath, id);
-        var jsonStr = JsonSerializer.Serialize(versionModel, typeof(RawVersionModel), new RawVersionModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
+        var jsonStr = JsonSerializer.Serialize(versionModel, typeof(RawVersionModel),
+            new RawVersionModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
         await File.WriteAllTextAsync(versionJsonPath, jsonStr);
 
         var librariesPath = Path.Combine(RootPath, GamePathHelper.GetLibraryRootPath(), "optifine",

@@ -67,8 +67,6 @@ public class VersionInfo
     [JsonPropertyName("libraries")] public ForgeLibraries[] Libraries { get; set; }
 }
 
-
-
 public class Optional
 {
     [JsonPropertyName("name")] public string Name { get; set; }

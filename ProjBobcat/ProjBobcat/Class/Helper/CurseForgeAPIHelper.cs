@@ -14,7 +14,6 @@ namespace ProjBobcat.Class.Helper;
 
 record AddonInfoReqModel(IEnumerable<int> modIds);
 
-
 [JsonSerializable(typeof(AddonInfoReqModel))]
 partial class AddonInfoReqModelContext : JsonSerializerContext
 {
@@ -85,7 +84,8 @@ public static class CurseForgeAPIHelper
         using var req = Req(HttpMethod.Get, reqUrl);
         using var res = await Client.SendAsync(req);
 
-        return await res.Content.ReadFromJsonAsync(SearchAddonsResultModelContext.Default.DataModelWithPaginationCurseForgeAddonInfoArray);
+        return await res.Content.ReadFromJsonAsync(SearchAddonsResultModelContext.Default
+            .DataModelWithPaginationCurseForgeAddonInfoArray);
     }
 
     public static async Task<CurseForgeAddonInfo?> GetAddon(int addonId)
@@ -95,13 +95,15 @@ public static class CurseForgeAPIHelper
         using var req = Req(HttpMethod.Get, reqUrl);
         using var res = await Client.SendAsync(req);
 
-        return (await res.Content.ReadFromJsonAsync(GetAddonResultModelContext.Default.DataModelCurseForgeAddonInfo))?.Data;
+        return (await res.Content.ReadFromJsonAsync(GetAddonResultModelContext.Default.DataModelCurseForgeAddonInfo))
+            ?.Data;
     }
 
     public static async Task<CurseForgeAddonInfo[]?> GetAddons(IEnumerable<int> addonIds)
     {
         const string reqUrl = $"{BaseUrl}/mods";
-        var data = JsonSerializer.Serialize(new AddonInfoReqModel(addonIds), AddonInfoReqModelContext.Default.AddonInfoReqModel);
+        var data = JsonSerializer.Serialize(new AddonInfoReqModel(addonIds),
+            AddonInfoReqModelContext.Default.AddonInfoReqModel);
 
         using var req = Req(HttpMethod.Post, reqUrl);
         req.Content = new StringContent(data, Encoding.UTF8, "application/json");
@@ -110,7 +112,8 @@ public static class CurseForgeAPIHelper
 
         res.EnsureSuccessStatusCode();
 
-        return (await res.Content.ReadFromJsonAsync(GetAddonsResultModelContext.Default.DataModelCurseForgeAddonInfoArray))?.Data;
+        return (await res.Content.ReadFromJsonAsync(GetAddonsResultModelContext.Default
+            .DataModelCurseForgeAddonInfoArray))?.Data;
     }
 
     public static async Task<CurseForgeLatestFileModel[]?> GetAddonFiles(int addonId)
@@ -120,7 +123,8 @@ public static class CurseForgeAPIHelper
         using var req = Req(HttpMethod.Get, reqUrl);
         using var res = await Client.SendAsync(req);
 
-        return (await res.Content.ReadFromJsonAsync(GetAddonFilesResultModelContext.Default.DataModelCurseForgeLatestFileModelArray))?.Data;
+        return (await res.Content.ReadFromJsonAsync(GetAddonFilesResultModelContext.Default
+            .DataModelCurseForgeLatestFileModelArray))?.Data;
     }
 
     public static async Task<CurseForgeSearchCategoryModel[]?> GetCategories(int gameId = 432)
@@ -130,7 +134,8 @@ public static class CurseForgeAPIHelper
         using var req = Req(HttpMethod.Get, reqUrl);
         using var res = await Client.SendAsync(req);
 
-        return (await res.Content.ReadFromJsonAsync(GetCategoriesResultContext.Default.DataModelCurseForgeSearchCategoryModelArray))?.Data;
+        return (await res.Content.ReadFromJsonAsync(GetCategoriesResultContext.Default
+            .DataModelCurseForgeSearchCategoryModelArray))?.Data;
     }
 
     public static async Task<CurseForgeFeaturedAddonModel?> GetFeaturedAddons(FeaturedQueryOptions options)
@@ -144,7 +149,8 @@ public static class CurseForgeAPIHelper
         using var res = await Client.SendAsync(req);
         res.EnsureSuccessStatusCode();
 
-        return (await res.Content.ReadFromJsonAsync(GetFeaturedAddonsResultContext.Default.DataModelCurseForgeFeaturedAddonModel))?.Data;
+        return (await res.Content.ReadFromJsonAsync(GetFeaturedAddonsResultContext.Default
+            .DataModelCurseForgeFeaturedAddonModel))?.Data;
     }
 
     public static async Task<string?> GetAddonDownloadUrl(long addonId, long fileId)

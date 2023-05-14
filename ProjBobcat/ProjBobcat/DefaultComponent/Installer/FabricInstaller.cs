@@ -86,7 +86,8 @@ public class FabricInstaller : InstallerBase, IFabricInstaller
         };
 
         var jsonPath = GamePathHelper.GetGameJsonPath(RootPath, id);
-        var jsonContent = JsonSerializer.Serialize(resultModel, typeof(RawVersionModel), new RawVersionModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
+        var jsonContent = JsonSerializer.Serialize(resultModel, typeof(RawVersionModel),
+            new RawVersionModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
         InvokeStatusChangedEvent("将版本 Json 写入文件", 90);
 

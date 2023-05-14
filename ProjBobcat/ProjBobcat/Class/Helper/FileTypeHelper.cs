@@ -11,7 +11,7 @@ public static class FileTypeHelper
 {
     public static async Task<AssetFileType> TryDetectFileTypeAsync(string filePath)
     {
-        if(!File.Exists(filePath)) throw new IOException("File not found.");
+        if (!File.Exists(filePath)) throw new IOException("File not found.");
 
         var extension = Path.GetExtension(filePath);
 
@@ -24,8 +24,10 @@ public static class FileTypeHelper
                 await using var fs = File.OpenRead(filePath);
                 using var archive = ArchiveFactory.Open(fs);
 
-                if(archive.Entries.Any(e => e.Key.Equals("manifest.json", StringComparison.OrdinalIgnoreCase))) return AssetFileType.CurseForgeModPack;
-                if(archive.Entries.Any(e => e.Key.Equals("modrinth.index.json", StringComparison.OrdinalIgnoreCase))) return AssetFileType.ModrinthModPack;
+                if (archive.Entries.Any(e => e.Key.Equals("manifest.json", StringComparison.OrdinalIgnoreCase)))
+                    return AssetFileType.CurseForgeModPack;
+                if (archive.Entries.Any(e => e.Key.Equals("modrinth.index.json", StringComparison.OrdinalIgnoreCase)))
+                    return AssetFileType.ModrinthModPack;
                 break;
             }
         }

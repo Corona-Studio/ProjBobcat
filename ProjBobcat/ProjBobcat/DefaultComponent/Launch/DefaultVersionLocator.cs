@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Helper.SystemInfo;
@@ -155,7 +154,8 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                 ruleValue = value.ValueKind switch
                 {
                     JsonValueKind.String => value.GetString(),
-                    JsonValueKind.Array => string.Join(' ', value.Deserialize(StringContext.Default.StringArray) ?? Array.Empty<string>())
+                    JsonValueKind.Array => string.Join(' ',
+                        value.Deserialize(StringContext.Default.StringArray) ?? Array.Empty<string>())
                 };
             }
 

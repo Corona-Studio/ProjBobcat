@@ -25,7 +25,9 @@ namespace ProjBobcat.DefaultComponent.Authenticator;
 record McReqModel(string identityToken);
 
 [JsonSerializable(typeof(McReqModel))]
-partial class McReqModelContext : JsonSerializerContext { }
+partial class McReqModelContext : JsonSerializerContext
+{
+}
 
 #endregion
 
@@ -124,12 +126,14 @@ public class MicrosoftAuthenticator : IAuthenticator
 
         #region STAGE 2
 
-        var xStsReqStr = JsonSerializer.Serialize(AuthXSTSRequestModel.Get(xBoxLiveToken.Token), AuthXSTSRequestModelContext.Default.AuthXSTSRequestModel);
+        var xStsReqStr = JsonSerializer.Serialize(AuthXSTSRequestModel.Get(xBoxLiveToken.Token),
+            AuthXSTSRequestModelContext.Default.AuthXSTSRequestModel);
         using var xStsMessage = await HttpHelper.Post(MSAuthXSTSUrl, xStsReqStr);
 
         if (!xStsMessage.IsSuccessStatusCode)
         {
-            var errModel = await xStsMessage.Content.ReadFromJsonAsync(AuthXSTSErrorModelContext.Default.AuthXSTSErrorModel);
+            var errModel =
+                await xStsMessage.Content.ReadFromJsonAsync(AuthXSTSErrorModelContext.Default.AuthXSTSErrorModel);
             var reason = (errModel?.XErr ?? 0) switch
             {
                 2148916233 => "未创建 XBox 账户",
@@ -153,19 +157,22 @@ public class MicrosoftAuthenticator : IAuthenticator
             };
         }
 
-        var xStsRes = await xStsMessage.Content.ReadFromJsonAsync(AuthXSTSResponseModelContext.Default.AuthXSTSResponseModel);
+        var xStsRes =
+            await xStsMessage.Content.ReadFromJsonAsync(AuthXSTSResponseModelContext.Default.AuthXSTSResponseModel);
 
         #endregion
 
         #region STAGE 2.5 (FETCH XBOX UID)
 
-        var xUidReqStr = JsonSerializer.Serialize(AuthXSTSRequestModel.Get(xBoxLiveToken.Token, "http://xboxlive.com"), AuthXSTSRequestModelContext.Default.AuthXSTSRequestModel);
+        var xUidReqStr = JsonSerializer.Serialize(AuthXSTSRequestModel.Get(xBoxLiveToken.Token, "http://xboxlive.com"),
+            AuthXSTSRequestModelContext.Default.AuthXSTSRequestModel);
         using var xUidMessage = await HttpHelper.Post(MSAuthXSTSUrl, xUidReqStr);
 
         var xuid = Guid.Empty.ToString("N");
         if (xUidMessage.IsSuccessStatusCode)
         {
-            var xUidRes = await xUidMessage.Content.ReadFromJsonAsync(AuthXSTSResponseModelContext.Default.AuthXSTSResponseModel);
+            var xUidRes =
+                await xUidMessage.Content.ReadFromJsonAsync(AuthXSTSResponseModelContext.Default.AuthXSTSResponseModel);
 
             if (xUidRes != null)
             {
@@ -207,7 +214,9 @@ public class MicrosoftAuthenticator : IAuthenticator
 
         using var ownResRes = await HttpHelper.Get(MojangOwnershipUrl,
             new Tuple<string, string>("Bearer", mcRes.AccessToken));
-        var ownRes = await ownResRes.Content.ReadFromJsonAsync(MojangOwnershipResponseModelContext.Default.MojangOwnershipResponseModel);
+        var ownRes =
+            await ownResRes.Content.ReadFromJsonAsync(MojangOwnershipResponseModelContext.Default
+                .MojangOwnershipResponseModel);
 
         if (!(ownRes?.Items?.Any() ?? false))
             return new MicrosoftAuthResult
@@ -227,11 +236,15 @@ public class MicrosoftAuthenticator : IAuthenticator
 
         using var profileResRes =
             await HttpHelper.Get(MojangProfileUrl, new Tuple<string, string>("Bearer", mcRes.AccessToken));
-        var profileRes = await profileResRes.Content.ReadFromJsonAsync(MojangProfileResponseModelContext.Default.MojangProfileResponseModel);
+        var profileRes =
+            await profileResRes.Content.ReadFromJsonAsync(MojangProfileResponseModelContext.Default
+                .MojangProfileResponseModel);
 
         if (profileRes == null)
         {
-            var errModel = await profileResRes.Content.ReadFromJsonAsync(MojangErrorResponseModelContext.Default.MojangErrorResponseModel);
+            var errModel =
+                await profileResRes.Content.ReadFromJsonAsync(MojangErrorResponseModelContext.Default
+                    .MojangErrorResponseModel);
 
             return new MicrosoftAuthResult
             {
@@ -375,7 +388,8 @@ public class MicrosoftAuthenticator : IAuthenticator
         };
 
         if (jsonObj.TryGetProperty("error", out _) && jsonObj.TryGetProperty("error_description", out _))
-            return JsonSerializer.Deserialize(content, typeof(GraphResponseErrorModel), new GraphResponseErrorModelContext(options)) as GraphResponseErrorModel;
+            return JsonSerializer.Deserialize(content, typeof(GraphResponseErrorModel),
+                new GraphResponseErrorModelContext(options)) as GraphResponseErrorModel;
 
         return JsonSerializer.Deserialize(content, typeInfo);
     }
@@ -397,7 +411,8 @@ public class MicrosoftAuthenticator : IAuthenticator
 
         using var deviceTokenRes = await DefaultClient.SendAsync(deviceTokenReq);
         var deviceTokenContent = await deviceTokenRes.Content.ReadAsStringAsync();
-        var deviceTokenModel = ResolveMSGraphResult(deviceTokenContent, DeviceIdResponseModelContext.Default.DeviceIdResponseModel);
+        var deviceTokenModel =
+            ResolveMSGraphResult(deviceTokenContent, DeviceIdResponseModelContext.Default.DeviceIdResponseModel);
 
         if (deviceTokenModel is not DeviceIdResponseModel deviceTokenResModel) return null;
 
@@ -426,7 +441,8 @@ public class MicrosoftAuthenticator : IAuthenticator
 
             using var userAuthResultRes = await DefaultClient.SendAsync(userAuthResultReq);
             var userAuthResultContent = await userAuthResultRes.Content.ReadAsStringAsync();
-            var userAuthResultModel = ResolveMSGraphResult(userAuthResultContent, GraphAuthResultModelContext.Default.GraphAuthResultModel);
+            var userAuthResultModel = ResolveMSGraphResult(userAuthResultContent,
+                GraphAuthResultModelContext.Default.GraphAuthResultModel);
 
             if (userAuthResultModel is not GraphAuthResultModel)
                 if (userAuthResultModel is GraphResponseErrorModel error)
@@ -458,7 +474,8 @@ public class MicrosoftAuthenticator : IAuthenticator
                                     + $"&redirect_uri={redirectUri}");
     }
 
-    static async Task<T?> SendRequest<T, TReq>(string url, TReq model, JsonTypeInfo<T> typeInfo, JsonTypeInfo<TReq> reqTypeInfo)
+    static async Task<T?> SendRequest<T, TReq>(string url, TReq model, JsonTypeInfo<T> typeInfo,
+        JsonTypeInfo<TReq> reqTypeInfo)
     {
         var reqStr = JsonSerializer.Serialize(model, reqTypeInfo);
 

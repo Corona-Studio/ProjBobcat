@@ -14,7 +14,7 @@ public static class StringHelper
 
         return $"\"{arg}\"";
     }
-    
+
     /// <summary>
     ///     修复+转义参数字符串
     /// </summary>

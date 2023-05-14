@@ -200,8 +200,10 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
                 "${classpath}"
             ]
             """;
-        
-        var preJvmArguments = VersionLocator.ParseJvmArguments(JsonSerializer.Deserialize(preset, JsonElementContext.Default.JsonElementArray)!);
+
+        var preJvmArguments =
+            VersionLocator.ParseJvmArguments(JsonSerializer.Deserialize(preset,
+                JsonElementContext.Default.JsonElementArray)!);
 
         foreach (var preJvmArg in preJvmArguments)
             yield return StringHelper.ReplaceByDic(preJvmArg, jvmArgumentsDic);

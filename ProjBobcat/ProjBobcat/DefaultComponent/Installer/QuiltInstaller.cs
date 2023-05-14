@@ -80,7 +80,8 @@ public class QuiltInstaller : InstallerBase, IQuiltInstaller
             DirectoryHelper.CleanDirectory(di.FullName);
 
         var jsonPath = GamePathHelper.GetGameJsonPath(RootPath, id);
-        var jsonContent = JsonSerializer.Serialize(versionModel, typeof(RawVersionModel), new RawVersionModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
+        var jsonContent = JsonSerializer.Serialize(versionModel, typeof(RawVersionModel),
+            new RawVersionModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
         InvokeStatusChangedEvent("将版本 Json 写入文件", 90);
 

@@ -14,7 +14,7 @@ public static class JwtTokenHelper
         var payload = jwt.Split('.')[1];
         var jsonBytes = Convert.FromBase64String(ReformatBase64String(payload));
         var keyValuePairs = JsonSerializer.Deserialize(jsonBytes, JsonElementContext.Default.JsonElement);
-        
+
         return keyValuePairs.EnumerateObject().Select(p => new Claim(p.Name, p.Value.ToString()));
     }
 

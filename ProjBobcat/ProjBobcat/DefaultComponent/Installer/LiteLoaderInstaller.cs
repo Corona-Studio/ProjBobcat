@@ -113,7 +113,8 @@ public class LiteLoaderInstaller : InstallerBase, ILiteLoaderInstaller
             DirectoryHelper.CleanDirectory(di.FullName);
 
         var jsonPath = GamePathHelper.GetGameJsonPath(RootPath, id);
-        var jsonContent = JsonSerializer.Serialize(resultModel, typeof(RawVersionModel), new RawVersionModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
+        var jsonContent = JsonSerializer.Serialize(resultModel, typeof(RawVersionModel),
+            new RawVersionModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
         await File.WriteAllTextAsync(jsonPath, jsonContent);
 

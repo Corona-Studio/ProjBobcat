@@ -7,16 +7,15 @@ namespace ProjBobcat.Class.Helper;
 /// <summary>
 ///     Maven解析工具类
 /// </summary>
-public static partial class MavenHelper
+public static class MavenHelper
 {
-    
 #if NET7_0_OR_GREATER
     [GeneratedRegex("\\.")]
     private static partial Regex GroupPathRegex();
 #else
     static readonly Regex GroupPathRegex = new("\\.", RegexOptions.Compiled);
 #endif
-    
+
     /// <summary>
     ///     使用名字来解析Maven包信息。
     ///     Parse Maven package's info with its name.

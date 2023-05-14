@@ -8,11 +8,9 @@ using ProjBobcat.Interface;
 
 namespace ProjBobcat.DefaultComponent.LogAnalysis;
 
-public partial class DefaultLogAnalyzer : ILogAnalyzer
+public class DefaultLogAnalyzer : ILogAnalyzer
 {
-    
 #if NET7_0_OR_GREATER
-
     [GeneratedRegex(@"(?<=\]: Warnings were found! ?[\n]+)[\w\W]+?(?=[\n]+\[)")]
     private static partial Regex WarningsMatch();
     
@@ -33,7 +31,7 @@ public partial class DefaultLogAnalyzer : ILogAnalyzer
     
     [GeneratedRegex(@"(?<=\tEntity's Exact location: )[^\n]+")]
     private static partial Regex EntityLocationMatch();
-    
+
 #else
 
     static readonly Regex WarningsMatch =
@@ -52,13 +50,14 @@ public partial class DefaultLogAnalyzer : ILogAnalyzer
     static readonly Regex EntityMatch = new(@"(?<=\tEntity Type: )[^\n]+(?= \()", RegexOptions.Compiled);
 
     static readonly Regex EntityLocationMatch = new(@"(?<=\tEntity's Exact location: )[^\n]+", RegexOptions.Compiled);
-    
+
 #endif
-    
+
     /// <summary>
-    /// 日志文件最后写入时间限制（分钟）
+    ///     日志文件最后写入时间限制（分钟）
     /// </summary>
     public double LogFileLastWriteTimeLimit { get; init; } = 10;
+
     public string? RootPath { get; init; }
     public string? GameId { get; init; }
     public bool VersionIsolation { get; init; }
@@ -223,7 +222,7 @@ public partial class DefaultLogAnalyzer : ILogAnalyzer
 #else
                         Details = new[] { WarningsMatch.Match(log).Value },
 #endif
-                        
+
                         From = from
                     };
 
@@ -334,9 +333,8 @@ public partial class DefaultLogAnalyzer : ILogAnalyzer
             CrashCauses.IncompatibleForgeAndOptifine
         }
     };
-    
-#if NET7_0_OR_GREATER
 
+#if NET7_0_OR_GREATER
     [GeneratedRegex("(?<=class \")[^']+(?=\"'s signer information)")]
     private static partial Regex PackSignerMatch();
     
@@ -372,7 +370,7 @@ public partial class DefaultLogAnalyzer : ILogAnalyzer
     
     [GeneratedRegex(@"^\[[^\]]+\] [^\n.]+.\w+.[^\n]+\n\[")]
     private static partial Regex MainClassMatch2();
-    
+
 #else
 
     static readonly Regex PackSignerMatch =
@@ -518,7 +516,7 @@ public partial class DefaultLogAnalyzer : ILogAnalyzer
             if (string.IsNullOrEmpty(modId))
                 modId = ModIdMatch4.Match(logs).Value;
 #endif
-            
+
             yield return new AnalysisReport.AnalysisReport(CrashCauses.ModMixinFailed)
             {
                 Details = string.IsNullOrEmpty(modId) ? null : new[] { modId }
@@ -570,7 +568,6 @@ public partial class DefaultLogAnalyzer : ILogAnalyzer
     };
 
 #if NET7_0_OR_GREATER
-
     [GeneratedRegex("(?<=Mod File: ).+")]
     private static partial Regex ModFileMatch();
     
@@ -591,7 +588,7 @@ public partial class DefaultLogAnalyzer : ILogAnalyzer
     
     [GeneratedRegex("(?<=Failed loading config file ).+(?= of type)")]
     private static partial Regex ConfigFileMatch2();
-    
+
 #else
 
     static readonly Regex ModFileMatch = new("(?<=Mod File: ).+", RegexOptions.Compiled);
@@ -612,7 +609,7 @@ public partial class DefaultLogAnalyzer : ILogAnalyzer
         new("(?<=Failed loading config file ).+(?= of type)", RegexOptions.Compiled);
 
 #endif
-    
+
     static IEnumerable<AnalysisReport.AnalysisReport> ProcessCrashReports(string logs)
     {
         foreach (var causeMap in CrashCausesMap)

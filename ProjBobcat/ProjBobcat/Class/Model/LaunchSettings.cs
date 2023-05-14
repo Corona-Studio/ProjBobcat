@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Text;
-using System.Text.Json.Serialization;
 using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.YggdrasilAuth;
 using ProjBobcat.Interface;
@@ -55,6 +54,9 @@ public class LaunchSettings
     public bool VersionInsulation { get; set; }
     public string LauncherName { get; set; }
 
+    public GameArguments? FallBackGameArguments { get; set; }
+    public GameArguments? GameArguments { get; set; }
+
     public override string ToString()
     {
         var sb = new StringBuilder();
@@ -70,7 +72,4 @@ public class LaunchSettings
 
         return sb.ToString();
     }
-
-    public GameArguments? FallBackGameArguments { get; set; }
-    public GameArguments? GameArguments { get; set; }
 }
