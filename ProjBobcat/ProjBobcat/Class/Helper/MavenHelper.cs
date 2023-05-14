@@ -7,7 +7,7 @@ namespace ProjBobcat.Class.Helper;
 /// <summary>
 ///     Maven解析工具类
 /// </summary>
-public static class MavenHelper
+public static partial class MavenHelper
 {
 #if NET7_0_OR_GREATER
     [GeneratedRegex("\\.")]

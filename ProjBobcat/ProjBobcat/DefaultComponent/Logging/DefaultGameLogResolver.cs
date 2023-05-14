@@ -5,7 +5,7 @@ using ProjBobcat.Interface;
 
 namespace ProjBobcat.DefaultComponent.Logging;
 
-public class DefaultGameLogResolver : IGameLogResolver
+public partial class DefaultGameLogResolver : IGameLogResolver
 {
     const string LogTypeRegexStr = "FATAL|ERROR|WARN|INFO|DEBUG";
     const string LogTimeRegexStr = "(20|21|22|23|[0-1]\\d):[0-5]\\d:[0-5]\\d";

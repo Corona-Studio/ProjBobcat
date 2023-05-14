@@ -19,7 +19,7 @@ using SharpCompress.Archives;
 
 namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller;
 
-public class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
+public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 {
 #if NET7_0_OR_GREATER
     [GeneratedRegex("^\\[.+\\]$")]

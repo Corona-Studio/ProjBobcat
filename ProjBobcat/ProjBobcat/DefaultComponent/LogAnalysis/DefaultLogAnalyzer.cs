@@ -8,7 +8,7 @@ using ProjBobcat.Interface;
 
 namespace ProjBobcat.DefaultComponent.LogAnalysis;
 
-public class DefaultLogAnalyzer : ILogAnalyzer
+public partial class DefaultLogAnalyzer : ILogAnalyzer
 {
 #if NET7_0_OR_GREATER
     [GeneratedRegex(@"(?<=\]: Warnings were found! ?[\n]+)[\w\W]+?(?=[\n]+\[)")]

@@ -1866,7 +1866,7 @@ public class TomlSyntaxException : Exception
 
 #region Parse utilities
 
-static class TomlSyntax
+static partial class TomlSyntax
 {
     #region Type Patterns
 
