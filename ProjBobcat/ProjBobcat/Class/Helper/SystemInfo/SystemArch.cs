@@ -14,12 +14,12 @@ public class SystemArch : IFormattable, IEquatable<SystemArch>
     }
 
     /// <summary>
-    ///     X64 。
+    ///     X64
     /// </summary>
     public static SystemArch X64 { get; } = new() { _is64BitOperatingSystem = true };
 
     /// <summary>
-    ///     X86 。
+    ///     X86
     /// </summary>
     public static SystemArch X86 { get; } = new() { _is64BitOperatingSystem = false };
 

@@ -9,6 +9,7 @@ using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Quilt;
 using ProjBobcat.Interface;
+using ProjBobcat.JsonConverter;
 
 namespace ProjBobcat.DefaultComponent.Installer;
 
@@ -41,7 +42,11 @@ public class QuiltInstaller : InstallerBase, IQuiltInstaller
 
         res.EnsureSuccessStatusCode();
 
-        var versionModel = await res.Content.ReadFromJsonAsync(RawVersionModelContext.Default.RawVersionModel);
+        var jsonOption = new JsonSerializerOptions
+        {
+            Converters = { new DateTimeConverterUsingDateTimeParse() }
+        };
+        var versionModel = await res.Content.ReadFromJsonAsync(new RawVersionModelContext(jsonOption).RawVersionModel);
 
         InvokeStatusChangedEvent("生成版本总成", 70);
 
