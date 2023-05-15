@@ -7,7 +7,7 @@ public class MicrosoftAuthResult : AuthResultBase
     /// <summary>
     ///     皮肤
     /// </summary>
-    public string Skin { get; set; }
+    public string? Skin { get; set; }
 
     /// <summary>
     ///     刷新用 Token

@@ -13,7 +13,7 @@ namespace ProjBobcat.DefaultComponent.Launch;
 
 public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccountParser
 {
-    readonly string FullLauncherAccountPath;
+    readonly string _fullLauncherAccountPath;
 
     /// <summary>
     ///     构造函数
@@ -23,9 +23,9 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
     public DefaultLauncherAccountParser(string rootPath, Guid clientToken)
     {
         RootPath = rootPath;
-        FullLauncherAccountPath = Path.Combine(rootPath, GamePathHelper.GetLauncherAccountPath());
+        _fullLauncherAccountPath = Path.Combine(rootPath, GamePathHelper.GetLauncherAccountPath());
 
-        if (!File.Exists(FullLauncherAccountPath))
+        if (!File.Exists(_fullLauncherAccountPath))
         {
             var launcherAccount = new LauncherAccountModel
             {
@@ -42,18 +42,18 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
             if (!Directory.Exists(RootPath))
                 Directory.CreateDirectory(RootPath);
 
-            File.WriteAllText(FullLauncherAccountPath, launcherProfileJson);
+            File.WriteAllText(_fullLauncherAccountPath, launcherProfileJson);
         }
         else
         {
             var launcherProfileJson =
-                File.ReadAllText(FullLauncherAccountPath, Encoding.UTF8);
+                File.ReadAllText(_fullLauncherAccountPath, Encoding.UTF8);
             LauncherAccount = JsonSerializer.Deserialize(launcherProfileJson,
                 LauncherAccountModelContext.Default.LauncherAccountModel);
         }
     }
 
-    public LauncherAccountModel LauncherAccount { get; set; }
+    public LauncherAccountModel? LauncherAccount { get; set; }
 
     public bool ActivateAccount(string uuid)
     {
@@ -68,20 +68,28 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
 
     public bool AddNewAccount(string uuid, AccountModel account, out Guid? id)
     {
-        if (LauncherAccount?.Accounts?.ContainsKey(uuid) ?? false)
-        {
-            id = null;
-            return false;
-        }
-
         if (LauncherAccount == null)
         {
             id = null;
             return false;
         }
-
+        
         LauncherAccount.Accounts ??= new Dictionary<string, AccountModel>();
+        
+        if (LauncherAccount.Accounts.ContainsKey(uuid))
+        {
+            id = null;
+            return false;
+        }
 
+        var oldRecord = LauncherAccount.Accounts
+            .FirstOrDefault(a => a.Value.MinecraftProfile.Id == account.MinecraftProfile.Id).Value;
+        if (oldRecord != null)
+        {
+            id = oldRecord.Id;
+            return true;
+        }
+        
         var newId = Guid.NewGuid();
         /*
         var existsAccount = LauncherAccount.Accounts
@@ -137,13 +145,13 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
 
     public void Save()
     {
-        if (File.Exists(FullLauncherAccountPath))
-            File.Delete(FullLauncherAccountPath);
+        if (File.Exists(_fullLauncherAccountPath))
+            File.Delete(_fullLauncherAccountPath);
 
         var launcherProfileJson =
             JsonSerializer.Serialize(LauncherAccount, typeof(LauncherAccountModel),
                 new LauncherAccountModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
-        File.WriteAllText(FullLauncherAccountPath, launcherProfileJson);
+        File.WriteAllText(_fullLauncherAccountPath, launcherProfileJson);
     }
 }
