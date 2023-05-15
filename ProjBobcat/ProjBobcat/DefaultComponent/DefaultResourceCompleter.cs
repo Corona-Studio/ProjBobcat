@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.ComponentModel;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using ProjBobcat.Class.Helper;
@@ -27,8 +29,10 @@ public class DefaultResourceCompleter : IResourceCompleter
 
     bool _disposedValue;
 
-    public int TotalDownloaded { get; private set; }
-    public int NeedToDownload { get; private set; }
+    ulong _needToDownload, _totalDownloaded;
+
+    public ulong TotalDownloaded => Interlocked.Read(ref _totalDownloaded);
+    public ulong NeedToDownload => Interlocked.Read(ref _needToDownload);
 
     public TimeSpan TimeoutPerFile { get; set; } = TimeSpan.FromSeconds(10);
     public int DownloadParts { get; set; } = 16;
@@ -65,7 +69,7 @@ public class DefaultResourceCompleter : IResourceCompleter
         if (!(ResourceInfoResolvers?.Any() ?? false))
             return new TaskResult<ResourceCompleterCheckResult?>(TaskResultStatus.Success, value: null);
 
-        NeedToDownload = 0;
+        _needToDownload = 0;
         _failedFiles.Clear();
 
         var processorCount = Environment.ProcessorCount;
@@ -88,25 +92,24 @@ public class DefaultResourceCompleter : IResourceCompleter
                 },
                 new ExecutionDataflowBlockOptions
                 {
-                    BoundedCapacity = processorCount,
                     MaxDegreeOfParallelism = processorCount
                 });
+        var downloadSettings = new DownloadSettings
+        {
+            CheckFile = CheckFile,
+            DownloadParts = DownloadParts,
+            HashType = HashType.SHA1,
+            RetryCount = TotalRetry,
+            Timeout = (int)TimeoutPerFile.TotalMilliseconds
+        };
         var downloadFileBlock = new ActionBlock<DownloadFile>(async df =>
         {
-            await DownloadHelper.AdvancedDownloadFile(df, new DownloadSettings
-            {
-                CheckFile = CheckFile,
-                DownloadParts = DownloadParts,
-                HashType = HashType.SHA1,
-                RetryCount = TotalRetry,
-                Timeout = (int)TimeoutPerFile.TotalMilliseconds
-            });
+            await DownloadHelper.AdvancedDownloadFile(df, downloadSettings);
 
             df.Completed -= WhenCompleted;
             df.Dispose();
         }, new ExecutionDataflowBlockOptions
         {
-            BoundedCapacity = processorCount,
             MaxDegreeOfParallelism = processorCount
         });
 
@@ -116,7 +119,7 @@ public class DefaultResourceCompleter : IResourceCompleter
         {
             await foreach (var element in asyncEnumerable)
             {
-                NeedToDownload++;
+                Interlocked.Increment(ref _needToDownload);
 
                 OnResolveComplete(this, new GameResourceInfoResolveEventArgs
                 {
@@ -128,23 +131,17 @@ public class DefaultResourceCompleter : IResourceCompleter
             }
         }
 
-        foreach (var resolver in ResourceInfoResolvers)
+        var chunks = ResourceInfoResolvers.Chunk(MaxDegreeOfParallelism).ToImmutableArray();
+        foreach (var chunk in chunks)
         {
-            /*
-            if (_listEventDelegates[ResolveEventKey] is EventHandler<GameResourceInfoResolveEventArgs> handler)
-                resolver.GameResourceInfoResolveEvent += handler;
-            */
-
-            if (resolver is VersionInfoResolver or GameLoggingInfoResolver || MaxDegreeOfParallelism == 1)
+            var tasks = new Task[chunk.Length];
+            
+            for (var i = 0; i < chunk.Length; i++)
             {
-                await ReceiveGameResourceTask(resolver.ResolveResourceAsync());
-                continue;
-            }
-
-            var asyncEnumerable = resolver.ResolveResourceAsync();
-            var tasks = new Task[MaxDegreeOfParallelism];
-            for (var i = 0; i < MaxDegreeOfParallelism; i++)
+                var resolver = chunk[i];
+                var asyncEnumerable = resolver.ResolveResourceAsync();
                 tasks[i] = ReceiveGameResourceTask(asyncEnumerable);
+            }
 
             await Task.WhenAll(tasks);
         }
@@ -208,7 +205,8 @@ public class DefaultResourceCompleter : IResourceCompleter
 
         if (!(e.Success ?? false)) _failedFiles.Add(df);
 
-        TotalDownloaded++;
+        Interlocked.Increment(ref _totalDownloaded);
+        
         OnChanged((double)TotalDownloaded / NeedToDownload, e.AverageSpeed);
         OnCompleted(sender, e);
     }

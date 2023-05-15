@@ -27,8 +27,8 @@ public interface IResourceCompleter : IDisposable
     /// </summary>
     bool CheckFile { get; set; }
 
-    public int TotalDownloaded { get; }
-    public int NeedToDownload { get; }
+    public ulong TotalDownloaded { get; }
+    public ulong NeedToDownload { get; }
 
     /// <summary>
     ///     游戏资源解析器集合
