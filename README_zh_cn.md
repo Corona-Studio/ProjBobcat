@@ -31,8 +31,8 @@ ProjBobcat 为 [NativeAot](https://learn.microsoft.com/en-us/dotnet/core/deployi
 |平台|状态|
 |:------:|:----:|
 |Windows |  ✅ |
-|macOS |  ✅ |
-|Linux |  制作中 |
+|macOS |  ✅   |
+|Linux |  ✅   |
 
 ## [广告] 一个超牛逼的Typescript启动核心
 [仓库链接](https://github.com/Voxelum/minecraft-launcher-core-node)
