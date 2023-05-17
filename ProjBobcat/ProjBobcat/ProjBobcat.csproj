@@ -10,9 +10,9 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <IsWindows Condition=" ( '$(OS)' == 'Windows_NT' And '$(Configuration)' == 'Debug' ) Or '$(RuntimeIdentifier)' == 'win-x64' Or '$(RuntimeIdentifier)' == 'win7-x64' Or '$(RuntimeIdentifier)' == 'win10-arm64'">true</IsWindows>
-    <IsOSX Condition="( '$(OS)' == 'Unix' And '$(Configuration)' == 'Debug' ) Or '$(RuntimeIdentifier)' == 'osx-x64'">true</IsOSX>
-    <IsLinux Condition="( '$(OS)' == 'Unix' And $([System.IO.File]::Exists('/usr/lib/libc.dylib'))) And '$(RuntimeIdentifier)' == 'linux-x64'">true</IsLinux>
+    <IsWindows Condition=" '$(OS)' == 'Windows_NT' Or '$(RuntimeIdentifier)' == 'win-x64' Or '$(RuntimeIdentifier)' == 'win7-x64' Or '$(RuntimeIdentifier)' == 'win10-arm64'">true</IsWindows>
+    <IsOSX Condition=" '$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))' Or '$(RuntimeIdentifier)' == 'osx-x64' Or '$(RuntimeIdentifier)' == 'osx.13-arm64' ">true</IsOSX>
+    <IsLinux Condition=" '$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' Or '$(RuntimeIdentifier)' == 'linux-x64' ">true</IsLinux>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(TargetFramework)'=='net8.0' OR ('$(TargetFramework)'=='net7.0' AND ('$(IsWindows)'=='true' OR '$(IsLinux)'=='true'))">

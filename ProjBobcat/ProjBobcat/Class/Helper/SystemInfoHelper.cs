@@ -12,20 +12,20 @@ namespace ProjBobcat.Class.Helper;
 /// </summary>
 public static class SystemInfoHelper
 {
-    public static CPUInfo GetProcessorUsage()
+    public static CPUInfo? GetProcessorUsage()
     {
 #if WINDOWS
         return Platforms.Windows.SystemInfoHelper.GetWindowsCpuUsage();
 #elif OSX
         return Platforms.MacOS.SystemInfoHelper.GetOSXCpuUsage();
 #elif LINUX
-        return Platforms.Linux.SystemInfoHelper.GetLinuxCpuUsage().FirstOrDefault();
+        return Platforms.Linux.SystemInfoHelper.GetLinuxCpuUsage();
 #else
         return null;
 #endif
     }
 
-    public static MemoryInfo GetMemoryUsage()
+    public static MemoryInfo? GetMemoryUsage()
     {
 #if WINDOWS
         return Platforms.Windows.SystemInfoHelper.GetWindowsMemoryStatus();
@@ -51,6 +51,9 @@ public static class SystemInfoHelper
             result.Add(path);
 #elif OSX
         foreach (var path in Platforms.MacOS.SystemInfoHelper.FindJavaMacOS())
+            result.Add(path);
+#elif LINUX
+        foreach(var path in Platforms.Linux.SystemInfoHelper.FindJavaLinux())
             result.Add(path);
 #endif
 

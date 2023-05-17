@@ -16,7 +16,7 @@ public static class Constants
     public const string OsSymbol = "osx";
 #elif LINUX
     public const string WhereCommand = "whereis";
-    public const string JavaExecutable = "javaw";
+    public const string JavaExecutable = "java";
     public const string JavaExecutablePath = $"bin/{JavaExecutable}";
     public const string JavaExecutableExtension = "*";
     public const string OsSymbol = "linux";

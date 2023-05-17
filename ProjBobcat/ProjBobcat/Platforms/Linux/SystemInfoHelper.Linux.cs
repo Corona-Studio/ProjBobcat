@@ -1,9 +1,13 @@
 ﻿using ProjBobcat.Class.Model;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace ProjBobcat.Platforms.Linux
 {
@@ -14,24 +18,37 @@ namespace ProjBobcat.Platforms.Linux
         /// </summary>
         /// <returns>The percentange value with the '%' sign. e.g. if the usage is 30.1234 %,
         /// then it will return 30.12.</returns>
-        public static IEnumerable<CPUInfo> GetLinuxCpuUsage()
+        public static CPUInfo GetLinuxCpuUsage()
         {
-            var startTime = DateTime.UtcNow;
-            var startCpuUsage = Process.GetProcesses().Sum(a => a.TotalProcessorTime.TotalMilliseconds);
+            var info = new ProcessStartInfo
+            {
+                FileName = "/bin/bash",
+                Arguments = "-c \"top -bn1\"",
+                RedirectStandardOutput = true
+            };
+            
+            using var process = Process.Start(info);
+            
+            if(process == null)
+                return new CPUInfo
+                {
+                    Name = "Overrall",
+                    Usage = -1
+                };
+            
+            var output = process.StandardOutput.ReadToEnd();
+            process.WaitForExit();
 
-            System.Threading.Thread.Sleep(500);
-
-            var endTime = DateTime.UtcNow;
-            var endCpuUsage = Process.GetProcesses().Sum(a => a.TotalProcessorTime.TotalMilliseconds);
-
-            var cpuUsedMs = endCpuUsage - startCpuUsage;
-            var totalMsPassed = (endTime - startTime).TotalMilliseconds;
-            var cpuUsageTotal = cpuUsedMs / (Environment.ProcessorCount * totalMsPassed);
-
-            yield return new CPUInfo
+            var usage = output
+                .Split('\n', StringSplitOptions.RemoveEmptyEntries)
+                .Select(l => l.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+                .Select(arr => double.TryParse(arr[8], out var outCpu) ? outCpu : 0)
+                .Sum();
+            
+            return new CPUInfo
             {
                 Name = "Overrall",
-                Usage = Math.Round(cpuUsageTotal * 100, 2)
+                Usage = usage / 100
             };
         }
 
@@ -41,7 +58,7 @@ namespace ProjBobcat.Platforms.Linux
 		/// <returns></returns>
         public static MemoryInfo GetLinuxMemoryStatus()
         {
-            var info = new ProcessStartInfo("free -m")
+            var info = new ProcessStartInfo
             {
                 FileName = "/bin/bash",
                 Arguments = "-c \"free -m\"",
@@ -49,6 +66,16 @@ namespace ProjBobcat.Platforms.Linux
             };
 
             using var process = Process.Start(info);
+            
+            if(process == null)
+                return new MemoryInfo
+                {
+                    Total = -1,
+                    Used = -1,
+                    Free = -1,
+                    Percentage = -1
+                };
+            
             var output = process.StandardOutput.ReadToEnd();
             process.WaitForExit();
             // Console.WriteLine(output);
@@ -66,10 +93,94 @@ namespace ProjBobcat.Platforms.Linux
                 Total = total,
                 Used = used,
                 Free = free,
-                Percentage = percentage
+                Percentage = percentage * 100
             };
 
             return metrics;
+        }
+
+        public static IEnumerable<string> FindJavaLinux()
+        {
+            var distribution = DistributionHelper.GetSystemDistribution();
+            var jvmPath = string.Empty switch
+            {
+                _ when Directory.Exists("/usr/lib/jvm") => "/usr/lib/jvm",
+                _ when Directory.Exists("/usr/lib64/jvm") => "/usr/lib64/jvm",
+                _ => string.Empty
+            };
+            
+            if(string.IsNullOrEmpty(jvmPath)) return Enumerable.Empty<string>();
+
+            var subJvmDirectories = Directory.GetDirectories(jvmPath);
+
+            return distribution switch
+            {
+                DistributionHelper.LinuxDistribution.Arch => FindJavaArchLinux(subJvmDirectories),
+                DistributionHelper.LinuxDistribution.Debian => FindJavaDebianLinux(subJvmDirectories),
+                DistributionHelper.LinuxDistribution.RedHat => FindJavaRedHatLinux(subJvmDirectories),
+                DistributionHelper.LinuxDistribution.OpenSuse => FindJavaSuseLinux(subJvmDirectories),
+                _ => FindJavaOtherLinux()
+            };
+        }
+
+        static IEnumerable<string> FindJavaArchLinux(string[] paths)
+        {
+            return
+                from path in paths
+                where !path.Contains("default", StringComparison.OrdinalIgnoreCase)
+                select $"{path}/bin/java"
+                into result
+                where File.Exists(result)
+                select result;
+        }
+        
+        static IEnumerable<string> FindJavaDebianLinux(string[] paths)
+        {
+            return
+                from path in paths
+                select $"{path}/bin/java"
+                into result
+                where File.Exists(result)
+                select result;
+        }
+        
+        static IEnumerable<string> FindJavaRedHatLinux(string[] paths)
+        {
+            return
+                from path in paths
+                where !path.Contains("jre", StringComparison.OrdinalIgnoreCase)
+                select $"{path}/bin/java"
+                into result
+                where File.Exists(result)
+                select result;
+        }
+        
+        static IEnumerable<string> FindJavaSuseLinux(string[] paths)
+        {
+            return
+                from path in paths
+                where !path.Contains("jre", StringComparison.OrdinalIgnoreCase)
+                select $"{path}/bin/java"
+                into result
+                where File.Exists(result)
+                select result;
+        }
+        
+        static IEnumerable<string> FindJavaOtherLinux()
+        {
+            var jvmPath = string.Empty switch
+            {
+                _ when Directory.Exists("/usr/lib/jvm") => "/usr/lib/jvm",
+                _ when Directory.Exists("/usr/lib32/jvm") => "/usr/lib32/jvm",
+                _ => "/usr/lib64/jvm"
+            };
+
+            foreach (var path in Directory.GetDirectories(jvmPath))
+            {
+                var result = $"{path}/bin/java";
+
+                if (File.Exists(result)) yield return result;
+            }
         }
     }
 }
