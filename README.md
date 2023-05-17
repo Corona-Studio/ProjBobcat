@@ -28,7 +28,7 @@ Currently we are working on the multi-platform support for ProjBobcat
 |:------:|:----:|
 |Windows |  ✅ |
 |macOS |  ✅   |
-|Linux |  WIP  |
+|Linux |  ✅   |
 
 ## [Ad] An Awesome Typescript Launcher Core
 [Repo Link](https://github.com/Voxelum/minecraft-launcher-core-node)
