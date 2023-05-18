@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.Forge;
 
@@ -62,7 +63,7 @@ public class VersionInfo
 
     [JsonPropertyName("assets")] public string Assets { get; set; }
 
-    [JsonPropertyName("logging")] public object Logging { get; set; }
+    [JsonPropertyName("logging")] public JsonElement Logging { get; set; }
 
     [JsonPropertyName("libraries")] public ForgeLibraries[] Libraries { get; set; }
 }

@@ -327,7 +327,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
                 .Select(ResolvePathRegex)
                 .Select(ResolveVariableRegex)
                 .Select(StringHelper.FixPathArgument)
-                .ToList();
+                .ToArray();
             var model = new ForgeInstallProcessorModel
             {
                 Processor = proc,
