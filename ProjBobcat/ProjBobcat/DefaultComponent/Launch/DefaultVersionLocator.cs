@@ -434,13 +434,15 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                 }
 
 
-                var currentNativesNames = new List<string>();
-                result.Natives.ForEach(n => { currentNativesNames.Add(n.FileInfo.Name); });
+                var currentNativesNames = new List<string>(result.Natives
+                    .Where(mL => !string.IsNullOrEmpty(mL.FileInfo.Name))
+                    .Select(mL => mL.FileInfo.Name!));
                 var moreMiddleNatives =
-                    middleLibs.Item1.AsParallel().Where(mL => !currentNativesNames.Contains(mL.FileInfo.Name))
+                    middleLibs.Item1
+                        .Where(mL => !string.IsNullOrEmpty(mL.FileInfo.Name))
+                        .Where(mL => !currentNativesNames.Contains(mL.FileInfo.Name!))
                         .ToList();
                 result.Natives.AddRange(moreMiddleNatives);
-
 
                 var jvmArgs = ParseJvmArguments(inherits[i]!.Arguments?.Jvm);
                 var middleGameArgs = ParseGameArguments(
