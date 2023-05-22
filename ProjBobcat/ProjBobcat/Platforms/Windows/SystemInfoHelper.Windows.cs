@@ -55,9 +55,12 @@ static class SystemInfoHelper
         try
         {
             using var rootReg = Registry.LocalMachine.OpenSubKey("SOFTWARE");
+
+            if(rootReg == null) return Enumerable.Empty<string>();
+
             using var wow64Reg = rootReg.OpenSubKey("Wow6432Node");
 
-            var javas = (rootReg == null ? Array.Empty<string>() : FindJavaInternal(rootReg))
+            var javas = FindJavaInternal(rootReg)
                 .Union(FindJavaInternal(wow64Reg))
                 .ToHashSet();
 
@@ -65,12 +68,14 @@ static class SystemInfoHelper
         }
         catch
         {
-            return Array.Empty<string>();
+            return Enumerable.Empty<string>();
         }
     }
 
-    public static IEnumerable<string> FindJavaInternal(RegistryKey registry)
+    public static IEnumerable<string> FindJavaInternal(RegistryKey? registry)
     {
+        if(registry == null) return Enumerable.Empty<string>();
+
         try
         {
             using var regKey = registry.OpenSubKey("JavaSoft");
@@ -139,8 +144,5 @@ static class SystemInfoHelper
         };
     }
 
-    public static IEnumerable<string> GetLogicalDrives()
-    {
-        return Environment.GetLogicalDrives();
-    }
+    public static IEnumerable<string> GetLogicalDrives() => Environment.GetLogicalDrives();
 }
