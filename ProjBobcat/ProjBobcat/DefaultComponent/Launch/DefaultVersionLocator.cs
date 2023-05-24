@@ -189,10 +189,16 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             var isNative = lib.Natives?.Any() ?? false;
             if (isNative)
             {
+                /*
                 var key =
-                    lib.Natives.TryGetValue(Constants.OsSymbol, out var value)
+                    lib.Natives!.TryGetValue(Constants.OsSymbol, out var value)
                         ? value.Replace("${arch}", SystemArch.CurrentArch.ToString("{0}"))
                         : $"natives-{Constants.OsSymbol}";
+                */
+
+                if(!lib.Natives!.TryGetValue(Constants.OsSymbol, out var value)) continue;
+
+                var key = value.Replace("${arch}", SystemArch.CurrentArch.ToString("{0}"));
 
                 FileInfo libFi;
                 if (lib.Downloads?.Classifiers?.ContainsKey(key) ?? false)
@@ -207,6 +213,9 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                     if (!lib.Name.EndsWith($":{key}", StringComparison.OrdinalIgnoreCase)) libName += $":{key}";
 
                     var mavenInfo = libName.ResolveMavenString();
+
+                    if(mavenInfo == null) continue;
+
                     var downloadUrl = string.IsNullOrEmpty(lib.Url)
                         ? mavenInfo.OrganizationName.Equals("net.minecraftforge", StringComparison.Ordinal)
                             ? "https://files.minecraftforge.net/maven/"
