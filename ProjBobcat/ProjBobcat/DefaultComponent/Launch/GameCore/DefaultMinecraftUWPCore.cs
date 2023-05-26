@@ -13,7 +13,7 @@ public class DefaultMineCraftUWPCore : GameCoreBase
 {
     public override LaunchResult Launch(LaunchSettings launchSettings)
     {
-#if NET5_0_WINDOWS || NET6_0_WINDOWS
+#if WINDOWS
         if (!ProjBobcat.Platforms.Windows.SystemInfoHelper.IsMinecraftUWPInstalled()) throw new InvalidOperationException();
 
         using var process = new Process
