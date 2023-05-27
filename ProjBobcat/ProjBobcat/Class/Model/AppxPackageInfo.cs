@@ -1,6 +1,6 @@
-﻿namespace ProjBobcat.Class.Model;
+namespace ProjBobcat.Class.Model;
 
-public class AppxPackageInfo
+public record AppxPackageInfo
 {
     /// <summary>
     ///     应用程序的名称
