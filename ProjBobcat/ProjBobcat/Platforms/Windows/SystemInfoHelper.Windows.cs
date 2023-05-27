@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -9,7 +9,7 @@ using ProjBobcat.Class.Model;
 
 namespace ProjBobcat.Platforms.Windows;
 
-static class SystemInfoHelper
+public static class SystemInfoHelper
 {
     static readonly PerformanceCounter FreeMemCounter = new("Memory", "Available MBytes");
     static readonly PerformanceCounter MemUsagePercentageCounter = new("Memory", "% Committed Bytes In Use");
@@ -27,7 +27,15 @@ static class SystemInfoHelper
     ///     判断是否安装了 UWP 版本的 Minecraft 。
     /// </summary>
     /// <returns>判断结果。</returns>
-    public static bool IsMinecraftUWPInstalled()
+    public static bool IsMinecraftUWPInstalled() =>
+        !string.IsNullOrEmpty(GetAppxPackage("Microsoft.MinecraftUWP").Status);
+
+        /// <summary>
+    ///     获取 UWP 应用的信息。
+    /// </summary>
+    /// <param name="appName">应用名称</param>
+    /// <returns>GetAppxPackage</returns>
+    public static AppxPackageInfo GetAppxPackage(string appName)
     {
         using var process = new Process
         {
@@ -36,14 +44,115 @@ static class SystemInfoHelper
                 WorkingDirectory = Environment.CurrentDirectory,
                 RedirectStandardOutput = true,
                 CreateNoWindow = true,
-                Arguments = "Get-AppxPackage -Name \"Microsoft.MinecraftUWP\""
+                Arguments = $"Get-AppxPackage -Name \"{appName}\""
             }
         };
-
         process.Start();
-
         var reader = process.StandardOutput;
-        return !string.IsNullOrEmpty(reader.ReadToEnd());
+
+        var values = ParseAppxPackageOutput(reader.ReadToEnd());
+
+        var appxPackageInfo = new AppxPackageInfo();
+        SetAppxPackageInfoProperty(appxPackageInfo, values);
+        return appxPackageInfo;
+    }
+
+    /// <summary>
+    ///     分析 PowerShell Get-AppxPackage 的输出。
+    /// </summary>
+    /// <param name="output">PowerShell Get-AppxPackage 的输出</param>
+    /// <returns>分析完毕的 Dictionary</returns>
+    static Dictionary<string, string> ParseAppxPackageOutput(string output)
+    {
+        var values = new Dictionary<string, string>();
+        var lines = output.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+
+        string key = null;
+        string value = null;
+        foreach (var line in lines)
+            if (line.Contains(":"))
+            {
+                if (key != null) values[key] = value.TrimEnd();
+                var parts = line.Split(new[] { ':' }, 2, StringSplitOptions.None);
+                key = parts[0].Trim();
+                value = parts[1].Trim();
+            }
+            else if (key != null)
+            {
+                value += line.Trim();
+            }
+
+        if (key != null) values[key] = value.TrimEnd();
+
+        return values;
+    }
+
+    /// <summary>
+    ///     设置 AppxPackageInfo 的属性。
+    /// </summary>
+    /// <param name="appxPackageInfo">要设置的 AppxPackageInfo</param>
+    /// <param name="values">分析完毕的 Dictionary</param>
+    static void SetAppxPackageInfoProperty(AppxPackageInfo appxPackageInfo, Dictionary<string, string> values)
+    {
+        foreach (var pair in values)
+            switch (pair.Key)
+            {
+                case "Name":
+                    appxPackageInfo.Name = pair.Value;
+                    break;
+                case "Publisher":
+                    appxPackageInfo.Publisher = pair.Value;
+                    break;
+                case "Architecture":
+                    appxPackageInfo.Architecture = pair.Value;
+                    break;
+                case "ResourceId":
+                    appxPackageInfo.ResourceId = pair.Value;
+                    break;
+                case "Version":
+                    appxPackageInfo.Version = pair.Value;
+                    break;
+                case "PackageFullName":
+                    appxPackageInfo.PackageFullName = pair.Value;
+                    break;
+                case "InstallLocation":
+                    appxPackageInfo.InstallLocation = pair.Value;
+                    break;
+                case "IsFramework":
+                    appxPackageInfo.IsFramework = Convert.ToBoolean(pair.Value);
+                    break;
+                case "PackageFamilyName":
+                    appxPackageInfo.PackageFamilyName = pair.Value;
+                    break;
+                case "PublisherId":
+                    appxPackageInfo.PublisherId = pair.Value;
+                    break;
+                case "IsResourcePackage":
+                    appxPackageInfo.IsResourcePackage = Convert.ToBoolean(pair.Value);
+                    break;
+                case "IsBundle":
+                    appxPackageInfo.IsBundle = Convert.ToBoolean(pair.Value);
+                    break;
+                case "IsDevelopmentMode":
+                    appxPackageInfo.IsDevelopmentMode = Convert.ToBoolean(pair.Value);
+                    break;
+                case "NonRemovable":
+                    appxPackageInfo.NonRemovable = Convert.ToBoolean(pair.Value);
+                    break;
+                case "Dependencies":
+                    appxPackageInfo.Dependencies = pair.Value.TrimStart('{').TrimEnd('}').Split(',')
+                        .Select(s => s.Trim()).ToArray();
+                    break;
+                case "IsPartiallyStaged":
+                    appxPackageInfo.IsPartiallyStaged = Convert.ToBoolean(pair.Value);
+                    break;
+                case "SignatureKind":
+                    appxPackageInfo.SignatureKind = pair.Value;
+                    break;
+                case "Status":
+                    appxPackageInfo.Status = pair.Value;
+                    break;
+            }
     }
 
     /// <summary>
@@ -56,7 +165,7 @@ static class SystemInfoHelper
         {
             using var rootReg = Registry.LocalMachine.OpenSubKey("SOFTWARE");
 
-            if(rootReg == null) return Enumerable.Empty<string>();
+            if (rootReg == null) return Enumerable.Empty<string>();
 
             using var wow64Reg = rootReg.OpenSubKey("Wow6432Node");
 
@@ -74,7 +183,7 @@ static class SystemInfoHelper
 
     public static IEnumerable<string> FindJavaInternal(RegistryKey? registry)
     {
-        if(registry == null) return Enumerable.Empty<string>();
+        if (registry == null) return Enumerable.Empty<string>();
 
         try
         {
@@ -144,5 +253,8 @@ static class SystemInfoHelper
         };
     }
 
-    public static IEnumerable<string> GetLogicalDrives() => Environment.GetLogicalDrives();
+    public static IEnumerable<string> GetLogicalDrives()
+    {
+        return Environment.GetLogicalDrives();
+    }
 }
