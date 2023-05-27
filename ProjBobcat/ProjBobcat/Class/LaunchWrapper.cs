@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Auth;
@@ -64,11 +64,13 @@ public class LaunchWrapper : IDisposable
     public void Do()
     {
         if (Process == null) return;
-
-        Process.BeginOutputReadLine();
-        Process.OutputDataReceived += ProcessOnOutputDataReceived;
-        Process.BeginErrorReadLine();
-        Process.ErrorDataReceived += ProcessOnErrorDataReceived;
+        if (Process.ProcessName != "Minecraft.Windows")
+        {
+            Process.BeginOutputReadLine();
+            Process.OutputDataReceived += ProcessOnOutputDataReceived;
+            Process.BeginErrorReadLine();
+            Process.ErrorDataReceived += ProcessOnErrorDataReceived;
+        }
         Process.Exited += ProcessOnExited;
     }
 
