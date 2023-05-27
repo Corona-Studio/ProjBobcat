@@ -27,10 +27,12 @@ public static class SystemInfoHelper
     ///     判断是否安装了 UWP 版本的 Minecraft 。
     /// </summary>
     /// <returns>判断结果。</returns>
-    public static bool IsMinecraftUWPInstalled() =>
-        !string.IsNullOrEmpty(GetAppxPackage("Microsoft.MinecraftUWP").Status);
+    public static bool IsMinecraftUWPInstalled()
+    {
+        return !string.IsNullOrEmpty(GetAppxPackage("Microsoft.MinecraftUWP").Status);
+    }
 
-        /// <summary>
+    /// <summary>
     ///     获取 UWP 应用的信息。
     /// </summary>
     /// <param name="appName">应用名称</param>
@@ -53,8 +55,7 @@ public static class SystemInfoHelper
         var values = ParseAppxPackageOutput(reader.ReadToEnd());
 
         var appxPackageInfo = new AppxPackageInfo();
-        SetAppxPackageInfoProperty(appxPackageInfo, values);
-        return appxPackageInfo;
+        return SetAppxPackageInfoProperty(appxPackageInfo, values);
     }
 
     /// <summary>
@@ -92,67 +93,38 @@ public static class SystemInfoHelper
     /// </summary>
     /// <param name="appxPackageInfo">要设置的 AppxPackageInfo</param>
     /// <param name="values">分析完毕的 Dictionary</param>
-    static void SetAppxPackageInfoProperty(AppxPackageInfo appxPackageInfo, Dictionary<string, string> values)
+    static AppxPackageInfo SetAppxPackageInfoProperty(AppxPackageInfo appxPackageInfo,
+        Dictionary<string, string> values)
     {
-        foreach (var pair in values)
-            switch (pair.Key)
+        foreach (var (key, value) in values)
+            appxPackageInfo = key switch
             {
-                case "Name":
-                    appxPackageInfo.Name = pair.Value;
-                    break;
-                case "Publisher":
-                    appxPackageInfo.Publisher = pair.Value;
-                    break;
-                case "Architecture":
-                    appxPackageInfo.Architecture = pair.Value;
-                    break;
-                case "ResourceId":
-                    appxPackageInfo.ResourceId = pair.Value;
-                    break;
-                case "Version":
-                    appxPackageInfo.Version = pair.Value;
-                    break;
-                case "PackageFullName":
-                    appxPackageInfo.PackageFullName = pair.Value;
-                    break;
-                case "InstallLocation":
-                    appxPackageInfo.InstallLocation = pair.Value;
-                    break;
-                case "IsFramework":
-                    appxPackageInfo.IsFramework = Convert.ToBoolean(pair.Value);
-                    break;
-                case "PackageFamilyName":
-                    appxPackageInfo.PackageFamilyName = pair.Value;
-                    break;
-                case "PublisherId":
-                    appxPackageInfo.PublisherId = pair.Value;
-                    break;
-                case "IsResourcePackage":
-                    appxPackageInfo.IsResourcePackage = Convert.ToBoolean(pair.Value);
-                    break;
-                case "IsBundle":
-                    appxPackageInfo.IsBundle = Convert.ToBoolean(pair.Value);
-                    break;
-                case "IsDevelopmentMode":
-                    appxPackageInfo.IsDevelopmentMode = Convert.ToBoolean(pair.Value);
-                    break;
-                case "NonRemovable":
-                    appxPackageInfo.NonRemovable = Convert.ToBoolean(pair.Value);
-                    break;
-                case "Dependencies":
-                    appxPackageInfo.Dependencies = pair.Value.TrimStart('{').TrimEnd('}').Split(',')
-                        .Select(s => s.Trim()).ToArray();
-                    break;
-                case "IsPartiallyStaged":
-                    appxPackageInfo.IsPartiallyStaged = Convert.ToBoolean(pair.Value);
-                    break;
-                case "SignatureKind":
-                    appxPackageInfo.SignatureKind = pair.Value;
-                    break;
-                case "Status":
-                    appxPackageInfo.Status = pair.Value;
-                    break;
-            }
+                "Name" => appxPackageInfo with { Name = value },
+                "Publisher" => appxPackageInfo with { Publisher = value },
+                "Architecture" => appxPackageInfo with { Architecture = value },
+                "ResourceId" => appxPackageInfo with { ResourceId = value },
+                "Version" => appxPackageInfo with { Version = value },
+                "PackageFullName" => appxPackageInfo with { PackageFullName = value },
+                "InstallLocation" => appxPackageInfo with { InstallLocation = value },
+                "IsFramework" => appxPackageInfo with { IsFramework = Convert.ToBoolean(value) },
+                "PackageFamilyName" => appxPackageInfo with { PackageFamilyName = value },
+                "PublisherId" => appxPackageInfo with { PublisherId = value },
+                "IsResourcePackage" => appxPackageInfo with { IsResourcePackage = Convert.ToBoolean(value) },
+                "IsBundle" => appxPackageInfo with { IsBundle = Convert.ToBoolean(value) },
+                "IsDevelopmentMode" => appxPackageInfo with { IsDevelopmentMode = Convert.ToBoolean(value) },
+                "NonRemovable" => appxPackageInfo with { NonRemovable = Convert.ToBoolean(value) },
+                "Dependencies" => appxPackageInfo with
+                {
+                    Dependencies = value.TrimStart('{').TrimEnd('}').Split(',')
+                        .Select(s => s.Trim()).ToArray()
+                },
+                "IsPartiallyStaged" => appxPackageInfo with { IsPartiallyStaged = Convert.ToBoolean(value) },
+                "SignatureKind" => appxPackageInfo with { SignatureKind = value },
+                "Status" => appxPackageInfo with { Status = value },
+                _ => appxPackageInfo
+            };
+
+        return appxPackageInfo;
     }
 
     /// <summary>
