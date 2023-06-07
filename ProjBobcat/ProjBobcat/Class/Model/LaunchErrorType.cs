@@ -1,4 +1,4 @@
-﻿namespace ProjBobcat.Class.Model;
+namespace ProjBobcat.Class.Model;
 
 public enum LaunchErrorType
 {
@@ -8,5 +8,6 @@ public enum LaunchErrorType
     AuthFailed,
     OperationFailed,
     IncompleteArguments,
+    UnsupportedOperatingSystem,
     Unknown
 }
