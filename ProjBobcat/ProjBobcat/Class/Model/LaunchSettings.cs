@@ -11,15 +11,15 @@ public class GameArguments
     /// <summary>
     ///     Java executable file
     /// </summary>
-    public string JavaExecutable { get; set; }
+    public string? JavaExecutable { get; set; }
 
     public uint MinMemory { get; set; }
     public uint MaxMemory { get; set; }
-    public ResolutionModel Resolution { get; set; }
+    public ResolutionModel? Resolution { get; set; }
     public GcType GcType { get; set; }
-    public IEnumerable<string>? AdditionalJvmArguments { get; set; }
-    public ServerSettings ServerSettings { get; set; }
-    public string AdvanceArguments { get; set; }
+    public IReadOnlyList<string>? AdditionalJvmArguments { get; set; }
+    public ServerSettings? ServerSettings { get; set; }
+    public string? AdvanceArguments { get; set; }
 }
 
 public class LaunchSettings
@@ -48,11 +48,11 @@ public class LaunchSettings
 
     public IVersionLocator VersionLocator { get; set; }
 
-    public IAuthenticator Authenticator { get; set; }
+    public IAuthenticator? Authenticator { get; set; }
     public ProfileInfoModel? SelectedProfile { get; set; }
 
     public bool VersionInsulation { get; set; }
-    public string LauncherName { get; set; }
+    public string? LauncherName { get; set; }
 
     public GameArguments? FallBackGameArguments { get; set; }
     public GameArguments? GameArguments { get; set; }
@@ -63,11 +63,11 @@ public class LaunchSettings
 
         sb
             .AppendLine()
-            .AppendFormat("Game Name: {0}", GameName).AppendLine()
-            .AppendFormat("Game Resource Path: {0}", GameResourcePath).AppendLine()
-            .AppendFormat("Version: {0}", Version).AppendLine()
-            .AppendFormat("Authenticator: {0}", Authenticator?.GetType().Name ?? "-").AppendLine()
-            .AppendFormat("Version Insulation: {0}", VersionInsulation).AppendLine()
+            .Append($"Game Name: {GameName}").AppendLine()
+            .Append($"Game Resource Path: {GameResourcePath}").AppendLine()
+            .Append($"Version: {Version}").AppendLine()
+            .Append($"Authenticator: {Authenticator?.GetType().Name ?? "-"}").AppendLine()
+            .Append($"Version Insulation: {VersionInsulation}").AppendLine()
             .AppendLine();
 
         return sb.ToString();
