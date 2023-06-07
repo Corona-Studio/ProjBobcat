@@ -51,7 +51,7 @@ public sealed class DefaultGameCore : GameCoreBase
 
     public bool EnableXmlLoggingOutput { get; init; }
 
-    public override async Task<LaunchResult> LaunchTaskAsync(LaunchSettings settings)
+    public override async Task<LaunchResult> LaunchTaskAsync(LaunchSettings? settings)
     {
         try
         {

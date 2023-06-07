@@ -44,7 +44,7 @@ public abstract class GameCoreBase : IGameCore
     /// </summary>
     /// <param name="settings"></param>
     /// <returns></returns>
-    public virtual LaunchResult Launch(LaunchSettings settings)
+    public virtual LaunchResult Launch(LaunchSettings? settings)
     {
         return LaunchTaskAsync(settings).Result;
     }
@@ -54,7 +54,7 @@ public abstract class GameCoreBase : IGameCore
     /// </summary>
     /// <param name="settings"></param>
     /// <returns></returns>
-    public abstract Task<LaunchResult> LaunchTaskAsync(LaunchSettings settings);
+    public abstract Task<LaunchResult> LaunchTaskAsync(LaunchSettings? settings);
 
     // // TODO: 仅当“Dispose(bool disposing)”拥有用于释放未托管资源的代码时才替代终结器
     // ~GameCoreBase()

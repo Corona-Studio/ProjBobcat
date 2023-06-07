@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 using ProjBobcat.Class;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.YggdrasilAuth;
+using ProjBobcat.DefaultComponent.Launch.GameCore;
 using ProjBobcat.Event;
-using ProjBobcat.Platforms.Windows;
 
-namespace ProjBobcat.DefaultComponent.Launch.GameCore;
+namespace ProjBobcat.Platforms.Windows;
 
 /// <summary>
 ///     提供了UWP版本MineCraft的启动核心
@@ -17,7 +17,7 @@ namespace ProjBobcat.DefaultComponent.Launch.GameCore;
 [SupportedOSPlatform("Windows")]
 public class DefaultMineCraftUWPCore : GameCoreBase
 {
-    public override LaunchResult Launch(LaunchSettings launchSettings = null)
+    public override LaunchResult Launch(LaunchSettings? launchSettings = null)
     {
 #if WINDOWS
         var prevSpan = new TimeSpan();
