@@ -10,6 +10,7 @@ using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.JsonContexts;
 using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.Version;
+using ProjBobcat.JsonConverter;
 using FileInfo = ProjBobcat.Class.Model.FileInfo;
 
 namespace ProjBobcat.DefaultComponent.Launch;
@@ -299,9 +300,17 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             return null;
 
         using var fs = File.OpenRead(GamePathHelper.GetGameJsonPath(RootPath, id));
-        var versionJson = JsonSerializer.Deserialize(fs, RawVersionModelContext.Default.RawVersionModel);
+        var options = new JsonSerializerOptions
+        {
+            Converters =
+            {
+                new DateTimeConverterUsingDateTimeParse()
+            }
+        };
+        var versionJsonObj = JsonSerializer.Deserialize(
+            fs, typeof(RawVersionModel), new RawVersionModelContext(options));
 
-        if (versionJson == null)
+        if (versionJsonObj is not RawVersionModel versionJson)
             return null;
         if (string.IsNullOrEmpty(versionJson.MainClass))
             return null;
