@@ -11,3 +11,6 @@ public class OptifineDownloadVersionModel
     [JsonPropertyName("__v")] public int VersionLocker { get; set; }
     [JsonPropertyName("filename")] public string FileName { get; set; }
 }
+
+[JsonSerializable(typeof(OptifineDownloadVersionModel[]))]
+public partial class OptifineDownloadVersionModelContext : JsonSerializerContext {}

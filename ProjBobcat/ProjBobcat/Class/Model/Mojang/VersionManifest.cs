@@ -26,6 +26,6 @@ public class VersionManifest
 }
 
 [JsonSerializable(typeof(VersionManifest))]
-partial class VersionManifestContext : JsonSerializerContext
+public partial class VersionManifestContext : JsonSerializerContext
 {
 }

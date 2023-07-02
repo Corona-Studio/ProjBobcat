@@ -12,3 +12,6 @@ public class QuiltLoaderModel
 
     [JsonPropertyName("version")] public string Version { get; set; }
 }
+
+[JsonSerializable(typeof(QuiltLoaderModel[]))]
+public partial class QuiltLoaderModelContext : JsonSerializerContext {}

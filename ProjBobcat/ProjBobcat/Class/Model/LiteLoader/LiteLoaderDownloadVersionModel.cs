@@ -12,3 +12,6 @@ public class LiteLoaderDownloadVersionModel
     [JsonPropertyName("version")] public string Version { get; set; }
     [JsonPropertyName("__v")] public int VersionLocker { get; set; }
 }
+
+[JsonSerializable(typeof(LiteLoaderDownloadVersionModel))]
+public partial class LiteLoaderDownloadVersionModelContext : JsonSerializerContext {}
