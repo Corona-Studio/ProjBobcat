@@ -77,10 +77,11 @@ public static class GameResourcesResolveHelper
 
             async Task<GameModResolvedInfo?> GetNewModInfo(IArchiveEntry entry)
             {
+                List<GameModInfoModel>? model = null;
+                
                 await using var stream = entry.OpenEntryStream();
                 var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
-
-                List<GameModInfoModel>? model = null;
+                
                 switch (doc.RootElement.ValueKind)
                 {
                     case JsonValueKind.Object:
@@ -205,12 +206,20 @@ public static class GameResourcesResolveHelper
 
             if (packInfoEntry != null)
             {
-                await using var stream = packInfoEntry.OpenEntryStream();
-                var model = await JsonSerializer.DeserializeAsync(stream,
-                    GameResourcePackModelContext.Default.GameResourcePackModel, ct);
+                try
+                {
+                    await using var stream = packInfoEntry.OpenEntryStream();
+                    var model = await JsonSerializer.DeserializeAsync(stream,
+                        GameResourcePackModelContext.Default.GameResourcePackModel, ct);
 
-                description = model?.Pack?.Description;
-                version = model?.Pack?.PackFormat ?? -1;
+                    description = model?.Pack?.Description;
+                    version = model?.Pack?.PackFormat ?? -1;
+                }
+                catch (JsonException e)
+                {
+                    description = $"[!] 数据包 JSON 异常: {e.Message}";
+                    version = -1;
+                }
             }
 
             return new GameResourcePackResolvedInfo(fileName, description, version, imageBytes);
@@ -230,12 +239,20 @@ public static class GameResourcesResolveHelper
 
             if (File.Exists(infoPath))
             {
-                await using var contentStream = File.OpenRead(infoPath);
-                var model = await JsonSerializer.DeserializeAsync(contentStream,
-                    GameResourcePackModelContext.Default.GameResourcePackModel, ct);
+                try
+                {
+                    await using var contentStream = File.OpenRead(infoPath);
+                    var model = await JsonSerializer.DeserializeAsync(contentStream,
+                        GameResourcePackModelContext.Default.GameResourcePackModel, ct);
 
-                description = model?.Pack?.Description;
-                version = model?.Pack?.PackFormat ?? -1;
+                    description = model?.Pack?.Description;
+                    version = model?.Pack?.PackFormat ?? -1;
+                }
+                catch (JsonException e)
+                {
+                    description = $"[!] 数据包 JSON 异常: {e.Message}";
+                    version = -1;
+                }
             }
 
             return new GameResourcePackResolvedInfo(fileName, description, version, imageBytes);
