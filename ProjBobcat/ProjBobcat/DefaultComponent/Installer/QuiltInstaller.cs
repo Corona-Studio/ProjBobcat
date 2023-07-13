@@ -20,6 +20,7 @@ public class QuiltInstaller : InstallerBase, IQuiltInstaller
     static HttpClient Client => HttpClientHelper.DefaultClient;
 
     public QuiltLoaderModel LoaderArtifact { get; set; }
+    public string MineCraftVersion { get; set; }
 
     public string Install()
     {
@@ -32,10 +33,12 @@ public class QuiltInstaller : InstallerBase, IQuiltInstaller
             throw new NullReferenceException("InheritsFrom 不能为 null");
         if (string.IsNullOrEmpty(RootPath))
             throw new NullReferenceException("RootPath 不能为 null");
+        if (string.IsNullOrEmpty(MineCraftVersion))
+            throw new NullReferenceException("MineCraftVersion 不能为 null");
 
         InvokeStatusChangedEvent("开始安装", 0);
 
-        var url = $"{DefaultMetaUrl}/v3/versions/loader/{InheritsFrom}/{LoaderArtifact.Version}/profile/json";
+        var url = $"{DefaultMetaUrl}/v3/versions/loader/{MineCraftVersion}/{LoaderArtifact.Version}/profile/json";
 
         using var req = new HttpRequestMessage(HttpMethod.Get, url);
         using var res = await Client.SendAsync(req);
