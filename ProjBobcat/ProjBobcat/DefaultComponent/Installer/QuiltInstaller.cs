@@ -29,12 +29,10 @@ public class QuiltInstaller : InstallerBase, IQuiltInstaller
 
     public async Task<string> InstallTaskAsync()
     {
-        if (string.IsNullOrEmpty(InheritsFrom))
-            throw new NullReferenceException("InheritsFrom 不能为 null");
-        if (string.IsNullOrEmpty(RootPath))
-            throw new NullReferenceException("RootPath 不能为 null");
         if (string.IsNullOrEmpty(MineCraftVersion))
             throw new NullReferenceException("MineCraftVersion 不能为 null");
+        if (string.IsNullOrEmpty(RootPath))
+            throw new NullReferenceException("RootPath 不能为 null");
 
         InvokeStatusChangedEvent("开始安装", 0);
 
