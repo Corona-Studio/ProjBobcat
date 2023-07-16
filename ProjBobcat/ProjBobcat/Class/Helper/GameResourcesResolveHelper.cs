@@ -63,7 +63,7 @@ public static class GameResourcesResolveHelper
                 var infoTable = arr.Children.First();
 
                 var title = infoTable.HasKey("modId")
-                    ? infoTable["modId"]?.AsString
+                    ? (infoTable["modId"]?.AsString ?? "-")
                     : Path.GetFileName(file);
                 var author = infoTable.HasKey("authors")
                     ? infoTable["authors"]?.AsString
@@ -128,18 +128,30 @@ public static class GameResourcesResolveHelper
 
             async Task<GameModResolvedInfo> GetFabricModInfo(IArchiveEntry entry)
             {
-                await using var stream = entry.OpenEntryStream();
-                var tempModel = await JsonSerializer.DeserializeAsync(stream,
-                    FabricModInfoModelContext.Default.FabricModInfoModel, ct);
+                try
+                {
+                    await using var stream = entry.OpenEntryStream();
+                    var tempModel = await JsonSerializer.DeserializeAsync(stream,
+                        FabricModInfoModelContext.Default.FabricModInfoModel, ct);
 
-                var author = tempModel?.Authors?.Any() ?? false
-                    ? string.Join(',', tempModel.Authors)
-                    : null;
-                var modList = tempModel?.Depends?.Select(d => d.Key)?.ToImmutableList();
-                var titleResult = string.IsNullOrEmpty(tempModel?.Id) ? Path.GetFileName(file) : tempModel.Id;
-                var versionResult = string.IsNullOrEmpty(tempModel?.Version) ? null : tempModel.Version;
+                    var author = tempModel?.Authors?.Any() ?? false
+                        ? string.Join(',', tempModel.Authors)
+                        : null;
+                    var modList = tempModel?.Depends?.Select(d => d.Key)?.ToImmutableList();
+                    var titleResult = string.IsNullOrEmpty(tempModel?.Id) ? Path.GetFileName(file) : tempModel.Id;
+                    var versionResult = string.IsNullOrEmpty(tempModel?.Version) ? null : tempModel.Version;
 
-                return new GameModResolvedInfo(author, file, modList, titleResult, versionResult, "Fabric", isEnabled);
+                    return new GameModResolvedInfo(author, file, modList, titleResult, versionResult, "Fabric", isEnabled);
+                }
+                catch (JsonException e)
+                {
+                    var errorList = new[]
+                    {
+                        "[!] 数据包 JSON 异常",
+                        e.Message
+                    };
+                    return new GameModResolvedInfo(null, file, errorList.ToImmutableList(), Path.GetFileName(file), null, "Fabric", isEnabled);
+                }
             }
 
             GameModResolvedInfo? result = null;

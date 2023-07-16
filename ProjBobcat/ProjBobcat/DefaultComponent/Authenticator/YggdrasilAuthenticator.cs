@@ -182,7 +182,7 @@ public class YggdrasilAuthenticator : IAuthenticator
             Legacy = false,
             LocalId = rUuid,
             Persistent = true,
-            RemoteId = result.User.UUID.ToString(),
+            RemoteId = result.User?.UUID.ToString() ?? new Guid().ToString(),
             Type = "Mojang",
             UserProperites = result.User?.Properties?.ToAuthProperties(profiles).ToArray() ??
                              Array.Empty<AuthPropertyModel>(),
@@ -361,7 +361,7 @@ public class YggdrasilAuthenticator : IAuthenticator
                     Legacy = false,
                     LocalId = rUuid,
                     Persistent = true,
-                    RemoteId = authResponse.User.UUID.ToString(),
+                    RemoteId = authResponse.User?.UUID.ToString() ?? new Guid().ToString(),
                     Type = "Mojang",
                     UserProperites = authResponse.User?.Properties?.ToAuthProperties(profiles).ToArray() ??
                                      Array.Empty<AuthPropertyModel>(),
