@@ -5,8 +5,8 @@ namespace ProjBobcat.Class.Model;
 
 public class ServerSettings : IDefaultValueChecker
 {
-    public string Address { get; init; }
-    public ushort Port { get; init; }
+    public string Address { get; set; }
+    public ushort Port { get; set; }
 
     [JsonIgnore] public bool IsDefaultValue => IsDefault();
     [JsonIgnore] public string DisplayStr => ToString();
