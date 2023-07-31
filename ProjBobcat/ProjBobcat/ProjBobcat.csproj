@@ -7,7 +7,6 @@
   <PropertyGroup>
     <OutputType>Library</OutputType>
     <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
-    <PackageLicenseUrl>https://github.com/Corona-Studio/ProjBobcat/blob/master/LICENSE</PackageLicenseUrl>
   </PropertyGroup>
 
   <PropertyGroup>
