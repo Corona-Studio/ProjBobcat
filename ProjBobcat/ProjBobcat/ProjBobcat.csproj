@@ -7,6 +7,7 @@
   <PropertyGroup>
     <OutputType>Library</OutputType>
     <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
+    <PackageLicenseUrl>https://github.com/Corona-Studio/ProjBobcat/blob/master/LICENSE</PackageLicenseUrl>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -45,7 +46,7 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageIcon>Bobcat.png</PackageIcon>
     <RepositoryUrl>https://github.com/Corona-Studio/ProjBobcat</RepositoryUrl>
-    <Version>1.30.0</Version>
+    <Version>1.32.0</Version>
     <Authors>Corona Studio</Authors>
     <Company>Corona Studio</Company>
     <Product>ProjBobcat</Product>
@@ -59,7 +60,8 @@
 JSON performance improvements
 minor bug fix
 remove unused packages
-change HttpClientHelper usage
+now HttpClient will use system default proxy settings
+resolved the issue that LaunchWrapper may not return the correct exit code
     </PackageReleaseNotes>
   </PropertyGroup>
 
