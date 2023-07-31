@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Auth;
 using ProjBobcat.DefaultComponent.Launch.GameCore;
@@ -13,7 +14,7 @@ namespace ProjBobcat.Class;
 /// </summary>
 public class LaunchWrapper : IDisposable
 {
-    bool disposedValue;
+    bool _disposedValue;
 
     /// <summary>
     ///     构造函数
@@ -83,16 +84,11 @@ public class LaunchWrapper : IDisposable
         Process.Exited -= ProcessOnExited;
     }
 
-    void ProcessOnExited(object sender, EventArgs e)
+    void ProcessOnExited(object? sender, EventArgs e)
     {
-        try
-        {
-            ExitCode = Process?.ExitCode ?? -1;
-        }
-        catch (InvalidOperationException)
-        {
-            ExitCode = -1;
-        }
+        if (Process == null) return;
+
+        ExitCode = ProcessorHelper.TryGetProcessExitCode(Process, out var code) ? code : 0;
     }
 
     void ProcessOnErrorDataReceived(object sender, DataReceivedEventArgs e)
@@ -150,13 +146,17 @@ public class LaunchWrapper : IDisposable
 
     protected virtual void Dispose(bool disposing)
     {
-        if (!disposedValue)
+        if (!_disposedValue)
         {
-            if (disposing) Process?.Dispose();
+            if (disposing)
+            {
+                DisposeManaged();
+                Process?.Dispose();
+            }
 
             // TODO: 释放未托管的资源(未托管的对象)并重写终结器
             // TODO: 将大型字段设置为 null
-            disposedValue = true;
+            _disposedValue = true;
         }
     }
 }

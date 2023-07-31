@@ -34,46 +34,15 @@ public static class HttpClientHelper
 
     static HttpClient HttpClientFactory()
     {
-        var handlers = new RedirectHandler(new RetryHandler(new HttpClientHandler { AllowAutoRedirect = false }));
+        var handlers = new RedirectHandler(new RetryHandler(new HttpClientHandler
+        {
+            AllowAutoRedirect = false,
+            Proxy = HttpClient.DefaultProxy
+        }));
         var httpClient = new HttpClient(handlers);
 
         httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(Ua);
 
         return httpClient;
     }
-
-    /*
-    public static void Init()
-    {
-        var arr = new[] { DefaultClientName, DataClientName, HeadClientName, MultiPartClientName };
-        foreach (var name in arr)
-            ServiceHelper.ServiceCollection
-                .AddHttpClient(name, client =>
-                {
-                    client.DefaultRequestHeaders.UserAgent.ParseAdd(Ua);
-
-                    if (name == MultiPartClientName)
-                        client.DefaultRequestHeaders.ConnectionClose = false;
-                })
-                .ConfigurePrimaryHttpMessageHandler(_ => new HttpClientHandler
-                {
-                    AllowAutoRedirect = false
-                })
-                .AddHttpMessageHandler<RedirectHandler>()
-                .AddHttpMessageHandler<RetryHandler>();
-
-        ServiceHelper.UpdateServiceProvider();
-
-        HttpClientFactory = ServiceHelper.ServiceProvider.GetRequiredService<IHttpClientFactory>();
-    }
-
-    /// <summary>
-    ///     获取一个HttpClient实例
-    /// </summary>
-    /// <returns></returns>
-    public static HttpClient GetNewClient(string name)
-    {
-        return HttpClientFactory.CreateClient(name);
-    }
-    */
 }

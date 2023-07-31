@@ -345,7 +345,9 @@ public sealed class DefaultGameCore : GameCoreBase
                     OnGameExit(launchWrapper, new GameExitEventArgs
                     {
                         Exception = task.Exception,
-                        ExitCode = launchWrapper.ExitCode
+                        ExitCode = launchWrapper.ExitCode == 0
+                            ? ProcessorHelper.TryGetProcessExitCode(launchWrapper.Process, out var code) ? code : 0
+                            : launchWrapper.ExitCode
                     });
                 });
 

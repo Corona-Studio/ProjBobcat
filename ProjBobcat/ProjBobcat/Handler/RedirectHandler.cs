@@ -14,10 +14,6 @@ public class RedirectHandler : DelegatingHandler
 {
     readonly int _maxRetries = 20;
 
-    public RedirectHandler()
-    {
-    }
-
     public RedirectHandler(HttpMessageHandler innerHandler) : base(innerHandler)
     {
     }
@@ -30,7 +26,7 @@ public class RedirectHandler : DelegatingHandler
     async Task<HttpResponseMessage?> CreateRedirectResponse(HttpRequestMessage request,
         HttpResponseMessage? response, CancellationToken cancellationToken)
     {
-        var redirectUri = response?.Headers?.Location;
+        var redirectUri = response?.Headers.Location;
 
         if (redirectUri == null) return null;
         if (request.RequestUri == null) return null;
