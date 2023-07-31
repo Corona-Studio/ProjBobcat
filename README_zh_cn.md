@@ -28,16 +28,16 @@ ProjBobcat 为 [NativeAot](https://learn.microsoft.com/en-us/dotnet/core/deployi
 
 目前我们正在为 ProjBobcat 加入跨平台支持
 
-|平台|状态|
-|:------:|:----:|
-|Windows |  ✅ |
-|macOS |  ✅   |
-|Linux |  ✅   |
+| 平台    | 状态               |
+| ------- | ------------------ |
+| Windows | :white_check_mark: |
+| macOS   | :white_check_mark: |
+| Linux   | :white_check_mark: |
 
 ## [广告] 一个超牛逼的Typescript启动核心
 [仓库链接](https://github.com/Voxelum/minecraft-launcher-core-node)
 
-All you need for minecraft launcher in typescript. https://voxelum.github.io/minecraft-launcher-core-node/
+All you need for Minecraft launcher in typescript. https://voxelum.github.io/minecraft-launcher-core-node/
 
 ## 反馈BUG或和我们一起开发？
 
@@ -55,40 +55,40 @@ All you need for minecraft launcher in typescript. https://voxelum.github.io/min
 + 由于 Projbobcat 使用了来自 .NET Core 和 .NET 6.0+ 的诸多最新语言特性。如果您想使用本项目，您需要将您的项目框架版本设置为 **.NET 6 或更高版本**。
 + 由于.NET的默认连接数限制，您需要手动覆盖掉默认的连接数才能保证 <DownloadHelper> 中的部分方法正常执行，您可以在App.xaml.cs或程序入口点添加下面的代码来完成修改（最大值不宜超过1024）
 
-  ```c#
-  using System.Net;
+```c#
+using System.Net;
   
-  ServicePointManager.DefaultConnectionLimit = 512;
-  ```
+ServicePointManager.DefaultConnectionLimit = 512;
+```
 
 ## 安装方法
 * 复制本项目源代码至您的解决方案中，然后在您的主项目添加引用。
 * 直接通过 Nuget 包管理器安装 ProjBobcat 或在包管理器控制台中执行以下命令
 
-  ```
-  Install-Package ProjBobcat
-  ```
+```
+Install-Package ProjBobcat
+```
 
 ## 功能列表
 
-| 功能 | 状态 |
-| - | - |
-| 离线验证模型 | ✅ |
-| 正版验证模型 (Yggdrasil) | ✅ |
-| 正版验证模型 (Microsoft) | ✅ |
-| 版本隔离 | ✅ |
-| launcher_profiles.json 解析 | ✅ |
-| launcher_accounts.json 解析 | ✅ |
-| Nuget 分发 | ✅ |
-| 旧版Forge安装模型 | ✅ |
-| 新版Forge安装模型 | ✅ |
-| Optifine安装模型 | ✅ |
-| LiteLoader安装模型 | ✅ |
-| Fabric安装模型 | ✅ |
-| 资源自动补全（多线程下载） | ✅ |
-| Windows 10 版 Minecraft 支持（检测和启动） | ✅ |
-| 游戏日志解析器 | ✅ |
-| 游戏崩溃探测器 | ✅ |
+| 功能                                     | 状态               |
+| ---------------------------------------- | ------------------ |
+| 离线验证模型                              | :white_check_mark: |
+| 正版验证模型 (Yggdrasil)                  | :white_check_mark: |
+| 正版验证模型 (Microsoft)                  | :white_check_mark: |
+| 版本隔离                                  | :white_check_mark: |
+| launcher_profiles.json 解析               | :white_check_mark: |
+| launcher_accounts.json 解析               | :white_check_mark: |
+| Nuget 分发                                | :white_check_mark: |
+| 旧版Forge安装模型                          | :white_check_mark: |
+| 新版Forge安装模型                          | :white_check_mark: |
+| Optifine安装模型                          | :white_check_mark: |
+| LiteLoader安装模型                        | :white_check_mark: |
+| Fabric安装模型                            | :white_check_mark: |
+| 资源自动补全（多线程下载）                 | :white_check_mark: |
+| Windows 10 版 Minecraft 支持（检测和启动） | :white_check_mark: |
+| 游戏日志解析器                            | :white_check_mark: |
+| 游戏崩溃探测器                            | :white_check_mark: |
 
 ## 使用说明
 
@@ -96,17 +96,18 @@ All you need for minecraft launcher in typescript. https://voxelum.github.io/min
 
 ProjBobcat提供了3大必要组件和一个核心总成来支撑起整个核心框架
 
-| 类 | 父级接口 | 父类 | 作用 |
-| - | - | - | - |
-| DefaultGameCore | IGameCore | NG | 提供默认启动核心所有实现 |
-| DefaultLaunchArgumentParser | IArgumentParser | LaunchArgumentParserBase | 提供默认启动参数解析 |
+| 类                           | 父级接口                | 父类                      | 作用                              |
+| ---------------------------- | ---------------------- | ------------------------- | --------------------------------- |
+| DefaultGameCore              | IGameCore              | NG                        | 提供默认启动核心所有实现            |
+| DefaultLaunchArgumentParser  | IArgumentParser        | LaunchArgumentParserBase  | 提供默认启动参数解析                |
 | DefaultLauncherProfileParser | ILauncherProfileParser | LauncherProfileParserBase | 提供默认launcher_profiles.json解析 |
-| DefaultVersionLocator | IVersionLocator        | VersionLocatorBase | 定位游戏版本 |
+| DefaultVersionLocator        | IVersionLocator        | VersionLocatorBase        | 定位游戏版本                       |
 
 选择性组件：
-| 类 | 父级接口| 父类 | 作用 |
-| - | - | - | - |
-| DefaultResourceCompleter | IResourceCompleter | NG | 提供默认资源补全器所有实现  |
+
+| 类                       | 父级接口            | 父类 | 作用                     |
+| ------------------------ | ------------------ | ---- | ------------------------ |
+| DefaultResourceCompleter | IResourceCompleter | NG   | 提供默认资源补全器所有实现 |
 
 ### 基本使用
 
@@ -135,7 +136,7 @@ var core = new DefaultGameCore
 #### 扫描全部游戏
 
 ```csharp
-List<VersionInfo> gameList = core.VersionLocator.GetAllGames().ToList();
+var gameList = core.VersionLocator.GetAllGames().ToList();
 ```
 
 #### 资源补全
@@ -167,11 +168,11 @@ await drc.CheckAndDownloadTaskAsync().ConfigureAwait(false);
 
 这里是一些您可以绑定的事件：
 
-| 名称 | 签名 | 作用 |
-| - | - | - |
-| GameResourceInfoResolveStatus | (object sender, GameResourceInfoResolveEventArgs e) | 获取解析器状态 |
-| DownloadFileChangedEvent | (object sender, DownloadFileChangedEventArgs e) | 总文件下载进度改变 |
-| DownloadFileCompletedEvent | (object sender, DownloadFileCompletedEventArgs e) | 单文件下载完成 |
+| 名称                          | 签名                                                | 作用              |
+| ----------------------------- | --------------------------------------------------- | ---------------- |
+| GameResourceInfoResolveStatus | (object sender, GameResourceInfoResolveEventArgs e) | 获取解析器状态     |
+| DownloadFileChangedEvent      | (object sender, DownloadFileChangedEventArgs e)     | 总文件下载进度改变 |
+| DownloadFileCompletedEvent    | (object sender, DownloadFileCompletedEventArgs e)   | 单文件下载完成     |
 
 
 #### 启动游戏前配置
@@ -210,8 +211,8 @@ launchSettings.GameArguments = new GameArguments // （可选）具体游戏启�
 
 您可以在启动核心内注册以下事件来实现完整的日志记录
 
-| 名称 | 方法签名 | 作用 |
-| - | - | - |
+| 名称                   | 方法签名                               | 作用            |
+| ---------------------- | ------------------------------------- | --------------- |
 | GameExitEventDelegate  | (object sender, GameExitEventArgs e)  | 游戏退出事件     |
 | GameLogEventDelegate   | (object sender, GameLogEventArgs e)   | 游戏日志输出事件 |
 | LaunchLogEventDelegate | (object sender, LaunchLogEventArgs e) | 启动日志输出事件 |
