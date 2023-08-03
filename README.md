@@ -13,70 +13,70 @@
 ![GitHub repo size](https://img.shields.io/github/repo-size/corona-studio/projbobcat?logo=github&style=for-the-badge)
 ![GitHub stars](https://img.shields.io/github/stars/corona-studio/projbobcat?logo=github&style=for-the-badge)
 
-The next-generation Minecraft launcher core written in C# providing the freest, fastest and the most complete experience.
+The next-generation Minecraft launcher core written in C# provides the freest, fastest, and most complete experience.
 
 Developed and maintained by Corona Studio.
 
 ## NativeAOT (ahead-of-time compilation) Support
 
-ProjBobcat provide fully support for [NativeAot](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/). Native AOT apps start up very quickly and use less memory. Users of the application can run it on a machine that doesn't have the .NET runtime installed. If you want to use NativeAot in your project, please switch your target framework to **net7.0 or higher**.
+ProjBobcat provides full support for [NativeAot](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/). Native AOT apps start up very quickly and use less memory. Users of the application can run it on a machine that doesn't have the .NET runtime installed. If you want to use NativeAot in your project, please switch your target framework to **net7.0 or higher**.
 
 ## Multi-Platform Support
 
-Currently we are working on the multi-platform support for ProjBobcat
-|Platform|Status|
-|:------:|:----:|
-|Windows |  ✅ |
-|macOS |  ✅   |
-|Linux |  ✅   |
+Currently, we are working on the multi-platform support for ProjBobcat
+| Platform | Status             |
+| -------- | ------------------ |
+| Windows  | :white_check_mark: |
+| macOS    | :white_check_mark: |
+| Linux    | :white_check_mark: |
 
 ## [Ad] An Awesome Typescript Launcher Core
 [Repo Link](https://github.com/Voxelum/minecraft-launcher-core-node)
 
-All you need for minecraft launcher in typescript. https://voxelum.github.io/minecraft-launcher-core-node/
+All you need for Minecraft launcher in typescript. https://voxelum.github.io/minecraft-launcher-core-node/
 
 ## Reminder before installation
 
-+ Because Projbobcat uses tons of latest language features and data structures from .NET Core and .NET 6+. As the result, you need to switch you project target to at least **.NET 6 or above** to use this package.
-+ Due to the limitation of the default number of connections in .NET, you need to manually override the default number of connections to ensure that some methods in <DownloadHelper> are executed normally. You can add the following code in App.xaml.cs or the entry point of the program to complete the modification (The maximum value should not exceed 1024)
++ Because Projbobcat uses tons of the latest language features and data structures from .NET Core and .NET 6+. As a result, you need to switch your project target to at least **.NET 6 or above** to use this package.
++ Due to the limitation of the default number of connections in .NET, you need to manually override the number of connections to ensure that some methods in <DownloadHelper> are executed typically. You can add the following code in App.xaml.cs or the entry point of the program to complete the modification (The maximum value should not exceed 1024)
 
-  ```c#
-   using System.Net;
-  
-   ServicePointManager.DefaultConnectionLimit = 512;
-  ```
+```c#
+using System.Net;
+
+ServicePointManager.DefaultConnectionLimit = 512;
+```
 
 ## Installation
 
 There are two methods for the first step:
 * Clone and copy ProjBobcat's source code to your solution folder, then add ProjBobcat's reference to your project.
-* Directly install ProjBobcat via Nuget Package Manager or simply execute 
+* Directly install ProjBobcat via Nuget Package Manager or execute
 
-  ```
-  Install-Package ProjBobcat
-  ```
-  in Package Manager Console.
+```
+Install-Package ProjBobcat
+```
+in Package Manager Console.
 
 ## Roadmap
 
-| Function | Status |
-| - | - |
-| Offline Auth Model | ✅ |
-| Online Auth Model (Yggdrasil) | ✅ |
-| Online Auth Model (Microsoft) | ✅ |
-| Version Isolation | ✅ |
-| launcher_profiles.json Analysis | ✅ |
-| launcher_accounts.json Analysis | ✅ |
-| Nuget Distribution | ✅ |
-| Old Forge Installation Model | ✅ |
-| New Forge Installation Model | ✅ |
-| Optifine Installation Model | ✅ |
-| Fabric Installation Model | ✅ |
-| LiteLoader Installation Model | ✅ |
-| Resource Auto Completion (Multi-thread downloader) | ✅ |
-| Minecraft: Windows 10 Edition Support (Detector and launcher) | ✅ |
-| Game log resolver | ✅ |
-| Game crashing detector | ✅ |
+| Function                                                      | Status             |
+| ------------------------------------------------------------- | ------------------ |
+| Offline Auth Model                                            | :white_check_mark: |
+| Online Auth Model (Yggdrasil)                                 | :white_check_mark: |
+| Online Auth Model (Microsoft)                                 | :white_check_mark: |
+| Version Isolation                                             | :white_check_mark: |
+| launcher_profiles.json Analysis                               | :white_check_mark: |
+| launcher_accounts.json Analysis                               | :white_check_mark: |
+| Nuget Distribution                                            | :white_check_mark: |
+| Old Forge Installation Model                                  | :white_check_mark: |
+| New Forge Installation Model                                  | :white_check_mark: |
+| Optifine Installation Model                                   | :white_check_mark: |
+| Fabric Installation Model                                     | :white_check_mark: |
+| LiteLoader Installation Model                                 | :white_check_mark: |
+| Resource Auto Completion (Multi-thread downloader)            | :white_check_mark: |
+| Minecraft: Windows 10 Edition Support (Detector and launcher) | :white_check_mark: |
+| Game log resolver                                             | :white_check_mark: |
+| Game crashing detector                                        | :white_check_mark: |
 
 ## Instruction
 
@@ -84,26 +84,25 @@ Please note: ProjBobcat requires non-32-bit preferred compilation in your main p
 
 ProjBobcat provides 3 main components & a core to form the whole core framework.
 
-| Class                           | Parent Interface               | Parent Class                      | Function                               |
-| - | - | - | - |
-| DefaultGameCore              | IGameCore              | NG                        | All Implementations of the Default Launch Core           |
-| DefaultLaunchArgumentParser  | IArgumentParser        | LaunchArgumentParserBase  | The Default Argument Analysis Tool               |
+| Class                        | Parent Interface       | Parent Class              | Function                                           |
+| ---------------------------- | ---------------------- | ------------------------- | -------------------------------------------------- |
+| DefaultGameCore              | IGameCore              | NG                        | All Implementations of the Default Launch Core     |
+| DefaultLaunchArgumentParser  | IArgumentParser        | LaunchArgumentParserBase  | The Default Argument Analysis Tool                 |
 | DefaultLauncherProfileParser | ILauncherProfileParser | LauncherProfileParserBase | The Default launcher_profiles.json Analysis Module |
-| DefaultVersionLocator        | IVersionLocator        | VersionLocatorBase        | Game Version Locator          |
-
+| DefaultVersionLocator        | IVersionLocator        | VersionLocatorBase        | Game Version Locator                               |
 
 Selective components:
-| Class                           | Parent Interface               | Parent Class                      | Function                               |
-| - | - | - | - |
-| DefaultResourceCompleter              | IResourceCompleter          | NG                        | All Implementations of the Default Resource Completer  |
 
+| Class                    | Parent Interface   | Parent Class | Function                                              |
+| ------------------------ | ------------------ | ------------ | ----------------------------------------------------- |
+| DefaultResourceCompleter | IResourceCompleter | NG           | All Implementations of the Default Resource Completer |
 
 ### Quick Startup
 
 #### Java Detection
 
 ```csharp
-var javaList = ProjBobcat.Class.Helper.SystemInfoHelper.FindJava(); // Returns a list of all java installations found in registry.
+var javaList = ProjBobcat.Class.Helper.SystemInfoHelper.FindJava(); // Returns a list of all Java installations found in the registry.
 ```
 
 #### Core Initialization
@@ -122,7 +121,7 @@ var core = new DefaultGameCore
 };
 ```
 
-#### Game Scaning
+#### Game Scanning
 
 ```csharp
 List<VersionInfo> gameList = core.VersionLocator.GetAllGames().ToList();
@@ -157,11 +156,11 @@ await drc.CheckAndDownloadTaskAsync().ConfigureAwait(false);
 
 Here are some events which you could bind to your program.
 
-| Name                   | Method Signature                              | Refers to             |
-| - | - | - |
-| GameResourceInfoResolveStatus  | (object sender, GameResourceInfoResolveEventArgs e)  | Resolver status |
-| DownloadFileChangedEvent   | (object sender, DownloadFileChangedEventArgs e)   | All files download status changed |
-| DownloadFileCompletedEvent | (object sender, DownloadFileCompletedEventArgs e) | Single file download completed |
+| Name                          | Method Signature                                    | Refers to                         |
+| ----------------------------- | --------------------------------------------------- | --------------------------------- |
+| GameResourceInfoResolveStatus | (object sender, GameResourceInfoResolveEventArgs e) | Resolver status                   |
+| DownloadFileChangedEvent      | (object sender, DownloadFileChangedEventArgs e)     | All files download status changed |
+| DownloadFileCompletedEvent    | (object sender, DownloadFileCompletedEventArgs e)   | Single file download completed    |
 
 #### Launch Configuration
 
@@ -199,11 +198,11 @@ launchSettings.GameArguments = new GameArguments // (Optional) The arguments of 
 
 Here are some events which you could bind to your program.
 
-| Name                   | Method Signature                              | Refers to             |
-| - | - | - |
-| GameExitEventDelegate  | (object sender, GameExitEventArgs e)  | Game Exit     |
-| GameLogEventDelegate   | (object sender, GameLogEventArgs e)   | Game Log |
-| LaunchLogEventDelegate | (object sender, LaunchLogEventArgs e) | Core Log |
+| Name                   | Method Signature                      | Refers to |
+| ---------------------- | ------------------------------------- | --------- |
+| GameExitEventDelegate  | (object sender, GameExitEventArgs e)  | Game Exit |
+| GameLogEventDelegate   | (object sender, GameLogEventArgs e)   | Game Log  |
+| LaunchLogEventDelegate | (object sender, LaunchLogEventArgs e) | Core Log  |
 
 #### Define Auth Model
 
