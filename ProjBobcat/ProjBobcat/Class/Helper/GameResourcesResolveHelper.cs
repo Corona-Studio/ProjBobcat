@@ -339,4 +339,26 @@ public static class GameResourcesResolveHelper
             }
         }
     }
+
+    public static IEnumerable<GameScreenshotResolvedInfo> ResolveScreenshot(IEnumerable<string> files)
+    {
+        foreach (var file in files)
+        {
+            if (!File.Exists(file)) continue;
+
+            var extension = Path.GetExtension(file);
+
+            if (string.IsNullOrEmpty(extension)) continue;
+            if (!extension.Equals(".jpg", StringComparison.OrdinalIgnoreCase) &&
+                !extension.Equals(".png", StringComparison.OrdinalIgnoreCase) &&
+                !extension.Equals(".jpeg", StringComparison.OrdinalIgnoreCase) &&
+                !extension.Equals(".gif", StringComparison.OrdinalIgnoreCase) &&
+                !extension.Equals(".tif", StringComparison.OrdinalIgnoreCase) &&
+                !extension.Equals(".tiff", StringComparison.OrdinalIgnoreCase)) continue;
+
+            var fileName = Path.GetFileName(file);
+
+            yield return new GameScreenshotResolvedInfo(file, fileName);
+        }
+    }
 }

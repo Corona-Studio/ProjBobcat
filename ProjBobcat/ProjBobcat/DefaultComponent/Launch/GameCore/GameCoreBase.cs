@@ -15,7 +15,7 @@ public abstract class GameCoreBase : IGameCore
     static readonly object LaunchLogEventKey = new();
 
     protected readonly EventHandlerList ListEventDelegates = new();
-    bool disposedValue;
+    bool _disposedValue;
     public virtual string? RootPath { get; set; }
     public virtual Guid ClientToken { get; set; }
     public virtual VersionLocatorBase VersionLocator { get; set; }
@@ -93,13 +93,13 @@ public abstract class GameCoreBase : IGameCore
 
     protected virtual void Dispose(bool disposing)
     {
-        if (!disposedValue)
+        if (!_disposedValue)
         {
             if (disposing) ListEventDelegates.Dispose();
 
             // TODO: 释放未托管的资源(未托管的对象)并重写终结器
             // TODO: 将大型字段设置为 null
-            disposedValue = true;
+            _disposedValue = true;
         }
     }
 }
