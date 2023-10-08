@@ -21,6 +21,6 @@ public class CurseForgeDependencyModelComparer : IEqualityComparer<CurseForgeDep
 
 public class CurseForgeDependencyModel
 {
-    [JsonPropertyName("modId")] public int ModId { get; set; }
+    [JsonPropertyName("modId")] public long ModId { get; set; }
     [JsonPropertyName("relationType")] public int RelationType { get; set; }
 }

@@ -7,12 +7,13 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using ProjBobcat.Class.Model.CurseForge;
 using ProjBobcat.Class.Model.CurseForge.API;
+using ProjBobcat.Exceptions;
 
 namespace ProjBobcat.Class.Helper;
 
 #region Temp Models
 
-record AddonInfoReqModel(IEnumerable<int> modIds);
+record AddonInfoReqModel(IEnumerable<long> modIds);
 
 [JsonSerializable(typeof(AddonInfoReqModel))]
 partial class AddonInfoReqModelContext : JsonSerializerContext
@@ -88,7 +89,7 @@ public static class CurseForgeAPIHelper
             .DataModelWithPaginationCurseForgeAddonInfoArray);
     }
 
-    public static async Task<CurseForgeAddonInfo?> GetAddon(int addonId)
+    public static async Task<CurseForgeAddonInfo?> GetAddon(long addonId)
     {
         var reqUrl = $"{BaseUrl}/mods/{addonId}";
 
@@ -99,7 +100,7 @@ public static class CurseForgeAPIHelper
             ?.Data;
     }
 
-    public static async Task<CurseForgeAddonInfo[]?> GetAddons(IEnumerable<int> addonIds)
+    public static async Task<CurseForgeAddonInfo[]?> GetAddons(IEnumerable<long> addonIds)
     {
         const string reqUrl = $"{BaseUrl}/mods";
         var data = JsonSerializer.Serialize(new AddonInfoReqModel(addonIds),
@@ -116,7 +117,7 @@ public static class CurseForgeAPIHelper
             .DataModelCurseForgeAddonInfoArray))?.Data;
     }
 
-    public static async Task<CurseForgeLatestFileModel[]?> GetAddonFiles(int addonId)
+    public static async Task<CurseForgeLatestFileModel[]?> GetAddonFiles(long addonId)
     {
         var reqUrl = $"{BaseUrl}/mods/{addonId}/files";
 
@@ -159,7 +160,9 @@ public static class CurseForgeAPIHelper
 
         using var req = Req(HttpMethod.Get, reqUrl);
         using var res = await Client.SendAsync(req);
-        res.EnsureSuccessStatusCode();
+
+        if (!res.IsSuccessStatusCode)
+            throw new CurseForgeModResolveException(addonId, fileId);
 
         return (await res.Content.ReadFromJsonAsync(DataModelStringResultContext.Default.DataModelString))?.Data;
     }

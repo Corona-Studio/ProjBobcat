@@ -9,6 +9,7 @@ using System.Threading.Tasks.Dataflow;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.CurseForge;
+using ProjBobcat.Exceptions;
 using ProjBobcat.Interface;
 using SharpCompress.Archives;
 
@@ -47,30 +48,68 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         {
             return urls.Select(file => (file.ProjectId, file.FileId));
         });
-
+        
         var urlBags = new ConcurrentBag<DownloadFile>();
+        var urlReqExceptions = new ConcurrentBag<CurseForgeModResolveException>();
         var actionBlock = new ActionBlock<(long, long)>(async t =>
         {
-            var downloadUrlRes = await CurseForgeAPIHelper.GetAddonDownloadUrl(t.Item1, t.Item2);
-            var d = downloadUrlRes.Trim('"');
-            var fn = Path.GetFileName(d);
-
-            var downloadFile = new DownloadFile
+            var retryCount = 0;
+            
+            do
             {
-                DownloadPath = di.FullName,
-                DownloadUri = d,
-                FileName = fn
-            };
-            downloadFile.Completed += WhenCompleted;
+                retryCount++;
+                
+                try
+                {
+                    var downloadUrlRes = await CurseForgeAPIHelper.GetAddonDownloadUrl(t.Item1, t.Item2);
+                    var d = downloadUrlRes.Trim('"');
+                    var fn = Path.GetFileName(d);
 
-            urlBags.Add(downloadFile);
+                    var downloadFile = new DownloadFile
+                    {
+                        DownloadPath = di.FullName,
+                        DownloadUri = d,
+                        FileName = fn
+                    };
+                    downloadFile.Completed += WhenCompleted;
 
-            TotalDownloaded++;
+                    urlBags.Add(downloadFile);
 
-            var progress = (double)TotalDownloaded / NeedToDownload * 100;
+                    TotalDownloaded++;
+                    NeedToDownload++;
 
-            InvokeStatusChangedEvent($"成功解析 MOD [{t.Item1}] 的下载地址",
-                progress);
+                    var progress = (double)TotalDownloaded / NeedToDownload * 100;
+
+                    InvokeStatusChangedEvent($"成功解析 MOD [{t.Item1}] 的下载地址",
+                        progress);
+                }
+                catch (CurseForgeModResolveException e)
+                {
+                    InvokeStatusChangedEvent($"MOD [{t.Item1}] 的下载地址解析失败，即将重试",
+                        114514);
+
+                    CurseForgeAddonInfo? info = null;
+                    try
+                    {
+                        info = await CurseForgeAPIHelper.GetAddon(t.Item1);
+                    }
+                    catch (Exception) { }
+
+                    if (info == null)
+                    {
+                        urlReqExceptions.Add(e);
+                        return;
+                    }
+
+                    var moreInfo = $$"""
+                                     模组名称：{{info.Name}}
+                                     模组链接：{{((info.Links?.TryGetValue("websiteUrl", out var link) ?? false) ? link : "-")}}
+                                     """;
+                    var ex = new CurseForgeModResolveException(t.Item1, t.Item2, moreInfo);
+                    
+                    urlReqExceptions.Add(ex);
+                }
+            } while (retryCount < 3);
         }, new ExecutionDataflowBlockOptions
         {
             BoundedCapacity = 32,
@@ -83,6 +122,9 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         urlBlock.Complete();
 
         await actionBlock.Completion;
+
+        if (!urlBags.IsEmpty)
+            throw new AggregateException(urlReqExceptions);
 
         TotalDownloaded = 0;
         await DownloadHelper.AdvancedDownloadListFile(urlBags, new DownloadSettings
