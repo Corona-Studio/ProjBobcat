@@ -7,6 +7,6 @@ namespace ProjBobcat.DefaultComponent.LogAnalysis.AnalysisReport;
 public record AnalysisReport(CrashCauses Cause) : IAnalysisReport
 {
     public string? From { get; set; }
-    public IReadOnlyCollection<string>? Details { get; init; }
+    public IReadOnlyCollection<string>? Details { get; set; }
     public bool HasDetails => Details?.Any() ?? false;
 }
