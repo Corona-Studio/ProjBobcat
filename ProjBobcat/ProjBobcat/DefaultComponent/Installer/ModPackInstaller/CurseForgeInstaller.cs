@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
@@ -23,6 +24,57 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
     public void Install()
     {
         InstallTaskAsync().Wait();
+    }
+
+    private async ValueTask<(bool, DownloadFile?)> TryGuessModDownloadLink(long fileId, string downloadPath)
+    {
+        try
+        {
+            var files = await CurseForgeAPIHelper.GetFiles(new[] { fileId });
+
+            if (files == null || files.Length == 0) return (false, null);
+
+            var file = files.FirstOrDefault(f => f.Id == fileId);
+
+            if (file == null || string.IsNullOrEmpty(file.FileName)) return (false, null);
+
+            var fileName = file.FileName;
+            var fileIdStr = fileId.ToString();
+            var pendingCheckUrls = new[]
+            {
+                $"https://edge.forgecdn.net/files/{fileIdStr[..4]}/{fileIdStr[4..]}/{fileName}",
+                $"https://mediafiles.forgecdn.net/files/{fileIdStr[..4]}/{fileIdStr[4..]}/{fileName}"
+            };
+
+            var httpClient = HttpClientHelper.DefaultClient;
+
+            foreach (var url in pendingCheckUrls)
+            {
+                using var checkReq = new HttpRequestMessage(HttpMethod.Head, url);
+                using var checkRes = await httpClient.SendAsync(checkReq);
+
+                if (!checkRes.IsSuccessStatusCode) continue;
+                
+                var df = new DownloadFile
+                {
+                    DownloadPath = downloadPath,
+                    DownloadUri = url,
+                    FileName = fileName
+                };
+                
+                df.Completed += WhenCompleted;
+                
+                return (true, df);
+            }
+
+            return (false, null);
+        }
+        catch (Exception e)
+        {
+            return (false, null);
+        }
+
+        return (false, null);
     }
 
     public async Task InstallTaskAsync()
@@ -53,63 +105,72 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         var urlReqExceptions = new ConcurrentBag<CurseForgeModResolveException>();
         var actionBlock = new ActionBlock<(long, long)>(async t =>
         {
-            var retryCount = 0;
-            
-            do
+            try
             {
-                retryCount++;
-                
-                try
+                var downloadUrlRes = await CurseForgeAPIHelper.GetAddonDownloadUrl(t.Item1, t.Item2);
+                var d = downloadUrlRes.Trim('"');
+                var fn = Path.GetFileName(d);
+
+                var downloadFile = new DownloadFile
                 {
-                    var downloadUrlRes = await CurseForgeAPIHelper.GetAddonDownloadUrl(t.Item1, t.Item2);
-                    var d = downloadUrlRes.Trim('"');
-                    var fn = Path.GetFileName(d);
+                    DownloadPath = di.FullName,
+                    DownloadUri = d,
+                    FileName = fn
+                };
+                downloadFile.Completed += WhenCompleted;
 
-                    var downloadFile = new DownloadFile
-                    {
-                        DownloadPath = di.FullName,
-                        DownloadUri = d,
-                        FileName = fn
-                    };
-                    downloadFile.Completed += WhenCompleted;
+                urlBags.Add(downloadFile);
 
-                    urlBags.Add(downloadFile);
+                TotalDownloaded++;
+                NeedToDownload++;
 
-                    TotalDownloaded++;
-                    NeedToDownload++;
+                var progress = (double)TotalDownloaded / NeedToDownload * 100;
 
-                    var progress = (double)TotalDownloaded / NeedToDownload * 100;
+                InvokeStatusChangedEvent($"成功解析 MOD [{t.Item1}] 的下载地址",
+                    progress);
+            }
+            catch (CurseForgeModResolveException e)
+            {
+                InvokeStatusChangedEvent($"MOD [{t.Item1}] 的下载地址解析失败，尝试手动拼接",
+                    114514);
 
-                    InvokeStatusChangedEvent($"成功解析 MOD [{t.Item1}] 的下载地址",
-                        progress);
-                }
-                catch (CurseForgeModResolveException e)
+                var (guessed, df) = await TryGuessModDownloadLink(t.Item2, di.FullName);
+
+                if (!guessed)
                 {
-                    InvokeStatusChangedEvent($"MOD [{t.Item1}] 的下载地址解析失败，即将重试",
-                        114514);
-
-                    CurseForgeAddonInfo? info = null;
                     try
                     {
-                        info = await CurseForgeAPIHelper.GetAddon(t.Item1);
-                    }
-                    catch (Exception) { }
+                        var info = await CurseForgeAPIHelper.GetAddon(t.Item1);
 
-                    if (info == null)
+                        if (info == null)
+                            throw new Exception();
+                        
+                        var moreInfo = $"""
+                                         模组名称：{info.Name}
+                                         模组链接：{((info.Links?.TryGetValue("websiteUrl", out var link) ?? false) ? link : "-")}
+                                         """;
+                        var ex = new CurseForgeModResolveException(t.Item1, t.Item2, moreInfo);
+                    
+                        urlReqExceptions.Add(ex);
+                    }
+                    catch (Exception exception)
                     {
                         urlReqExceptions.Add(e);
-                        return;
                     }
-
-                    var moreInfo = $$"""
-                                     模组名称：{{info.Name}}
-                                     模组链接：{{((info.Links?.TryGetValue("websiteUrl", out var link) ?? false) ? link : "-")}}
-                                     """;
-                    var ex = new CurseForgeModResolveException(t.Item1, t.Item2, moreInfo);
                     
-                    urlReqExceptions.Add(ex);
+                    return;
                 }
-            } while (retryCount < 3);
+                
+                urlBags.Add(df);
+
+                TotalDownloaded++;
+                NeedToDownload++;
+
+                var progress = (double)TotalDownloaded / NeedToDownload * 100;
+
+                InvokeStatusChangedEvent($"成功解析 MOD [{t.Item1}] 的下载地址",
+                    progress);
+            }
         }, new ExecutionDataflowBlockOptions
         {
             BoundedCapacity = 32,
@@ -123,7 +184,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
         await actionBlock.Completion;
 
-        if (!urlBags.IsEmpty)
+        if (!urlReqExceptions.IsEmpty)
             throw new AggregateException(urlReqExceptions);
 
         TotalDownloaded = 0;
