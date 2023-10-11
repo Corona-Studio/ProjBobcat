@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Threading.Tasks;
 using ProjBobcat.Class;
@@ -14,12 +15,11 @@ namespace ProjBobcat.Platforms.Windows;
 /// <summary>
 ///     提供了UWP版本MineCraft的启动核心
 /// </summary>
-[SupportedOSPlatform("Windows")]
+[SupportedOSPlatform(nameof(OSPlatform.Windows))]
 public class DefaultMineCraftUWPCore : GameCoreBase
 {
     public override LaunchResult Launch(LaunchSettings? launchSettings = null)
     {
-#if WINDOWS
         var prevSpan = new TimeSpan();
         var stopwatch = new Stopwatch();
         stopwatch.Start();
@@ -72,22 +72,11 @@ public class DefaultMineCraftUWPCore : GameCoreBase
             GameProcess = uwpProcess,
             LaunchSettings = launchSettings
         };
-#endif
-        return new LaunchResult
-        {
-            ErrorType = LaunchErrorType.UnsupportedOperatingSystem,
-            Error = new ErrorModel
-            {
-                Error = "不支持的操作系统",
-                ErrorMessage = "此操作系统无法启动UWP版本的Minecraft",
-                Cause = "UWP版本的Minecraft不支持此操作系统"
-            }
-        };
     }
 
     [Obsolete("UWP启动核心并不支持异步启动")]
 #pragma warning disable CS0809 // 过时成员重写未过时成员
-    public override Task<LaunchResult> LaunchTaskAsync(LaunchSettings settings)
+    public override Task<LaunchResult> LaunchTaskAsync(LaunchSettings? settings)
 #pragma warning restore CS0809 // 过时成员重写未过时成员
     {
         throw new NotImplementedException();

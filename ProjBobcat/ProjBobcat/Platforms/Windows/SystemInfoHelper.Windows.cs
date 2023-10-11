@@ -3,16 +3,16 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.System.SystemInformation;
 using Microsoft.Win32;
 using ProjBobcat.Class.Model;
 
-#pragma warning disable CA1416
-
 namespace ProjBobcat.Platforms.Windows;
 
+[SupportedOSPlatform(nameof(OSPlatform.Windows))]
 public static class SystemInfoHelper
 {
     static readonly PerformanceCounter FreeMemCounter = new("Memory", "Available MBytes");
@@ -28,7 +28,7 @@ public static class SystemInfoHelper
     }
 
     /// <summary>
-    ///     判断是否安装了 UWP 版本的 Minecraft 。
+    ///     判断是否安装了 UWP 版本的 MineCraft 。
     /// </summary>
     /// <returns>判断结果。</returns>
     public static bool IsMinecraftUWPInstalled()
@@ -45,7 +45,7 @@ public static class SystemInfoHelper
     {
         using var process = new Process
         {
-            StartInfo = new ProcessStartInfo("C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe")
+            StartInfo = new ProcessStartInfo(@"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe")
             {
                 WorkingDirectory = Environment.CurrentDirectory,
                 RedirectStandardOutput = true,
@@ -53,12 +53,13 @@ public static class SystemInfoHelper
                 Arguments = $"Get-AppxPackage -Name \"{appName}\""
             }
         };
+
         process.Start();
+
         var reader = process.StandardOutput;
-
         var values = ParseAppxPackageOutput(reader.ReadToEnd());
-
         var appxPackageInfo = new AppxPackageInfo();
+
         return SetAppxPackageInfoProperty(appxPackageInfo, values);
     }
 
@@ -72,22 +73,27 @@ public static class SystemInfoHelper
         var values = new Dictionary<string, string>();
         var lines = output.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
 
-        string key = null;
-        string value = null;
+        string? key = null;
+        string? value = null;
+
         foreach (var line in lines)
-            if (line.Contains(":"))
+            if (line.Contains(':'))
             {
-                if (key != null) values[key] = value.TrimEnd();
+                if (!string.IsNullOrEmpty(key))
+                    values[key] = value!.TrimEnd();
+
                 var parts = line.Split(new[] { ':' }, 2, StringSplitOptions.None);
+
                 key = parts[0].Trim();
                 value = parts[1].Trim();
             }
-            else if (key != null)
+            else if (!string.IsNullOrEmpty(key))
             {
                 value += line.Trim();
             }
 
-        if (key != null) values[key] = value.TrimEnd();
+        if (!string.IsNullOrEmpty(key))
+            values[key] = value!.TrimEnd();
 
         return values;
     }
@@ -181,7 +187,7 @@ public static class SystemInfoHelper
 
                 if (string.IsNullOrWhiteSpace(str)) continue;
 
-                result.Add($"{str}\\bin\\javaw.exe");
+                result.Add($@"{str}\bin\javaw.exe");
             }
 
             return result;
