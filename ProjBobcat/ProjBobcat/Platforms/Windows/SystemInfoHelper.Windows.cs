@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.System.SystemInformation;
@@ -262,8 +263,16 @@ public static class SystemInfoHelper
             &nativeMachine);
 
         if (!result) return false;
-        if (processMachine == IMAGE_FILE_MACHINE.IMAGE_FILE_MACHINE_UNKNOWN) return false;
 
-        return processMachine != nativeMachine;
+        var nativeArch = nativeMachine switch
+        {
+            IMAGE_FILE_MACHINE.IMAGE_FILE_MACHINE_AMD64 => Architecture.X64,
+            IMAGE_FILE_MACHINE.IMAGE_FILE_MACHINE_ARM64 => Architecture.Arm64,
+            IMAGE_FILE_MACHINE.IMAGE_FILE_MACHINE_ARMNT => Architecture.Arm64,
+            IMAGE_FILE_MACHINE.IMAGE_FILE_MACHINE_I386 => Architecture.X86,
+            _ => throw new ArgumentException($"Unknown System Arch [{nativeMachine}]")
+        };
+
+        return nativeArch != RuntimeInformation.OSArchitecture;
     }
 }
