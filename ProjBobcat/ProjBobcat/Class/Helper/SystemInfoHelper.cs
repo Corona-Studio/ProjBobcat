@@ -16,6 +16,8 @@ public static class SystemInfoHelper
     {
 #if WINDOWS
         return Platforms.Windows.SystemInfoHelper.IsRunningUnderTranslation();
+#elif OSX
+        return Platforms.MacOS.SystemInfoHelper.IsRunningUnderTranslation();
 #else
         return false;
 #endif

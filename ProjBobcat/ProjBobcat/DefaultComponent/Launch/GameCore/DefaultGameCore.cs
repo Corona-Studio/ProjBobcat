@@ -3,8 +3,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Windows.Win32;
-using Windows.Win32.Foundation;
 using Microsoft.Extensions.Configuration;
 using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
@@ -358,10 +356,12 @@ public sealed class DefaultGameCore : GameCoreBase
                     {
                         if (launchWrapper.Process == null) break;
 
+#if WINDOWS
 #pragma warning disable CA1416 // 验证平台兼容性
-                        _ = PInvoke.SetWindowText(new HWND(launchWrapper.Process.MainWindowHandle),
+                        _ = Windows.Win32.PInvoke.SetWindowText(new Windows.Win32.Foundation.HWND(launchWrapper.Process.MainWindowHandle),
                             settings.WindowTitle);
 #pragma warning restore CA1416 // 验证平台兼容性
+#endif
                     } while (string.IsNullOrEmpty(launchWrapper.Process?.MainWindowTitle));
                 });
 #pragma warning restore CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法

@@ -4,12 +4,16 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 
 namespace ProjBobcat.Platforms.MacOS
 {
     static class SystemInfoHelper
     {
+        [DllImport ("libc")]
+        static extern int sysctlbyname (string name, out int int_val, ref IntPtr length, IntPtr newp, IntPtr newlen);
+        
         public static IEnumerable<string> FindJavaMacOS()
         {
             const string rootPath = "/Library/Java/JavaVirtualMachines";
@@ -171,6 +175,16 @@ namespace ProjBobcat.Platforms.MacOS
             };
 
             return metrics;
+        }
+
+        public static bool IsRunningUnderTranslation()
+        {
+            var size = (IntPtr)sizeof(int);
+            var res = sysctlbyname ("hw.logicalcpu", out var value, ref size, IntPtr.Zero, (IntPtr)0);
+
+            if (res != 0) return false;
+
+            return value == 1;
         }
     }
 }
