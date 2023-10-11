@@ -180,7 +180,7 @@ namespace ProjBobcat.Platforms.MacOS
         public static bool IsRunningUnderTranslation()
         {
             var size = (IntPtr)sizeof(int);
-            var res = sysctlbyname ("hw.logicalcpu", out var value, ref size, IntPtr.Zero, (IntPtr)0);
+            var res = sysctlbyname("sysctl.proc_translated", out var value, ref size, IntPtr.Zero, (IntPtr)0);
 
             if (res != 0) return false;
 
