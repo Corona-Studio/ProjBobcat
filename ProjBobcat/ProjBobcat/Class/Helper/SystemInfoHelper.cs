@@ -12,6 +12,15 @@ namespace ProjBobcat.Class.Helper;
 /// </summary>
 public static class SystemInfoHelper
 {
+    public static bool IsRunningUnderTranslation()
+    {
+#if WINDOWS
+        return Platforms.Windows.SystemInfoHelper.IsRunningUnderTranslation();
+#else
+        return false;
+#endif
+    }
+
     public static CPUInfo? GetProcessorUsage()
     {
 #if WINDOWS
