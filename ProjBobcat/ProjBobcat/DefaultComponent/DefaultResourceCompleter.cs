@@ -9,12 +9,11 @@ using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
-using ProjBobcat.DefaultComponent.ResourceInfoResolver;
 using ProjBobcat.Event;
 using ProjBobcat.Interface;
 
 namespace ProjBobcat.DefaultComponent;
-#nullable enable
+
 /// <summary>
 ///     默认的资源补全器
 /// </summary>

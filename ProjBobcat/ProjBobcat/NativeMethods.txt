@@ -1,1 +1,2 @@
 SetWindowText
+IsWow64Process2

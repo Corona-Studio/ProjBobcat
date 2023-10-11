@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using Windows.Win32;
+using Windows.Win32.Foundation;
+using Windows.Win32.System.SystemInformation;
 using Microsoft.Win32;
 using ProjBobcat.Class.Model;
 
@@ -228,5 +231,39 @@ public static class SystemInfoHelper
     public static IEnumerable<string> GetLogicalDrives()
     {
         return Environment.GetLogicalDrives();
+    }
+
+    public static bool IsWindows7()
+    {
+        var os = Environment.OSVersion;
+
+        return os is { Platform: PlatformID.Win32NT, Version: { Major: 6, Minor: 1 } };
+    }
+
+    /// <summary>
+    /// 检查某个进程是否运行在 X86 模拟下
+    /// </summary>
+    /// <param name="proc"></param>
+    /// <returns>待检查的进程，如果不传则检测当前进程</returns>
+    public static unsafe bool IsRunningUnderTranslation(Process? proc = null)
+    {
+        if (IsWindows7()) return false;
+
+        proc ??= Process.GetCurrentProcess();
+
+        var handle = proc.Handle;
+
+        IMAGE_FILE_MACHINE processMachine;
+        IMAGE_FILE_MACHINE nativeMachine;
+
+        var result = PInvoke.IsWow64Process2(
+            new HANDLE(handle),
+            &processMachine,
+            &nativeMachine);
+
+        if (!result) return false;
+        if (processMachine == IMAGE_FILE_MACHINE.IMAGE_FILE_MACHINE_UNKNOWN) return false;
+
+        return processMachine != nativeMachine;
     }
 }
