@@ -26,11 +26,16 @@ public class MojangProfileResponseModel
 
     [JsonPropertyName("skins")] public MojangSkinProfile[] Skins { get; set; }
 
-    [JsonPropertyName("capes")] public JsonElement[] Capes { get; set; }
+    [JsonPropertyName("capes")] public MojangSkinProfile[] Capes { get; set; }
 
     public MojangSkinProfile? GetActiveSkin()
     {
         return Skins?.FirstOrDefault(x => x.State.Equals("ACTIVE", StringComparison.OrdinalIgnoreCase));
+    }
+
+    public MojangSkinProfile? GetActiveCape()
+    {
+        return Capes?.FirstOrDefault(x => x.State.Equals("ACTIVE", StringComparison.OrdinalIgnoreCase));
     }
 }
 

@@ -266,6 +266,7 @@ public class MicrosoftAuthenticator : IAuthenticator
             AccessToken = mcRes.AccessToken,
             AccessTokenExpiresAt = DateTime.Now.AddSeconds(expiresIn > 0 ? expiresIn : mcRes.ExpiresIn),
             Avatar = profileRes.GetActiveSkin()?.Url,
+            Cape = profileRes.GetActiveCape()?.Url,
             EligibleForMigration = false,
             HasMultipleProfiles = false,
             Legacy = false,
@@ -327,6 +328,7 @@ public class MicrosoftAuthenticator : IAuthenticator
             AccessToken = mcRes.AccessToken,
             AuthStatus = AuthStatus.Succeeded,
             Skin = profileRes.GetActiveSkin()?.Url,
+            Cape = profileRes.GetActiveCape()?.Url,
             ExpiresIn = expiresIn,
             RefreshToken = refreshToken,
             CurrentAuthTime = DateTime.Now,
@@ -362,6 +364,7 @@ public class MicrosoftAuthenticator : IAuthenticator
             AccessToken = value.AccessToken,
             AuthStatus = AuthStatus.Succeeded,
             Skin = value.Avatar,
+            Cape = value.Cape,
             SelectedProfile = sP,
             User = new UserInfoModel
             {

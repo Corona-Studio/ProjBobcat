@@ -10,6 +10,11 @@ public class MicrosoftAuthResult : AuthResultBase
     public string? Skin { get; set; }
 
     /// <summary>
+    /// 披风
+    /// </summary>
+    public string? Cape { get; set; }
+
+    /// <summary>
     ///     刷新用 Token
     /// </summary>
     public string RefreshToken { get; set; }

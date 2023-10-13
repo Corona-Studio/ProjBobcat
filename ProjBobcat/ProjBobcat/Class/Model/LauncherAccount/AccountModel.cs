@@ -11,7 +11,8 @@ public class AccountModel
     [JsonPropertyName("accessTokenExpiresAt")]
     public DateTime AccessTokenExpiresAt { get; set; }
 
-    [JsonPropertyName("avatar")] public string Avatar { get; set; }
+    [JsonPropertyName("avatar")] public string? Avatar { get; set; }
+    [JsonPropertyName("cape")] public string? Cape { get; set; }
 
     [JsonPropertyName("eligibleForMigration")]
     public bool EligibleForMigration { get; set; }
