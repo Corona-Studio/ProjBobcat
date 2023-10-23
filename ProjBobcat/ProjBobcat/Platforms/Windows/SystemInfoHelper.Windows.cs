@@ -240,11 +240,22 @@ public static class SystemInfoHelper
         return Environment.GetLogicalDrives();
     }
 
-    public static bool IsWindows7()
+    /// <summary>
+    /// 获取 Windows 系统版本，7，8.1，10，11
+    /// </summary>
+    /// <returns></returns>
+    public static string GetWindowsMajorVersion()
     {
-        var os = Environment.OSVersion;
+        return Environment.OSVersion switch
+        {
+            { Platform: PlatformID.Win32NT, Version: { Major: 6, Minor: 1 } } => "7",
+            { Platform: PlatformID.Win32NT, Version: { Major: 6, Minor: 2 } } => "8",
+            { Platform: PlatformID.Win32NT, Version: { Major: 6, Minor: 3 } } => "8.1",
+            { Platform: PlatformID.Win32NT, Version: { Major: 10, Minor: 0 } } => "10",
+            { Platform: PlatformID.Win32NT, Version.Build: >= 22000 } => "11",
+            var os => throw new NotImplementedException($"Unknown OS version: {os}")
 
-        return os is { Platform: PlatformID.Win32NT, Version: { Major: 6, Minor: 1 } };
+        };
     }
 
     /// <summary>
@@ -254,7 +265,7 @@ public static class SystemInfoHelper
     /// <returns>待检查的进程，如果不传则检测当前进程</returns>
     public static unsafe bool IsRunningUnderTranslation(Process? proc = null)
     {
-        if (IsWindows7()) return false;
+        if (GetWindowsMajorVersion() == "7") return false;
 
         proc ??= Process.GetCurrentProcess();
 

@@ -18,7 +18,7 @@ public class OperatingSystemRules
             !Name.Equals(Constants.OsSymbol, StringComparison.OrdinalIgnoreCase)) return false;
         if (!string.IsNullOrEmpty(Arch) && Arch != SystemInfoHelper.GetSystemArch()) return false;
 #if WINDOWS
-        if (!string.IsNullOrEmpty(Version) && Version != $"^{WindowsSystemVersion.CurrentVersion}\\.") return false;
+        if (!string.IsNullOrEmpty(Version) && Version != $"^{Platforms.Windows.SystemInfoHelper.GetWindowsMajorVersion()}\\.") return false;
 #endif
 
         return true;
