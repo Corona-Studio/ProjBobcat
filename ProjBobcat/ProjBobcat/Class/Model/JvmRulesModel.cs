@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Text.Json.Serialization;
-using ProjBobcat.Class.Helper.SystemInfo;
+using ProjBobcat.Class.Helper;
 
 namespace ProjBobcat.Class.Model;
 
@@ -16,7 +16,7 @@ public class OperatingSystemRules
     {
         if (!string.IsNullOrEmpty(Name) &&
             !Name.Equals(Constants.OsSymbol, StringComparison.OrdinalIgnoreCase)) return false;
-        if (!string.IsNullOrEmpty(Arch) && Arch != SystemArch.CurrentArch.ToString()) return false;
+        if (!string.IsNullOrEmpty(Arch) && Arch != SystemInfoHelper.GetSystemArch()) return false;
 #if WINDOWS
         if (!string.IsNullOrEmpty(Version) && Version != $"^{WindowsSystemVersion.CurrentVersion}\\.") return false;
 #endif

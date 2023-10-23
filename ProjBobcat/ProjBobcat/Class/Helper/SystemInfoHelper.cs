@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using Microsoft.Extensions.Configuration;
 using ProjBobcat.Class.Model;
 
@@ -12,6 +13,17 @@ namespace ProjBobcat.Class.Helper;
 /// </summary>
 public static class SystemInfoHelper
 {
+    public static string GetSystemArch()
+    {
+        return RuntimeInformation.OSArchitecture switch
+        {
+            Architecture.X86 => "x86",
+            Architecture.X64 => "x64",
+            Architecture.Arm64 => "arm64",
+            var arch => throw new Exception($"Unknown system arch: {arch}")
+        };
+    }
+    
     public static bool IsRunningUnderTranslation()
     {
 #if WINDOWS

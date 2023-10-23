@@ -5,7 +5,6 @@ using System.Linq;
 using System.Text.Json;
 using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
-using ProjBobcat.Class.Helper.SystemInfo;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.JsonContexts;
 using ProjBobcat.Class.Model.LauncherProfile;
@@ -199,7 +198,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
 
                 if(!lib.Natives!.TryGetValue(Constants.OsSymbol, out var value)) continue;
 
-                var key = value.Replace("${arch}", SystemArch.CurrentArch.ToString("{0}"));
+                var key = value.Replace("${arch}", SystemInfoHelper.GetSystemArch());
 
                 FileInfo libFi;
                 if (lib.Downloads?.Classifiers?.ContainsKey(key) ?? false)
