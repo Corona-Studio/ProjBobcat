@@ -198,7 +198,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
 
                 if(!lib.Natives!.TryGetValue(Constants.OsSymbol, out var value)) continue;
 
-                var key = value.Replace("${arch}", SystemInfoHelper.GetSystemArch());
+                var key = value.Replace("${arch}", SystemInfoHelper.GetSystemArch().TrimStart('x'));
 
                 FileInfo libFi;
                 if (lib.Downloads?.Classifiers?.ContainsKey(key) ?? false)
