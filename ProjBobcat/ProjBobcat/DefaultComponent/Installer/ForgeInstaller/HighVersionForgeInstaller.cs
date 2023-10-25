@@ -560,7 +560,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
         var retryStr = file.RetryCount > 0 ? $"[重试 - {file.RetryCount}] " : string.Empty;
 
         InvokeStatusChangedEvent(
-            $"{retryStr}下载模组 - {file.FileName} ( {_totalDownloaded} / {_needToDownload} )",
+            $"{retryStr}下载 - {file.FileName} ( {_totalDownloaded} / {_needToDownload} )",
             progress);
 
         if (!(e.Success ?? false)) _failedFiles.Add(file);
