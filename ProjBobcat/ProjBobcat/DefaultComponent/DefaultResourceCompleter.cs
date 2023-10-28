@@ -91,25 +91,29 @@ public class DefaultResourceCompleter : IResourceCompleter
                 },
                 new ExecutionDataflowBlockOptions
                 {
-                    MaxDegreeOfParallelism = processorCount
+                    MaxDegreeOfParallelism = processorCount,
+                    BoundedCapacity = processorCount
                 });
-        var downloadSettings = new DownloadSettings
-        {
-            CheckFile = CheckFile,
-            DownloadParts = DownloadParts,
-            HashType = HashType.SHA1,
-            RetryCount = TotalRetry,
-            Timeout = (int)TimeoutPerFile.TotalMilliseconds
-        };
+        
         var downloadFileBlock = new ActionBlock<DownloadFile>(async df =>
         {
+            var downloadSettings = new DownloadSettings
+            {
+                CheckFile = CheckFile,
+                DownloadParts = DownloadParts,
+                HashType = HashType.SHA1,
+                RetryCount = TotalRetry,
+                Timeout = (int)TimeoutPerFile.TotalMilliseconds
+            };
+
             await DownloadHelper.AdvancedDownloadFile(df, downloadSettings);
 
             df.Completed -= WhenCompleted;
             df.Dispose();
         }, new ExecutionDataflowBlockOptions
         {
-            MaxDegreeOfParallelism = processorCount
+            MaxDegreeOfParallelism = processorCount,
+            BoundedCapacity = processorCount
         });
 
         gameResourceTransBlock.LinkTo(downloadFileBlock, linkOptions);
@@ -120,13 +124,15 @@ public class DefaultResourceCompleter : IResourceCompleter
             {
                 Interlocked.Increment(ref _needToDownload);
 
+                /*
                 OnResolveComplete(this, new GameResourceInfoResolveEventArgs
                 {
                     Progress = 114514,
                     Status = $"发现未下载的 {element.FileName.CropStr()}({element.Type})，已加入下载队列"
                 });
+                */
 
-                gameResourceTransBlock.Post(element);
+                await gameResourceTransBlock.SendAsync(element);
             }
         }
 
