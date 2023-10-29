@@ -124,13 +124,11 @@ public class DefaultResourceCompleter : IResourceCompleter
             {
                 Interlocked.Increment(ref _needToDownload);
 
-                /*
                 OnResolveComplete(this, new GameResourceInfoResolveEventArgs
                 {
-                    Progress = 114514,
+                    Progress = -1,
                     Status = $"发现未下载的 {element.FileName.CropStr()}({element.Type})，已加入下载队列"
                 });
-                */
 
                 await gameResourceTransBlock.SendAsync(element);
             }
