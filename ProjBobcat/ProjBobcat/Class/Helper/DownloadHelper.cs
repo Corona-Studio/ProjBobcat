@@ -51,8 +51,10 @@ public static class DownloadHelper
             {
                 using var request = new HttpRequestMessage { RequestUri = new Uri(downloadFile.DownloadUri) };
 
-                if (!string.IsNullOrEmpty(downloadFile.Host))
-                    request.Headers.Host = downloadFile.Host;
+                if (downloadSettings.Authentication != null)
+                    request.Headers.Authorization = downloadSettings.Authentication;
+                if (!string.IsNullOrEmpty(downloadSettings.Host))
+                    request.Headers.Host = downloadSettings.Host;
 
                 using var res =
                     await DataClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token);
@@ -129,7 +131,6 @@ public static class DownloadHelper
 
                 downloadFile.RetryCount++;
                 exceptions.Add(e);
-                // downloadProperty.OnCompleted(false, e, 0);
             }
         }
 
@@ -230,7 +231,8 @@ public static class DownloadHelper
     /// <param name="downloadFile"></param>
     /// <param name="downloadSettings"></param>
     /// <returns></returns>
-    public static async Task MultiPartDownloadTaskAsync(DownloadFile? downloadFile,
+    public static async Task MultiPartDownloadTaskAsync(
+        DownloadFile? downloadFile,
         DownloadSettings? downloadSettings = null)
     {
         if (downloadFile == null) return;
@@ -255,12 +257,14 @@ public static class DownloadHelper
             {
                 #region Get file size
 
-                using var message = new HttpRequestMessage(HttpMethod.Head, new Uri(downloadFile.DownloadUri));
+                using var headReq = new HttpRequestMessage(HttpMethod.Head, new Uri(downloadFile.DownloadUri));
 
-                if (!string.IsNullOrEmpty(downloadFile.Host))
-                    message.Headers.Host = downloadFile.Host;
+                if (downloadSettings.Authentication != null)
+                    headReq.Headers.Authorization = downloadSettings.Authentication;
+                if (!string.IsNullOrEmpty(downloadSettings.Host))
+                    headReq.Headers.Host = downloadSettings.Host;
 
-                using var headRes = await HeadClient.SendAsync(message, cts.Token);
+                using var headRes = await HeadClient.SendAsync(headReq, cts.Token);
 
                 headRes.EnsureSuccessStatusCode();
 
@@ -330,8 +334,11 @@ public static class DownloadHelper
                         {
                             using var request = new HttpRequestMessage
                                 { RequestUri = new Uri(downloadFile.DownloadUri) };
-                            if (!string.IsNullOrEmpty(downloadFile.Host))
-                                request.Headers.Host = downloadFile.Host;
+
+                            if (downloadSettings.Authentication != null)
+                                request.Headers.Authorization = downloadSettings.Authentication;
+                            if (!string.IsNullOrEmpty(downloadSettings.Host))
+                                request.Headers.Host = downloadSettings.Host;
 
                             request.Headers.Range = new RangeHeaderValue(p.Start, p.End);
 

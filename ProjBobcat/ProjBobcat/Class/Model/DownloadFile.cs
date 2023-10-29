@@ -51,11 +51,6 @@ public class DownloadFile : IDisposable
     /// </summary>
     public string CheckSum { get; set; }
 
-    /// <summary>
-    ///     请求源
-    /// </summary>
-    public string Host { get; set; }
-
     // // TODO: 仅当“Dispose(bool disposing)”拥有用于释放未托管资源的代码时才替代终结器
     // ~DownloadFile()
     // {

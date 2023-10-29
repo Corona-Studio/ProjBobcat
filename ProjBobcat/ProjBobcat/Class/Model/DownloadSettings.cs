@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
@@ -30,6 +31,16 @@ public class DownloadSettings
     public int Timeout { get; init; }
     public int DownloadParts { get; set; }
     public HashType HashType { get; init; }
+
+    /// <summary>
+    /// 认证
+    /// </summary>
+    public AuthenticationHeaderValue? Authentication { get; init; }
+
+    /// <summary>
+    /// 请求源
+    /// </summary>
+    public string Host { get; set; }
 
     public HashAlgorithm GetHashAlgorithm()
     {
