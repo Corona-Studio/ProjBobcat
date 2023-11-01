@@ -257,7 +257,7 @@ public static class DownloadHelper
             {
                 #region Get file size
 
-                using var headReq = new HttpRequestMessage(HttpMethod.Head, new Uri(downloadFile.DownloadUri));
+                using var headReq = new HttpRequestMessage(HttpMethod.Head, downloadFile.DownloadUri);
 
                 if (downloadSettings.Authentication != null)
                     headReq.Headers.Authorization = downloadSettings.Authentication;
@@ -271,7 +271,7 @@ public static class DownloadHelper
                 var responseLength = headRes.Content.Headers.ContentLength ?? 0;
                 var hasAcceptRanges = headRes.Headers.AcceptRanges.Any();
 
-                using var rangeGetMessage = new HttpRequestMessage(HttpMethod.Get, new Uri(downloadFile.DownloadUri));
+                using var rangeGetMessage = new HttpRequestMessage(HttpMethod.Get, downloadFile.DownloadUri);
                 rangeGetMessage.Headers.Range = new RangeHeaderValue(0, 0);
 
                 using var rangeGetRes = await HeadClient.SendAsync(rangeGetMessage, cts.Token);
@@ -280,7 +280,7 @@ public static class DownloadHelper
                     responseLength != 0 &&
                     hasAcceptRanges &&
                     rangeGetRes.StatusCode == HttpStatusCode.PartialContent &&
-                    rangeGetRes.Content.Headers.ContentRange.HasRange &&
+                    (rangeGetRes.Content.Headers.ContentRange?.HasRange ?? false) &&
                     rangeGetRes.Content.Headers.ContentLength == 1;
 
                 if (!parallelDownloadSupported)
@@ -318,7 +318,7 @@ public static class DownloadHelper
                     });
                 }
 
-                readRanges = readRanges.OrderBy(r => r.Start).ToList();
+                readRanges = readRanges.OrderBy(range => range.Start).ToList();
 
                 #endregion
 
@@ -332,8 +332,7 @@ public static class DownloadHelper
                     new TransformBlock<DownloadRange, (HttpResponseMessage, DownloadRange)>(
                         async p =>
                         {
-                            using var request = new HttpRequestMessage
-                                { RequestUri = new Uri(downloadFile.DownloadUri) };
+                            using var request = new HttpRequestMessage(HttpMethod.Get, downloadFile.DownloadUri);
 
                             if (downloadSettings.Authentication != null)
                                 request.Headers.Authorization = downloadSettings.Authentication;
