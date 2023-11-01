@@ -1,5 +1,7 @@
 ﻿using System;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 using ProjBobcat.Class.Model;
 
 namespace ProjBobcat.Class.Helper;
@@ -27,5 +29,23 @@ public static class FileHelper
 
         var type = Enum.TryParse(fileClass, out FileType t) ? t : FileType.ValidFile;
         return type;
+    }
+
+    public static async Task<FileStream?> OpenReadAsync(string path, CancellationToken token)
+    {
+        while (!token.IsCancellationRequested)
+        {
+            try
+            {
+                return File.OpenRead(path);
+            }
+            catch (IOException)
+            {
+                await Task.Delay(1000, token);
+                continue;
+            }
+        }
+        
+        return null;
     }
 }
