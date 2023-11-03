@@ -34,7 +34,7 @@ public class DownloadFile : IDisposable
     /// <summary>
     ///     最大重试计数
     /// </summary>
-    public int RetryCount { get; set; }
+    public int RetryCount { get; internal set; }
 
     /// <summary>
     ///     文件类型（仅在Lib/Asset补全时可用）

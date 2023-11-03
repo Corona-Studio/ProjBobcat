@@ -29,8 +29,10 @@ public class FileInfo
 public class GameDownloadInfo
 {
     [JsonPropertyName("client")] public FileInfo Client { get; set; }
+    [JsonPropertyName("client_mappings")] public FileInfo? ClientMappings { get; set; }
 
     [JsonPropertyName("server")] public FileInfo Server { get; set; }
+    [JsonPropertyName("server_mappings")] public FileInfo? ServerMappings { get; set; }
 }
 
 #endregion

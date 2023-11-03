@@ -16,13 +16,14 @@ using ProjBobcat.Class.Model.YggdrasilAuth;
 using ProjBobcat.Event;
 using ProjBobcat.Interface;
 using SharpCompress.Archives;
+using FileInfo = ProjBobcat.Class.Model.FileInfo;
 
 namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller;
 
 public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 {
 #if NET7_0_OR_GREATER
-    [GeneratedRegex("^\\[.+\\]$")]
+    [GeneratedRegex(@"^\[.+\]$")]
     private static partial Regex PathRegex();
 
     [GeneratedRegex("^{.+}$")]
@@ -31,7 +32,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 #else
 
     static readonly Regex
-        PathRegex = new("^\\[.+\\]$", RegexOptions.Compiled),
+        PathRegex = new(@"^\[.+\]$", RegexOptions.Compiled),
         VariableRegex = new("^{.+}$", RegexOptions.Compiled);
 
 #endif
@@ -39,15 +40,17 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
     readonly ConcurrentBag<DownloadFile> _failedFiles = new();
     int _totalDownloaded, _needToDownload, _totalProcessed, _needToProcess;
 
-    public string JavaExecutablePath { get; init; }
+    public string? JavaExecutablePath { get; init; }
 
     public string MineCraftVersionId { get; set; }
     public string MineCraftVersion { get; set; }
 
     public string DownloadUrlRoot { get; set; }
-    public string ForgeExecutablePath { get; set; }
+    public string? ForgeExecutablePath { get; set; }
 
     public VersionLocatorBase VersionLocator { get; set; }
+
+    public FileInfo? CustomMojangClientMappings { get; set; }
 
     public ForgeInstallResult InstallForge()
     {
@@ -138,6 +141,9 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             await JsonSerializer.DeserializeAsync(ipStream, ForgeInstallProfileContext.Default.ForgeInstallProfile);
 
         #endregion
+
+        if (ipModel == null)
+            throw new NullReferenceException("Forge install_profile is null, please check downloaded JAR!");
 
         #region 解析 Lzma
 
@@ -243,6 +249,46 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
                 fLDi.Create();
 
             forgeJar.WriteTo(forgeFs);
+        }
+
+        #endregion
+
+        #region 预下载 Mojang Mappings
+
+        if (ipModel.Data.TryGetValue("MOJMAPS", out var mapsVal) &&
+            !string.IsNullOrEmpty(mapsVal.Client) &&
+            CustomMojangClientMappings != null)
+        {
+            var clientMavenStr = mapsVal.Client.TrimStart('[').TrimEnd(']');
+            var resolvedMappingMaven = clientMavenStr.ResolveMavenString();
+            var mappingPath = Path.GetDirectoryName(resolvedMappingMaven.Path);
+            var mappingFileName = Path.GetFileName(resolvedMappingMaven.Path);
+            var mappingDf = new DownloadFile
+            {
+                CheckSum = CustomMojangClientMappings.Sha1,
+                DownloadPath = mappingPath!,
+                DownloadUri = CustomMojangClientMappings.Url,
+                FileName = mappingFileName
+            };
+
+            mappingDf.Changed += (_, args) =>
+            {
+                InvokeStatusChangedEvent(
+                    $"下载 - {mappingFileName} ( {args.ProgressPercentage} / 100 )",
+                    args.ProgressPercentage);
+            };
+
+            if (!Directory.Exists(mappingPath))
+                Directory.CreateDirectory(mappingPath!);
+
+            await DownloadHelper.MultiPartDownloadTaskAsync(mappingDf, new DownloadSettings
+            {
+                CheckFile = true,
+                DownloadParts = 4,
+                HashType = HashType.SHA1,
+                RetryCount = 3,
+                Timeout = 5000
+            });
         }
 
         #endregion
