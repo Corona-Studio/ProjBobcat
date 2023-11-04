@@ -274,6 +274,11 @@ public static class DownloadHelper
                 using var rangeGetMessage = new HttpRequestMessage(HttpMethod.Get, downloadFile.DownloadUri);
                 rangeGetMessage.Headers.Range = new RangeHeaderValue(0, 0);
 
+                if (downloadSettings.Authentication != null)
+                    rangeGetMessage.Headers.Authorization = downloadSettings.Authentication;
+                if (!string.IsNullOrEmpty(downloadSettings.Host))
+                    rangeGetMessage.Headers.Host = downloadSettings.Host;
+
                 using var rangeGetRes = await HeadClient.SendAsync(rangeGetMessage, cts.Token);
 
                 var parallelDownloadSupported =
