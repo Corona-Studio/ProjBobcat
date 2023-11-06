@@ -120,9 +120,11 @@ public class DefaultResourceCompleter : IResourceCompleter
 
         async Task ReceiveGameResourceTask(IAsyncEnumerable<IGameResource> asyncEnumerable)
         {
+            var count = 0UL;
+
             await foreach (var element in asyncEnumerable)
             {
-                Interlocked.Increment(ref _needToDownload);
+                count++;
 
                 OnResolveComplete(this, new GameResourceInfoResolveEventArgs
                 {
@@ -132,6 +134,8 @@ public class DefaultResourceCompleter : IResourceCompleter
 
                 await gameResourceTransBlock.SendAsync(element);
             }
+
+            Interlocked.Add(ref _needToDownload, count);
         }
 
         var chunks = ResourceInfoResolvers.Chunk(MaxDegreeOfParallelism).ToImmutableArray();

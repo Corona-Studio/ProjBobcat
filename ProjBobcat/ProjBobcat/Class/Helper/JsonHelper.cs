@@ -1,4 +1,6 @@
-﻿using System.Text.Json;
+﻿using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Helper;
 
@@ -10,6 +12,7 @@ public static class JsonHelper
         {
             WriteIndented = true,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
             MaxDepth = 100
         };
     }

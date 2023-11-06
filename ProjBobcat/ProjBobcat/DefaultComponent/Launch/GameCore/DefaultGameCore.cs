@@ -196,8 +196,6 @@ public sealed class DefaultGameCore : GameCoreBase
             }
             */
 
-            // var totalArg = string.Join(' ', arguments);
-
             //通过String Builder格式化参数。（转化成字符串）
             //Format the arguments using string builder.(Convert to string)
             // arguments.ForEach(arg => sb.Append(arg.Trim()).Append(' '));

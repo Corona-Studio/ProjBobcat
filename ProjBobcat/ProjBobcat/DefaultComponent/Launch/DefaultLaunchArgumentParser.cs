@@ -16,6 +16,7 @@ namespace ProjBobcat.DefaultComponent.Launch;
 public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentParser
 {
     readonly LaunchSettings _launchSettings;
+    readonly string? _rootVersion;
 
     /// <summary>
     ///     构造函数
@@ -27,12 +28,13 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
     /// <param name="rootPath"></param>
     /// <param name="rootVersion"></param>
     public DefaultLaunchArgumentParser(LaunchSettings launchSettings, ILauncherProfileParser launcherProfileParser,
-        IVersionLocator versionLocator, AuthResultBase authResult, string rootPath, string rootVersion)
+        IVersionLocator versionLocator, AuthResultBase authResult, string rootPath, string? rootVersion)
     {
         if (launchSettings == null || launcherProfileParser == null)
             throw new ArgumentNullException();
 
         _launchSettings = launchSettings;
+        _rootVersion = rootVersion;
 
         AuthResult = authResult;
         VersionLocator = versionLocator;
@@ -46,9 +48,7 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
         foreach (var lib in VersionInfo.Libraries)
             sb.Append($"{Path.Combine(RootPath, GamePathHelper.GetLibraryPath(lib.Path))}{Path.PathSeparator}");
 
-
-        if (!VersionInfo.MainClass.Equals("cpw.mods.bootstraplauncher.BootstrapLauncher",
-                StringComparison.OrdinalIgnoreCase))
+        if (true)
         {
             var rootJarPath = string.IsNullOrEmpty(rootVersion)
                 ? GamePathHelper.GetGameExecutablePath(launchSettings.Version)
@@ -60,6 +60,7 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
         }
 
         ClassPath = sb.ToString();
+
         LastAuthResult = LaunchSettings.Authenticator.GetLastAuthResult();
     }
 
@@ -126,6 +127,9 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
 
     public IEnumerable<string> ParseJvmArguments()
     {
+        var versionNameFollowing = string.IsNullOrEmpty(_rootVersion) ? string.Empty : $",{_rootVersion}";
+        var versionName = $"{LaunchSettings.Version}{versionNameFollowing}";
+
         var jvmArgumentsDic = new Dictionary<string, string>
         {
             { "${natives_directory}", $"\"{NativeRoot}\"" },
@@ -133,7 +137,8 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
             { "${launcher_version}", "32" },
             { "${classpath}", $"\"{ClassPath}\"" },
             { "${classpath_separator}", Path.PathSeparator.ToString() },
-            { "${library_directory}", $"\"{Path.Combine(RootPath, GamePathHelper.GetLibraryRootPath())}\"" }
+            { "${library_directory}", $"\"{Path.Combine(RootPath, GamePathHelper.GetLibraryRootPath())}\"" },
+            { "${version_name}", versionName}
         };
 
         #region log4j 缓解措施
@@ -148,7 +153,10 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
         if (VersionInfo.JvmArguments?.Any() ?? false)
         {
             foreach (var jvmArg in VersionInfo.JvmArguments)
+            {
                 yield return StringHelper.ReplaceByDic(jvmArg, jvmArgumentsDic);
+            }
+                
             yield break;
         }
 
