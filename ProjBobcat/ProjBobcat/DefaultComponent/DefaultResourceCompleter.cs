@@ -149,7 +149,7 @@ public class DefaultResourceCompleter : IResourceCompleter
         var chunks = ResourceInfoResolvers.Chunk(MaxDegreeOfParallelism).ToImmutableArray();
         foreach (var chunk in chunks)
         {
-            var tasks = new Task[chunk.Length * 2];
+            var tasks = new Task[chunk.Length];
             
             for (var i = 0; i < chunk.Length; i++)
             {
