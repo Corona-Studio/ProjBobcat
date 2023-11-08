@@ -75,7 +75,7 @@ public class Extract
 public class Downloads
 {
     [JsonPropertyName("artifact")] public FileInfo? Artifact { get; set; }
-    [JsonPropertyName("classifiers")] public Dictionary<string, FileInfo> Classifiers { get; set; }
+    [JsonPropertyName("classifiers")] public IReadOnlyDictionary<string, FileInfo> Classifiers { get; set; }
 }
 
 public class Library
@@ -86,7 +86,7 @@ public class Library
 
     [JsonPropertyName("extract")] public Extract Extract { get; set; }
 
-    [JsonPropertyName("natives")] public Dictionary<string, string> Natives { get; set; }
+    [JsonPropertyName("natives")] public IReadOnlyDictionary<string, string> Natives { get; set; }
 
     [JsonPropertyName("rules")] public JvmRules[] Rules { get; set; }
 

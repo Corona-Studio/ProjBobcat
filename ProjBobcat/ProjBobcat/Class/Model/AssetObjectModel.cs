@@ -30,7 +30,7 @@ public class AssetObjectModel
     ///     Asset Objects集合
     /// </summary>
     [JsonPropertyName("objects")]
-    public Dictionary<string, AssetFileInfo> Objects { get; set; }
+    public IReadOnlyDictionary<string, AssetFileInfo> Objects { get; set; }
 }
 
 [JsonSerializable(typeof(AssetObjectModel))]

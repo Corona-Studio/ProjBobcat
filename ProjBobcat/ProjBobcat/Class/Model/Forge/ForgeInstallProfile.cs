@@ -20,7 +20,7 @@ public class ForgeInstallProfileProcessor
 
     [JsonPropertyName("args")] public string[] Arguments { get; set; }
 
-    [JsonPropertyName("outputs")] public Dictionary<string, string> Outputs { get; set; }
+    [JsonPropertyName("outputs")] public IReadOnlyDictionary<string, string> Outputs { get; set; }
 }
 
 public class ForgeInstallProfile
@@ -45,7 +45,7 @@ public class ForgeInstallProfile
 
     [JsonPropertyName("welcome")] public string Welcome { get; set; }
 
-    [JsonPropertyName("data")] public Dictionary<string, ForgeInstallProfileData> Data { get; set; }
+    [JsonPropertyName("data")] public IReadOnlyDictionary<string, ForgeInstallProfileData> Data { get; set; }
 
     [JsonPropertyName("processors")] public ForgeInstallProfileProcessor[] Processors { get; set; }
 

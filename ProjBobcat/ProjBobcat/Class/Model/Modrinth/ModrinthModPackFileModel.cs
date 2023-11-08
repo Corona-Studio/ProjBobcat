@@ -7,7 +7,7 @@ public class ModrinthModPackFileModel
 {
     [JsonPropertyName("path")] public string? Path { get; set; }
 
-    [JsonPropertyName("hashes")] public Dictionary<string, string> Hashes { get; set; }
+    [JsonPropertyName("hashes")] public IReadOnlyDictionary<string, string> Hashes { get; set; }
 
     [JsonPropertyName("downloads")] public string[] Downloads { get; set; }
 

@@ -11,5 +11,5 @@ public class PlayerTextureInfoModel
 
     [JsonPropertyName("profileName")] public string ProfileName { get; set; }
 
-    [JsonPropertyName("textures")] public Dictionary<string, TextureInfoModel> Textures { get; set; }
+    [JsonPropertyName("textures")] public IReadOnlyDictionary<string, TextureInfoModel> Textures { get; set; }
 }

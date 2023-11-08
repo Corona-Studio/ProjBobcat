@@ -6,7 +6,7 @@ namespace ProjBobcat.Class.Model.Modrinth;
 
 public class ModrinthFileInfo
 {
-    [JsonPropertyName("hashes")] public Dictionary<string, string> Hashes { get; set; }
+    [JsonPropertyName("hashes")] public IReadOnlyDictionary<string, string> Hashes { get; set; }
 
     [JsonPropertyName("url")] public string Url { get; set; }
 

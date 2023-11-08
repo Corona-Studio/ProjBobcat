@@ -30,13 +30,13 @@ public class FabricModInfoModel
 
     [JsonPropertyName("environment")] public string Environment { get; set; }
 
-    [JsonPropertyName("entrypoints")] public Dictionary<string, string[]> Entrypoints { get; set; }
+    [JsonPropertyName("entrypoints")] public IReadOnlyDictionary<string, string[]> Entrypoints { get; set; }
 
     [JsonPropertyName("custom")] public Custom Custom { get; set; }
 
-    [JsonPropertyName("depends")] public Dictionary<string, string> Depends { get; set; }
+    [JsonPropertyName("depends")] public IReadOnlyDictionary<string, string> Depends { get; set; }
 
-    [JsonPropertyName("recommends")] public Dictionary<string, string> Recommends { get; set; }
+    [JsonPropertyName("recommends")] public IReadOnlyDictionary<string, string> Recommends { get; set; }
 
     [JsonPropertyName("name")] public string Name { get; set; }
 
@@ -46,7 +46,7 @@ public class FabricModInfoModel
 
     [JsonPropertyName("authors")] public string[] Authors { get; set; }
 
-    [JsonPropertyName("contacts")] public Dictionary<string, string> Contacts { get; set; }
+    [JsonPropertyName("contacts")] public IReadOnlyDictionary<string, string> Contacts { get; set; }
 
     [JsonPropertyName("jars")] public FabricFileInfo[] Jars { get; set; }
 }

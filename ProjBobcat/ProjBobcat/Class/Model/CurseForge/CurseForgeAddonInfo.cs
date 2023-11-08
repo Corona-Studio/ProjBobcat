@@ -20,7 +20,7 @@ public class CurseForgeAddonInfo
     [JsonPropertyName("gameId")] public int GameId { get; set; }
 
     [JsonPropertyName("summary")] public string Summary { get; set; }
-    [JsonPropertyName("links")] public Dictionary<string, string> Links { get; set; }
+    [JsonPropertyName("links")] public IReadOnlyDictionary<string, string> Links { get; set; }
 
     [JsonPropertyName("defaultFileId")] public int DefaultFileId { get; set; }
     [JsonPropertyName("releaseType")] public int ReleaseType { get; set; }

@@ -13,7 +13,7 @@ public class UserProfilePropertyValue
     [JsonPropertyName("timestamp")] public long Timestamp { get; set; }
     [JsonPropertyName("profileId")] public string ProfileId { get; set; }
     [JsonPropertyName("profileName")] public string ProfileName { get; set; }
-    [JsonPropertyName("textures")] public Dictionary<string, UrlModel> Textures { get; set; }
+    [JsonPropertyName("textures")] public IReadOnlyDictionary<string, UrlModel> Textures { get; set; }
 }
 
 [JsonSerializable(typeof(UserProfilePropertyValue))]
