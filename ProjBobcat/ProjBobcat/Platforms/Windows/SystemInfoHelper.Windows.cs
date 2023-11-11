@@ -17,7 +17,7 @@ public static class SystemInfoHelper
 {
     static readonly PerformanceCounter FreeMemCounter = new("Memory", "Available MBytes");
     static readonly PerformanceCounter MemUsagePercentageCounter = new("Memory", "% Committed Bytes In Use");
-    static readonly PerformanceCounter CpuCounter = new("Processor Information", "% Processor Utility", "_Total");
+    static readonly PerformanceCounter CpuCounter = new("Processor", "% Processor Time", "_Total");
 
     static SystemInfoHelper()
     {
@@ -231,7 +231,7 @@ public static class SystemInfoHelper
         return new CPUInfo
         {
             Name = "Total %",
-            Usage = percentage
+            Usage = percentage > 100 ? 100 : percentage
         };
     }
 
