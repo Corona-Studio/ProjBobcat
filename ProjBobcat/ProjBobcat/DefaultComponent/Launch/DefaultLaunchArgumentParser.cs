@@ -128,7 +128,7 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
     public IEnumerable<string> ParseJvmArguments()
     {
         var versionNameFollowing = string.IsNullOrEmpty(_rootVersion) ? string.Empty : $",{_rootVersion}";
-        var versionName = $"{LaunchSettings.Version}{versionNameFollowing}";
+        var versionName = $"{LaunchSettings.Version}{versionNameFollowing}".Replace(' ', '_');
 
         var jvmArgumentsDic = new Dictionary<string, string>
         {
