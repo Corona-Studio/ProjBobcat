@@ -20,7 +20,7 @@ public static class RandomHelper
     /// <param name="enumerable">一个有限的 <see cref="IEnumerable{T}" /> 。</param>
     /// <returns> <paramref name="enumerable" /> 中的随机一项。</returns>
     /// <exception cref="ArgumentNullException"></exception>
-    public static T RandomSample<T>(this IEnumerable<T> enumerable)
+    public static T? RandomSample<T>(this IEnumerable<T> enumerable)
     {
         var arr = enumerable.ToArray();
         return arr.Length == 0 ? default : arr[RandomInteger(0, arr.Length - 1)];
