@@ -17,7 +17,7 @@ public static class SystemInfoHelper
 {
     static readonly PerformanceCounter FreeMemCounter = new("Memory", "Available MBytes");
     static readonly PerformanceCounter MemUsagePercentageCounter = new("Memory", "% Committed Bytes In Use");
-    static readonly PerformanceCounter CpuCounter = new("Processor", "% Processor Time", "_Total");
+    static readonly PerformanceCounter CpuCounter = new("Processor Information", "% Processor Utility", "_Total");
 
     static SystemInfoHelper()
     {
@@ -125,8 +125,12 @@ public static class SystemInfoHelper
                 "NonRemovable" => appxPackageInfo with { NonRemovable = Convert.ToBoolean(value) },
                 "Dependencies" => appxPackageInfo with
                 {
-                    Dependencies = value.TrimStart('{').TrimEnd('}').Split(',')
-                        .Select(s => s.Trim()).ToArray()
+                    Dependencies = value
+                        .TrimStart('{')
+                        .TrimEnd('}')
+                        .Split(',')
+                        .Select(s => s.Trim())
+                        .ToArray()
                 },
                 "IsPartiallyStaged" => appxPackageInfo with { IsPartiallyStaged = Convert.ToBoolean(value) },
                 "SignatureKind" => appxPackageInfo with { SignatureKind = value },
@@ -226,7 +230,7 @@ public static class SystemInfoHelper
     /// <returns></returns>
     public static CPUInfo GetWindowsCpuUsage()
     {
-        var percentage = CpuCounter.NextValue();
+        var percentage = CpuCounter.NextValue() / Environment.ProcessorCount * 100;
 
         return new CPUInfo
         {
