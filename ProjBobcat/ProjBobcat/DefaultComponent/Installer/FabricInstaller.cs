@@ -29,7 +29,8 @@ public class FabricInstaller : InstallerBase, IFabricInstaller
             throw new NullReferenceException("RootPath 字段为空");
 
         var mcVersion = LoaderArtifact.Intermediary.Version;
-        var id = CustomId ?? $"{mcVersion}-fabric{LoaderArtifact.Loader.Version}";
+        var fabricVersion = LoaderArtifact.Loader.Version.Replace(LoaderArtifact.Loader.Separator ?? "+build.", ".build.");
+        var id = CustomId ?? $"{mcVersion}-fabric{fabricVersion}";
 
         var libraries = new List<Library>
         {
