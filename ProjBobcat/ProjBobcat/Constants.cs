@@ -2,6 +2,8 @@
 
 public static class Constants
 {
+    public const string FallBackVersion = "0.0.0";
+
 #if WINDOWS
     public const string WhereCommand = "where";
     public const string JavaExecutable = "javaw.exe";
