@@ -15,9 +15,9 @@ namespace ProjBobcat.Platforms.Windows;
 [SupportedOSPlatform(nameof(OSPlatform.Windows))]
 public static class SystemInfoHelper
 {
-    static readonly PerformanceCounter FreeMemCounter = new("Memory", "Available MBytes");
-    static readonly PerformanceCounter MemUsagePercentageCounter = new("Memory", "% Committed Bytes In Use");
-    static readonly PerformanceCounter CpuCounter = new("Processor Information", "% Processor Utility", "_Total");
+    static readonly PerformanceCounter FreeMemCounter = new("Memory", "Available MBytes", true);
+    static readonly PerformanceCounter MemUsagePercentageCounter = new("Memory", "% Committed Bytes In Use", true);
+    static readonly PerformanceCounter CpuCounter = new("Processor Information", "% Processor Utility", "_Total", true);
 
     static SystemInfoHelper()
     {
