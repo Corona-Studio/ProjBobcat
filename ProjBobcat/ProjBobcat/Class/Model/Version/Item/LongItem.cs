@@ -11,7 +11,7 @@ public class LongItem : IItem
         _value = long.TryParse(longStr, out var outLong) ? outLong : 0;
     }
 
-    public int CompareTo(object obj)
+    public int CompareTo(object? obj)
     {
         if (obj is not IItem item) return _value == 0 ? 0 : 1; // 1.0 == 1, 1.1 > 1
 
@@ -38,7 +38,7 @@ public class LongItem : IItem
         return _value == 0;
     }
 
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
         if (this == obj) return true;
         if (obj is not LongItem that) return false;

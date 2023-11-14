@@ -11,17 +11,11 @@ public class ListItem : List<IItem>, IItem
     {
         if (obj is not IItem item)
         {
-            if (Count == 0) return 0; // 1-0 = 1- (normalize) = 1
-
+            // 1-0 = 1- (normalize) = 1
             // Compare the entire list of items with null - not just the first one, MNG-6964
-            foreach (var i in this)
-            {
-                var result = i.CompareTo(null);
-                if (result != 0)
-                    return result;
-            }
-
-            return 0;
+            return Count == 0
+                ? 0
+                : this.Select(i => i.CompareTo(null)).FirstOrDefault(result => result != 0);
         }
 
         switch (item)

@@ -53,8 +53,8 @@ public class ComparableVersion : IComparable<ComparableVersion>
 
     readonly ListItem _items = new();
 
-    string _canonical;
-    string _value;
+    string? _canonical;
+    string _value = null!;
 
     public ComparableVersion(string version)
     {
@@ -66,9 +66,9 @@ public class ComparableVersion : IComparable<ComparableVersion>
         get { return _canonical ??= _items.ToString(); }
     }
 
-    public int CompareTo(ComparableVersion other)
+    public int CompareTo(ComparableVersion? other)
     {
-        return _items.CompareTo(other._items);
+        return other == null ? 1 : _items.CompareTo(other._items);
     }
 
     void ParseVersion(string version)
@@ -152,21 +152,19 @@ public class ComparableVersion : IComparable<ComparableVersion>
 
     static IItem ParseItem(bool isDigit, string buf)
     {
-        if (isDigit)
+        if (!isDigit) return new StringItem(buf, false);
+
+        buf = string.IsNullOrEmpty(buf) ? "0" : buf.TrimStart('0');
+
+        return buf.Length switch
         {
-            buf = string.IsNullOrEmpty(buf) ? "0" : buf.TrimStart('0');
+            // lower than 2^31
+            <= MaxIntItemLength => new IntItem(buf),
+            // lower than 2^63
+            <= MaxLongItemLength => new LongItem(buf),
+            _ => new BigIntegerItem(buf)
+        };
 
-            if (buf.Length <= MaxIntItemLength)
-                // lower than 2^31
-                return new IntItem(buf);
-            if (buf.Length <= MaxLongItemLength)
-                // lower than 2^63
-                return new LongItem(buf);
-
-            return new BigIntegerItem(buf);
-        }
-
-        return new StringItem(buf, false);
     }
 
     public override string ToString()
@@ -174,7 +172,7 @@ public class ComparableVersion : IComparable<ComparableVersion>
         return _value;
     }
 
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
         return obj is ComparableVersion version && _items.Equals(version._items);
     }

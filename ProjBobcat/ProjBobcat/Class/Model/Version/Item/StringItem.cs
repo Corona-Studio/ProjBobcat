@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using static System.String;
 
 namespace ProjBobcat.Class.Model.Version.Item;
 
@@ -12,19 +13,19 @@ public class StringItem : IItem
         "milestone",
         "rc",
         "snapshot",
-        string.Empty,
+        Empty,
         "sp"
     };
 
     static readonly Dictionary<string, string> Aliases = new()
     {
-        { "ga", string.Empty },
-        { "final", string.Empty },
-        { "release", string.Empty },
+        { "ga", Empty },
+        { "final", Empty },
+        { "release", Empty },
         { "cr", "rc" }
     };
 
-    static readonly string ReleaseVersionIndex = Qualifiers.IndexOf(string.Empty).ToString();
+    static readonly string ReleaseVersionIndex = Qualifiers.IndexOf(Empty).ToString();
 
     readonly string _value;
 
@@ -37,22 +38,22 @@ public class StringItem : IItem
                 'a' => "alpha",
                 'b' => "beta",
                 'm' => "milestone",
-                _ => string.Empty
+                _ => Empty
             };
 
         _value = Aliases.TryGetValue(str, out var outVal) ? outVal : str;
     }
 
-    public int CompareTo(object obj)
+    public int CompareTo(object? obj)
     {
         if (obj is not IItem item)
             // 1-rc < 1, 1-ga > 1
-            return ComparableQualifier(_value).CompareTo(ReleaseVersionIndex);
+            return Compare(ComparableQualifier(_value), ReleaseVersionIndex, StringComparison.Ordinal);
 
         return item switch
         {
             IntItem or LongItem or BigIntegerItem => -1, // 1.any < 1.1 ?
-            StringItem strItem => ComparableQualifier(_value).CompareTo(ComparableQualifier(strItem._value)),
+            StringItem strItem => Compare(ComparableQualifier(_value), ComparableQualifier(strItem._value), StringComparison.Ordinal),
             ListItem => -1, // 1.any < 1-1
             _ => throw new ArgumentOutOfRangeException($"invalid item: {item.GetType()}")
         };
@@ -60,7 +61,7 @@ public class StringItem : IItem
 
     public bool IsNull()
     {
-        return ComparableQualifier(_value).CompareTo(ReleaseVersionIndex) == 0;
+        return Compare(ComparableQualifier(_value), ReleaseVersionIndex, StringComparison.Ordinal) == 0;
     }
 
     /**
@@ -83,7 +84,7 @@ public class StringItem : IItem
         return i == -1 ? $"{Qualifiers.Count}-{qualifier}" : i.ToString();
     }
 
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
         if (this == obj) return true;
         if (obj is not StringItem that) return false;
