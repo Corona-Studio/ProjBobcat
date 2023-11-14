@@ -230,7 +230,7 @@ public static class SystemInfoHelper
     /// <returns></returns>
     public static CPUInfo GetWindowsCpuUsage()
     {
-        var percentage = CpuCounter.NextValue() / Environment.ProcessorCount * 100;
+        var percentage = CpuCounter.NextValue();
 
         return new CPUInfo
         {
