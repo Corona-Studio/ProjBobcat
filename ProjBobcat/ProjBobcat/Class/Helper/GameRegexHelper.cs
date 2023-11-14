@@ -10,7 +10,7 @@ public static partial class GameRegexHelper
         "forge-[0-9]{1,}.[0-9]{1,}[.]?[0-9]{0,}-[0-9]{1,}.[0-9]{1,}.[0-9]{1,}.[0-9]{4}-[0-9]{1,}.[0-9]{1,}[.]?[0-9]{0,}-universal.jar";
 
 
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
     [GeneratedRegex("[0-9]{1,}.[0-9]{1,}[.]?[0-9]{0,}")]
     public static partial Regex GameVersionRegex();
 

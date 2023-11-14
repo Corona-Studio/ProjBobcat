@@ -59,7 +59,7 @@ public class DownloadSettings
     {
         token ??= CancellationToken.None;
 
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
         await using var fs = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
 
         return HashType switch

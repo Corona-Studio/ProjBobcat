@@ -16,7 +16,7 @@ public partial class DefaultGameLogResolver : IGameLogResolver
     const string LogDateRegex = $"\\[{LogTimeRegexStr}\\]";
     const string LogTotalPrefixRegex = $"\\[{LogTimeRegexStr}\\] \\[{LogSourceAndTypeRegex}\\]";
 
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
     [GeneratedRegex(LogSourceAndTypeRegex)]
     private static partial Regex SourceAndTypeRegex();
     
@@ -59,7 +59,7 @@ public partial class DefaultGameLogResolver : IGameLogResolver
         if (!string.IsNullOrEmpty(ResolveStackTrace(log)))
             return GameLogType.StackTrace;
 
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
         return TypeRegex().Match(log).Value switch
         {
             "FATAL" => GameLogType.Fatal,
@@ -84,7 +84,7 @@ public partial class DefaultGameLogResolver : IGameLogResolver
 
     public string ResolveStackTrace(string log)
     {
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
         var stackTrace = StackTraceAtRegex().Match(log).Value;
 #else
         var stackTrace = StackTraceAtRegex.Match(log).Value;
@@ -95,7 +95,7 @@ public partial class DefaultGameLogResolver : IGameLogResolver
 
     public string ResolveExceptionMsg(string log)
     {
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
         var exceptionMsg = ExceptionRegex().Match(log).Value;
 #else
         var exceptionMsg = ExceptionRegex.Match(log).Value;
@@ -106,7 +106,7 @@ public partial class DefaultGameLogResolver : IGameLogResolver
 
     public string ResolveSource(string log)
     {
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
         var content = SourceAndTypeRegex().Match(log).Value.Split('/').FirstOrDefault();
         var date = TimeFullRegex().Match(log).Value;
 #else
@@ -121,7 +121,7 @@ public partial class DefaultGameLogResolver : IGameLogResolver
 
     public string ResolveTime(string log)
     {
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
         return TimeRegex().Match(log).Value;
 #else
         return TimeRegex.Match(log).Value;
@@ -130,7 +130,7 @@ public partial class DefaultGameLogResolver : IGameLogResolver
 
     public string ResolveTotalPrefix(string log)
     {
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
         return TotalPrefixRegex().Match(log).Value;
 #else
         return TotalPrefixRegex.Match(log).Value;

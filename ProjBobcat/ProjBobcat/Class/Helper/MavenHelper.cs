@@ -9,7 +9,7 @@ namespace ProjBobcat.Class.Helper;
 /// </summary>
 public static partial class MavenHelper
 {
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
     [GeneratedRegex("\\.")]
     private static partial Regex GroupPathRegex();
 #else
@@ -71,7 +71,7 @@ public static partial class MavenHelper
     /// <returns>处理好的Group Path</returns>
     public static string GetGroupPath(this string artifactId)
     {
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
         return GroupPathRegex().Replace(artifactId, "/");
 #else
         return GroupPathRegex.Replace(artifactId, "/");

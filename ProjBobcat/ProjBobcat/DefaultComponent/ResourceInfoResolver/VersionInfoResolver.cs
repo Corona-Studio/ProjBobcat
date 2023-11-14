@@ -34,7 +34,7 @@ public sealed class VersionInfoResolver : ResolverBase
         {
             if (string.IsNullOrEmpty(clientDownload.Sha1)) yield break;
 
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
             await using var jarFs = File.Open(jarPath, FileMode.Open, FileAccess.Read, FileShare.Read);
             var computedHash = (await SHA1.HashDataAsync(jarFs)).BytesToString();
 #else

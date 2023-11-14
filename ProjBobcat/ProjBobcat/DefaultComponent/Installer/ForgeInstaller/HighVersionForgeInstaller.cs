@@ -22,7 +22,7 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller;
 
 public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 {
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
     [GeneratedRegex(@"^\[.+\]$")]
     private static partial Regex PathRegex();
 
@@ -299,7 +299,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
         string ResolvePathRegex(string val)
         {
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
             if (string.IsNullOrEmpty(val) || string.IsNullOrEmpty(PathRegex().Match(val).Value)) return val;
 #else
             if (string.IsNullOrEmpty(val) || string.IsNullOrEmpty(PathRegex.Match(val).Value)) return val;
@@ -333,7 +333,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
         string ResolveVariableRegex(string val)
         {
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
             if (string.IsNullOrEmpty(val) || string.IsNullOrEmpty(VariableRegex().Match(val).Value)) return val;
 #else
             if (string.IsNullOrEmpty(val) || string.IsNullOrEmpty(VariableRegex.Match(val).Value)) return val;

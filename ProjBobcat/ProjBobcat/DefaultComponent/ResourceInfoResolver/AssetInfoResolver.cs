@@ -158,7 +158,7 @@ public sealed class AssetInfoResolver : ResolverBase
 
             if (File.Exists(filePath))
             {
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
                 await using var fs = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
                 var computedHash = (await SHA1.HashDataAsync(fs)).BytesToString();
 #else

@@ -51,7 +51,7 @@ public sealed class LibraryInfoResolver : ResolverBase
             {
                 if (string.IsNullOrEmpty(lib.Sha1)) continue;
 
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
                 await using var fs = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
                 var computedHash = (await SHA1.HashDataAsync(fs)).BytesToString();
 #else
@@ -83,7 +83,7 @@ public sealed class LibraryInfoResolver : ResolverBase
                 var progress = (double)checkedLib / libCount * 100;
                 OnResolve(string.Empty, progress);
 
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
                 await using var fs = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
                 var computedHash = (await SHA1.HashDataAsync(fs)).BytesToString();
 #else

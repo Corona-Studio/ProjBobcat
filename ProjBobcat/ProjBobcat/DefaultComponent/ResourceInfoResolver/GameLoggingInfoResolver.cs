@@ -28,7 +28,7 @@ public sealed class GameLoggingInfoResolver : ResolverBase
         {
             if (string.IsNullOrEmpty(VersionInfo.Logging?.Client?.File?.Sha1)) yield break;
 
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
             await using var fs = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
             var computedHash = (await SHA1.HashDataAsync(fs)).BytesToString();
 #else

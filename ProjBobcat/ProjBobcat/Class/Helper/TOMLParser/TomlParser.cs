@@ -1901,7 +1901,7 @@ static partial class TomlSyntax
 
     public static bool IsInteger(string s)
     {
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
         return IntegerPattern().IsMatch(s);
 #else
         return IntegerPattern.IsMatch(s);
@@ -1910,7 +1910,7 @@ static partial class TomlSyntax
 
     public static bool IsFloat(string s)
     {
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
         return FloatPattern().IsMatch(s);
 #else
         return FloatPattern.IsMatch(s);
@@ -1921,7 +1921,7 @@ static partial class TomlSyntax
     {
         numberBase = 10;
 
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
         var match = BasedIntegerPattern().Match(s);
 #else
         var match = BasedIntegerPattern.Match(s);
@@ -2052,7 +2052,7 @@ static partial class TomlSyntax
         return c is ITEM_SEPARATOR or ARRAY_END_SYMBOL or INLINE_TABLE_END_SYMBOL;
     }
 
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
     [GeneratedRegex("^(\\+|-)?(?!_)(0|(?!0)(_?\\d)*)$")]
     private static partial Regex IntegerPattern();
 
