@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography;
 
 namespace ProjBobcat.Class.Helper;
 
@@ -17,13 +16,12 @@ public static class RandomHelper
     ///     <see cref="OutOfMemoryException" /> 。
     /// </summary>
     /// <typeparam name="T">数据的类型。</typeparam>
-    /// <param name="enumerable">一个有限的 <see cref="IEnumerable{T}" /> 。</param>
-    /// <returns> <paramref name="enumerable" /> 中的随机一项。</returns>
+    /// <param name="list">一个有限的 <see cref="IList{T}" /> 。</param>
+    /// <returns> <paramref name="list" /> 中的随机一项。</returns>
     /// <exception cref="ArgumentNullException"></exception>
-    public static T? RandomSample<T>(this IEnumerable<T> enumerable)
+    public static T? RandomSample<T>(this IList<T> list)
     {
-        var arr = enumerable.ToArray();
-        return arr.Length == 0 ? default : arr[RandomInteger(0, arr.Length - 1)];
+        return list.Count == 0 ? default : list[RandomInteger(0, list.Count - 1)];
     }
 
     /// <summary>
@@ -34,7 +32,11 @@ public static class RandomHelper
     /// <returns></returns>
     public static int RandomInteger(int min, int max)
     {
-        return RandomNumberGenerator.GetInt32(min, max + 1);
+#if NET8_0_OR_GREATER
+        return Random.Shared.Next(min, max + 1);
+#else
+        return System.Security.Cryptography.RandomNumberGenerator.GetInt32(min, max + 1);
+#endif
     }
 
     /// <summary>

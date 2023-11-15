@@ -8,5 +8,5 @@ public class PlayersPayload
 
     [JsonPropertyName("online")] public int Online { get; set; }
 
-    [JsonPropertyName("sample")] public Player[] Sample { get; set; }
+    [JsonPropertyName("sample")] public Player[]? Sample { get; set; }
 }

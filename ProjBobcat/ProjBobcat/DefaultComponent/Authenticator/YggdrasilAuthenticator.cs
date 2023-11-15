@@ -132,7 +132,7 @@ public class YggdrasilAuthenticator : IAuthenticator
             };
         }
 
-        if (result.SelectedProfile == null && !(result.AvailableProfiles?.Any() ?? false))
+        if (result.SelectedProfile == null && (result.AvailableProfiles == null || result.AvailableProfiles.Length == 0))
             return new YggdrasilAuthResult
             {
                 AuthStatus = AuthStatus.Failed,

@@ -318,7 +318,7 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
     /// <returns></returns>
     public IEnumerable<string> ParseAdditionalArguments()
     {
-        if (!VersionInfo.AvailableGameArguments.Any()) yield break;
+        if (VersionInfo.AvailableGameArguments.Count == 0) yield break;
         if (!VersionInfo.AvailableGameArguments.ContainsKey("has_custom_resolution")) yield break;
 
         if (!(LaunchSettings.GameArguments?.Resolution?.IsDefault() ?? true))

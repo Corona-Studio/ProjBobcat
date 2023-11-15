@@ -22,7 +22,7 @@ public abstract class ResolverBase : IResourceInfoResolver
 
     public string BasePath { get; set; }
     public bool CheckLocalFiles { get; set; }
-    public VersionInfo VersionInfo { get; set; }
+    public VersionInfo? VersionInfo { get; set; }
 
     public abstract IAsyncEnumerable<IGameResource> ResolveResourceAsync();
 

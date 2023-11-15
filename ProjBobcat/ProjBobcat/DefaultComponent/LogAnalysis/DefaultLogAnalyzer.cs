@@ -80,7 +80,7 @@ public partial class DefaultLogAnalyzer : ILogAnalyzer
             logs[logFileType].Add(lines);
         }
 
-        if (!logs.Any() || logs.All(p => !p.Value.Any()))
+        if (logs.Count > 0 || logs.All(p => p.Value.Count == 0))
             yield return new AnalysisReport.AnalysisReport(CrashCauses.LogFileNotFound);
 
         var hasLogAnalysisResult = false;
@@ -96,7 +96,7 @@ public partial class DefaultLogAnalyzer : ILogAnalyzer
             yield return report;
     }
 
-    static LogFileType GetLogFileType(FileInfo fi)
+    static LogFileType GetLogFileType(FileSystemInfo fi)
     {
         var fileName = Path.GetFileName(fi.FullName);
 
@@ -142,7 +142,7 @@ public partial class DefaultLogAnalyzer : ILogAnalyzer
         logFiles.Add(new FileInfo(Path.Combine(versionPath, "logs", "latest.log")));
         logFiles.Add(new FileInfo(Path.Combine(versionPath, "logs", "debug.log")));
 
-        if (CustomLogFiles?.Any() ?? false)
+        if (CustomLogFiles is { Count: > 0 })
             logFiles.AddRange(CustomLogFiles.Select(custom => new FileInfo(custom)));
 
         foreach (var log in logFiles)
@@ -155,13 +155,13 @@ public partial class DefaultLogAnalyzer : ILogAnalyzer
 
             var lines = File.ReadAllText(log.FullName);
 
-            if (!lines.Any()) continue;
+            if (lines.Length == 0) continue;
 
             yield return (logType, (log.FullName, lines));
         }
     }
 
-    static IEnumerable<IAnalysisReport> AnalysisLogs(IReadOnlyDictionary<LogFileType, List<(string, string)>> logs)
+    static IEnumerable<IAnalysisReport> AnalysisLogs(Dictionary<LogFileType, List<(string, string)>> logs)
     {
         var hasGameLogs = logs.TryGetValue(LogFileType.GameLog, out var gameLogs);
         var hasHsErrors = logs.TryGetValue(LogFileType.HsError, out var hsLogs);
@@ -175,8 +175,8 @@ public partial class DefaultLogAnalyzer : ILogAnalyzer
                 if (MainClassMatch1().IsMatch(subLogs) ||
                     (MainClassMatch2().IsMatch(subLogs) &&
                      !subLogs.Contains("at net.")) || (subLogs.Contains("/INFO]") &&
-                                                       !(hasHsErrors && hsLogs!.Any()) &&
-                                                       !(hasCrashes && crashes!.Any()) &&
+                                                       !(hasHsErrors && hsLogs is { Count: > 0 }) &&
+                                                       !(hasCrashes && crashes is { Count: > 0 }) &&
                                                        subLogs.Length < 500))
                     yield return
                         new AnalysisReport.AnalysisReport(CrashCauses.IncorrectPathEncodingOrMainClassNotFound);
@@ -184,8 +184,8 @@ public partial class DefaultLogAnalyzer : ILogAnalyzer
                 if (MainClassMatch1.IsMatch(subLogs) ||
                     (MainClassMatch2.IsMatch(subLogs) &&
                      !subLogs.Contains("at net.")) || (subLogs.Contains("/INFO]") &&
-                                                       !(hasHsErrors && hsLogs!.Any()) &&
-                                                       !(hasCrashes && crashes!.Any()) &&
+                                                       !(hasHsErrors && hsLogs is { Count: > 0 }) &&
+                                                       !(hasCrashes && crashes is { Count: > 0 }) &&
                                                        subLogs.Length < 500))
                     yield return
                         new AnalysisReport.AnalysisReport(CrashCauses.IncorrectPathEncodingOrMainClassNotFound);

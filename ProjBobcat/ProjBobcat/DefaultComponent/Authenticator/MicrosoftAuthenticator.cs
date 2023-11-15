@@ -218,7 +218,7 @@ public class MicrosoftAuthenticator : IAuthenticator
             await ownResRes.Content.ReadFromJsonAsync(MojangOwnershipResponseModelContext.Default
                 .MojangOwnershipResponseModel);
 
-        if (!(ownRes?.Items?.Any() ?? false))
+        if (ownRes?.Items == null || ownRes.Items.Length == 0)
             return new MicrosoftAuthResult
             {
                 AuthStatus = AuthStatus.Failed,

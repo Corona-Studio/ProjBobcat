@@ -96,7 +96,7 @@ public static class GameResourcesResolveHelper
                         break;
                 }
 
-                if (!(model?.Any() ?? false))
+                if (model == null || model.Count == 0)
                     return null;
 
                 var authors = new HashSet<string>();
@@ -134,7 +134,7 @@ public static class GameResourcesResolveHelper
                     var tempModel = await JsonSerializer.DeserializeAsync(stream,
                         FabricModInfoModelContext.Default.FabricModInfoModel, ct);
 
-                    var author = tempModel?.Authors?.Any() ?? false
+                    var author = tempModel?.Authors is { Length: > 0 }
                         ? string.Join(',', tempModel.Authors)
                         : null;
                     var modList = tempModel?.Depends?.Select(d => d.Key)?.ToImmutableList();

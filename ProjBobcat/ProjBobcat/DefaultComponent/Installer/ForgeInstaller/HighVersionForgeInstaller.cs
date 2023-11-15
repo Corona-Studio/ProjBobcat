@@ -356,8 +356,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
         foreach (var proc in ipModel.Processors)
         {
-            if (proc.Sides != null &&
-                proc.Sides.Any() &&
+            if (proc.Sides is { Length: > 0 } &&
                 !proc.Sides.Any(s => s.Equals("client", StringComparison.OrdinalIgnoreCase))
                )
                 continue;

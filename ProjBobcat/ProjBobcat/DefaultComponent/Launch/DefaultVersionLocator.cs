@@ -82,7 +82,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                 case JsonValueKind.Array:
                     var values = value.Deserialize(StringContext.Default.StringArray);
 
-                    if (!(values?.Any() ?? false)) continue;
+                    if (values == null || values.Length == 0) continue;
 
                     foreach (var val in values)
                         yield return StringHelper.FixArgument(val);
@@ -139,12 +139,12 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
 
             var rulesArr = rules.Deserialize(GameRulesContext.Default.GameRulesArray);
 
-            if (!(rulesArr?.Any() ?? false)) continue;
+            if (rulesArr == null || rulesArr.Length == 0) continue;
 
             foreach (var rule in rulesArr)
             {
                 if (!rule.Action.Equals("allow", StringComparison.Ordinal)) continue;
-                if (!rule.Features.Any()) continue;
+                if (rule.Features.Count == 0) continue;
                 if (!rule.Features.First().Value) continue;
 
                 ruleKey = rule.Features.First().Key;
@@ -381,7 +381,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
 
         // 检查游戏是否存在继承关系。
         // Check if there is inheritance.
-        if (inherits?.Any() ?? false)
+        if (inherits is { Count: > 0 })
         {
             // 存在继承关系。
             // Inheritance exists.

@@ -15,7 +15,7 @@ public class UserProfile
 
     [JsonPropertyName("id")] public string Id { get; set; }
     [JsonPropertyName("name")] public string Name { get; set; }
-    [JsonPropertyName("properties")] public UserProfileProperty[] Properties { get; set; }
+    [JsonPropertyName("properties")] public UserProfileProperty[]? Properties { get; set; }
 }
 
 [JsonSerializable(typeof(UserProfile))]

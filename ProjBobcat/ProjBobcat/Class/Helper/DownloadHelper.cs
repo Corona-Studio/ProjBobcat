@@ -269,7 +269,7 @@ public static class DownloadHelper
                 headRes.EnsureSuccessStatusCode();
 
                 var responseLength = headRes.Content.Headers.ContentLength ?? 0;
-                var hasAcceptRanges = headRes.Headers.AcceptRanges.Any();
+                var hasAcceptRanges = headRes.Headers.AcceptRanges.Count != 0;
 
                 using var rangeGetMessage = new HttpRequestMessage(HttpMethod.Get, downloadFile.DownloadUri);
                 rangeGetMessage.Headers.Range = new RangeHeaderValue(0, 0);
@@ -484,7 +484,7 @@ public static class DownloadHelper
             }
         }
 
-        if (exceptions.Any())
+        if (exceptions.Count > 0)
         {
             downloadFile.OnCompleted(false, new AggregateException(exceptions), 0);
             return;

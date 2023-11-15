@@ -180,7 +180,7 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
         await p.WaitForExitAsync();
         InvokeStatusChangedEvent("安装即将完成", 90);
 
-        if (errList.Any())
+        if (errList.Count > 0)
             throw new NullReferenceException(string.Join(Environment.NewLine, errList));
 
         InvokeStatusChangedEvent("Optifine 安装完成", 100);

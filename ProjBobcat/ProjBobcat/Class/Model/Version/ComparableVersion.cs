@@ -143,7 +143,7 @@ public class ComparableVersion : IComparable<ComparableVersion>
 
         if (version.Length > startIndex) list.Add(ParseItem(isDigit, version[startIndex..]));
 
-        while (stack.Any())
+        while (stack.Count > 0)
         {
             list = (ListItem)stack.Pop();
             list.Normalize();

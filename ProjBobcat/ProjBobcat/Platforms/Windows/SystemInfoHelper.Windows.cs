@@ -63,6 +63,9 @@ public static class SystemInfoHelper
         return SetAppxPackageInfoProperty(appxPackageInfo, values);
     }
 
+    static readonly string[] LineChArr = new[] { "\r\n", "\r", "\n" };
+    static readonly char[] SepArr = new[] { ':' };
+
     /// <summary>
     ///     分析 PowerShell Get-AppxPackage 的输出。
     /// </summary>
@@ -71,7 +74,7 @@ public static class SystemInfoHelper
     static Dictionary<string, string> ParseAppxPackageOutput(string output)
     {
         var values = new Dictionary<string, string>();
-        var lines = output.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+        var lines = output.Split(LineChArr, StringSplitOptions.None);
 
         string? key = null;
         string? value = null;
@@ -82,7 +85,7 @@ public static class SystemInfoHelper
                 if (!string.IsNullOrEmpty(key))
                     values[key] = value!.TrimEnd();
 
-                var parts = line.Split(new[] { ':' }, 2, StringSplitOptions.None);
+                var parts = line.Split(SepArr, 2, StringSplitOptions.None);
 
                 key = parts[0].Trim();
                 value = parts[1].Trim();

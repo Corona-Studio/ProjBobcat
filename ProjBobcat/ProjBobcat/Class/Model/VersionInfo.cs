@@ -23,8 +23,8 @@ public class VersionInfo
     public string? MainClass { get; set; }
     public string Assets { get; set; }
     public Asset? AssetInfo { get; set; }
-    public List<FileInfo> Libraries { get; set; }
-    public List<NativeFileInfo> Natives { get; set; }
+    public List<FileInfo>? Libraries { get; set; }
+    public List<NativeFileInfo>? Natives { get; set; }
     public Logging Logging { get; set; }
     public IEnumerable<string> JvmArguments { get; set; }
     public IEnumerable<string> GameArguments { get; set; }

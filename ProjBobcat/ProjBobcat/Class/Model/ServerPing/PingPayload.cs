@@ -11,7 +11,7 @@ public class PingPayload
 
     [JsonPropertyName("description")] public JsonElement Description { get; set; }
 
-    [JsonPropertyName("modinfo")] public ServerPingModInfo ModInfo { get; set; }
+    [JsonPropertyName("modinfo")] public ServerPingModInfo? ModInfo { get; set; }
 
     [JsonPropertyName("favicon")] public string Icon { get; set; }
 }

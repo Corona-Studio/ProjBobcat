@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Security.Cryptography;
 using System.Threading;
 using ProjBobcat.Class.Helper;
@@ -24,10 +23,11 @@ public sealed class LibraryInfoResolver : ResolverBase
     public override async IAsyncEnumerable<IGameResource> ResolveResourceAsync()
     {
         if (!CheckLocalFiles) yield break;
+        if (VersionInfo == null) yield break;
 
         OnResolve("开始进行游戏资源(Library)检查");
-        if (!(VersionInfo?.Natives?.Any() ?? false) &&
-            !(VersionInfo?.Libraries?.Any() ?? false))
+        if ((VersionInfo.Natives == null || VersionInfo.Natives.Count == 0) &&
+            (VersionInfo.Libraries == null || VersionInfo.Libraries.Count == 0))
             yield break;
 
         var libDi = new DirectoryInfo(Path.Combine(BasePath, GamePathHelper.GetLibraryRootPath()));
@@ -35,66 +35,72 @@ public sealed class LibraryInfoResolver : ResolverBase
         if (!libDi.Exists) libDi.Create();
 
         var checkedLib = 0;
-        var libCount = VersionInfo.Libraries.Count;
+        var libCount = VersionInfo.Libraries?.Count ?? 0;
 
-        foreach (var lib in VersionInfo.Libraries)
+        if (libCount > 0)
         {
-            var libPath = GamePathHelper.GetLibraryPath(lib.Path);
-            var filePath = Path.Combine(BasePath, libPath);
-
-            Interlocked.Increment(ref checkedLib);
-            var progress = (double)checkedLib / libCount * 100;
-
-            OnResolve(string.Empty, progress);
-
-            if (File.Exists(filePath))
+            foreach (var lib in VersionInfo.Libraries!)
             {
-                if (string.IsNullOrEmpty(lib.Sha1)) continue;
+                var libPath = GamePathHelper.GetLibraryPath(lib.Path);
+                var filePath = Path.Combine(BasePath, libPath);
+
+                Interlocked.Increment(ref checkedLib);
+                var progress = (double)checkedLib / libCount * 100;
+
+                OnResolve(string.Empty, progress);
+
+                if (File.Exists(filePath))
+                {
+                    if (string.IsNullOrEmpty(lib.Sha1)) continue;
 
 #if NET8_0_OR_GREATER
                 await using var fs = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
                 var computedHash = (await SHA1.HashDataAsync(fs)).BytesToString();
 #else
-                var bytes = await File.ReadAllBytesAsync(filePath);
-                var computedHash = SHA1.HashData(bytes.AsSpan()).BytesToString();
+                    var bytes = await File.ReadAllBytesAsync(filePath);
+                    var computedHash = SHA1.HashData(bytes.AsSpan()).BytesToString();
 #endif
 
-                if (computedHash.Equals(lib.Sha1, StringComparison.OrdinalIgnoreCase)) continue;
-            }
+                    if (computedHash.Equals(lib.Sha1, StringComparison.OrdinalIgnoreCase)) continue;
+                }
 
-            yield return GetDownloadFile(lib);
+                yield return GetDownloadFile(lib);
+            }
         }
 
         OnResolve("检索并验证 Library");
 
         checkedLib = 0;
-        libCount = VersionInfo.Natives.Count;
+        libCount = VersionInfo.Natives?.Count ?? 0;
 
-        foreach (var native in VersionInfo.Natives)
+        if (libCount > 0)
         {
-            var nativePath = GamePathHelper.GetLibraryPath(native.FileInfo.Path);
-            var filePath = Path.Combine(BasePath, nativePath);
-
-            if (File.Exists(filePath))
+            foreach (var native in VersionInfo.Natives!)
             {
-                if (string.IsNullOrEmpty(native.FileInfo.Sha1)) continue;
+                var nativePath = GamePathHelper.GetLibraryPath(native.FileInfo.Path);
+                var filePath = Path.Combine(BasePath, nativePath);
 
-                Interlocked.Increment(ref checkedLib);
-                var progress = (double)checkedLib / libCount * 100;
-                OnResolve(string.Empty, progress);
+                if (File.Exists(filePath))
+                {
+                    if (string.IsNullOrEmpty(native.FileInfo.Sha1)) continue;
+
+                    Interlocked.Increment(ref checkedLib);
+                    var progress = (double)checkedLib / libCount * 100;
+                    OnResolve(string.Empty, progress);
 
 #if NET8_0_OR_GREATER
                 await using var fs = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
                 var computedHash = (await SHA1.HashDataAsync(fs)).BytesToString();
 #else
-                var bytes = await File.ReadAllBytesAsync(filePath);
-                var computedHash = SHA1.HashData(bytes.AsSpan()).BytesToString();
+                    var bytes = await File.ReadAllBytesAsync(filePath);
+                    var computedHash = SHA1.HashData(bytes.AsSpan()).BytesToString();
 #endif
 
-                if (computedHash.Equals(native.FileInfo.Sha1, StringComparison.OrdinalIgnoreCase)) continue;
-            }
+                    if (computedHash.Equals(native.FileInfo.Sha1, StringComparison.OrdinalIgnoreCase)) continue;
+                }
 
-            yield return GetDownloadFile(native.FileInfo);
+                yield return GetDownloadFile(native.FileInfo);
+            }
         }
 
         OnResolve("检查Library完成", 100);
