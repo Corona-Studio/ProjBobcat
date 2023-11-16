@@ -6,8 +6,8 @@ namespace ProjBobcat.Class.Model.Version.Item;
 
 public class StringItem : IItem
 {
-    static readonly List<string> Qualifiers = new()
-    {
+    static readonly List<string> Qualifiers =
+    [
         "alpha",
         "beta",
         "milestone",
@@ -15,7 +15,7 @@ public class StringItem : IItem
         "snapshot",
         Empty,
         "sp"
-    };
+    ];
 
     static readonly Dictionary<string, string> Aliases = new()
     {

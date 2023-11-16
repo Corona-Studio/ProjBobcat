@@ -75,7 +75,7 @@ public partial class DefaultLogAnalyzer : ILogAnalyzer
         foreach (var (logFileType, lines) in GetAllLogs())
         {
             if (!logs.ContainsKey(logFileType))
-                logs[logFileType] = new List<(string, string)>();
+                logs[logFileType] = [];
 
             logs[logFileType].Add(lines);
         }

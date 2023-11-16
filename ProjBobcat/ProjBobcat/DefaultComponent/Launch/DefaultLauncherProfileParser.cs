@@ -40,7 +40,7 @@ public sealed class DefaultLauncherProfileParser : LauncherParserBase, ILauncher
                     Format = 1,
                     Name = string.Empty
                 },
-                Profiles = new Dictionary<string, GameProfileModel>()
+                Profiles = []
             };
 
             LauncherProfile = launcherProfile;

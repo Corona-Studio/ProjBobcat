@@ -301,7 +301,7 @@ public static class DownloadHelper
 
                 #region Calculate ranges
 
-                readRanges = new List<DownloadRange>();
+                readRanges = [];
                 var partSize = responseLength / downloadSettings.DownloadParts;
                 var totalSize = responseLength;
 

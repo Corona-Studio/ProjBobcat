@@ -23,7 +23,7 @@ public class DefaultResourceCompleter : IResourceCompleter
     static readonly object ChangedEventKey = new();
     static readonly object CompletedEventKey = new();
 
-    readonly ConcurrentBag<DownloadFile> _failedFiles = new();
+    readonly ConcurrentBag<DownloadFile> _failedFiles = [];
     readonly EventHandlerList _listEventDelegates = new();
 
     bool _disposedValue;

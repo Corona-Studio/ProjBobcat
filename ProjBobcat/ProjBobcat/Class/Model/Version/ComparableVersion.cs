@@ -51,7 +51,7 @@ public class ComparableVersion : IComparable<ComparableVersion>
     const int MaxIntItemLength = 9;
     const int MaxLongItemLength = 18;
 
-    readonly ListItem _items = new();
+    readonly ListItem _items = [];
 
     string? _canonical;
     string _value = null!;
@@ -104,7 +104,7 @@ public class ComparableVersion : IComparable<ComparableVersion>
                         : ParseItem(isDigit, version[startIndex..i]));
                     startIndex = i + 1;
 
-                    list.Add(list = new ListItem());
+                    list.Add(list = []);
                     stack.Push(list);
                     break;
                 default:
@@ -116,7 +116,7 @@ public class ComparableVersion : IComparable<ComparableVersion>
                             list.Add(new StringItem(version[startIndex..i], true));
                             startIndex = i;
 
-                            list.Add(list = new ListItem());
+                            list.Add(list = []);
                             stack.Push(list);
                         }
 
@@ -129,7 +129,7 @@ public class ComparableVersion : IComparable<ComparableVersion>
                             list.Add(ParseItem(true, version[startIndex..i]));
                             startIndex = i;
 
-                            list.Add(list = new ListItem());
+                            list.Add(list = []);
                             stack.Push(list);
                         }
 

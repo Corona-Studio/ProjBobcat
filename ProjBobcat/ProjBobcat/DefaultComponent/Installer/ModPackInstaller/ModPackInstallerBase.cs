@@ -6,7 +6,7 @@ namespace ProjBobcat.DefaultComponent.Installer.ModPackInstaller;
 
 public class ModPackInstallerBase : InstallerBase
 {
-    protected readonly ConcurrentBag<DownloadFile> FailedFiles = new();
+    protected readonly ConcurrentBag<DownloadFile> FailedFiles = [];
     protected int TotalDownloaded, NeedToDownload;
 
     protected void WhenCompleted(object? sender, DownloadFileCompletedEventArgs e)

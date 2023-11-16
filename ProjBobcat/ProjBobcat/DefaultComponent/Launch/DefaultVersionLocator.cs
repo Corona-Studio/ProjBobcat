@@ -341,7 +341,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             // 存在继承关系。
             // Inheritance exists.
 
-            inherits = new List<RawVersionModel?>();
+            inherits = [];
             var current = rawVersion;
             var first = true;
 
@@ -370,8 +370,8 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             Assets = rawVersion.AssetsVersion,
             AssetInfo = rawVersion.AssetIndex,
             MainClass = rawVersion.MainClass,
-            Libraries = new List<FileInfo>(),
-            Natives = new List<NativeFileInfo>(),
+            Libraries = [],
+            Natives = [],
             Logging = rawVersion.Logging,
             Id = rawVersion.Id,
             DirName = id,
@@ -484,11 +484,11 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                 result.MainClass = inherits[i]!.MainClass ?? result.MainClass;
             }
 
-            var finalJvmArgs = result.JvmArguments?.ToList() ?? new List<string>();
+            var finalJvmArgs = result.JvmArguments?.ToList() ?? [];
             finalJvmArgs.AddRange(jvmArgList);
             result.JvmArguments = finalJvmArgs;
 
-            var finalGameArgs = result.GameArguments?.ToList() ?? new List<string>();
+            var finalGameArgs = result.GameArguments?.ToList() ?? [];
             finalGameArgs.AddRange(gameArgList);
             finalGameArgs = finalGameArgs.Select(arg => arg.Split(' ')).SelectMany(a => a).Distinct().ToList();
             result.GameArguments = finalGameArgs;

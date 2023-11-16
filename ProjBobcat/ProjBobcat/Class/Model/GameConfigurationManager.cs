@@ -13,7 +13,7 @@ public class GameConfigurationManager : IEnumerable<KeyValuePair<string, string>
 
     public GameConfigurationManager()
     {
-        _configuration = new Dictionary<string, string>();
+        _configuration = [];
     }
 
     public GameConfigurationManager(string path)

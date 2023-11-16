@@ -87,12 +87,11 @@ public static class GameResourcesResolveHelper
                     case JsonValueKind.Object:
                         var val = doc.RootElement.Deserialize(GameModInfoModelContext.Default.GameModInfoModel);
 
-                        if (val != null) model = new List<GameModInfoModel> { val };
+                        if (val != null) model = [val];
 
                         break;
                     case JsonValueKind.Array:
-                        model = doc.RootElement.Deserialize(GameModInfoModelContext.Default.ListGameModInfoModel) ??
-                                new List<GameModInfoModel>();
+                        model = doc.RootElement.Deserialize(GameModInfoModelContext.Default.ListGameModInfoModel) ?? [];
                         break;
                 }
 

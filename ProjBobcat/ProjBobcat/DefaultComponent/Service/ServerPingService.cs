@@ -65,7 +65,7 @@ public class ServerPingService : ProgressReportBase
             return null;
         }
 
-        _buffer = new List<byte>();
+        _buffer = [];
         _stream = client.GetStream();
 
         InvokeStatusChangedEvent("发送请求...", 30);

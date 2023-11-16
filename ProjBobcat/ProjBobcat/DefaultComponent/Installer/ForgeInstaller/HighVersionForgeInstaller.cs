@@ -37,7 +37,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
 #endif
 
-    readonly ConcurrentBag<DownloadFile> _failedFiles = new();
+    readonly ConcurrentBag<DownloadFile> _failedFiles = [];
     int _totalDownloaded, _needToDownload, _totalProcessed, _needToProcess;
 
     public string? JavaExecutablePath { get; init; }

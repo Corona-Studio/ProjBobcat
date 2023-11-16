@@ -29,7 +29,7 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
         {
             var launcherAccount = new LauncherAccountModel
             {
-                Accounts = new Dictionary<string, AccountModel>(),
+                Accounts = [],
                 MojangClientToken = clientToken.ToString("N")
             };
 
@@ -74,7 +74,7 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
             return false;
         }
         
-        LauncherAccount.Accounts ??= new Dictionary<string, AccountModel>();
+        LauncherAccount.Accounts ??= [];
         
         if (LauncherAccount.Accounts.ContainsKey(uuid))
         {
