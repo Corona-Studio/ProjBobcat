@@ -80,8 +80,11 @@ public partial class DefaultLogAnalyzer : ILogAnalyzer
             logs[logFileType].Add(lines);
         }
 
-        if (logs.Count > 0 || logs.All(p => p.Value.Count == 0))
+        if (logs.Count == 0 || logs.All(p => p.Value.Count == 0))
+        {
             yield return new AnalysisReport.AnalysisReport(CrashCauses.LogFileNotFound);
+            yield break;
+        }
 
         var hasLogAnalysisResult = false;
         foreach (var report in AnalysisLogs(logs))
