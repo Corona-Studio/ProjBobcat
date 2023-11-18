@@ -9,5 +9,5 @@ public class FabricLoaderArtifactModel
     [JsonPropertyName("launcherMeta")] public FabricLauncherMeta LauncherMeta { get; set; }
 }
 
-[JsonSerializable(typeof(FabricLoaderArtifactModel[]))]
+[JsonSerializable(typeof(FabricLoaderArtifactModel))]
 public partial class FabricLoaderArtifactModelContext : JsonSerializerContext {}
