@@ -23,13 +23,13 @@ public class RedirectHandler : DelegatingHandler
         _maxRetries = maxRetries;
     }
 
-    async Task<HttpResponseMessage?> CreateRedirectResponse(HttpRequestMessage request,
-        HttpResponseMessage? response, CancellationToken cancellationToken)
+    async Task<HttpResponseMessage> CreateRedirectResponse(HttpRequestMessage request,
+        HttpResponseMessage response, CancellationToken cancellationToken)
     {
-        var redirectUri = response?.Headers.Location;
+        var redirectUri = response.Headers.Location;
 
-        if (redirectUri == null) return null;
-        if (request.RequestUri == null) return null;
+        Debug.Assert(redirectUri is not null, "RedirectUri cannot be null!");
+        Debug.Assert(request.RequestUri is not null, "RequestUri cannot be null!");
 
         if (!redirectUri.IsAbsoluteUri)
             redirectUri = new Uri(request.RequestUri.GetLeftPart(UriPartial.Authority) + redirectUri);
@@ -40,13 +40,13 @@ public class RedirectHandler : DelegatingHandler
         return await base.SendAsync(newRequest, cancellationToken);
     }
 
-    protected override async Task<HttpResponseMessage?> SendAsync(
+    protected override async Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request,
         CancellationToken cancellationToken)
     {
         var currentRedirect = 0;
         var response = await base.SendAsync(request, cancellationToken);
-        var statusCode = response?.StatusCode;
+        var statusCode = response.StatusCode;
 
         while (currentRedirect < _maxRetries &&
                statusCode is
@@ -56,7 +56,7 @@ public class RedirectHandler : DelegatingHandler
         {
             Debug.WriteLine($"第{currentRedirect}次重定向");
             response = await CreateRedirectResponse(request, response, cancellationToken);
-            statusCode = response?.StatusCode;
+            statusCode = response.StatusCode;
             currentRedirect++;
         }
 

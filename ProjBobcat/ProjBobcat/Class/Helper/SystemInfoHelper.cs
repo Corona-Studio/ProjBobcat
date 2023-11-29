@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using Microsoft.Extensions.Configuration;
 using ProjBobcat.Class.Model;
 
@@ -23,44 +24,54 @@ public static class SystemInfoHelper
             var arch => throw new Exception($"Unknown system arch: {arch}")
         };
     }
-    
+
+    [SupportedOSPlatform("windows10.0.10586")]
+    [SupportedOSPlatform(nameof(OSPlatform.OSX))]
     public static bool IsRunningUnderTranslation()
     {
 #if WINDOWS
-        return Platforms.Windows.SystemInfoHelper.IsRunningUnderTranslation();
+        if (OperatingSystem.IsWindows())
+            return Platforms.Windows.SystemInfoHelper.IsRunningUnderTranslation();
 #elif OSX
-        return Platforms.MacOS.SystemInfoHelper.IsRunningUnderTranslation();
-#else
-        return false;
+        if (OperatingSystem.IsMacOS())
+            return Platforms.MacOS.SystemInfoHelper.IsRunningUnderTranslation();
 #endif
+        return false;
     }
-
+    
     public static CPUInfo? GetProcessorUsage()
     {
 #if WINDOWS
-        return Platforms.Windows.SystemInfoHelper.GetWindowsCpuUsage();
+        if (OperatingSystem.IsWindows())
+            return Platforms.Windows.SystemInfoHelper.GetWindowsCpuUsage();
 #elif OSX
-        return Platforms.MacOS.SystemInfoHelper.GetOSXCpuUsage();
+        if (OperatingSystem.IsMacOS())
+            return Platforms.MacOS.SystemInfoHelper.GetOSXCpuUsage();
 #elif LINUX
-        return Platforms.Linux.SystemInfoHelper.GetLinuxCpuUsage();
-#else
-        return null;
+        if (OperatingSystem.IsLinux())
+            return Platforms.Linux.SystemInfoHelper.GetLinuxCpuUsage();
 #endif
+        return null;
     }
 
     public static MemoryInfo? GetMemoryUsage()
     {
 #if WINDOWS
-        return Platforms.Windows.SystemInfoHelper.GetWindowsMemoryStatus();
+        if (OperatingSystem.IsWindows())
+            return Platforms.Windows.SystemInfoHelper.GetWindowsMemoryStatus();
 #elif OSX
-        return Platforms.MacOS.SystemInfoHelper.GetOsxMemoryStatus();
+        if (OperatingSystem.IsMacOS())
+            return Platforms.MacOS.SystemInfoHelper.GetOsxMemoryStatus();
 #elif LINUX
-        return Platforms.Linux.SystemInfoHelper.GetLinuxMemoryStatus();
-#else
-        return null;
+        if (OperatingSystem.IsLinux())
+            return Platforms.Linux.SystemInfoHelper.GetLinuxMemoryStatus();
 #endif
+        return null;
     }
 
+    [SupportedOSPlatform(nameof(OSPlatform.Windows))]
+    [SupportedOSPlatform(nameof(OSPlatform.OSX))]
+    [SupportedOSPlatform(nameof(OSPlatform.Linux))]
     public static async IAsyncEnumerable<string> FindJava(bool fullSearch = false)
     {
         var result = new HashSet<string>();
@@ -70,16 +81,18 @@ public static class SystemInfoHelper
                 result.Add(path);
 
 #if WINDOWS
-        foreach (var path in Platforms.Windows.SystemInfoHelper.FindJavaWindows())
-            result.Add(path);
+        if (OperatingSystem.IsWindows())
+            foreach (var path in Platforms.Windows.SystemInfoHelper.FindJavaWindows())
+                result.Add(path);
 #elif OSX
-        foreach (var path in Platforms.MacOS.SystemInfoHelper.FindJavaMacOS())
-            result.Add(path);
+        if (OperatingSystem.IsMacOS())
+            foreach (var path in Platforms.MacOS.SystemInfoHelper.FindJavaMacOS())
+                result.Add(path);
 #elif LINUX
-        foreach(var path in Platforms.Linux.SystemInfoHelper.FindJavaLinux())
-            result.Add(path);
+        if (OperatingSystem.IsLinux())
+            foreach(var path in Platforms.Linux.SystemInfoHelper.FindJavaLinux())
+                result.Add(path);
 #endif
-
         foreach (var path in result)
             yield return path;
         foreach (var path in FindJavaInOfficialGamePath())
