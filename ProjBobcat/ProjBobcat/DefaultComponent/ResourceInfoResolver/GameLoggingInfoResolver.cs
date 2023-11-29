@@ -27,18 +27,16 @@ public sealed class GameLoggingInfoResolver : ResolverBase
         if (File.Exists(filePath))
         {
             if (string.IsNullOrEmpty(VersionInfo.Logging?.Client?.File?.Sha1)) yield break;
-
-#if NET8_0_OR_GREATER
+            
             await using var fs = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
             var computedHash = (await SHA1.HashDataAsync(fs)).BytesToString();
-#else
-            var bytes = await File.ReadAllBytesAsync(filePath);
-            var computedHash = SHA1.HashData(bytes.AsSpan()).BytesToString();
-#endif
 
             if (computedHash.Equals(VersionInfo.Logging?.Client?.File?.Sha1, StringComparison.OrdinalIgnoreCase))
                 yield break;
         }
+
+        if (string.IsNullOrEmpty(VersionInfo.Logging?.Client?.File?.Url))
+            yield break;
 
         yield return new GameLoggingDownloadInfo
         {
@@ -48,7 +46,7 @@ public sealed class GameLoggingInfoResolver : ResolverBase
             Path = loggingPath,
             Title = fileName,
             Type = ResourceType.Logging,
-            Url = VersionInfo.Logging?.Client?.File?.Url
+            Url = VersionInfo.Logging!.Client!.File!.Url!
         };
     }
 }

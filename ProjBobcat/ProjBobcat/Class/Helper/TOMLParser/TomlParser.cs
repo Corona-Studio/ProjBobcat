@@ -1899,33 +1899,15 @@ static partial class TomlSyntax
         return s is NAN_VALUE or POS_NAN_VALUE or NEG_NAN_VALUE;
     }
 
-    public static bool IsInteger(string s)
-    {
-#if NET8_0_OR_GREATER
-        return IntegerPattern().IsMatch(s);
-#else
-        return IntegerPattern.IsMatch(s);
-#endif
-    }
+    public static bool IsInteger(string s) => IntegerPattern().IsMatch(s);
 
-    public static bool IsFloat(string s)
-    {
-#if NET8_0_OR_GREATER
-        return FloatPattern().IsMatch(s);
-#else
-        return FloatPattern.IsMatch(s);
-#endif
-    }
+    public static bool IsFloat(string s) => FloatPattern().IsMatch(s);
 
     public static bool IsIntegerWithBase(string s, out int numberBase)
     {
         numberBase = 10;
-
-#if NET8_0_OR_GREATER
+        
         var match = BasedIntegerPattern().Match(s);
-#else
-        var match = BasedIntegerPattern.Match(s);
-#endif
 
         if (!match.Success) return false;
         IntegerBases.TryGetValue(match.Groups["base"].Value, out numberBase);
@@ -2051,8 +2033,7 @@ static partial class TomlSyntax
     {
         return c is ITEM_SEPARATOR or ARRAY_END_SYMBOL or INLINE_TABLE_END_SYMBOL;
     }
-
-#if NET8_0_OR_GREATER
+    
     [GeneratedRegex("^(\\+|-)?(?!_)(0|(?!0)(_?\\d)*)$")]
     private static partial Regex IntegerPattern();
 
@@ -2061,28 +2042,6 @@ static partial class TomlSyntax
 
     [GeneratedRegex("^(\\+|-)?0(?<base>x|b|o)(?!_)(_?[0-9A-F])*$", RegexOptions.IgnoreCase)]
     private static partial Regex BasedIntegerPattern();
-
-#else
-
-    /**
-    * A pattern to verify the integer value according to the TOML specification.
-    */
-    static readonly Regex IntegerPattern = new("^(\\+|-)?(?!_)(0|(?!0)(_?\\d)*)$", RegexOptions.Compiled);
-
-    /**
-    * A pattern to verify the float value according to the TOML specification.
-    */
-    static readonly Regex FloatPattern =
-        new("^(\\+|-)?(?!_)(0|(?!0)(_?\\d)+)(((e(\\+|-)?(?!_)(_?\\d)+)?)|(\\.(?!_)(_?\\d)+(e(\\+|-)?(?!_)(_?\\d)+)?))$",
-            RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
-    /**
-    * A pattern to verify a special 0x, 0o and 0b forms of an integer according to the TOML specification.
-    */
-    static readonly Regex BasedIntegerPattern = new("^(\\+|-)?0(?<base>x|b|o)(?!_)(_?[0-9A-F])*$",
-        RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
-#endif
 
     #endregion
 }

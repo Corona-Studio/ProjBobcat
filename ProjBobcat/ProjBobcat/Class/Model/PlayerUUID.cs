@@ -23,12 +23,12 @@ public class PlayerUUIDJsonConverter : JsonConverter<PlayerUUID>
 
 class PlayerUUIDTypeConverter : TypeConverter
 {
-    public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
+    public override bool CanConvertFrom(ITypeDescriptorContext? context, Type sourceType)
     {
         return sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
     }
 
-    public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+    public override object? ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object value)
     {
         if (value is string str) return new PlayerUUID(str);
         return base.ConvertFrom(context, culture, value);
@@ -61,7 +61,7 @@ public readonly struct PlayerUUID : IFormattable, IComparable<PlayerUUID>, IEqua
         return _guid.CompareTo(other._guid);
     }
 
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
         if (obj is PlayerUUID playerUuid)
             return _guid.Equals(playerUuid._guid);
@@ -78,7 +78,7 @@ public readonly struct PlayerUUID : IFormattable, IComparable<PlayerUUID>, IEqua
         return _guid.GetHashCode();
     }
 
-    public string ToString(string format, IFormatProvider formatProvider)
+    public string ToString(string? format, IFormatProvider? formatProvider)
     {
         return _guid.ToString(format, formatProvider);
     }

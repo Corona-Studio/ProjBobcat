@@ -13,13 +13,14 @@ namespace ProjBobcat.Class.Model;
 public class FileInfo
 {
     [JsonIgnore] public string? Name { get; set; }
-    [JsonPropertyName("path")] public string Path { get; set; }
+    
+    [JsonPropertyName("path")] public string? Path { get; init; }
 
-    [JsonPropertyName("sha1")] public string Sha1 { get; set; }
+    [JsonPropertyName("sha1")] public string? Sha1 { get; set; }
 
     [JsonPropertyName("size")] public long Size { get; set; }
 
-    [JsonPropertyName("url")] public string Url { get; set; }
+    [JsonPropertyName("url")] public string? Url { get; set; }
 }
 
 #endregion
@@ -28,10 +29,10 @@ public class FileInfo
 
 public class GameDownloadInfo
 {
-    [JsonPropertyName("client")] public FileInfo Client { get; set; }
+    [JsonPropertyName("client")] public FileInfo? Client { get; set; }
     [JsonPropertyName("client_mappings")] public FileInfo? ClientMappings { get; set; }
 
-    [JsonPropertyName("server")] public FileInfo Server { get; set; }
+    [JsonPropertyName("server")] public FileInfo? Server { get; set; }
     [JsonPropertyName("server_mappings")] public FileInfo? ServerMappings { get; set; }
 }
 
@@ -41,15 +42,15 @@ public class GameDownloadInfo
 
 public class Asset
 {
-    [JsonPropertyName("id")] public string Id { get; set; }
+    [JsonPropertyName("id")] public required string Id { get; set; }
 
-    [JsonPropertyName("sha1")] public string Sha1 { get; set; }
+    [JsonPropertyName("sha1")] public string? Sha1 { get; set; }
 
     [JsonPropertyName("size")] public long Size { get; set; }
 
     [JsonPropertyName("totalSize")] public long TotalSize { get; set; }
 
-    [JsonPropertyName("url")] public string Url { get; set; }
+    [JsonPropertyName("url")] public string? Url { get; set; }
 }
 
 #endregion
@@ -58,9 +59,9 @@ public class Asset
 
 public class Arguments
 {
-    [JsonPropertyName("game")] public JsonElement[] Game { get; set; }
+    [JsonPropertyName("game")] public JsonElement[]? Game { get; set; }
 
-    [JsonPropertyName("jvm")] public JsonElement[] Jvm { get; set; }
+    [JsonPropertyName("jvm")] public JsonElement[]? Jvm { get; set; }
 }
 
 #endregion
@@ -69,34 +70,34 @@ public class Arguments
 
 public class Extract
 {
-    [JsonPropertyName("exclude")] public string[] Exclude { get; set; }
+    [JsonPropertyName("exclude")] public string[]? Exclude { get; set; }
 }
 
 public class Downloads
 {
     [JsonPropertyName("artifact")] public FileInfo? Artifact { get; set; }
-    [JsonPropertyName("classifiers")] public IReadOnlyDictionary<string, FileInfo> Classifiers { get; set; }
+    [JsonPropertyName("classifiers")] public IReadOnlyDictionary<string, FileInfo>? Classifiers { get; set; }
 }
 
 public class Library
 {
     [JsonPropertyName("downloads")] public Downloads? Downloads { get; set; }
 
-    [JsonPropertyName("name")] public string Name { get; set; }
+    [JsonPropertyName("name")] public required string Name { get; set; }
 
-    [JsonPropertyName("extract")] public Extract Extract { get; set; }
+    [JsonPropertyName("extract")] public Extract? Extract { get; set; }
 
-    [JsonPropertyName("natives")] public IReadOnlyDictionary<string, string> Natives { get; set; }
+    [JsonPropertyName("natives")] public IReadOnlyDictionary<string, string>? Natives { get; set; }
 
-    [JsonPropertyName("rules")] public JvmRules[] Rules { get; set; }
+    [JsonPropertyName("rules")] public JvmRules[]? Rules { get; set; }
 
-    [JsonPropertyName("checksums")] public string[] CheckSums { get; set; }
+    [JsonPropertyName("checksums")] public string[]? CheckSums { get; set; }
 
     [JsonPropertyName("serverreq")] public bool ServerRequired { get; set; }
 
     [JsonPropertyName("clientreq")] public bool ClientRequired { get; set; } = true;
 
-    [JsonPropertyName("url")] public string Url { get; set; }
+    [JsonPropertyName("url")] public string? Url { get; set; }
 }
 
 #endregion
@@ -105,16 +106,16 @@ public class Library
 
 public class Client
 {
-    [JsonPropertyName("argument")] public string Argument { get; set; }
+    [JsonPropertyName("argument")] public string? Argument { get; set; }
 
-    [JsonPropertyName("file")] public FileInfo File { get; set; }
+    [JsonPropertyName("file")] public FileInfo? File { get; set; }
 
-    [JsonPropertyName("type")] public string Type { get; set; }
+    [JsonPropertyName("type")] public string? Type { get; set; }
 }
 
 public class Logging
 {
-    [JsonPropertyName("client")] public Client Client { get; set; }
+    [JsonPropertyName("client")] public Client? Client { get; set; }
 }
 
 #endregion
@@ -130,7 +131,7 @@ public class RawVersionModel
     ///     Launch arguments for the older versions
     /// </summary>
     [JsonPropertyName("minecraftArguments")]
-    public string MinecraftArguments { get; set; }
+    public string? MinecraftArguments { get; set; }
 
     /// <summary>
     ///     启动参数
@@ -149,19 +150,19 @@ public class RawVersionModel
     ///     资源版本
     /// </summary>
     [JsonPropertyName("assets")]
-    public string AssetsVersion { get; set; }
+    public string? AssetsVersion { get; set; }
 
     /// <summary>
     ///     游戏下载信息
     /// </summary>
     [JsonPropertyName("downloads")]
-    public GameDownloadInfo Downloads { get; set; }
+    public GameDownloadInfo? Downloads { get; set; }
 
     /// <summary>
     ///     游戏版本
     /// </summary>
     [JsonPropertyName("id")]
-    public string? Id { get; set; }
+    public required string Id { get; set; }
 
     [JsonPropertyName("javaVersion")] public JavaVersionModel? JavaVersion { get; set; }
 
@@ -171,25 +172,25 @@ public class RawVersionModel
     ///     version, based on which are be modifications with higher priority.)
     /// </summary>
     [JsonPropertyName("inheritsFrom")]
-    public string InheritsFrom { get; set; }
+    public string? InheritsFrom { get; set; }
 
     /// <summary>
     ///     库信息
     /// </summary>
     [JsonPropertyName("libraries")]
-    public Library[] Libraries { get; set; }
+    public required Library[] Libraries { get; set; }
 
     /// <summary>
     ///     日志
     /// </summary>
     [JsonPropertyName("logging")]
-    public Logging Logging { get; set; }
+    public Logging? Logging { get; set; }
 
     /// <summary>
     ///     主类
     /// </summary>
     [JsonPropertyName("mainClass")]
-    public string? MainClass { get; set; }
+    public required string MainClass { get; set; }
 
     /// <summary>
     ///     最小启动器版本
@@ -213,7 +214,7 @@ public class RawVersionModel
     ///     类型
     /// </summary>
     [JsonPropertyName("type")]
-    public string BuildType { get; set; }
+    public string? BuildType { get; set; }
 
     /// <summary>
     ///     Jar 参数，LiteLoader 使用

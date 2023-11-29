@@ -5,9 +5,9 @@ namespace ProjBobcat.Class.Model.CurseForge;
 
 public class CurseForgeAddonAuthorInfo
 {
-    [JsonPropertyName("name")] public string Name { get; set; }
+    [JsonPropertyName("name")] public required string Name { get; init; }
 
-    [JsonPropertyName("url")] public string Url { get; set; }
+    [JsonPropertyName("url")] public string? Url { get; set; }
 
     [JsonPropertyName("projectId")] public int ProjectId { get; set; }
 

@@ -5,11 +5,11 @@ using ProjBobcat.Interface;
 
 namespace ProjBobcat.Class;
 
-public abstract class VersionLocatorBase : LauncherParserBase, IVersionLocator
+public abstract class VersionLocatorBase(string rootPath) : LauncherParserBase(rootPath), IVersionLocator
 {
-    public ILauncherProfileParser LauncherProfileParser { get; set; }
-    public ILauncherAccountParser LauncherAccountParser { get; set; }
-
+    public ILauncherProfileParser? LauncherProfileParser { get; init; }
+    public ILauncherAccountParser? LauncherAccountParser { get; init; }
+    
     public abstract VersionInfo? GetGame(string id);
 
     public abstract IEnumerable<VersionInfo> GetAllGames();

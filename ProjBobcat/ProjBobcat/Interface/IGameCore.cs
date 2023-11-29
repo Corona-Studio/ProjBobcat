@@ -14,19 +14,19 @@ public interface IGameCore : IDisposable
     /// <summary>
     ///     获取或设置根目录。
     /// </summary>
-    string? RootPath { get; set; }
+    string RootPath { get; init; }
 
     /// <summary>
     ///     获取或设置客户端令牌。
     /// </summary>
-    Guid ClientToken { get; set; }
+    Guid ClientToken { get; init; }
 
     /// <summary>
     ///     获取或设置版本定位器。
     /// </summary>
-    VersionLocatorBase VersionLocator { get; set; }
+    VersionLocatorBase VersionLocator { get; init; }
 
-    IGameLogResolver GameLogResolver { get; set; }
+    IGameLogResolver? GameLogResolver { get; init; }
 
     /// <summary>
     ///     启动游戏。

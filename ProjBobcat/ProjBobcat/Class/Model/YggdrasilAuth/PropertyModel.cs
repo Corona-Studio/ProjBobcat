@@ -4,9 +4,9 @@ namespace ProjBobcat.Class.Model.YggdrasilAuth;
 
 public class PropertyModel
 {
-    [JsonPropertyName("name")] public string Name { get; set; }
+    [JsonPropertyName("name")] public required string Name { get; init; }
 
-    [JsonPropertyName("value")] public string Value { get; set; }
+    [JsonPropertyName("value")] public required string Value { get; init; }
 
-    [JsonPropertyName("signature")] public string Signature { get; set; }
+    [JsonPropertyName("signature")] public string? Signature { get; init; }
 }

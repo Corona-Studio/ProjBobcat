@@ -6,7 +6,7 @@ public class UserInfoModel
 {
     [JsonPropertyName("id")] public PlayerUUID UUID { get; set; }
 
-    [JsonPropertyName("username")] public string UserName { get; set; }
+    [JsonPropertyName("username")] public string? UserName { get; set; }
 
-    [JsonPropertyName("properties")] public PropertyModel[] Properties { get; set; }
+    [JsonPropertyName("properties")] public PropertyModel[]? Properties { get; set; }
 }

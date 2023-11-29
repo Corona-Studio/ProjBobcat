@@ -1,17 +1,10 @@
 ﻿namespace ProjBobcat.Class.Model;
 
-public class TaskResult<T>
+public class TaskResult<T>(TaskResultStatus taskStatus, string message = "", T? value = default)
 {
-    public TaskResult(TaskResultStatus taskStatus, string message = "", T value = default)
-    {
-        TaskStatus = taskStatus;
-        Message = message;
-        Value = value;
-    }
+    public T? Value { get; } = value;
 
-    public T Value { get; }
+    public string Message { get; set; } = message;
 
-    public string Message { get; set; }
-
-    public TaskResultStatus TaskStatus { get; set; }
+    public TaskResultStatus TaskStatus { get; set; } = taskStatus;
 }

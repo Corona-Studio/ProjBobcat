@@ -15,8 +15,7 @@ public partial class DefaultGameLogResolver : IGameLogResolver
     const string LogSourceAndTypeRegex = $"[\\w\\W\\s]{{2,}}/({LogTypeRegexStr})";
     const string LogDateRegex = $"\\[{LogTimeRegexStr}\\]";
     const string LogTotalPrefixRegex = $"\\[{LogTimeRegexStr}\\] \\[{LogSourceAndTypeRegex}\\]";
-
-#if NET8_0_OR_GREATER
+    
     [GeneratedRegex(LogSourceAndTypeRegex)]
     private static partial Regex SourceAndTypeRegex();
     
@@ -38,19 +37,6 @@ public partial class DefaultGameLogResolver : IGameLogResolver
     [GeneratedRegex(ExceptionRegexStr)]
     private static partial Regex ExceptionRegex();
 
-#else
-
-    static readonly Regex
-        SourceAndTypeRegex = new(LogSourceAndTypeRegex, RegexOptions.Compiled),
-        TotalPrefixRegex = new(LogTotalPrefixRegex, RegexOptions.Compiled),
-        TypeRegex = new(LogTypeRegexStr, RegexOptions.Compiled),
-        TimeRegex = new(LogTimeRegexStr, RegexOptions.Compiled),
-        TimeFullRegex = new(LogDateRegex, RegexOptions.Compiled),
-        StackTraceAtRegex = new(StackTraceAtStr, RegexOptions.Compiled),
-        ExceptionRegex = new(ExceptionRegexStr, RegexOptions.Compiled);
-
-#endif
-
     public GameLogType ResolveLogType(string log)
     {
         if (!string.IsNullOrEmpty(ResolveExceptionMsg(log)))
@@ -58,8 +44,7 @@ public partial class DefaultGameLogResolver : IGameLogResolver
 
         if (!string.IsNullOrEmpty(ResolveStackTrace(log)))
             return GameLogType.StackTrace;
-
-#if NET8_0_OR_GREATER
+        
         return TypeRegex().Match(log).Value switch
         {
             "FATAL" => GameLogType.Fatal,
@@ -69,71 +54,41 @@ public partial class DefaultGameLogResolver : IGameLogResolver
             "DEBUG" => GameLogType.Debug,
             _ => GameLogType.Unknown
         };
-#else
-        return TypeRegex.Match(log).Value switch
-        {
-            "FATAL" => GameLogType.Fatal,
-            "ERROR" => GameLogType.Error,
-            "WARN" => GameLogType.Warning,
-            "INFO" => GameLogType.Info,
-            "DEBUG" => GameLogType.Debug,
-            _ => GameLogType.Unknown
-        };
-#endif
     }
 
     public string ResolveStackTrace(string log)
     {
-#if NET8_0_OR_GREATER
         var stackTrace = StackTraceAtRegex().Match(log).Value;
-#else
-        var stackTrace = StackTraceAtRegex.Match(log).Value;
-#endif
 
         return stackTrace;
     }
 
     public string ResolveExceptionMsg(string log)
     {
-#if NET8_0_OR_GREATER
         var exceptionMsg = ExceptionRegex().Match(log).Value;
-#else
-        var exceptionMsg = ExceptionRegex.Match(log).Value;
-#endif
-
+        
         return exceptionMsg;
     }
 
     public string ResolveSource(string log)
     {
-#if NET8_0_OR_GREATER
         var content = SourceAndTypeRegex().Match(log).Value.Split('/').FirstOrDefault();
-        var date = TimeFullRegex().Match(log).Value;
-#else
-        var content = SourceAndTypeRegex.Match(log).Value.Split('/').FirstOrDefault();
-        var date = TimeFullRegex.Match(log).Value;
-#endif
 
-        var result = content?.Replace($"{date} [", string.Empty);
+        if (string.IsNullOrEmpty(content)) return string.Empty;
+        
+        var date = TimeFullRegex().Match(log).Value;
+        var result = content.Replace($"{date} [", string.Empty);
 
         return result;
     }
 
     public string ResolveTime(string log)
     {
-#if NET8_0_OR_GREATER
         return TimeRegex().Match(log).Value;
-#else
-        return TimeRegex.Match(log).Value;
-#endif
     }
 
     public string ResolveTotalPrefix(string log)
     {
-#if NET8_0_OR_GREATER
         return TotalPrefixRegex().Match(log).Value;
-#else
-        return TotalPrefixRegex.Match(log).Value;
-#endif
     }
 }

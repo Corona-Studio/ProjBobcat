@@ -4,7 +4,7 @@ namespace ProjBobcat.Class.Model.LauncherAccount;
 
 public class AccountProfileModel
 {
-    [JsonPropertyName("id")] public string Id { get; set; }
+    [JsonPropertyName("id")] public required string Id { get; init; }
 
-    [JsonPropertyName("name")] public string Name { get; set; }
+    [JsonPropertyName("name")] public required string Name { get; init; }
 }

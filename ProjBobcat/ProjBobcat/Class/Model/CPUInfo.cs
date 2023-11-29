@@ -1,7 +1,7 @@
 ﻿namespace ProjBobcat.Class.Model;
 
-public class CPUInfo
+public readonly struct CPUInfo
 {
-    public double Usage { get; set; }
-    public string Name { get; set; }
+    public required double Usage { get; init; }
+    public required string Name { get; init; }
 }

@@ -6,11 +6,11 @@ namespace ProjBobcat.Class.Model;
 
 public class OperatingSystemRules
 {
-    [JsonPropertyName("name")] public string Name { get; set; }
+    [JsonPropertyName("name")] public string? Name { get; set; }
 
-    [JsonPropertyName("version")] public string Version { get; set; }
+    [JsonPropertyName("version")] public string? Version { get; set; }
 
-    [JsonPropertyName("arch")] public string Arch { get; set; }
+    [JsonPropertyName("arch")] public string? Arch { get; set; }
 
     public bool IsAllow()
     {

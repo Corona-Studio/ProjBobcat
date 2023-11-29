@@ -2,6 +2,6 @@
 
 public class NativeFileInfo
 {
-    public FileInfo FileInfo { get; set; }
-    public Extract Extract { get; set; }
+    public required FileInfo FileInfo { get; init; }
+    public Extract? Extract { get; init; }
 }

@@ -6,9 +6,9 @@ namespace ProjBobcat.Class.Model;
 
 public class ProgressReportBase : IProgressReport
 {
-    public event EventHandler<StageChangedEventArgs> StageChangedEventDelegate;
+    public event EventHandler<StageChangedEventArgs>? StageChangedEventDelegate;
 
-    public virtual void InvokeStatusChangedEvent(string currentStage, double progress)
+    protected void InvokeStatusChangedEvent(string currentStage, double progress)
     {
         StageChangedEventDelegate?.Invoke(this, new StageChangedEventArgs
         {

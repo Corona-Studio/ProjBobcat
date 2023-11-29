@@ -25,15 +25,14 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
     /// </summary>
     /// <param name="rootPath">指.minecraft/ Refers to .minecraft/</param>
     /// <param name="clientToken"></param>
-    public DefaultVersionLocator(string rootPath, Guid clientToken)
+    public DefaultVersionLocator(string rootPath, Guid clientToken) : base(rootPath)
     {
-        RootPath = rootPath; // .minecraft/
         LauncherProfileParser = new DefaultLauncherProfileParser(rootPath, clientToken);
 
         //防止给定路径不存在的时候Parser遍历文件夹爆炸。
         //Prevents errors in the parser's folder traversal when the given path does not exist.
-        if (!Directory.Exists(GamePathHelper.GetVersionPath(RootPath)))
-            Directory.CreateDirectory(GamePathHelper.GetVersionPath(RootPath));
+        if (!Directory.Exists(GamePathHelper.GetVersionPath(rootPath)))
+            Directory.CreateDirectory(GamePathHelper.GetVersionPath(rootPath));
     }
 
     public override IEnumerable<VersionInfo> GetAllGames()
@@ -243,7 +242,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             {
                 // 一些Library项不包含下载数据，所以我们直接解析Maven的名称来猜测下载链接。
                 // Some library items don't contain download data, so we directly resolve maven's name to guess the download link.
-                var mavenInfo = lib.Name.ResolveMavenString();
+                var mavenInfo = lib.Name.ResolveMavenString()!;
                 var downloadUrl = string.IsNullOrEmpty(lib.Url)
                     ? mavenInfo.OrganizationName.Equals("net.minecraftforge", StringComparison.Ordinal)
                         ? "https://files.minecraftforge.net/maven/"
@@ -375,8 +374,9 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             Logging = rawVersion.Logging,
             Id = rawVersion.Id,
             DirName = id,
-            Name = id, //randomName,
-            JavaVersion = rawVersion.JavaVersion
+            Name = id,
+            JavaVersion = rawVersion.JavaVersion,
+            GameArguments = []
         };
 
         // 检查游戏是否存在继承关系。
@@ -410,8 +410,9 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
 
                     jvmArgList.AddRange(ParseJvmArguments(inherits[i]!.Arguments?.Jvm));
 
-                    var rootArgs = ParseGameArguments((inherits[i]!.MinecraftArguments,
-                        inherits[i]!.Arguments?.Game));
+                    var rootArgs =
+                        ParseGameArguments(
+                            (inherits[i]!.MinecraftArguments, inherits[i]!.Arguments?.Game));
 
                     gameArgList.AddRange(rootArgs.Item1);
                     result.AvailableGameArguments = rootArgs.Item2;
@@ -426,12 +427,17 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
 
                 foreach (var mL in middleLibs.Item2)
                 {
-                    var mLMaven = mL.Name.ResolveMavenString();
+                    if (string.IsNullOrEmpty(mL.Name)) continue;
+                    
+                    var mLMaven = mL.Name.ResolveMavenString()!;
                     var mLFlag = false;
 
                     for (var j = 0; j < result.Libraries.Count; j++)
                     {
-                        var lMaven = result.Libraries[j].Name.ResolveMavenString();
+                        if (string.IsNullOrEmpty(result.Libraries[j].Name))
+                            continue;
+                        
+                        var lMaven = result.Libraries[j].Name!.ResolveMavenString()!;
                         if (!lMaven.GetMavenFullName().Equals(mLMaven.GetMavenFullName(), StringComparison.Ordinal))
                             continue;
 
@@ -469,7 +475,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                 {
                     jvmArgList.AddRange(jvmArgs);
                     gameArgList.AddRange(middleGameArgs.Item1);
-                    result.AvailableGameArguments = result.AvailableGameArguments
+                    result.AvailableGameArguments = result.AvailableGameArguments?
                         .Union(middleGameArgs.Item2)
                         .ToDictionary(x => x.Key, y => y.Value);
                 }
@@ -493,7 +499,8 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             finalGameArgs = finalGameArgs.Select(arg => arg.Split(' ')).SelectMany(a => a).Distinct().ToList();
             result.GameArguments = finalGameArgs;
 
-            goto ProcessProfile;
+            ProcessProfile(result, id);
+            return result;
         }
 
         var libs = GetNatives(rawVersion.Libraries);
@@ -507,15 +514,23 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                 rawVersion.Arguments?.Game));
         result.GameArguments = gameArgs.Item1;
         result.AvailableGameArguments = gameArgs.Item2;
+        
+        ProcessProfile(result, id);
 
-        ProcessProfile:
-        var oldProfile = LauncherProfileParser.LauncherProfile.Profiles.FirstOrDefault(p =>
+        return result;
+    }
+
+    private void ProcessProfile(VersionInfo result, string id)
+    {
+        if (LauncherProfileParser == null) return;
+        
+        var oldProfile = LauncherProfileParser.LauncherProfile.Profiles!.FirstOrDefault(p =>
             p.Value.LastVersionId?.Equals(id, StringComparison.Ordinal) ?? true);
 
         var gamePath = Path.Combine(RootPath, GamePathHelper.GetGamePath(id));
         if (oldProfile.Equals(default(KeyValuePair<string, GameProfileModel>)))
         {
-            LauncherProfileParser.LauncherProfile.Profiles.Add(id.ToGuidHash().ToString("N"),
+            LauncherProfileParser.LauncherProfile.Profiles!.Add(id.ToGuidHash().ToString("N"),
                 new GameProfileModel
                 {
                     GameDir = gamePath,
@@ -524,15 +539,12 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                     Created = DateTime.Now
                 });
             LauncherProfileParser.SaveProfile();
-            return result;
         }
 
-        result.Name = oldProfile.Value.Name;
+        result.Name = oldProfile.Value.Name!;
         oldProfile.Value.GameDir = gamePath;
         oldProfile.Value.LastVersionId = id;
-        LauncherProfileParser.LauncherProfile.Profiles[oldProfile.Key] = oldProfile.Value;
+        LauncherProfileParser.LauncherProfile.Profiles![oldProfile.Key] = oldProfile.Value;
         LauncherProfileParser.SaveProfile();
-
-        return result;
     }
 }

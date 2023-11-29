@@ -11,5 +11,5 @@ public class AuthProfileModel
     ///     显示名称
     /// </summary>
     [JsonPropertyName("displayName")]
-    public string DisplayName { get; set; }
+    public required string DisplayName { get; set; }
 }

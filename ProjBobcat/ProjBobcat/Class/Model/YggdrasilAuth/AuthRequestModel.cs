@@ -4,20 +4,24 @@ namespace ProjBobcat.Class.Model.YggdrasilAuth;
 
 public class Agent
 {
-    [JsonPropertyName("name")] public string Name { get; set; }
+    [JsonPropertyName("name")] public required string Name { get; init; }
 
-    [JsonPropertyName("version")] public int Version { get; set; }
+    [JsonPropertyName("version")] public int Version { get; init; }
 }
 
 public class AuthRequestModel
 {
-    [JsonPropertyName("username")] public string Username { get; set; }
+    [JsonPropertyName("username")]
+    public required string Username { get; init; }
 
-    [JsonPropertyName("password")] public string Password { get; set; }
+    [JsonPropertyName("password")]
+    public required string Password { get; init; }
 
-    [JsonPropertyName("clientToken")] public string ClientToken { get; set; }
+    [JsonPropertyName("clientToken")]
+    public required string ClientToken { get; init; }
 
-    [JsonPropertyName("requestUser")] public bool RequestUser { get; set; }
+    [JsonPropertyName("requestUser")]
+    public bool RequestUser { get; init; }
 
     [JsonPropertyName("agent")]
     public Agent Agent { get; set; } = new()

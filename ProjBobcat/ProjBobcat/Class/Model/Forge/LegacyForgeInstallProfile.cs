@@ -8,34 +8,34 @@ namespace ProjBobcat.Class.Model.Forge;
 /// </summary>
 public class Install
 {
-    [JsonPropertyName("profileName")] public string ProfileName { get; set; }
+    [JsonPropertyName("profileName")] public string? ProfileName { get; set; }
 
-    [JsonPropertyName("target")] public string Target { get; set; }
+    [JsonPropertyName("target")] public string? Target { get; set; }
 
-    [JsonPropertyName("path")] public string Path { get; set; }
+    [JsonPropertyName("path")] public string? Path { get; set; }
 
-    [JsonPropertyName("version")] public string Version { get; set; }
+    [JsonPropertyName("version")] public string? Version { get; set; }
 
-    [JsonPropertyName("filePath")] public string FilePath { get; set; }
+    [JsonPropertyName("filePath")] public string? FilePath { get; set; }
 
-    [JsonPropertyName("welcome")] public string Welcome { get; set; }
+    [JsonPropertyName("welcome")] public string? Welcome { get; set; }
 
-    [JsonPropertyName("minecraft")] public string MineCraft { get; set; }
+    [JsonPropertyName("minecraft")] public string? MineCraft { get; set; }
 
-    [JsonPropertyName("mirrorList")] public string MirrorList { get; set; }
+    [JsonPropertyName("mirrorList")] public string? MirrorList { get; set; }
 
-    [JsonPropertyName("logo")] public string Logo { get; set; }
+    [JsonPropertyName("logo")] public string? Logo { get; set; }
 
-    [JsonPropertyName("modList")] public string ModList { get; set; }
+    [JsonPropertyName("modList")] public string? ModList { get; set; }
 }
 
 public class ForgeLibraries
 {
-    [JsonPropertyName("name")] public string Name { get; set; }
+    [JsonPropertyName("name")] public required string Name { get; set; }
 
-    [JsonPropertyName("url")] public string Url { get; set; }
+    [JsonPropertyName("url")] public string? Url { get; set; }
 
-    [JsonPropertyName("checksums")] public string[] CheckSums { get; set; }
+    [JsonPropertyName("checksums")] public string[]? CheckSums { get; set; }
 
     [JsonPropertyName("serverreq")] public bool ServerReq { get; set; }
 
@@ -44,33 +44,33 @@ public class ForgeLibraries
 
 public class VersionInfo
 {
-    [JsonPropertyName("id")] public string Id { get; set; }
+    [JsonPropertyName("id")] public required string Id { get; set; }
 
-    [JsonPropertyName("time")] public string Time { get; set; }
+    [JsonPropertyName("time")] public string? Time { get; set; }
 
-    [JsonPropertyName("releaseTime")] public string ReleaseTime { get; set; }
+    [JsonPropertyName("releaseTime")] public string? ReleaseTime { get; set; }
 
-    [JsonPropertyName("type")] public string Type { get; set; }
+    [JsonPropertyName("type")] public string? Type { get; set; }
 
     [JsonPropertyName("minecraftArguments")]
-    public string MinecraftArguments { get; set; }
+    public string? MinecraftArguments { get; set; }
 
-    [JsonPropertyName("mainClass")] public string MainClass { get; set; }
+    [JsonPropertyName("mainClass")] public string? MainClass { get; set; }
 
-    [JsonPropertyName("inheritsFrom")] public string InheritsFrom { get; set; }
+    [JsonPropertyName("inheritsFrom")] public required string InheritsFrom { get; set; }
 
-    [JsonPropertyName("jar")] public string Jar { get; set; }
+    [JsonPropertyName("jar")] public string? Jar { get; set; }
 
-    [JsonPropertyName("assets")] public string Assets { get; set; }
+    [JsonPropertyName("assets")] public string? Assets { get; set; }
 
     [JsonPropertyName("logging")] public JsonElement Logging { get; set; }
 
-    [JsonPropertyName("libraries")] public ForgeLibraries[] Libraries { get; set; }
+    [JsonPropertyName("libraries")] public ForgeLibraries[] Libraries { get; set; } = [];
 }
 
 public class Optional
 {
-    [JsonPropertyName("name")] public string Name { get; set; }
+    [JsonPropertyName("name")] public string? Name { get; set; }
 
     [JsonPropertyName("client")] public bool Client { get; set; }
 
@@ -78,13 +78,13 @@ public class Optional
 
     [JsonPropertyName("inject")] public bool Inject { get; set; }
 
-    [JsonPropertyName("desc")] public string Desc { get; set; }
+    [JsonPropertyName("desc")] public string? Desc { get; set; }
 
-    [JsonPropertyName("url")] public string Url { get; set; }
+    [JsonPropertyName("url")] public string? Url { get; set; }
 
-    [JsonPropertyName("artifact")] public string Artifact { get; set; }
+    [JsonPropertyName("artifact")] public string? Artifact { get; set; }
 
-    [JsonPropertyName("maven")] public string Maven { get; set; }
+    [JsonPropertyName("maven")] public string? Maven { get; set; }
 }
 
 /// <summary>
@@ -92,11 +92,11 @@ public class Optional
 /// </summary>
 public class LegacyForgeInstallProfile
 {
-    [JsonPropertyName("install")] public Install Install { get; set; }
+    [JsonPropertyName("install")] public Install? Install { get; set; }
 
-    [JsonPropertyName("versionInfo")] public VersionInfo VersionInfo { get; set; }
+    [JsonPropertyName("versionInfo")] public required VersionInfo VersionInfo { get; set; }
 
-    [JsonPropertyName("optionals")] public Optional[] OptionalList { get; set; }
+    [JsonPropertyName("optionals")] public Optional[]? OptionalList { get; set; }
 }
 
 [JsonSerializable(typeof(VersionInfo))]

@@ -16,10 +16,10 @@ public abstract class GameCoreBase : IGameCore
 
     protected readonly EventHandlerList ListEventDelegates = new();
     bool _disposedValue;
-    public virtual string? RootPath { get; set; }
-    public virtual Guid ClientToken { get; set; }
-    public virtual VersionLocatorBase VersionLocator { get; set; }
-    public virtual IGameLogResolver GameLogResolver { get; set; }
+    public virtual required string RootPath { get; init; }
+    public virtual required Guid ClientToken { get; init; }
+    public virtual required VersionLocatorBase VersionLocator { get; init; }
+    public virtual IGameLogResolver? GameLogResolver { get; init; }
 
     public event EventHandler<GameExitEventArgs> GameExitEventDelegate
     {
@@ -44,7 +44,7 @@ public abstract class GameCoreBase : IGameCore
     /// </summary>
     /// <param name="settings"></param>
     /// <returns></returns>
-    public virtual LaunchResult Launch(LaunchSettings? settings)
+    public virtual LaunchResult Launch(LaunchSettings settings)
     {
         return LaunchTaskAsync(settings).Result;
     }
@@ -54,7 +54,7 @@ public abstract class GameCoreBase : IGameCore
     /// </summary>
     /// <param name="settings"></param>
     /// <returns></returns>
-    public abstract Task<LaunchResult> LaunchTaskAsync(LaunchSettings? settings);
+    public abstract Task<LaunchResult> LaunchTaskAsync(LaunchSettings settings);
 
     // // TODO: 仅当“Dispose(bool disposing)”拥有用于释放未托管资源的代码时才替代终结器
     // ~GameCoreBase()

@@ -5,7 +5,7 @@ namespace ProjBobcat.Interface;
 
 public interface IQuiltInstaller : IInstaller
 {
-    QuiltLoaderModel LoaderArtifact { get; set; }
+    QuiltLoaderModel LoaderArtifact { get; init; }
     string Install();
     Task<string> InstallTaskAsync();
 }

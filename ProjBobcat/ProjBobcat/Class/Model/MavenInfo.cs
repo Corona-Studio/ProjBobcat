@@ -9,35 +9,35 @@ public class MavenInfo
     /// <summary>
     ///     组织名。
     /// </summary>
-    public string OrganizationName { get; set; }
+    public required string OrganizationName { get; init; }
 
     /// <summary>
     ///     项目名。
     /// </summary>
-    public string ArtifactId { get; set; }
+    public required string ArtifactId { get; init; }
 
     /// <summary>
     ///     版本号。
     /// </summary>
-    public string Version { get; set; }
+    public required string Version { get; init; }
 
     /// <summary>
     ///     分类串。
     /// </summary>
-    public string Classifier { get; set; }
+    public required string Classifier { get; init; }
 
     /// <summary>
     ///     类型。
     /// </summary>
-    public string Type { get; set; }
+    public required string Type { get; init; }
 
     /// <summary>
     ///     是否为快照。
     /// </summary>
-    public bool IsSnapshot { get; set; }
+    public required bool IsSnapshot { get; init; }
 
     /// <summary>
     ///     路径。
     /// </summary>
-    public string Path { get; set; }
+    public required string Path { get; init; }
 }

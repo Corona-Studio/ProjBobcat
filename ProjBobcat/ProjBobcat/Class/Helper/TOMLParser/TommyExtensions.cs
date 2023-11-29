@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
+#nullable disable
+
 namespace ProjBobcat.Class.Helper.TOMLParser;
 
 /// <summary>
@@ -226,3 +228,5 @@ public static class TommyExtensions
         return self;
     }
 }
+
+#nullable restore

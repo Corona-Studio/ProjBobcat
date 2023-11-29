@@ -8,8 +8,9 @@ namespace ProjBobcat.Class.Helper;
 /// </summary>
 public static class StringHelper
 {
-    public static string FixPathArgument(string arg)
+    public static string? FixPathArgument(string? arg)
     {
+        if (string.IsNullOrEmpty(arg)) return null;
         if (!arg.Contains(' ')) return arg;
 
         return $"\"{arg}\"";

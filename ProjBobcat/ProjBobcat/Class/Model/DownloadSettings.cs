@@ -40,7 +40,7 @@ public class DownloadSettings
     /// <summary>
     /// 请求源
     /// </summary>
-    public string Host { get; set; }
+    public string? Host { get; init; }
 
     public HashAlgorithm GetHashAlgorithm()
     {
@@ -58,8 +58,7 @@ public class DownloadSettings
     public async Task<byte[]> HashDataAsync(string filePath, CancellationToken? token)
     {
         token ??= CancellationToken.None;
-
-#if NET8_0_OR_GREATER
+        
         await using var fs = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
 
         return HashType switch
@@ -71,18 +70,5 @@ public class DownloadSettings
             HashType.SHA512 => await SHA512.HashDataAsync(fs, token.Value),
             _ => throw new NotSupportedException()
         };
-#else
-        var bytes = await File.ReadAllBytesAsync(filePath, token.Value);
-
-        return HashType switch
-        {
-            HashType.MD5 => MD5.HashData(bytes),
-            HashType.SHA1 => SHA1.HashData(bytes),
-            HashType.SHA256 => SHA256.HashData(bytes),
-            HashType.SHA384 => SHA384.HashData(bytes),
-            HashType.SHA512 => SHA512.HashData(bytes),
-            _ => throw new NotSupportedException()
-        };
-#endif
     }
 }

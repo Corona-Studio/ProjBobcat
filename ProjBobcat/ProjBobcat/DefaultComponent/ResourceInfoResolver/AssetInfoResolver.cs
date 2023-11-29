@@ -17,12 +17,12 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver;
 public sealed class AssetInfoResolver : ResolverBase
 {
     const string DefaultVersionManifestUrl = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
-    readonly string _assetIndexUrlRoot;
+    readonly string? _assetIndexUrlRoot;
 
-    public string AssetIndexUriRoot
+    public string? AssetIndexUriRoot
     {
         get => _assetIndexUrlRoot;
-        init => _assetIndexUrlRoot = value.TrimEnd('/');
+        init => _assetIndexUrlRoot = value?.TrimEnd('/');
     }
 
     public string AssetUriRoot { get; init; } = "https://resources.download.minecraft.net/";
@@ -51,10 +51,10 @@ public sealed class AssetInfoResolver : ResolverBase
         if (!(versions?.Any() ?? false)) yield break;
 
         var isAssetInfoNotExists =
-            string.IsNullOrEmpty(VersionInfo?.AssetInfo?.Url) &&
-            string.IsNullOrEmpty(VersionInfo?.AssetInfo?.Id);
+            string.IsNullOrEmpty(VersionInfo.AssetInfo?.Url) &&
+            string.IsNullOrEmpty(VersionInfo.AssetInfo?.Id);
         if (isAssetInfoNotExists &&
-            string.IsNullOrEmpty(VersionInfo?.Assets))
+            string.IsNullOrEmpty(VersionInfo.Assets))
             yield break;
 
         var assetIndexesDi =
@@ -65,7 +65,7 @@ public sealed class AssetInfoResolver : ResolverBase
         if (!assetIndexesDi.Exists) assetIndexesDi.Create();
         if (!assetObjectsDi.Exists) assetObjectsDi.Create();
 
-        var id = VersionInfo?.AssetInfo?.Id ?? VersionInfo.Assets;
+        var id = VersionInfo.AssetInfo?.Id ?? VersionInfo.Assets;
         var assetIndexesPath = Path.Combine(assetIndexesDi.FullName, $"{id}.json");
         if (!File.Exists(assetIndexesPath))
         {
@@ -158,13 +158,8 @@ public sealed class AssetInfoResolver : ResolverBase
 
             if (File.Exists(filePath))
             {
-#if NET8_0_OR_GREATER
                 await using var fs = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
                 var computedHash = (await SHA1.HashDataAsync(fs)).BytesToString();
-#else
-                var bytes = await File.ReadAllBytesAsync(filePath);
-                var computedHash = SHA1.HashData(bytes.AsSpan()).BytesToString();
-#endif
                 
                 if (computedHash.Equals(fi.Hash, StringComparison.OrdinalIgnoreCase)) continue;
             }

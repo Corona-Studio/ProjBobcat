@@ -33,22 +33,20 @@ public sealed class VersionInfoResolver : ResolverBase
         if (File.Exists(jarPath))
         {
             if (string.IsNullOrEmpty(clientDownload.Sha1)) yield break;
-
-#if NET8_0_OR_GREATER
+            
             await using var jarFs = File.Open(jarPath, FileMode.Open, FileAccess.Read, FileShare.Read);
             var computedHash = (await SHA1.HashDataAsync(jarFs)).BytesToString();
-#else
-            var bytes = await File.ReadAllBytesAsync(jarPath);
-            var computedHash = SHA1.HashData(bytes.AsSpan()).BytesToString();
-#endif
 
             if (computedHash.Equals(clientDownload.Sha1, StringComparison.OrdinalIgnoreCase))
                 yield break;
         }
+        
+        if (string.IsNullOrEmpty(clientDownload.Url))
+            yield break;
 
         yield return new VersionJarDownloadInfo
         {
-            CheckSum = clientDownload.Sha1,
+            CheckSum = clientDownload.Sha1 ?? string.Empty,
             FileName = $"{id}.jar",
             FileSize = clientDownload.Size,
             Path = Path.Combine(BasePath, GamePathHelper.GetGamePath(id)),

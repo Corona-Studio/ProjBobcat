@@ -4,9 +4,9 @@ namespace ProjBobcat.Class.Model.YggdrasilAuth;
 
 public class AuthTokenRequestModel
 {
-    [JsonPropertyName("accessToken")] public string AccessToken { get; set; }
+    [JsonPropertyName("accessToken")] public required string AccessToken { get; init; }
 
-    [JsonPropertyName("clientToken")] public string ClientToken { get; set; }
+    [JsonPropertyName("clientToken")] public required string ClientToken { get; init; }
 }
 
 [JsonSerializable(typeof(AuthTokenRequestModel))]

@@ -17,9 +17,10 @@ namespace ProjBobcat.DefaultComponent.Installer;
 
 public class OptifineInstaller : InstallerBase, IOptifineInstaller
 {
-    public string? JavaExecutablePath { get; set; }
-    public string? OptifineJarPath { get; set; }
-    public OptifineDownloadVersionModel? OptifineDownloadVersion { get; set; }
+    public required string JavaExecutablePath { get; init; }
+    public required string OptifineJarPath { get; init; }
+    public required OptifineDownloadVersionModel OptifineDownloadVersion { get; init; }
+    public override required string RootPath { get; init; }
 
     public string Install()
     {

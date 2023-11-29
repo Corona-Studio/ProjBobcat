@@ -5,13 +5,14 @@ namespace ProjBobcat.Class.Model.LauncherAccount;
 
 public class LauncherAccountModel
 {
-    [JsonPropertyName("accounts")] public Dictionary<string, AccountModel>? Accounts { get; set; }
+    [JsonPropertyName("accounts")]
+    public Dictionary<string, AccountModel>? Accounts { get; set; }
 
     [JsonPropertyName("activeAccountLocalId")]
-    public string ActiveAccountLocalId { get; set; }
+    public string? ActiveAccountLocalId { get; set; }
 
     [JsonPropertyName("mojangClientToken")]
-    public string MojangClientToken { get; set; }
+    public required string MojangClientToken { get; init; }
 }
 
 [JsonSerializable(typeof(LauncherAccountModel))]

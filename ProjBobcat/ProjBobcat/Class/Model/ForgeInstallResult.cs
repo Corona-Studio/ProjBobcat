@@ -15,5 +15,5 @@ public class ForgeInstallResult
     /// <summary>
     ///     错误信息
     /// </summary>
-    public ErrorModel Error { get; set; }
+    public ErrorModel? Error { get; set; }
 }

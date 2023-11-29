@@ -4,7 +4,7 @@ using ProjBobcat.Event;
 
 namespace ProjBobcat.DefaultComponent.Installer.ModPackInstaller;
 
-public class ModPackInstallerBase : InstallerBase
+public abstract class ModPackInstallerBase : InstallerBase
 {
     protected readonly ConcurrentBag<DownloadFile> FailedFiles = [];
     protected int TotalDownloaded, NeedToDownload;

@@ -8,17 +8,17 @@ public class DownloadRange
     /// <summary>
     ///     开始字节
     /// </summary>
-    public long Start { get; set; }
+    public required long Start { get; init; }
 
     /// <summary>
     ///     结束字节
     /// </summary>
-    public long End { get; set; }
+    public required long End { get; init; }
 
     /// <summary>
     ///     临时文件名称
     /// </summary>
-    public string TempFileName { get; set; }
+    public required string TempFileName { get; init; }
 
     public override string ToString()
     {

@@ -4,7 +4,7 @@ namespace ProjBobcat.Class.Model.CurseForge;
 
 public class CurseForgeModuleModel
 {
-    [JsonPropertyName("foldername")] public string FolderName { get; set; }
+    [JsonPropertyName("foldername")] public string? FolderName { get; set; }
 
     [JsonPropertyName("fingerprint")] public long Fingerprint { get; set; }
 

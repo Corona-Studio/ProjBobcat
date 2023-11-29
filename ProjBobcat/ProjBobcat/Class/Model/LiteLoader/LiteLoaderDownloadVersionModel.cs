@@ -4,12 +4,12 @@ namespace ProjBobcat.Class.Model.LiteLoader;
 
 public class LiteLoaderDownloadVersionModel
 {
-    [JsonPropertyName("_id")] public string Id { get; set; }
-    [JsonPropertyName("mcversion")] public string McVersion { get; set; }
-    [JsonPropertyName("build")] public LiteLoaderBuildModel Build { get; set; }
-    [JsonPropertyName("hash")] public string Hash { get; set; }
-    [JsonPropertyName("type")] public string Type { get; set; }
-    [JsonPropertyName("version")] public string Version { get; set; }
+    [JsonPropertyName("_id")] public string? Id { get; set; }
+    [JsonPropertyName("mcversion")] public required string McVersion { get; set; }
+    [JsonPropertyName("build")] public required LiteLoaderBuildModel Build { get; set; }
+    [JsonPropertyName("hash")] public string? Hash { get; set; }
+    [JsonPropertyName("type")] public required string Type { get; set; }
+    [JsonPropertyName("version")] public string? Version { get; set; }
     [JsonPropertyName("__v")] public int VersionLocker { get; set; }
 }
 

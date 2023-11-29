@@ -12,7 +12,7 @@ public class AssetFileInfo
     ///     Hash检验码
     /// </summary>
     [JsonPropertyName("hash")]
-    public string Hash { get; set; }
+    public required string Hash { get; init; }
 
     /// <summary>
     ///     文件大小
@@ -30,7 +30,7 @@ public class AssetObjectModel
     ///     Asset Objects集合
     /// </summary>
     [JsonPropertyName("objects")]
-    public IReadOnlyDictionary<string, AssetFileInfo> Objects { get; set; }
+    public required IReadOnlyDictionary<string, AssetFileInfo> Objects { get; init; }
 }
 
 [JsonSerializable(typeof(AssetObjectModel))]

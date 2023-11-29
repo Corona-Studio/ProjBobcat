@@ -6,9 +6,9 @@ namespace ProjBobcat.Class.Model;
 
 public class LaunchResult
 {
-    public LaunchErrorType ErrorType { get; set; }
-    public LaunchSettings LaunchSettings { get; set; }
-    public ErrorModel? Error { get; set; }
-    public TimeSpan RunTime { get; set; }
-    public Process? GameProcess { get; set; }
+    public LaunchErrorType ErrorType { get; init; }
+    public LaunchSettings? LaunchSettings { get; init; }
+    public ErrorModel? Error { get; init; }
+    public TimeSpan RunTime { get; init; }
+    public Process? GameProcess { get; init; }
 }

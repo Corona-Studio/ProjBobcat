@@ -14,12 +14,12 @@ namespace ProjBobcat.DefaultComponent.Service;
 
 public class ServerPingService : ProgressReportBase
 {
-    List<byte> _buffer;
+    List<byte> _buffer = null!;
     int _offset;
-    NetworkStream _stream;
+    NetworkStream _stream = null!;
 
-    public string Address { get; init; }
-    public ushort Port { get; init; }
+    public required string Address { get; init; }
+    public required ushort Port { get; init; }
     public int VersionId { get; init; }
 
     public override string ToString()
@@ -27,7 +27,7 @@ public class ServerPingService : ProgressReportBase
         return $"{Address}:{Port}";
     }
 
-    public ServerPingResult Run()
+    public ServerPingResult? Run()
     {
         return RunAsync().Result;
     }

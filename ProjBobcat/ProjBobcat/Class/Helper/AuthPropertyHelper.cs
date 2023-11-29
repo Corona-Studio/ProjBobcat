@@ -42,7 +42,8 @@ public static class AuthPropertyHelper
     /// <param name="model">PropertyModel</param>
     /// <param name="profiles">Profile集合</param>
     /// <returns>转换好的UserProperty</returns>
-    public static AuthPropertyModel ToAuthProperty(this PropertyModel model,
+    public static AuthPropertyModel? ToAuthProperty(
+        this PropertyModel? model,
         IReadOnlyDictionary<PlayerUUID, AuthProfileModel> profiles)
     {
         return model is null
@@ -61,11 +62,14 @@ public static class AuthPropertyHelper
     /// <param name="models">PropertyModel集合</param>
     /// <param name="profiles">Profile集合</param>
     /// <returns>转换好的UserProperty</returns>
-    public static IEnumerable<AuthPropertyModel> ToAuthProperties(this IEnumerable<PropertyModel> models,
+    public static IEnumerable<AuthPropertyModel> ToAuthProperties(
+        this IEnumerable<PropertyModel>? models,
         IReadOnlyDictionary<PlayerUUID, AuthProfileModel> profiles)
     {
         return models == null
-            ? new List<AuthPropertyModel>()
-            : models.Select(model => model.ToAuthProperty(profiles));
+            ? []
+            : models
+                .Select(model => model.ToAuthProperty(profiles))
+                .OfType<AuthPropertyModel>();
     }
 }

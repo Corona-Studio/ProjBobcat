@@ -9,12 +9,8 @@ namespace ProjBobcat.Class.Helper;
 /// </summary>
 public static partial class MavenHelper
 {
-#if NET8_0_OR_GREATER
     [GeneratedRegex("\\.")]
     private static partial Regex GroupPathRegex();
-#else
-    static readonly Regex GroupPathRegex = new("\\.", RegexOptions.Compiled);
-#endif
 
     /// <summary>
     ///     使用名字来解析Maven包信息。
@@ -69,14 +65,7 @@ public static partial class MavenHelper
     /// </summary>
     /// <param name="artifactId">Maven Id</param>
     /// <returns>处理好的Group Path</returns>
-    public static string GetGroupPath(this string artifactId)
-    {
-#if NET8_0_OR_GREATER
-        return GroupPathRegex().Replace(artifactId, "/");
-#else
-        return GroupPathRegex.Replace(artifactId, "/");
-#endif
-    }
+    public static string GetGroupPath(this string artifactId) => GroupPathRegex().Replace(artifactId, "/");
 
     /// <summary>
     ///     获取Maven全名

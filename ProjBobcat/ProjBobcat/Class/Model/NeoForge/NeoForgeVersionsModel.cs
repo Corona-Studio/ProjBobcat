@@ -4,9 +4,9 @@ namespace ProjBobcat.Class.Model.NeoForge;
 
 public class NeoForgeVersionModel
 {
-    [JsonPropertyName("rawVersion")] public string RawVersion { get; set; }
+    [JsonPropertyName("rawVersion")] public required string RawVersion { get; init; }
     [JsonPropertyName("version")] public string? Version { get; set; }
-    [JsonPropertyName("mcversion")] public string MineCraftVersion { get; set; }
+    [JsonPropertyName("mcversion")] public required string MineCraftVersion { get; init; }
 }
 
 [JsonSerializable(typeof(NeoForgeVersionModel))]

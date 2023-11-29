@@ -10,8 +10,7 @@ public class YggdrasilAuthResult : AuthResultBase
     /// <summary>
     ///     可用的Profiles
     /// </summary>
-    public ProfileInfoModel[] Profiles { get; set; }
-
-    public string LocalId { get; set; }
-    public string RemoteId { get; set; }
+    public ProfileInfoModel[]? Profiles { get; set; }
+    public string? LocalId { get; set; }
+    public string? RemoteId { get; set; }
 }

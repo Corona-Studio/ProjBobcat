@@ -4,6 +4,6 @@ namespace ProjBobcat.Event;
 
 public class ForgeInstallStageChangedEventArgs : EventArgs
 {
-    public string CurrentStage { get; set; }
-    public double Progress { get; set; }
+    public required string CurrentStage { get; init; }
+    public double Progress { get; init; }
 }

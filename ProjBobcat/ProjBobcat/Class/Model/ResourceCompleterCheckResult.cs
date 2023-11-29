@@ -4,6 +4,6 @@ namespace ProjBobcat.Class.Model;
 
 public class ResourceCompleterCheckResult
 {
-    public bool IsLibDownloadFailed { get; set; }
-    public IEnumerable<DownloadFile> FailedFiles { get; set; }
+    public bool IsLibDownloadFailed { get; init; }
+    public required IReadOnlyCollection<DownloadFile> FailedFiles { get; init; }
 }

@@ -30,14 +30,7 @@ public static class RandomHelper
     /// <param name="min"></param>
     /// <param name="max"></param>
     /// <returns></returns>
-    public static int RandomInteger(int min, int max)
-    {
-#if NET8_0_OR_GREATER
-        return Random.Shared.Next(min, max + 1);
-#else
-        return System.Security.Cryptography.RandomNumberGenerator.GetInt32(min, max + 1);
-#endif
-    }
+    public static int RandomInteger(int min, int max) => Random.Shared.Next(min, max + 1);
 
     /// <summary>
     ///     随机打乱集合当中的元素

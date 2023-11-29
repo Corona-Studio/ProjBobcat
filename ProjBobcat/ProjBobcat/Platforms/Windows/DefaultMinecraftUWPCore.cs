@@ -18,7 +18,7 @@ namespace ProjBobcat.Platforms.Windows;
 [SupportedOSPlatform(nameof(OSPlatform.Windows))]
 public class DefaultMineCraftUWPCore : GameCoreBase
 {
-    public override LaunchResult Launch(LaunchSettings? launchSettings = null)
+    public override LaunchResult Launch(LaunchSettings launchSettings)
     {
         var prevSpan = new TimeSpan();
         var stopwatch = new Stopwatch();

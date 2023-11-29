@@ -5,7 +5,7 @@ namespace ProjBobcat.Class.Model.YggdrasilAuth;
 
 public class TextureInfoModel
 {
-    [JsonPropertyName("url")] public string Url { get; set; }
+    [JsonPropertyName("url")] public string? Url { get; set; }
 
     [JsonPropertyName("metadata")] public JsonElement Metadata { get; set; }
 }

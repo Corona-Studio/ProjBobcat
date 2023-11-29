@@ -11,12 +11,12 @@ public class GameArguments
     /// <summary>
     ///     Java executable file
     /// </summary>
-    public string? JavaExecutable { get; set; }
+    public required string JavaExecutable { get; set; }
 
     public uint MinMemory { get; set; }
-    public uint MaxMemory { get; set; }
+    public required uint MaxMemory { get; init; }
     public ResolutionModel? Resolution { get; set; }
-    public GcType GcType { get; set; }
+    public required GcType GcType { get; init; }
     public IReadOnlyList<string>? AdditionalJvmArguments { get; set; }
     public ServerSettings? ServerSettings { get; set; }
     public string? AdvanceArguments { get; set; }
@@ -24,38 +24,38 @@ public class GameArguments
 
 public class LaunchSettings
 {
-    public string? GameName { get; set; }
+    public required string GameName { get; init; }
 
     /// <summary>
     ///     Real game root, should be the root of /saves, /logs
     /// </summary>
-    public string GamePath { get; set; }
+    public required string GamePath { get; init; }
 
     /// <summary>
     ///     The game resource path, should be the root of  /libraries
     /// </summary>
-    public string GameResourcePath { get; set; }
+    public required string GameResourcePath { get; init; }
 
     /// <summary>
     ///     Real version id, like 1.14, 1.14-forge-xxxx
     /// </summary>
-    public string Version { get; set; }
+    public required string Version { get; init; }
 
     /// <summary>
     ///     游戏窗口标题
     /// </summary>
-    public string? WindowTitle { get; set; }
+    public string? WindowTitle { get; init; }
 
-    public IVersionLocator VersionLocator { get; set; }
+    public required IVersionLocator VersionLocator { get; init; }
 
-    public IAuthenticator? Authenticator { get; set; }
-    public ProfileInfoModel? SelectedProfile { get; set; }
+    public required IAuthenticator Authenticator { get; init; }
+    public ProfileInfoModel? SelectedProfile { get; init; }
 
-    public bool VersionInsulation { get; set; }
-    public string? LauncherName { get; set; }
+    public bool VersionInsulation { get; init; }
+    public string? LauncherName { get; init; }
 
-    public GameArguments? FallBackGameArguments { get; set; }
-    public GameArguments? GameArguments { get; set; }
+    public GameArguments? FallBackGameArguments { get; init; }
+    public required GameArguments GameArguments { get; init; }
 
     public override string ToString()
     {

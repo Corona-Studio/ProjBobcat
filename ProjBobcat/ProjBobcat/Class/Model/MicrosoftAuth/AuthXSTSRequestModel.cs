@@ -4,15 +4,15 @@ namespace ProjBobcat.Class.Model.MicrosoftAuth;
 
 public class XSTSProperties
 {
-    public string SandboxId { get; set; }
-    public string[] UserTokens { get; set; }
+    public required string SandboxId { get; init; }
+    public required string[] UserTokens { get; init; }
 }
 
 public class AuthXSTSRequestModel
 {
-    public XSTSProperties Properties { get; set; }
-    public string RelyingParty { get; set; }
-    public string TokenType { get; set; }
+    public required XSTSProperties Properties { get; init; }
+    public required string RelyingParty { get; init; }
+    public required string TokenType { get; init; }
 
     public static AuthXSTSRequestModel Get(string token, string relyingParty = "rp://api.minecraftservices.com/")
     {

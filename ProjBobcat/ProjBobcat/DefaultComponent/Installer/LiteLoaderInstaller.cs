@@ -16,11 +16,12 @@ namespace ProjBobcat.DefaultComponent.Installer;
 
 public class LiteLoaderInstaller : InstallerBase, ILiteLoaderInstaller
 {
-    const string SnapshotRoot = "http://dl.liteloader.com/versions/";
-    const string ReleaseRoot = "http://repo.mumfrey.com/content/repositories/liteloader/";
+    const string SnapshotRoot = "https://dl.liteloader.com/versions/";
+    const string ReleaseRoot = "https://repo.mumfrey.com/content/repositories/liteloader/";
 
-    public RawVersionModel InheritVersion { get; init; }
-    public LiteLoaderDownloadVersionModel VersionModel { get; init; }
+    public required RawVersionModel InheritVersion { get; init; }
+    public required LiteLoaderDownloadVersionModel VersionModel { get; init; }
+    public override required string RootPath { get; init; }
 
     public string Install()
     {

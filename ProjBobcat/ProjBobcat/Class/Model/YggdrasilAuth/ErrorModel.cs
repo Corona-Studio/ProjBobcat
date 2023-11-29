@@ -5,13 +5,13 @@ namespace ProjBobcat.Class.Model.YggdrasilAuth;
 
 public class ErrorModel
 {
-    [JsonPropertyName("error")] public string Error { get; set; }
+    [JsonPropertyName("error")] public string? Error { get; init; }
 
-    [JsonPropertyName("errorMessage")] public string ErrorMessage { get; set; }
+    [JsonPropertyName("errorMessage")] public string? ErrorMessage { get; init; }
 
-    [JsonPropertyName("cause")] public string Cause { get; set; }
+    [JsonPropertyName("cause")] public string? Cause { get; init; }
 
-    [JsonIgnore] public Exception Exception { get; set; }
+    [JsonIgnore] public Exception? Exception { get; init; }
 }
 
 [JsonSerializable(typeof(ErrorModel))]

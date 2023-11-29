@@ -11,13 +11,13 @@ public class AuthPropertyModel
     ///     名称
     /// </summary>
     [JsonPropertyName("name")]
-    public string Name { get; set; }
+    public required string Name { get; set; }
 
     /// <summary>
     ///     Profile Id
     /// </summary>
     [JsonPropertyName("profileId")]
-    public string ProfileId { get; set; }
+    public string? ProfileId { get; set; }
 
     /// <summary>
     ///     用户Id
@@ -29,5 +29,5 @@ public class AuthPropertyModel
     ///     值
     /// </summary>
     [JsonPropertyName("value")]
-    public string Value { get; set; }
+    public required string Value { get; set; }
 }

@@ -48,22 +48,22 @@ public class MicrosoftAuthenticator : IAuthenticator
                 "请使用 Configure(MicrosoftAuthenticatorAPISettings apiSettings) 方法来配置验证器基础设置！");
     }
 
-    public static MicrosoftAuthenticatorAPISettings ApiSettings { get; private set; }
+    public static MicrosoftAuthenticatorAPISettings? ApiSettings { get; private set; }
 
     public static string MSDeviceTokenRequestUrl =>
-        $"https://login.microsoftonline.com/{ApiSettings.TenentId}/oauth2/v2.0/devicecode";
+        $"https://login.microsoftonline.com/{ApiSettings!.TenentId}/oauth2/v2.0/devicecode";
 
-    public static string MSDeviceTokenStatusUrl =>
-        $"https://login.microsoftonline.com/{ApiSettings.TenentId}/oauth2/v2.0/token";
+    public static  string MSDeviceTokenStatusUrl =>
+        $"https://login.microsoftonline.com/{ApiSettings!.TenentId}/oauth2/v2.0/token";
 
-    public static string MSRefreshTokenRequestUrl =>
-        $"https://login.microsoftonline.com/{ApiSettings.TenentId}/oauth2/v2.0/token";
+    public static  string MSRefreshTokenRequestUrl =>
+        $"https://login.microsoftonline.com/{ApiSettings!.TenentId}/oauth2/v2.0/token";
 
     static HttpClient DefaultClient => HttpClientHelper.DefaultClient;
 
-    public string Email { get; set; }
-    public Func<Task<(bool, GraphAuthResultModel?)>> CacheTokenProvider { get; init; }
-    public ILauncherAccountParser LauncherAccountParser { get; set; }
+    public string? Email { get; set; }
+    public Func<Task<(bool, GraphAuthResultModel?)>>? CacheTokenProvider { get; init; }
+    public required ILauncherAccountParser LauncherAccountParser { get; init; }
 
     public AuthResultBase Auth(bool userField = false)
     {
@@ -86,7 +86,7 @@ public class MicrosoftAuthenticator : IAuthenticator
 
         var (isCredentialValid, cacheAuthResult) = await CacheTokenProvider();
 
-        if (!isCredentialValid)
+        if (!isCredentialValid || cacheAuthResult == null)
             return new MicrosoftAuthResult
             {
                 AuthStatus = AuthStatus.Failed,
@@ -141,15 +141,17 @@ public class MicrosoftAuthenticator : IAuthenticator
                 _ => "未知"
             };
 
+            var errorMessage = errModel?.Message ?? "未知";
+            if (!string.IsNullOrEmpty(errModel?.Redirect))
+                errorMessage += $"，相关链接：{errModel.Redirect}";
+            
             var err = new ErrorModel
             {
                 Cause = reason,
                 Error = $"XSTS 认证失败，原因：{reason}",
-                ErrorMessage = errModel?.Message ?? "未知"
+                ErrorMessage = errorMessage
             };
-
-            if (!string.IsNullOrEmpty(errModel?.Redirect)) err.Error += $"，相关链接：{errModel.Redirect}";
-
+            
             return new MicrosoftAuthResult
             {
                 AuthStatus = AuthStatus.Failed,
@@ -210,10 +212,23 @@ public class MicrosoftAuthenticator : IAuthenticator
 
         #endregion
 
+        if (mcRes == null)
+            return new MicrosoftAuthResult
+            {
+                AuthStatus = AuthStatus.Failed,
+                Error = new ErrorModel
+                {
+                    Error = "Mojang 服务器返回了无效的响应",
+                    ErrorMessage = "XSTS 认证失败，可能是网络原因导致的",
+                    Cause = "XSTS 认证失败"
+                }
+            };
+
         #region STAGE 4
 
-        using var ownResRes = await HttpHelper.Get(MojangOwnershipUrl,
-            new Tuple<string, string>("Bearer", mcRes.AccessToken));
+        using var ownResRes = await HttpHelper.Get(
+            MojangOwnershipUrl,
+            ("Bearer", mcRes.AccessToken));
         var ownRes =
             await ownResRes.Content.ReadFromJsonAsync(MojangOwnershipResponseModelContext.Default
                 .MojangOwnershipResponseModel);
@@ -235,7 +250,7 @@ public class MicrosoftAuthenticator : IAuthenticator
         #region STAGE 5
 
         using var profileResRes =
-            await HttpHelper.Get(MojangProfileUrl, new Tuple<string, string>("Bearer", mcRes.AccessToken));
+            await HttpHelper.Get(MojangProfileUrl, ("Bearer", mcRes.AccessToken));
         var profileRes =
             await profileResRes.Content.ReadFromJsonAsync(MojangProfileResponseModelContext.Default
                 .MojangProfileResponseModel);
@@ -279,7 +294,7 @@ public class MicrosoftAuthenticator : IAuthenticator
             Persistent = true,
             RemoteId = profileRes.Name,
             Type = "XBox",
-            UserProperites = Array.Empty<AuthPropertyModel>(),
+            UserProperites = null,
             Username = profileRes.Name
         };
 
@@ -343,9 +358,9 @@ public class MicrosoftAuthenticator : IAuthenticator
         };
     }
 
-    public AuthResultBase GetLastAuthResult()
+    public AuthResultBase? GetLastAuthResult()
     {
-        var (_, value) = LauncherAccountParser.LauncherAccount.Accounts
+        var (_, value) = LauncherAccountParser.LauncherAccount.Accounts!
             .FirstOrDefault(x =>
                 x.Value.Username.Equals(Email, StringComparison.OrdinalIgnoreCase) &&
                 x.Value.Type.Equals("XBox", StringComparison.OrdinalIgnoreCase));
@@ -355,8 +370,8 @@ public class MicrosoftAuthenticator : IAuthenticator
 
         var sP = new ProfileInfoModel
         {
-            Name = value.MinecraftProfile.Name,
-            UUID = new PlayerUUID(value.MinecraftProfile.Id)
+            Name = value.MinecraftProfile?.Name ?? Email ?? string.Empty,
+            UUID = new PlayerUUID(value.MinecraftProfile?.Id ?? Email ?? string.Empty)
         };
 
         return new MicrosoftAuthResult
@@ -403,7 +418,7 @@ public class MicrosoftAuthenticator : IAuthenticator
 
         var deviceTokenRequestDic = new[]
         {
-            new KeyValuePair<string, string>("client_id", ApiSettings.ClientId),
+            new KeyValuePair<string, string>("client_id", ApiSettings!.ClientId),
             new KeyValuePair<string, string>("scope", string.Join(' ', ApiSettings.Scopes))
         };
 

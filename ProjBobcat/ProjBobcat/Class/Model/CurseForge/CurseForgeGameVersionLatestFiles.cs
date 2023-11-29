@@ -5,11 +5,11 @@ namespace ProjBobcat.Class.Model.CurseForge;
 
 public class CurseForgeGameVersionLatestFiles
 {
-    [JsonPropertyName("gameVersion")] public string GameVersion { get; set; }
+    [JsonPropertyName("gameVersion")] public string? GameVersion { get; set; }
 
     [JsonPropertyName("projectFileId")] public int ProjectFileId { get; set; }
 
-    [JsonPropertyName("projectFileName")] public string ProjectFileName { get; set; }
+    [JsonPropertyName("projectFileName")] public string? ProjectFileName { get; set; }
 
     [JsonPropertyName("fileType")] public int FileType { get; set; }
 

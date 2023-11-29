@@ -14,8 +14,9 @@ namespace ProjBobcat.DefaultComponent.Installer.ModPackInstaller;
 
 public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
 {
-    public string GameId { get; set; }
-    public string ModPackPath { get; set; }
+    public string? GameId { get; init; }
+    public override string RootPath { get; init; } = string.Empty;
+    public required string ModPackPath { get; init; }
 
     public async Task<ModrinthModPackIndexModel?> ReadIndexTask()
     {
@@ -42,6 +43,11 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
 
     public async Task InstallTaskAsync()
     {
+        if (string.IsNullOrEmpty(GameId))
+            throw new ArgumentNullException(nameof(GameId));
+        if (string.IsNullOrEmpty(RootPath))
+            throw new ArgumentNullException(nameof(RootPath));
+        
         InvokeStatusChangedEvent("开始安装", 0);
 
         var index = await ReadIndexTask();
@@ -65,7 +71,7 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
             if (file.Downloads.Length == 0) continue;
 
             var fullPath = Path.Combine(idPath, file.Path);
-            var downloadDir = Path.GetDirectoryName(fullPath);
+            var downloadDir = Path.GetDirectoryName(fullPath)!;
             var fileName = Path.GetFileName(fullPath);
             var checkSum = file.Hashes.TryGetValue("sha1", out var sha1) ? sha1 : string.Empty;
 
@@ -73,7 +79,7 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
             {
                 CheckSum = checkSum,
                 DownloadPath = downloadDir,
-                DownloadUri = file.Downloads.RandomSample(),
+                DownloadUri = file.Downloads.RandomSample()!,
                 FileName = fileName,
                 FileSize = file.Size
             };
@@ -111,7 +117,7 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
             if (string.IsNullOrEmpty(subPath)) continue;
 
             var path = Path.Combine(Path.GetFullPath(idPath), subPath);
-            var dirPath = Path.GetDirectoryName(path);
+            var dirPath = Path.GetDirectoryName(path)!;
 
             if (!Directory.Exists(dirPath))
                 Directory.CreateDirectory(dirPath);

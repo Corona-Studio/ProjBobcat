@@ -7,26 +7,26 @@ public interface IGameResource
     /// <summary>
     ///     下载目录
     /// </summary>
-    string Path { get; set; }
+    string Path { get; init; }
 
     /// <summary>
     ///     标题
     /// </summary>
-    string Title { get; set; }
+    string Title { get; init; }
 
     /// <summary>
     ///     文件类型
     /// </summary>
-    ResourceType Type { get; set; }
+    ResourceType Type { get; init; }
 
     /// <summary>
     ///     Url
     /// </summary>
-    string Url { get; set; }
+    string Url { get; init; }
 
-    string FileName { get; set; }
+    string FileName { get; init; }
 
-    long FileSize { get; set; }
+    long FileSize { get; init; }
 
-    string CheckSum { get; set; }
+    string? CheckSum { get; init; }
 }

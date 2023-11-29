@@ -4,6 +4,6 @@ namespace ProjBobcat.Event;
 
 public class LaunchLogEventArgs : EventArgs
 {
-    public string Item { get; set; }
-    public TimeSpan ItemRunTime { get; set; }
+    public required string Item { get; init; }
+    public required TimeSpan ItemRunTime { get; init; }
 }

@@ -8,9 +8,9 @@ public class CurseForgeLatestFileModel
 {
     [JsonPropertyName("id")] public int Id { get; set; }
 
-    [JsonPropertyName("displayName")] public string DisplayName { get; set; }
+    [JsonPropertyName("displayName")] public required string DisplayName { get; init; }
 
-    [JsonPropertyName("fileName")] public string FileName { get; set; }
+    [JsonPropertyName("fileName")] public required string FileName { get; init; }
 
     [JsonPropertyName("fileDate")] public DateTime FileDate { get; set; }
 
@@ -20,25 +20,25 @@ public class CurseForgeLatestFileModel
 
     [JsonPropertyName("fileStatus")] public int FileStatus { get; set; }
 
-    [JsonPropertyName("downloadUrl")] public string DownloadUrl { get; set; }
+    [JsonPropertyName("downloadUrl")] public required string DownloadUrl { get; init; }
 
     [JsonPropertyName("isAlternate")] public bool IsAlternate { get; set; }
 
     [JsonPropertyName("alternateFileId")] public int AlternateFileId { get; set; }
 
-    [JsonPropertyName("dependencies")] public CurseForgeDependencyModel[] Dependencies { get; set; }
+    [JsonPropertyName("dependencies")] public CurseForgeDependencyModel[]? Dependencies { get; set; }
 
     [JsonPropertyName("isAvailable")] public bool IsAvailable { get; set; }
 
-    [JsonPropertyName("modules")] public CurseForgeModuleModel[] Modules { get; set; }
+    [JsonPropertyName("modules")] public CurseForgeModuleModel[]? Modules { get; set; }
 
     [JsonPropertyName("packageFingerprint")]
     public long PackageFingerprint { get; set; }
 
-    [JsonPropertyName("gameVersions")] public string[] GameVersions { get; set; }
+    [JsonPropertyName("gameVersions")] public required string[] GameVersions { get; init; }
 
     [JsonPropertyName("sortableGameVersion")]
-    public CurseForgeSortableGameVersionModel[] SortableGameVersion { get; set; }
+    public CurseForgeSortableGameVersionModel[]? SortableGameVersion { get; set; }
 
     [JsonPropertyName("installMetadata")] public JsonElement InstallMetadata { get; set; }
 

@@ -4,9 +4,9 @@ namespace ProjBobcat.Class.Model.YggdrasilAuth;
 
 public class ProfileInfoModel
 {
-    [JsonPropertyName("id")] public PlayerUUID UUID { get; set; }
+    [JsonPropertyName("id")] public required PlayerUUID UUID { get; init; }
 
-    [JsonPropertyName("name")] public string Name { get; set; }
+    [JsonPropertyName("name")] public required string Name { get; init; }
 
-    [JsonPropertyName("properties")] public PropertyModel[] Properties { get; set; }
+    [JsonPropertyName("properties")] public PropertyModel[]? Properties { get; init; }
 }

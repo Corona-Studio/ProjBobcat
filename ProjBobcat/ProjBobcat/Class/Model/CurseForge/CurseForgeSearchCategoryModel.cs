@@ -7,13 +7,13 @@ public class CurseForgeSearchCategoryModel
 {
     [JsonPropertyName("id")] public int? Id { get; set; }
 
-    [JsonPropertyName("name")] public string Name { get; set; }
+    [JsonPropertyName("name")] public string? Name { get; set; }
 
-    [JsonPropertyName("slug")] public string Slug { get; set; }
+    [JsonPropertyName("slug")] public string? Slug { get; set; }
 
-    [JsonPropertyName("url")] public string Url { get; set; }
+    [JsonPropertyName("url")] public string? Url { get; set; }
 
-    [JsonPropertyName("iconUrl")] public string IconUrl { get; set; }
+    [JsonPropertyName("iconUrl")] public string? IconUrl { get; set; }
 
     [JsonPropertyName("dateModified")] public DateTime? DateModified { get; set; }
 

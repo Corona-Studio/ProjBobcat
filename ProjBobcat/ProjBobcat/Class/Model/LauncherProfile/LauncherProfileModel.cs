@@ -5,13 +5,13 @@ namespace ProjBobcat.Class.Model.LauncherProfile;
 
 public class LauncherProfileModel
 {
-    [JsonPropertyName("profiles")] public Dictionary<string, GameProfileModel> Profiles { get; set; }
+    [JsonPropertyName("profiles")] public Dictionary<string, GameProfileModel>? Profiles { get; init; }
 
-    [JsonPropertyName("clientToken")] public string ClientToken { get; set; }
+    [JsonPropertyName("clientToken")] public string? ClientToken { get; init; }
 
-    [JsonPropertyName("selectedUser")] public SelectedUserModel SelectedUser { get; set; }
+    [JsonPropertyName("selectedUser")] public SelectedUserModel? SelectedUser { get; set; }
 
-    [JsonPropertyName("launcherVersion")] public LauncherVersionModel LauncherVersion { get; set; }
+    [JsonPropertyName("launcherVersion")] public LauncherVersionModel? LauncherVersion { get; init; }
 }
 
 [JsonSerializable(typeof(LauncherProfileModel))]

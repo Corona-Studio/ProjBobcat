@@ -5,9 +5,10 @@ namespace ProjBobcat.Class.Model;
 
 public class GameRules
 {
-    [JsonPropertyName("action")] public string Action { get; set; }
+    [JsonPropertyName("action")] public required string Action { get; init; }
 
-    [JsonPropertyName("features")] public Dictionary<string, bool> Features { get; set; }
+    [JsonPropertyName("features")]
+    public IReadOnlyDictionary<string, bool> Features { get; set; } = new Dictionary<string, bool>();
 }
 
 [JsonSerializable(typeof(GameRules))]

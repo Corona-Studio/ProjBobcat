@@ -20,9 +20,9 @@ public abstract class ResolverBase : IResourceInfoResolver
         remove => listEventDelegates.RemoveHandler(ResolveEventKey, value);
     }
 
-    public string BasePath { get; set; }
+    public required string BasePath { get; init; }
     public bool CheckLocalFiles { get; set; }
-    public VersionInfo? VersionInfo { get; set; }
+    public required VersionInfo VersionInfo { get; init; }
 
     public abstract IAsyncEnumerable<IGameResource> ResolveResourceAsync();
 

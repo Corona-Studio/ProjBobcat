@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http.Json;
@@ -28,12 +29,12 @@ public class YggdrasilAuthenticator : IAuthenticator
     /// <summary>
     ///     获取或设置邮箱。
     /// </summary>
-    public string Email { get; init; }
+    public required string Email { get; init; }
 
     /// <summary>
     ///     获取或设置密码。
     /// </summary>
-    public string Password { get; init; }
+    public required string Password { get; init; }
 
     /// <summary>
     ///     获取或设置验证服务器。
@@ -71,7 +72,7 @@ public class YggdrasilAuthenticator : IAuthenticator
     string SignOutAddress =>
         $"{AuthServer}{(string.IsNullOrEmpty(AuthServer) ? OfficialAuthServer : "/authserver")}/signout";
 
-    public ILauncherAccountParser LauncherAccountParser { get; set; }
+    public required ILauncherAccountParser LauncherAccountParser { get; init; }
 
     /// <summary>
     ///     验证凭据。
@@ -155,13 +156,28 @@ public class YggdrasilAuthenticator : IAuthenticator
                     Cause = "可能是因为您还没有购买正版游戏或是账户服务器出现了问题！"
                 }
             };
+        
+        if (result.AvailableProfiles == null || result.AvailableProfiles.Length == 0)
+            return new YggdrasilAuthResult
+            {
+                AuthStatus = AuthStatus.Failed,
+                Error = new ErrorModel
+                {
+                    Error = "没有发现档案",
+                    ErrorMessage = "没有在返回消息中发现任何可用的档案",
+                    Cause = "可能是因为您还没有购买正版游戏或是账户服务器出现了问题！"
+                }
+            };
 
-        var profiles = result.AvailableProfiles.ToDictionary(profile => profile.UUID,
-            profile => new AuthProfileModel { DisplayName = profile.Name });
+        var profiles =
+            result.AvailableProfiles
+                .ToDictionary(profile => profile.UUID,
+                              profile => new AuthProfileModel { DisplayName = profile.Name })
+                .AsReadOnly();
 
         foreach (var (playerUuid, authProfileModel) in profiles)
         {
-            var ids = LauncherAccountParser.LauncherAccount.Accounts.Where(a =>
+            var ids = LauncherAccountParser.LauncherAccount.Accounts!.Where(a =>
                     (a.Value.MinecraftProfile?.Name?.Equals(authProfileModel.DisplayName,
                         StringComparison.OrdinalIgnoreCase) ?? false) &&
                     (a.Value.MinecraftProfile?.Id?.Equals(playerUuid.ToString(), StringComparison.OrdinalIgnoreCase) ??
@@ -250,7 +266,7 @@ public class YggdrasilAuthenticator : IAuthenticator
     public AuthResultBase GetLastAuthResult()
     {
         var profile =
-            LauncherAccountParser.LauncherAccount.Accounts.Values.FirstOrDefault(a =>
+            LauncherAccountParser.LauncherAccount.Accounts!.Values.FirstOrDefault(a =>
                 a.Username.Equals(Email, StringComparison.OrdinalIgnoreCase));
 
         if (profile is null)
@@ -275,7 +291,7 @@ public class YggdrasilAuthenticator : IAuthenticator
                     new ProfileInfoModel
                     {
                         Name = profile.Username,
-                        Properties = profile.UserProperites.Select(x => new PropertyModel
+                        Properties = profile.UserProperites?.Select(x => new PropertyModel
                         {
                             Name = x.Name,
                             Value = x.Value
@@ -302,6 +318,11 @@ public class YggdrasilAuthenticator : IAuthenticator
 
     public async Task<AuthResultBase> AuthRefreshTaskAsync(AuthResponseModel response, bool userField = false)
     {
+        if (string.IsNullOrEmpty(response.AccessToken) ||
+            string.IsNullOrEmpty(response.ClientToken) ||
+            response.SelectedProfile == null)
+            throw new ArgumentException(nameof(response));
+        
         var requestModel = new AuthRefreshRequestModel
         {
             AccessToken = response.AccessToken,
@@ -327,7 +348,20 @@ public class YggdrasilAuthenticator : IAuthenticator
                     Error = error
                 };
             case AuthResponseModel authResponse:
-                if (authResponse.SelectedProfile == null)
+                if (authResponse.User == null ||
+                    string.IsNullOrEmpty(authResponse.AccessToken))
+                    return new AuthResultBase
+                    {
+                        AuthStatus = AuthStatus.Failed,
+                        Error = new ErrorModel
+                        {
+                            Error = "无效的用户字段",
+                            ErrorMessage = "用户字段缺少了部分重要数据，请联系开发者"
+                        }
+                    };
+                
+                if (authResponse.SelectedProfile == null ||
+                    (authResponse.AvailableProfiles == null || authResponse.AvailableProfiles.Length == 0))
                     return new AuthResultBase
                     {
                         AuthStatus = AuthStatus.Failed,
@@ -339,11 +373,15 @@ public class YggdrasilAuthenticator : IAuthenticator
                         }
                     };
 
-                var profiles = authResponse.AvailableProfiles.ToDictionary(profile => profile.UUID,
-                    profile => new AuthProfileModel { DisplayName = profile.Name });
+                var profiles =
+                    authResponse.AvailableProfiles
+                        .ToDictionary(
+                            profile => profile.UUID,
+                            profile => new AuthProfileModel { DisplayName = profile.Name })
+                        .AsReadOnly();
 
                 var uuid = authResponse.User.UUID.ToString();
-                var (_, value) = LauncherAccountParser.LauncherAccount.Accounts.FirstOrDefault(a =>
+                var (_, value) = LauncherAccountParser.LauncherAccount.Accounts!.FirstOrDefault(a =>
                     (a.Value.MinecraftProfile?.Name?.Equals(authResponse.User.UserName,
                         StringComparison.OrdinalIgnoreCase) ?? false) &&
                     (a.Value.MinecraftProfile?.Id?.Equals(uuid, StringComparison.OrdinalIgnoreCase) ?? false));

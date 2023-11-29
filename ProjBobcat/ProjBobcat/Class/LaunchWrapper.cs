@@ -12,23 +12,18 @@ namespace ProjBobcat.Class;
 /// <summary>
 ///     启动包装类
 /// </summary>
-public class LaunchWrapper : IDisposable
+/// <remarks>
+///     构造函数
+/// </remarks>
+/// <param name="authResult">验证结果</param>
+public class LaunchWrapper(AuthResultBase authResult) : IDisposable
 {
     bool _disposedValue;
 
     /// <summary>
-    ///     构造函数
-    /// </summary>
-    /// <param name="authResult">验证结果</param>
-    public LaunchWrapper(AuthResultBase authResult)
-    {
-        AuthResult = authResult;
-    }
-
-    /// <summary>
     ///     验证结果
     /// </summary>
-    public AuthResultBase AuthResult { get; }
+    public AuthResultBase AuthResult { get; } = authResult;
 
     /// <summary>
     ///     退出码
@@ -38,19 +33,12 @@ public class LaunchWrapper : IDisposable
     /// <summary>
     ///     游戏核心
     /// </summary>
-    public IGameCore GameCore { get; init; }
+    public required IGameCore GameCore { get; init; }
 
     /// <summary>
     ///     游戏进程
     /// </summary>
     public Process? Process { get; init; }
-
-    // // TODO: 仅当“Dispose(bool disposing)”拥有用于释放未托管资源的代码时才替代终结器
-    // ~LaunchWrapper()
-    // {
-    //     // 不要更改此代码。请将清理代码放入“Dispose(bool disposing)”方法中
-    //     Dispose(disposing: false);
-    // }
 
     public void Dispose()
     {
@@ -106,6 +94,7 @@ public class LaunchWrapper : IDisposable
     void ProcessOnOutputDataReceived(object sender, DataReceivedEventArgs e)
     {
         if (string.IsNullOrEmpty(e.Data)) return;
+        if (GameCore.GameLogResolver == null) return;
 
         var totalPrefix = GameCore.GameLogResolver.ResolveTotalPrefix(e.Data);
         var type = GameCore.GameLogResolver.ResolveLogType(string.IsNullOrEmpty(totalPrefix)
@@ -144,7 +133,7 @@ public class LaunchWrapper : IDisposable
             });
     }
 
-    protected virtual void Dispose(bool disposing)
+    void Dispose(bool disposing)
     {
         if (!_disposedValue)
         {

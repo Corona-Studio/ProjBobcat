@@ -7,17 +7,17 @@ public class FeaturedQueryOptions
 {
     public int GameId { get; set; }
 
-    [JsonPropertyName("addonIds")] public int[] AddonIds { get; set; }
+    [JsonPropertyName("addonIds")] public required int[] AddonIds { get; init; }
 
-    [JsonPropertyName("featuredCount")] public int FeaturedCount { get; set; }
+    [JsonPropertyName("featuredCount")] public required int FeaturedCount { get; init; }
 
-    [JsonPropertyName("popularCount")] public int PopularCount { get; set; }
+    [JsonPropertyName("popularCount")] public required int PopularCount { get; init; }
 
-    [JsonPropertyName("updatedCount")] public int UpdatedCount { get; set; }
+    [JsonPropertyName("updatedCount")] public required int UpdatedCount { get; init; }
 
     public static FeaturedQueryOptions Default => new()
     {
-        AddonIds = Array.Empty<int>(),
+        AddonIds = [],
         FeaturedCount = 15,
         GameId = 432,
         PopularCount = 150,

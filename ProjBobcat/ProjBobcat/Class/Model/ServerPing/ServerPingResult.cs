@@ -2,6 +2,6 @@
 
 public class ServerPingResult
 {
-    public PingPayload Response { get; set; }
-    public long Latency { get; set; }
+    public required PingPayload Response { get; init; }
+    public long Latency { get; init; }
 }

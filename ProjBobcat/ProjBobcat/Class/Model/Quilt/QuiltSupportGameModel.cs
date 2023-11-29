@@ -4,7 +4,7 @@ namespace ProjBobcat.Class.Model.Quilt;
 
 public class QuiltSupportGameModel
 {
-    [JsonPropertyName("version")] public string Version { get; set; }
+    [JsonPropertyName("version")] public required string Version { get; init; }
 
     [JsonPropertyName("stable")] public bool Stable { get; set; }
 }

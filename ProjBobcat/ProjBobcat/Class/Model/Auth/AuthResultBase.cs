@@ -15,7 +15,7 @@ public class AuthResultBase
     /// <summary>
     ///     获取的AccessToken
     /// </summary>
-    public string AccessToken { get; set; }
+    public string? AccessToken { get; set; }
 
     /// <summary>
     ///     错误信息
@@ -30,5 +30,5 @@ public class AuthResultBase
     /// <summary>
     ///     用户信息
     /// </summary>
-    public UserInfoModel User { get; set; }
+    public UserInfoModel? User { get; set; }
 }

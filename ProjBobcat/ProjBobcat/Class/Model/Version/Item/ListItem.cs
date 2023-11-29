@@ -7,7 +7,7 @@ namespace ProjBobcat.Class.Model.Version.Item;
 
 public class ListItem : List<IItem>, IItem
 {
-    public int CompareTo(object obj)
+    public int CompareTo(object? obj)
     {
         if (obj is not IItem item)
         {

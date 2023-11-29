@@ -18,15 +18,16 @@ namespace ProjBobcat.DefaultComponent.Installer.ModPackInstaller;
 
 public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInstaller
 {
-    public string ModPackPath { get; set; }
-    public string GameId { get; set; }
+    public override string RootPath { get; init; } = string.Empty;
+    public required string ModPackPath { get; init; }
+    public string? GameId { get; init; }
 
     public void Install()
     {
         InstallTaskAsync().Wait();
     }
 
-    private async ValueTask<(bool, DownloadFile?)> TryGuessModDownloadLink(long fileId, string downloadPath)
+    async ValueTask<(bool, DownloadFile?)> TryGuessModDownloadLink(long fileId, string downloadPath)
     {
         try
         {
@@ -79,6 +80,11 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
     public async Task InstallTaskAsync()
     {
+        if (string.IsNullOrEmpty(GameId))
+            throw new ArgumentNullException(nameof(GameId));
+        if (string.IsNullOrEmpty(RootPath))
+            throw new ArgumentNullException(nameof(RootPath));
+        
         InvokeStatusChangedEvent("开始安装", 0);
 
         var manifest = await ReadManifestTask();
@@ -108,6 +114,10 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
             try
             {
                 var downloadUrlRes = await CurseForgeAPIHelper.GetAddonDownloadUrl(t.Item1, t.Item2);
+                
+                if (string.IsNullOrEmpty(downloadUrlRes))
+                    throw new CurseForgeModResolveException(t.Item1, t.Item2);
+                
                 var d = downloadUrlRes.Trim('"');
                 var fn = Path.GetFileName(d);
 
@@ -136,7 +146,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
                 var (guessed, df) = await TryGuessModDownloadLink(t.Item2, di.FullName);
 
-                if (!guessed)
+                if (!guessed || df == null)
                 {
                     try
                     {
@@ -205,13 +215,14 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
         foreach (var entry in archive.Entries)
         {
-            if (!entry.Key.StartsWith(manifest.Overrides, StringComparison.OrdinalIgnoreCase)) continue;
+            if (string.IsNullOrEmpty(manifest.Overrides) ||
+                !entry.Key.StartsWith(manifest.Overrides, StringComparison.OrdinalIgnoreCase)) continue;
 
             var subPath = entry.Key[(manifest.Overrides.Length + 1)..];
             if (string.IsNullOrEmpty(subPath)) continue;
 
             var path = Path.Combine(Path.GetFullPath(idPath), subPath);
-            var dirPath = Path.GetDirectoryName(path);
+            var dirPath = Path.GetDirectoryName(path)!;
 
             if (!Directory.Exists(dirPath))
                 Directory.CreateDirectory(dirPath);

@@ -5,8 +5,8 @@ namespace ProjBobcat.Interface;
 
 public interface ICurseForgeInstaller : IInstaller
 {
-    string GameId { get; set; }
-    string ModPackPath { get; set; }
+    string? GameId { get; init; }
+    string ModPackPath { get; init; }
     Task<CurseForgeManifestModel?> ReadManifestTask();
     void Install();
     Task InstallTaskAsync();

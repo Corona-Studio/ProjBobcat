@@ -12,24 +12,23 @@ public class DownloadFile : IDisposable
     static readonly object CompletedEventKey = new();
     static readonly object ChangedEventKey = new();
 
-    protected readonly EventHandlerList ListEventDelegates = new();
-
-    bool disposedValue;
+    readonly EventHandlerList _listEventDelegates = new();
+    bool _disposedValue;
 
     /// <summary>
     ///     下载Uri
     /// </summary>
-    public string DownloadUri { get; set; }
+    public required string DownloadUri { get; init; }
 
     /// <summary>
     ///     下载路径
     /// </summary>
-    public string DownloadPath { get; set; }
+    public required string DownloadPath { get; init; }
 
     /// <summary>
     ///     保存的文件名
     /// </summary>
-    public string FileName { get; set; }
+    public required string FileName { get; init; }
 
     /// <summary>
     ///     最大重试计数
@@ -39,24 +38,17 @@ public class DownloadFile : IDisposable
     /// <summary>
     ///     文件类型（仅在Lib/Asset补全时可用）
     /// </summary>
-    public ResourceType FileType { get; set; }
+    public ResourceType FileType { get; init; }
 
     /// <summary>
     ///     文件大小
     /// </summary>
-    public long FileSize { get; set; }
+    public long FileSize { get; init; }
 
     /// <summary>
     ///     文件检验码
     /// </summary>
-    public string CheckSum { get; set; }
-
-    // // TODO: 仅当“Dispose(bool disposing)”拥有用于释放未托管资源的代码时才替代终结器
-    // ~DownloadFile()
-    // {
-    //     // 不要更改此代码。请将清理代码放入“Dispose(bool disposing)”方法中
-    //     Dispose(disposing: false);
-    // }
+    public string? CheckSum { get; init; }
 
     public void Dispose()
     {
@@ -70,8 +62,8 @@ public class DownloadFile : IDisposable
     /// </summary>
     public event EventHandler<DownloadFileCompletedEventArgs> Completed
     {
-        add => ListEventDelegates.AddHandler(CompletedEventKey, value);
-        remove => ListEventDelegates.RemoveHandler(CompletedEventKey, value);
+        add => _listEventDelegates.AddHandler(CompletedEventKey, value);
+        remove => _listEventDelegates.RemoveHandler(CompletedEventKey, value);
     }
 
     /// <summary>
@@ -79,14 +71,15 @@ public class DownloadFile : IDisposable
     /// </summary>
     public event EventHandler<DownloadFileChangedEventArgs> Changed
     {
-        add => ListEventDelegates.AddHandler(ChangedEventKey, value);
-        remove => ListEventDelegates.RemoveHandler(ChangedEventKey, value);
+        add => _listEventDelegates.AddHandler(ChangedEventKey, value);
+        remove => _listEventDelegates.RemoveHandler(ChangedEventKey, value);
     }
 
     public void OnChanged(double speed, double progress, long bytesReceived, long totalBytes)
     {
-        var eventList = ListEventDelegates;
-        var @event = (EventHandler<DownloadFileChangedEventArgs>)eventList[ChangedEventKey];
+        var eventList = _listEventDelegates;
+        var @event = (EventHandler<DownloadFileChangedEventArgs>?)eventList[ChangedEventKey];
+        
         @event?.Invoke(this, new DownloadFileChangedEventArgs
         {
             Speed = speed,
@@ -98,22 +91,22 @@ public class DownloadFile : IDisposable
 
     public void OnCompleted(bool? success, Exception? ex, double averageSpeed)
     {
-        var eventList = ListEventDelegates;
+        var eventList = _listEventDelegates;
         var @event = (EventHandler<DownloadFileCompletedEventArgs>?)eventList[CompletedEventKey];
         @event?.Invoke(this, new DownloadFileCompletedEventArgs(success, ex, averageSpeed));
     }
 
     protected virtual void Dispose(bool disposing)
     {
-        if (!disposedValue)
+        if (!_disposedValue)
         {
             if (disposing)
                 // TODO: 释放托管状态(托管对象)
-                ListEventDelegates.Dispose();
+                _listEventDelegates.Dispose();
 
             // TODO: 释放未托管的资源(未托管的对象)并重写终结器
             // TODO: 将大型字段设置为 null
-            disposedValue = true;
+            _disposedValue = true;
         }
     }
 }

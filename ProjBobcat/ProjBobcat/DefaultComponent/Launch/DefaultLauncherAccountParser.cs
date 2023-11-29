@@ -20,40 +20,52 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
     /// </summary>
     /// <param name="rootPath"></param>
     /// <param name="clientToken"></param>
-    public DefaultLauncherAccountParser(string rootPath, Guid clientToken)
+    public DefaultLauncherAccountParser(string rootPath, Guid clientToken) : base(rootPath)
     {
-        RootPath = rootPath;
         _fullLauncherAccountPath = Path.Combine(rootPath, GamePathHelper.GetLauncherAccountPath());
 
         if (!File.Exists(_fullLauncherAccountPath))
         {
-            var launcherAccount = new LauncherAccountModel
-            {
-                Accounts = [],
-                MojangClientToken = clientToken.ToString("N")
-            };
-
-            LauncherAccount = launcherAccount;
-
-            var launcherProfileJson =
-                JsonSerializer.Serialize(launcherAccount, typeof(LauncherAccountModel),
-                    new LauncherAccountModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
-
-            if (!Directory.Exists(RootPath))
-                Directory.CreateDirectory(RootPath);
-
-            File.WriteAllText(_fullLauncherAccountPath, launcherProfileJson);
+            LauncherAccount = GenerateLauncherAccountModel(clientToken);
         }
         else
         {
             var launcherProfileJson =
                 File.ReadAllText(_fullLauncherAccountPath, Encoding.UTF8);
-            LauncherAccount = JsonSerializer.Deserialize(launcherProfileJson,
+            var val = JsonSerializer.Deserialize(launcherProfileJson,
                 LauncherAccountModelContext.Default.LauncherAccountModel);
+
+            if (val == null)
+            {
+                LauncherAccount = GenerateLauncherAccountModel(clientToken);
+                return;
+            }
+
+            LauncherAccount = val;
         }
     }
 
-    public LauncherAccountModel? LauncherAccount { get; set; }
+    LauncherAccountModel GenerateLauncherAccountModel(Guid clientToken)
+    {
+        var launcherAccount = new LauncherAccountModel
+        {
+            Accounts = [],
+            MojangClientToken = clientToken.ToString("N")
+        };
+
+        var launcherProfileJson =
+            JsonSerializer.Serialize(launcherAccount, typeof(LauncherAccountModel),
+                new LauncherAccountModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
+
+        if (!Directory.Exists(RootPath))
+            Directory.CreateDirectory(RootPath);
+
+        File.WriteAllText(_fullLauncherAccountPath, launcherProfileJson);
+
+        return launcherAccount;
+    }
+
+    public LauncherAccountModel LauncherAccount { get; set; }
 
     public bool ActivateAccount(string uuid)
     {
@@ -83,7 +95,7 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
         }
 
         var oldRecord = LauncherAccount.Accounts
-            .FirstOrDefault(a => a.Value.MinecraftProfile.Id == account.MinecraftProfile.Id).Value;
+            .FirstOrDefault(a => a.Value.MinecraftProfile?.Id == account.MinecraftProfile?.Id).Value;
         if (oldRecord != null)
         {
             id = oldRecord.Id;
@@ -134,12 +146,10 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
         if (!result.HasValue) return false;
 
         var (key, value) = result.Value;
-        if (value == default)
-            return false;
 
-        LauncherAccount.Accounts.Remove(key);
-
+        LauncherAccount?.Accounts?.Remove(key);
         Save();
+        
         return true;
     }
 

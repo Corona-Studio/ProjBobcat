@@ -5,8 +5,8 @@ namespace ProjBobcat.Interface;
 
 public interface IModrinthInstaller : IInstaller
 {
-    string GameId { get; set; }
-    string ModPackPath { get; set; }
+    string? GameId { get; init; }
+    string ModPackPath { get; init; }
     Task<ModrinthModPackIndexModel?> ReadIndexTask();
     void Install();
     Task InstallTaskAsync();

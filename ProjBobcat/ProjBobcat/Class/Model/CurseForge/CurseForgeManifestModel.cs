@@ -4,21 +4,21 @@ namespace ProjBobcat.Class.Model.CurseForge;
 
 public class CurseForgeManifestModel
 {
-    [JsonPropertyName("minecraft")] public CurseForgeMineCraftModel MineCraft { get; set; }
+    [JsonPropertyName("minecraft")] public required CurseForgeMineCraftModel MineCraft { get; init; }
 
-    [JsonPropertyName("manifestType")] public string ManifestType { get; set; }
+    [JsonPropertyName("manifestType")] public string? ManifestType { get; set; }
 
     [JsonPropertyName("manifestVersion")] public int ManifestVersion { get; set; }
 
-    [JsonPropertyName("name")] public string Name { get; set; }
+    [JsonPropertyName("name")] public required string Name { get; init; }
 
-    [JsonPropertyName("version")] public string Version { get; set; }
+    [JsonPropertyName("version")] public required string Version { get; init; }
 
-    [JsonPropertyName("author")] public string Author { get; set; }
+    [JsonPropertyName("author")] public string? Author { get; set; }
 
-    [JsonPropertyName("files")] public CurseForgeFileModel[] Files { get; set; }
+    [JsonPropertyName("files")] public required CurseForgeFileModel[] Files { get; init; }
 
-    [JsonPropertyName("overrides")] public string Overrides { get; set; }
+    [JsonPropertyName("overrides")] public string? Overrides { get; set; }
 }
 
 [JsonSerializable(typeof(CurseForgeManifestModel))]

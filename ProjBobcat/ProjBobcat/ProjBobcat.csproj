@@ -6,7 +6,8 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
+    <TargetFrameworks>net8.0</TargetFrameworks>
+    <WarningsAsErrors>CS8618,CS8619,CS8601,CS8602,CS8603,CS8604,CS8620,CS8622,CS8625,CS8765,CS8766,CS8767</WarningsAsErrors>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -45,7 +46,7 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageIcon>Bobcat.png</PackageIcon>
     <RepositoryUrl>https://github.com/Corona-Studio/ProjBobcat</RepositoryUrl>
-    <Version>1.32.0</Version>
+    <Version>1.40.0</Version>
     <Authors>Corona Studio</Authors>
     <Company>Corona Studio</Company>
     <Product>ProjBobcat</Product>

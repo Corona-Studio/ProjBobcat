@@ -4,7 +4,7 @@ namespace ProjBobcat.Class.Model.Modrinth;
 
 public class ModrinthSearchOptions
 {
-    public string Name { get; init; }
+    public string? Name { get; init; }
     public string? Category { get; init; }
     public string Index { get; init; } = "relevance";
     public string? ProjectType { get; init; } = "mod";

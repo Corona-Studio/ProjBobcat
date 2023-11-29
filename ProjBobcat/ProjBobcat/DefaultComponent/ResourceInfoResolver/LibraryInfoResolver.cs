@@ -23,11 +23,10 @@ public sealed class LibraryInfoResolver : ResolverBase
     public override async IAsyncEnumerable<IGameResource> ResolveResourceAsync()
     {
         if (!CheckLocalFiles) yield break;
-        if (VersionInfo == null) yield break;
 
         OnResolve("开始进行游戏资源(Library)检查");
-        if ((VersionInfo.Natives == null || VersionInfo.Natives.Count == 0) &&
-            (VersionInfo.Libraries == null || VersionInfo.Libraries.Count == 0))
+        if (VersionInfo.Natives.Count == 0 &&
+            VersionInfo.Libraries.Count == 0)
             yield break;
 
         var libDi = new DirectoryInfo(Path.Combine(BasePath, GamePathHelper.GetLibraryRootPath()));
@@ -41,7 +40,7 @@ public sealed class LibraryInfoResolver : ResolverBase
         {
             foreach (var lib in VersionInfo.Libraries!)
             {
-                var libPath = GamePathHelper.GetLibraryPath(lib.Path);
+                var libPath = GamePathHelper.GetLibraryPath(lib.Path!);
                 var filePath = Path.Combine(BasePath, libPath);
 
                 Interlocked.Increment(ref checkedLib);
@@ -53,13 +52,8 @@ public sealed class LibraryInfoResolver : ResolverBase
                 {
                     if (string.IsNullOrEmpty(lib.Sha1)) continue;
 
-#if NET8_0_OR_GREATER
-                await using var fs = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-                var computedHash = (await SHA1.HashDataAsync(fs)).BytesToString();
-#else
-                    var bytes = await File.ReadAllBytesAsync(filePath);
-                    var computedHash = SHA1.HashData(bytes.AsSpan()).BytesToString();
-#endif
+                    await using var fs = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                    var computedHash = (await SHA1.HashDataAsync(fs)).BytesToString();
 
                     if (computedHash.Equals(lib.Sha1, StringComparison.OrdinalIgnoreCase)) continue;
                 }
@@ -77,7 +71,7 @@ public sealed class LibraryInfoResolver : ResolverBase
         {
             foreach (var native in VersionInfo.Natives!)
             {
-                var nativePath = GamePathHelper.GetLibraryPath(native.FileInfo.Path);
+                var nativePath = GamePathHelper.GetLibraryPath(native.FileInfo.Path!);
                 var filePath = Path.Combine(BasePath, nativePath);
 
                 if (File.Exists(filePath))
@@ -88,13 +82,8 @@ public sealed class LibraryInfoResolver : ResolverBase
                     var progress = (double)checkedLib / libCount * 100;
                     OnResolve(string.Empty, progress);
 
-#if NET8_0_OR_GREATER
-                await using var fs = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-                var computedHash = (await SHA1.HashDataAsync(fs)).BytesToString();
-#else
-                    var bytes = await File.ReadAllBytesAsync(filePath);
-                    var computedHash = SHA1.HashData(bytes.AsSpan()).BytesToString();
-#endif
+                    await using var fs = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                    var computedHash = (await SHA1.HashDataAsync(fs)).BytesToString();
 
                     if (computedHash.Equals(native.FileInfo.Sha1, StringComparison.OrdinalIgnoreCase)) continue;
                 }
@@ -124,7 +113,7 @@ public sealed class LibraryInfoResolver : ResolverBase
             _ => string.Empty
         };
 
-        var symbolIndex = lL.Path.LastIndexOf('/');
+        var symbolIndex = lL.Path!.LastIndexOf('/');
         var fileName = lL.Path[(symbolIndex + 1)..];
         var path = Path.Combine(BasePath,
             GamePathHelper.GetLibraryPath(lL.Path[..symbolIndex]));
@@ -132,7 +121,7 @@ public sealed class LibraryInfoResolver : ResolverBase
         return new LibraryDownloadInfo
         {
             Path = path,
-            Title = lL.Name.Split(':')[1],
+            Title = lL.Name?.Split(':')[1] ?? fileName,
             Type = ResourceType.LibraryOrNative,
             Url = uri,
             FileSize = lL.Size,
@@ -152,24 +141,24 @@ public sealed class LibraryInfoResolver : ResolverBase
 
     static bool IsQuiltLib(FileInfo fi)
     {
-        if (fi.Name.Contains("quiltmc", StringComparison.OrdinalIgnoreCase)) return true;
-        if (fi.Url.Contains("quiltmc", StringComparison.OrdinalIgnoreCase)) return true;
+        if (fi.Name?.Contains("quiltmc", StringComparison.OrdinalIgnoreCase) ?? false) return true;
+        if (fi.Url?.Contains("quiltmc", StringComparison.OrdinalIgnoreCase) ?? false) return true;
 
         return false;
     }
 
     static bool IsFabricLib(FileInfo fi)
     {
-        if (fi.Name.Contains("fabricmc", StringComparison.OrdinalIgnoreCase)) return true;
-        if (fi.Url.Contains("fabricmc", StringComparison.OrdinalIgnoreCase)) return true;
+        if (fi.Name?.Contains("fabricmc", StringComparison.OrdinalIgnoreCase) ?? false) return true;
+        if (fi.Url?.Contains("fabricmc", StringComparison.OrdinalIgnoreCase) ?? false) return true;
 
         return false;
     }
 
     static bool IsForgeLib(FileInfo fi)
     {
-        if (fi.Name.StartsWith("forge", StringComparison.Ordinal)) return true;
-        if (fi.Name.StartsWith("net.minecraftforge", StringComparison.Ordinal)) return true;
+        if (fi.Name?.StartsWith("forge", StringComparison.Ordinal) ?? false) return true;
+        if (fi.Name?.StartsWith("net.minecraftforge", StringComparison.Ordinal) ?? false) return true;
         if (HttpHelper.RegexMatchUri(fi?.Url ?? string.Empty)
             .Contains("minecraftforge", StringComparison.OrdinalIgnoreCase)) return true;
 

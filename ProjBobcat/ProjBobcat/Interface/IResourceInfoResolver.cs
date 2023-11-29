@@ -7,9 +7,9 @@ namespace ProjBobcat.Interface;
 
 public interface IResourceInfoResolver : IDisposable
 {
-    string BasePath { get; set; }
+    string BasePath { get; init; }
     bool CheckLocalFiles { get; set; }
-    VersionInfo VersionInfo { get; set; }
+    VersionInfo VersionInfo { get; init; }
     IAsyncEnumerable<IGameResource> ResolveResourceAsync();
     IEnumerable<IGameResource> ResolveResource();
 

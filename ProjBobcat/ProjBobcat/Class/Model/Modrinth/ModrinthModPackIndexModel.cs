@@ -15,9 +15,10 @@ public class ModrinthModPackIndexModel
 
     [JsonPropertyName("summary")] public string? Summary { get; set; }
 
-    [JsonPropertyName("files")] public ModrinthModPackFileModel[] Files { get; set; }
+    [JsonPropertyName("files")] public ModrinthModPackFileModel[] Files { get; set; } = [];
 
-    [JsonPropertyName("dependencies")] public IReadOnlyDictionary<string, string> Dependencies { get; set; }
+    [JsonPropertyName("dependencies")]
+    public IReadOnlyDictionary<string, string> Dependencies { get; set; } = new Dictionary<string, string>();
 }
 
 [JsonSerializable(typeof(ModrinthModPackIndexModel))]

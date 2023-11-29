@@ -16,19 +16,20 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller;
 
 public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
 {
-    public string ForgeVersion { get; init; }
-    public string ForgeExecutablePath { get; set; }
+    public required string ForgeVersion { get; init; }
+    public required string ForgeExecutablePath { get; init; }
+    public override required string RootPath { get; init; }
 
     public VersionLocatorBase VersionLocator
     {
         get => throw new NotImplementedException();
-        set => throw new NotImplementedException();
+        init => throw new NotImplementedException();
     }
 
     public string DownloadUrlRoot
     {
         get => throw new NotImplementedException();
-        set => throw new NotImplementedException();
+        init => throw new NotImplementedException();
     }
 
     public ForgeInstallResult InstallForge()
@@ -38,11 +39,6 @@ public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
 
     public async Task<ForgeInstallResult> InstallForgeTaskAsync()
     {
-        if (string.IsNullOrEmpty(ForgeExecutablePath))
-            throw new ArgumentNullException("未指定\"ForgeExecutablePath\"参数");
-        if (string.IsNullOrEmpty(RootPath))
-            throw new ArgumentNullException("未指定\"RootPath\"参数");
-
         try
         {
             InvokeStatusChangedEvent("解压安装文件", 0.05);
@@ -106,12 +102,12 @@ public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
 
             var forgeLibrary = profileModel.VersionInfo.Libraries.First(l =>
                 l.Name.StartsWith("net.minecraftforge:forge", StringComparison.OrdinalIgnoreCase));
-            var mavenInfo = forgeLibrary.Name.ResolveMavenString();
+            var mavenInfo = forgeLibrary.Name.ResolveMavenString()!;
 
             var libSubPath = GamePathHelper.GetLibraryPath(mavenInfo.Path);
             var forgeLibPath = Path.Combine(RootPath, libSubPath);
 
-            var libDi = new DirectoryInfo(Path.GetDirectoryName(forgeLibPath));
+            var libDi = new DirectoryInfo(Path.GetDirectoryName(forgeLibPath)!);
 
             if (!libDi.Exists)
                 libDi.Create();

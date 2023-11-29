@@ -6,11 +6,11 @@ public class CurseForgeCategoryInfo
 {
     [JsonPropertyName("categoryId")] public int CategoryId { get; set; }
 
-    [JsonPropertyName("name")] public string Name { get; set; }
+    [JsonPropertyName("name")] public required string Name { get; init; }
 
-    [JsonPropertyName("url")] public string Url { get; set; }
+    [JsonPropertyName("url")] public string? Url { get; set; }
 
-    [JsonPropertyName("avatarUrl")] public string AvatarUrl { get; set; }
+    [JsonPropertyName("avatarUrl")] public string? AvatarUrl { get; set; }
 
     [JsonPropertyName("parentId")] public int ParentId { get; set; }
 

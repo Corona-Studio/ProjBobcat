@@ -18,12 +18,12 @@ public class OfflineAuthenticator : IAuthenticator
     /// <summary>
     ///     获取或设置用户名。
     /// </summary>
-    public string Username { get; init; }
+    public required string Username { get; init; }
 
     /// <summary>
     ///     获取或设置启动程序配置文件分析器。
     /// </summary>
-    public ILauncherAccountParser LauncherAccountParser { get; set; }
+    public required ILauncherAccountParser LauncherAccountParser { get; init; }
 
     /// <summary>
     ///     验证凭据。

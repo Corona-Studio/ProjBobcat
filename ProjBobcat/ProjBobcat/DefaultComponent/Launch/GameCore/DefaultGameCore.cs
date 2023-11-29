@@ -21,7 +21,7 @@ namespace ProjBobcat.DefaultComponent.Launch.GameCore;
 /// </summary>
 public sealed class DefaultGameCore : GameCoreBase
 {
-    string? _rootPath;
+    readonly string _rootPath = null!;
 
     /// <summary>
     ///     启动参数解析器
@@ -35,13 +35,13 @@ public sealed class DefaultGameCore : GameCoreBase
     /// <summary>
     ///     .minecraft 目录
     /// </summary>
-    public override string? RootPath
+    public override required string RootPath
     {
         get => _rootPath;
-        set
+        init
         {
             if (string.IsNullOrEmpty(value))
-                return;
+                throw new ArgumentNullException(nameof(RootPath));
 
             _rootPath = Path.GetFullPath(value.TrimEnd('/'));
         }
@@ -49,8 +49,11 @@ public sealed class DefaultGameCore : GameCoreBase
 
     public bool EnableXmlLoggingOutput { get; init; }
 
-    public override async Task<LaunchResult> LaunchTaskAsync(LaunchSettings? settings)
+    public override async Task<LaunchResult> LaunchTaskAsync(LaunchSettings settings)
     {
+        if (VersionLocator.LauncherProfileParser == null)
+            throw new ArgumentNullException(nameof(VersionLocator.LauncherProfileParser));
+        
         try
         {
             //逐步测量启动时间。
@@ -160,8 +163,13 @@ public sealed class DefaultGameCore : GameCoreBase
                     }
                 };
 
-            var argumentParser = new DefaultLaunchArgumentParser(settings, VersionLocator.LauncherProfileParser,
-                VersionLocator, authResult, RootPath, version.RootVersion)
+            var argumentParser = new DefaultLaunchArgumentParser(
+                settings,
+                VersionLocator.LauncherProfileParser,
+                VersionLocator,
+                authResult,
+                RootPath,
+                version.RootVersion)
             {
                 EnableXmlLoggingOutput = EnableXmlLoggingOutput
             };
@@ -208,7 +216,9 @@ public sealed class DefaultGameCore : GameCoreBase
                 foreach (var n in version.Natives)
                 {
                     var path =
-                        Path.Combine(RootPath, GamePathHelper.GetLibraryPath(n.FileInfo.Path));
+                        Path.Combine(RootPath, GamePathHelper.GetLibraryPath(n.FileInfo.Path!));
+                    
+                    if (!File.Exists(path)) continue;
 
                     // await using var stream = File.OpenRead(path);
                     // using var reader =  ReaderFactory.Open(stream);

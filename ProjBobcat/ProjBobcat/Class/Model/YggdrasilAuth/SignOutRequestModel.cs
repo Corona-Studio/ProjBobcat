@@ -4,9 +4,9 @@ namespace ProjBobcat.Class.Model.YggdrasilAuth;
 
 public class SignOutRequestModel
 {
-    [JsonPropertyName("username")] public string Username { get; set; }
+    [JsonPropertyName("username")] public required string Username { get; init; }
 
-    [JsonPropertyName("password")] public string Password { get; set; }
+    [JsonPropertyName("password")] public required string Password { get; init; }
 }
 
 [JsonSerializable(typeof(SignOutRequestModel))]

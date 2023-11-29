@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text;
@@ -14,7 +15,6 @@ namespace ProjBobcat.Class.Helper;
 #region Temp Models
 
 record AddonInfoReqModel(IEnumerable<long> modIds);
-
 record FileInfoReqModel(IEnumerable<long> fileIds);
 
 [JsonSerializable(typeof(AddonInfoReqModel))]
@@ -37,11 +37,14 @@ public static class CurseForgeAPIHelper
 {
     const string BaseUrl = "https://api.curseforge.com/v1";
 
-    static string ApiKey { get; set; }
+    static string ApiKey { get; set; } = null!;
     static HttpClient Client => HttpClientHelper.DefaultClient;
 
     static HttpRequestMessage Req(HttpMethod method, string url)
     {
+        if (string.IsNullOrEmpty(ApiKey))
+            throw new NullReferenceException("未设置 API KEY，请调用 SetApiKey(string apiKey) 来进行设置。");
+        
         var req = new HttpRequestMessage(method, url);
 
         req.Headers.Add("x-api-key", ApiKey);

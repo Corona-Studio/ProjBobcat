@@ -2,14 +2,9 @@
 
 namespace ProjBobcat.Class.Model.Version.Item;
 
-public class LongItem : IItem
+public class LongItem(string longStr) : IItem
 {
-    readonly long _value;
-
-    public LongItem(string longStr)
-    {
-        _value = long.TryParse(longStr, out var outLong) ? outLong : 0;
-    }
+    readonly long _value = long.TryParse(longStr, out var outLong) ? outLong : 0;
 
     public int CompareTo(object? obj)
     {

@@ -3,16 +3,11 @@ using System.Numerics;
 
 namespace ProjBobcat.Class.Model.Version.Item;
 
-public class BigIntegerItem : IItem
+public class BigIntegerItem(string bigIntStr) : IItem
 {
-    readonly BigInteger _value;
+    readonly BigInteger _value = BigInteger.TryParse(bigIntStr, out var outBigInt) ? outBigInt : BigInteger.Zero;
 
-    public BigIntegerItem(string bigIntStr)
-    {
-        _value = BigInteger.TryParse(bigIntStr, out var outBigInt) ? outBigInt : BigInteger.Zero;
-    }
-
-    public int CompareTo(object obj)
+    public int CompareTo(object? obj)
     {
         if (obj is not IItem item) return BigInteger.Zero.CompareTo(_value) == 0 ? 0 : 1; // 1.0 == 1, 1.1 > 1
 
@@ -31,7 +26,7 @@ public class BigIntegerItem : IItem
         return BigInteger.Zero.CompareTo(_value) == 0;
     }
 
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
         if (this == obj) return true;
         if (obj is not BigIntegerItem that) return false;

@@ -2,7 +2,7 @@
 
 public interface IInstaller
 {
-    string CustomId { get; set; }
-    string RootPath { get; set; }
-    string InheritsFrom { get; set; }
+    string? CustomId { get; init; }
+    string RootPath { get; init; }
+    string? InheritsFrom { get; init; }
 }
