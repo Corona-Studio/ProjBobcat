@@ -67,6 +67,7 @@ public static class DeepJavaSearcher
 
     public static async IAsyncEnumerable<string> DeepSearch()
     {
+#if WINDOWS
         if (OperatingSystem.IsWindows())
         {
             var drives = Platforms.Windows.SystemInfoHelper.GetLogicalDrives();
@@ -75,9 +76,10 @@ public static class DeepJavaSearcher
             await foreach (var path in DeepSearch(drive, Constants.JavaExecutable))
                 yield return path;
         }
-
+#elif OSX || LINUX
         if (OperatingSystem.IsMacOS() || OperatingSystem.IsLinux())
             await foreach (var path in DeepSearch(string.Empty, Constants.JavaExecutable))
                 yield return path;
+#endif
     }
 }
