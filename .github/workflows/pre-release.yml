@@ -1,0 +1,43 @@
+name: Publish Pre-Release Version NuGet Package
+
+on: 
+  push:
+    branches: [master]
+jobs:
+  test-build:
+    name: Test build on ${{ matrix.os }} .NET 8.0
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+    steps:
+      - uses: actions/setup-dotnet@v3.2.0
+        with:
+          dotnet-version: 8.0
+      - uses: actions/checkout@v4
+      - name: Restore packages
+        run: dotnet restore ProjBobcat/ProjBobcat.sln
+      - name: Build Test
+        run: dotnet build ProjBobcat/ProjBobcat.sln -c Release --no-restore
+  publish-package:
+    name: Publish package
+    runs-on: windows-latest
+    needs: [test-build]
+    if: needs.test-build.result == 'success'
+    steps:
+      - uses: actions/setup-dotnet@v3.2.0
+        with:
+          dotnet-version: 8.0
+      - uses: actions/checkout@v4
+      - name: Get Current Time
+        id: current-time
+        uses: josStorer/get-current-time@v2.1.1
+        with:
+          format: YYYYMMDD-HHmmss
+          utcOffset: "+08:00"
+      - name: Restore packages
+        run: dotnet restore ProjBobcat/ProjBobcat.sln
+      - name: Create the package
+        run: dotnet pack ProjBobcat/ProjBobcat.sln -c Release -p:PackageVersion=beta-${{ steps.current-time.outputs.formattedTime }}-${{github.sha}}"
+      - name: Publish the package to NuGet.org
+        run: dotnet nuget push -k ${{secrets.NUGET_KEY}} -s https://api.nuget.org/v3/index.json "ProjBobcat/ProjBobcat/bin/Release/*.nupkg"
