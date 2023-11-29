@@ -43,7 +43,6 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageIcon>Bobcat.png</PackageIcon>
     <RepositoryUrl>https://github.com/Corona-Studio/ProjBobcat</RepositoryUrl>
-    <Version>1.40.0</Version>
     <Authors>Corona Studio</Authors>
     <Company>Corona Studio</Company>
     <Product>ProjBobcat</Product>
