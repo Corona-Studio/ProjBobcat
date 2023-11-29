@@ -38,6 +38,6 @@ jobs:
       - name: Restore packages
         run: dotnet restore ProjBobcat/ProjBobcat.sln
       - name: Create the package
-        run: dotnet pack ProjBobcat/ProjBobcat.sln -c Release -p:PackageVersion=beta-${{ steps.current-time.outputs.formattedTime }}-${{github.sha}}
+        run: dotnet pack ProjBobcat/ProjBobcat.sln -c Release -p:PackageVersion="beta-${{ steps.current-time.outputs.formattedTime }}-${{ github.sha }}"
       - name: Publish the package to NuGet.org
         run: dotnet nuget push -k ${{secrets.NUGET_KEY}} -s https://api.nuget.org/v3/index.json "ProjBobcat/ProjBobcat/bin/Release/*.nupkg"
