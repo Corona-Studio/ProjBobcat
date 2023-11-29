@@ -154,7 +154,8 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                 {
                     JsonValueKind.String => value.GetString(),
                     JsonValueKind.Array => string.Join(' ',
-                        value.Deserialize(StringContext.Default.StringArray) ?? Array.Empty<string>())
+                        value.Deserialize(StringContext.Default.StringArray) ?? Array.Empty<string>()),
+                    _ => string.Empty
                 };
             }
 
@@ -195,7 +196,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                         : $"natives-{Constants.OsSymbol}";
                 */
 
-                if(!lib.Natives!.TryGetValue(Constants.OsSymbol, out var value)) continue;
+                if (!lib.Natives!.TryGetValue(Constants.OsSymbol, out var value)) continue;
 
                 var key = value.Replace("${arch}", SystemInfoHelper.GetSystemArch().TrimStart('x'));
 
@@ -213,7 +214,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
 
                     var mavenInfo = libName.ResolveMavenString();
 
-                    if(mavenInfo == null) continue;
+                    if (mavenInfo == null) continue;
 
                     var downloadUrl = string.IsNullOrEmpty(lib.Url)
                         ? mavenInfo.OrganizationName.Equals("net.minecraftforge", StringComparison.Ordinal)
@@ -428,7 +429,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                 foreach (var mL in middleLibs.Item2)
                 {
                     if (string.IsNullOrEmpty(mL.Name)) continue;
-                    
+
                     var mLMaven = mL.Name.ResolveMavenString()!;
                     var mLFlag = false;
 
@@ -436,7 +437,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                     {
                         if (string.IsNullOrEmpty(result.Libraries[j].Name))
                             continue;
-                        
+
                         var lMaven = result.Libraries[j].Name!.ResolveMavenString()!;
                         if (!lMaven.GetMavenFullName().Equals(mLMaven.GetMavenFullName(), StringComparison.Ordinal))
                             continue;
@@ -514,7 +515,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                 rawVersion.Arguments?.Game));
         result.GameArguments = gameArgs.Item1;
         result.AvailableGameArguments = gameArgs.Item2;
-        
+
         ProcessProfile(result, id);
 
         return result;
@@ -523,7 +524,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
     private void ProcessProfile(VersionInfo result, string id)
     {
         if (LauncherProfileParser == null) return;
-        
+
         var oldProfile = LauncherProfileParser.LauncherProfile.Profiles!.FirstOrDefault(p =>
             p.Value.LastVersionId?.Equals(id, StringComparison.Ordinal) ?? true);
 

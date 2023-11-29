@@ -53,7 +53,7 @@ public sealed class DefaultGameCore : GameCoreBase
     {
         if (VersionLocator.LauncherProfileParser == null)
             throw new ArgumentNullException(nameof(VersionLocator.LauncherProfileParser));
-        
+
         try
         {
             //逐步测量启动时间。
@@ -217,7 +217,7 @@ public sealed class DefaultGameCore : GameCoreBase
                 {
                     var path =
                         Path.Combine(RootPath, GamePathHelper.GetLibraryPath(n.FileInfo.Path!));
-                    
+
                     if (!File.Exists(path)) continue;
 
                     // await using var stream = File.OpenRead(path);
@@ -357,10 +357,10 @@ public sealed class DefaultGameCore : GameCoreBase
                         if (launchWrapper.Process == null) break;
 
 #if WINDOWS
-#pragma warning disable CA1416 // 验证平台兼容性
-                        _ = Windows.Win32.PInvoke.SetWindowText(new Windows.Win32.Foundation.HWND(launchWrapper.Process.MainWindowHandle),
-                            settings.WindowTitle);
-#pragma warning restore CA1416 // 验证平台兼容性
+                        if (OperatingSystem.IsWindows() && OperatingSystem.IsWindowsVersionAtLeast(5))
+                            _ = Windows.Win32.PInvoke.SetWindowText(
+                                new Windows.Win32.Foundation.HWND(launchWrapper.Process.MainWindowHandle),
+                                settings.WindowTitle);
 #endif
                     } while (string.IsNullOrEmpty(launchWrapper.Process?.MainWindowTitle));
                 });

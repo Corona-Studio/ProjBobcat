@@ -260,8 +260,7 @@ public static class SystemInfoHelper
             { Platform: PlatformID.Win32NT, Version: { Major: 6, Minor: 3 } } => "8.1",
             { Platform: PlatformID.Win32NT, Version: { Major: 10, Minor: 0 } } => "10",
             { Platform: PlatformID.Win32NT, Version.Build: >= 22000 } => "11",
-            var os => throw new NotImplementedException($"Unknown OS version: {os}")
-
+            var os => throw new PlatformNotSupportedException($"Unknown OS version: {os}")
         };
     }
 
@@ -270,6 +269,7 @@ public static class SystemInfoHelper
     /// </summary>
     /// <param name="proc"></param>
     /// <returns>待检查的进程，如果不传则检测当前进程</returns>
+    [SupportedOSPlatform("windows10.0.10586")]
     public static unsafe bool IsRunningUnderTranslation(Process? proc = null)
     {
         if (GetWindowsMajorVersion() == "7") return false;

@@ -18,7 +18,10 @@ public class OperatingSystemRules
             !Name.Equals(Constants.OsSymbol, StringComparison.OrdinalIgnoreCase)) return false;
         if (!string.IsNullOrEmpty(Arch) && Arch != SystemInfoHelper.GetSystemArch()) return false;
 #if WINDOWS
-        if (!string.IsNullOrEmpty(Version) && Version != $"^{Platforms.Windows.SystemInfoHelper.GetWindowsMajorVersion()}\\.") return false;
+        if (OperatingSystem.IsWindows())
+            if (!string.IsNullOrEmpty(Version) &&
+                Version != $"^{Platforms.Windows.SystemInfoHelper.GetWindowsMajorVersion()}\\.")
+                return false;
 #endif
 
         return true;
@@ -45,6 +48,4 @@ public class JvmRules
 
 [JsonSerializable(typeof(JvmRules))]
 [JsonSerializable(typeof(JvmRules[]))]
-partial class JvmRulesContext : JsonSerializerContext
-{
-}
+partial class JvmRulesContext : JsonSerializerContext;

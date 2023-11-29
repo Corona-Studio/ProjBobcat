@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -55,16 +56,16 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
                 using var checkRes = await httpClient.SendAsync(checkReq);
 
                 if (!checkRes.IsSuccessStatusCode) continue;
-                
+
                 var df = new DownloadFile
                 {
                     DownloadPath = downloadPath,
                     DownloadUri = url,
                     FileName = fileName
                 };
-                
+
                 df.Completed += WhenCompleted;
-                
+
                 return (true, df);
             }
 
@@ -72,10 +73,9 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         }
         catch (Exception e)
         {
+            Debug.WriteLine(e);
             return (false, null);
         }
-
-        return (false, null);
     }
 
     public async Task InstallTaskAsync()
@@ -84,7 +84,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
             throw new ArgumentNullException(nameof(GameId));
         if (string.IsNullOrEmpty(RootPath))
             throw new ArgumentNullException(nameof(RootPath));
-        
+
         InvokeStatusChangedEvent("开始安装", 0);
 
         var manifest = await ReadManifestTask();
@@ -106,7 +106,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         {
             return urls.Select(file => (file.ProjectId, file.FileId));
         });
-        
+
         var urlBags = new ConcurrentBag<DownloadFile>();
         var urlReqExceptions = new ConcurrentBag<CurseForgeModResolveException>();
         var actionBlock = new ActionBlock<(long, long)>(async t =>
@@ -114,10 +114,10 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
             try
             {
                 var downloadUrlRes = await CurseForgeAPIHelper.GetAddonDownloadUrl(t.Item1, t.Item2);
-                
+
                 if (string.IsNullOrEmpty(downloadUrlRes))
                     throw new CurseForgeModResolveException(t.Item1, t.Item2);
-                
+
                 var d = downloadUrlRes.Trim('"');
                 var fn = Path.GetFileName(d);
 
@@ -154,23 +154,23 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
                         if (info == null)
                             throw new Exception();
-                        
+
                         var moreInfo = $"""
-                                         模组名称：{info.Name}
-                                         模组链接：{((info.Links?.TryGetValue("websiteUrl", out var link) ?? false) ? link : "-")}
-                                         """;
+                                        模组名称：{info.Name}
+                                        模组链接：{((info.Links?.TryGetValue("websiteUrl", out var link) ?? false) ? link : "-")}
+                                        """;
                         var ex = new CurseForgeModResolveException(t.Item1, t.Item2, moreInfo);
-                    
+
                         urlReqExceptions.Add(ex);
                     }
-                    catch (Exception exception)
+                    catch
                     {
                         urlReqExceptions.Add(e);
                     }
-                    
+
                     return;
                 }
-                
+
                 urlBags.Add(df);
 
                 TotalDownloaded++;

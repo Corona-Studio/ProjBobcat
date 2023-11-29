@@ -32,10 +32,7 @@
     <DefineConstants>LINUX</DefineConstants>
   </PropertyGroup>
   <!-- Symbol Definitions -->
-
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <NoWarn>CA1716;CA2227;CA2208;CA1031;CA5351;CA1065;CA1305;CS0067;CA1720;CA1055;CA1054;CA1056;CA1062</NoWarn>
-  </PropertyGroup>
+  
 
   <PropertyGroup>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>

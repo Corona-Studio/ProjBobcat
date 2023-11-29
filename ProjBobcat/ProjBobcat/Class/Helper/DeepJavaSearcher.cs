@@ -1,6 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 
 namespace ProjBobcat.Class.Helper;
 
@@ -65,14 +68,18 @@ public static class DeepJavaSearcher
     public static async IAsyncEnumerable<string> DeepSearch()
     {
 #if WINDOWS
-        var drives = Platforms.Windows.SystemInfoHelper.GetLogicalDrives();
+        if (OperatingSystem.IsWindows())
+        {
+            var drives = Platforms.Windows.SystemInfoHelper.GetLogicalDrives();
 
-        foreach (var drive in drives)
-        await foreach (var path in DeepSearch(drive, Constants.JavaExecutable))
-            yield return path;
+            foreach (var drive in drives)
+            await foreach (var path in DeepSearch(drive, Constants.JavaExecutable))
+                yield return path;
+        }
 #elif OSX || LINUX
-        await foreach (var path in DeepSearch(string.Empty, Constants.JavaExecutable))
-            yield return path;
+        if (OperatingSystem.IsMacOS() || OperatingSystem.IsLinux())
+            await foreach (var path in DeepSearch(string.Empty, Constants.JavaExecutable))
+                yield return path;
 #endif
     }
 }
