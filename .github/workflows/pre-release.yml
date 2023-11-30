@@ -33,14 +33,12 @@ jobs:
         id: previoustag
         uses: "WyriHaximus/github-action-get-previous-tag@v1"
         with:
-          fallback: 0.0.0
-      - name: Fix version tag
-        run: echo ::set-env name=PREVIOUS_TAG::${{ steps.previoustag.outputs.tag }}
+          fallback: 1.0.0
       - name: Restore packages
         run: dotnet restore ProjBobcat/ProjBobcat.sln
       - name: Build the project
         run: dotnet build ProjBobcat/ProjBobcat.sln -c Release --no-restore
       - name: Create the package
-        run: $tag="${{ steps.previoustag.outputs.tag }}".replace("v",""); dotnet pack ProjBobcat/ProjBobcat.sln -c Release -p:PackageVersion="$tag-(CI)${{ github.sha }}-beta" --no-build --no-restore
+        run: $tag="${{ steps.previoustag.outputs.tag }}".replace("v",""); dotnet pack ProjBobcat/ProjBobcat.sln -c Release -p:PackageVersion="$tag-CI${{ github.sha }}-beta" --no-build --no-restore
       - name: Publish the package to NuGet.org
         run: dotnet nuget push -k ${{secrets.NUGET_KEY}} -s https://api.nuget.org/v3/index.json "ProjBobcat/ProjBobcat/bin/Release/*.nupkg"

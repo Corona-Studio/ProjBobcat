@@ -1,7 +1,10 @@
 using System.IO;
+using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 
 namespace ProjBobcat.Platforms.Linux;
 
+[SupportedOSPlatform(nameof(OSPlatform.Linux))]
 public static class DistributionHelper
 {
     public enum LinuxDistribution

@@ -138,17 +138,13 @@ public static class GamePathHelper
     /// <returns></returns>
     public static string OfficialLauncherGamePath()
     {
-#if WINDOWS
-        var basePath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-#elif OSX
-        var path = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
-        var basePath = Path.Combine(path, "Library", "Application Support");
-#elif LINUX
-        var basePath = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
-#endif
-
-        basePath = Path.Combine(basePath, ".minecraft");
-
-        return basePath;
+        if (OperatingSystem.IsWindows())
+            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), ".minecraft");
+        if (OperatingSystem.IsMacOS())
+            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "Library",
+                "Application Support", ".minecraft");
+        if (OperatingSystem.IsLinux())
+            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), ".minecraft");
+        return string.Empty;
     }
 }

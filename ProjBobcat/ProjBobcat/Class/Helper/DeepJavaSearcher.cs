@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
 
 namespace ProjBobcat.Class.Helper;
 
@@ -12,27 +10,34 @@ public static class DeepJavaSearcher
     public static async IAsyncEnumerable<string> DeepSearch(string drive, string fileName)
     {
         var result = new HashSet<string>();
-        var psi = new ProcessStartInfo(Constants.WhereCommand)
-        {
-#if WINDOWS
-            ArgumentList =
+        ProcessStartInfo psi;
+        if (OperatingSystem.IsWindows())
+            psi = new ProcessStartInfo(Constants.WhereCommand)
             {
-                "/R",
-                $"{drive}\\",
-                fileName
-            },
-#elif OSX || LINUX
-            ArgumentList =
+                ArgumentList =
+                {
+                    "/R",
+                    $"{drive}\\",
+                    fileName
+                },
+                CreateNoWindow = true,
+                RedirectStandardError = true,
+                RedirectStandardOutput = true,
+                UseShellExecute = false
+            };
+        else
+            psi = new ProcessStartInfo(Constants.WhereCommand)
             {
-                "/b",
-                fileName
-            },
-#endif
-            CreateNoWindow = true,
-            RedirectStandardError = true,
-            RedirectStandardOutput = true,
-            UseShellExecute = false
-        };
+                ArgumentList =
+                {
+                    "/b",
+                    fileName
+                },
+                CreateNoWindow = true,
+                RedirectStandardError = true,
+                RedirectStandardOutput = true,
+                UseShellExecute = false
+            };
 
         var process = Process.Start(psi);
         var isFailed = false;
@@ -67,7 +72,6 @@ public static class DeepJavaSearcher
 
     public static async IAsyncEnumerable<string> DeepSearch()
     {
-#if WINDOWS
         if (OperatingSystem.IsWindows())
         {
             var drives = Platforms.Windows.SystemInfoHelper.GetLogicalDrives();
@@ -76,10 +80,9 @@ public static class DeepJavaSearcher
             await foreach (var path in DeepSearch(drive, Constants.JavaExecutable))
                 yield return path;
         }
-#elif OSX || LINUX
+
         if (OperatingSystem.IsMacOS() || OperatingSystem.IsLinux())
             await foreach (var path in DeepSearch(string.Empty, Constants.JavaExecutable))
                 yield return path;
-#endif
     }
 }

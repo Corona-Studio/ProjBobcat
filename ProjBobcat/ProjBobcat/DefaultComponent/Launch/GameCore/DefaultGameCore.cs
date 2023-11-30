@@ -355,13 +355,12 @@ public sealed class DefaultGameCore : GameCoreBase
                     do
                     {
                         if (launchWrapper.Process == null) break;
-
-#if WINDOWS
+                        
                         if (OperatingSystem.IsWindows() && OperatingSystem.IsWindowsVersionAtLeast(5))
                             _ = Windows.Win32.PInvoke.SetWindowText(
                                 new Windows.Win32.Foundation.HWND(launchWrapper.Process.MainWindowHandle),
                                 settings.WindowTitle);
-#endif
+
                     } while (string.IsNullOrEmpty(launchWrapper.Process?.MainWindowTitle));
                 });
 #pragma warning restore CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法

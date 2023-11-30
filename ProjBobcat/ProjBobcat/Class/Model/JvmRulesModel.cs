@@ -16,13 +16,13 @@ public class OperatingSystemRules
     {
         if (!string.IsNullOrEmpty(Name) &&
             !Name.Equals(Constants.OsSymbol, StringComparison.OrdinalIgnoreCase)) return false;
+        
         if (!string.IsNullOrEmpty(Arch) && Arch != SystemInfoHelper.GetSystemArch()) return false;
-#if WINDOWS
+        
         if (OperatingSystem.IsWindows())
             if (!string.IsNullOrEmpty(Version) &&
                 Version != $"^{Platforms.Windows.SystemInfoHelper.GetWindowsMajorVersion()}\\.")
                 return false;
-#endif
 
         return true;
     }

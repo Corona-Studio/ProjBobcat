@@ -1,7 +1,10 @@
 using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 
 namespace ProjBobcat.Platforms.Linux;
 
+[SupportedOSPlatform(nameof(OSPlatform.Linux))]
 public static class FileHelper
 {
     public static bool Chmod(string filePath, string permissions)

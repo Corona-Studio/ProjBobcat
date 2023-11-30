@@ -29,43 +29,40 @@ public static class SystemInfoHelper
     [SupportedOSPlatform(nameof(OSPlatform.OSX))]
     public static bool IsRunningUnderTranslation()
     {
-#if WINDOWS
         if (OperatingSystem.IsWindows())
             return Platforms.Windows.SystemInfoHelper.IsRunningUnderTranslation();
-#elif OSX
+
         if (OperatingSystem.IsMacOS())
             return Platforms.MacOS.SystemInfoHelper.IsRunningUnderTranslation();
-#endif
+
         return false;
     }
-    
+
     public static CPUInfo? GetProcessorUsage()
     {
-#if WINDOWS
         if (OperatingSystem.IsWindows())
             return Platforms.Windows.SystemInfoHelper.GetWindowsCpuUsage();
-#elif OSX
+
         if (OperatingSystem.IsMacOS())
             return Platforms.MacOS.SystemInfoHelper.GetOSXCpuUsage();
-#elif LINUX
+
         if (OperatingSystem.IsLinux())
             return Platforms.Linux.SystemInfoHelper.GetLinuxCpuUsage();
-#endif
+
         return null;
     }
 
     public static MemoryInfo? GetMemoryUsage()
     {
-#if WINDOWS
         if (OperatingSystem.IsWindows())
             return Platforms.Windows.SystemInfoHelper.GetWindowsMemoryStatus();
-#elif OSX
+
         if (OperatingSystem.IsMacOS())
             return Platforms.MacOS.SystemInfoHelper.GetOsxMemoryStatus();
-#elif LINUX
+
         if (OperatingSystem.IsLinux())
             return Platforms.Linux.SystemInfoHelper.GetLinuxMemoryStatus();
-#endif
+
         return null;
     }
 
@@ -79,20 +76,19 @@ public static class SystemInfoHelper
         if (fullSearch)
             await foreach (var path in DeepJavaSearcher.DeepSearch())
                 result.Add(path);
-
-#if WINDOWS
+        
         if (OperatingSystem.IsWindows())
             foreach (var path in Platforms.Windows.SystemInfoHelper.FindJavaWindows())
                 result.Add(path);
-#elif OSX
+
         if (OperatingSystem.IsMacOS())
             foreach (var path in Platforms.MacOS.SystemInfoHelper.FindJavaMacOS())
                 result.Add(path);
-#elif LINUX
+
         if (OperatingSystem.IsLinux())
             foreach(var path in Platforms.Linux.SystemInfoHelper.FindJavaLinux())
                 result.Add(path);
-#endif
+
         foreach (var path in result)
             yield return path;
         foreach (var path in FindJavaInOfficialGamePath())
