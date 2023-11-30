@@ -319,7 +319,7 @@ public static class DownloadHelper
                     {
                         Start = from,
                         End = to,
-                        TempFileName = Path.GetTempFileName()
+                        TempFileName = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName())
                     });
                 }
 

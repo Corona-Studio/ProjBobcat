@@ -7,14 +7,15 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text.RegularExpressions;
+using Windows.Win32;
 
 namespace ProjBobcat.Platforms.MacOS;
 
 [SupportedOSPlatform(nameof(OSPlatform.OSX))]
-static class SystemInfoHelper
+static partial class SystemInfoHelper
 {
-    [DllImport("libc")]
-    static extern int sysctlbyname(string name, out int int_val, ref IntPtr length, IntPtr newp, IntPtr newlen);
+    [LibraryImport("libc", StringMarshalling = StringMarshalling.Utf8)]
+    private static partial int sysctlbyname(string name, out int int_val, ref IntPtr length, IntPtr newp, IntPtr newlen);
 
     public static IEnumerable<string> FindJavaMacOS()
     {
@@ -51,25 +52,13 @@ static class SystemInfoHelper
         using var process = Process.Start(info);
 
         if (process == null)
-        {
-            return new CPUInfo
-            {
-                Name = "Overrall",
-                Usage = -1
-            };
-        }
+            return new CPUInfo(-1, "Overrall");
 
         var output = process.StandardOutput?.ReadToEnd();
         process.WaitForExit();
 
         if (string.IsNullOrEmpty(output))
-        {
-            return new CPUInfo
-            {
-                Name = "Overrall",
-                Usage = -1
-            };
-        }
+            return new CPUInfo(-1, "Overrall");
 
         var cpu = output.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
@@ -77,11 +66,7 @@ static class SystemInfoHelper
         var sysUsage = double.TryParse(cpu[4].TrimEnd('%'), out var sysOut) ? sysOut : 0;
         var totalUsage = userUsage + sysUsage;
 
-        return new CPUInfo
-        {
-            Name = "Overrall",
-            Usage = totalUsage
-        };
+        return new CPUInfo(totalUsage, "Overrall");
     }
 
     private static ulong GetTotalMemory()
@@ -117,36 +102,20 @@ static class SystemInfoHelper
         var info = new ProcessStartInfo
         {
             FileName = "/bin/bash",
-            Arguments = $"-c \"vm_stat\"",
+            Arguments = "-c \"vm_stat\"",
             RedirectStandardOutput = true
         };
 
         using var process = Process.Start(info);
 
         if (process == null)
-        {
-            return new MemoryInfo
-            {
-                Total = -1,
-                Used = -1,
-                Free = -1,
-                Percentage = -1
-            };
-        }
+            return new MemoryInfo(-1, -1, -1, -1);
 
         var output = process.StandardOutput.ReadToEnd();
         process.WaitForExit();
 
         if (string.IsNullOrEmpty(output))
-        {
-            return new MemoryInfo
-            {
-                Total = -1,
-                Used = -1,
-                Free = -1,
-                Percentage = -1
-            };
-        }
+            return new MemoryInfo(-1, -1, -1, -1);
 
         var split = output.Split('\n', StringSplitOptions.RemoveEmptyEntries);
         var infoDic = split
@@ -165,15 +134,7 @@ static class SystemInfoHelper
         var free = total - used;
         var percentage = used / total;
 
-        var metrics = new MemoryInfo
-        {
-            Total = total,
-            Used = used,
-            Free = free,
-            Percentage = percentage * 100
-        };
-
-        return metrics;
+        return new MemoryInfo(total, used, free, percentage * 100);
     }
 
     public static bool IsRunningUnderTranslation()

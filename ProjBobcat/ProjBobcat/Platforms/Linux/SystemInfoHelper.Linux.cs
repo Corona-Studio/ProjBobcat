@@ -29,11 +29,7 @@ class SystemInfoHelper
         using var process = Process.Start(info);
 
         if (process == null)
-            return new CPUInfo
-            {
-                Name = "Overrall",
-                Usage = -1
-            };
+            return new CPUInfo(-1, "Overrall");
 
         var output = process.StandardOutput.ReadToEnd();
         process.WaitForExit();
@@ -44,11 +40,7 @@ class SystemInfoHelper
             .Select(arr => double.TryParse(arr[8], out var outCpu) ? outCpu : 0)
             .Sum();
 
-        return new CPUInfo
-        {
-            Name = "Overrall",
-            Usage = usage / 100
-        };
+        return new CPUInfo(usage / 100, "Overrall");
     }
 
     /// <summary>
@@ -67,13 +59,7 @@ class SystemInfoHelper
         using var process = Process.Start(info);
 
         if (process == null)
-            return new MemoryInfo
-            {
-                Total = -1,
-                Used = -1,
-                Free = -1,
-                Percentage = -1
-            };
+            return new MemoryInfo(-1, -1, -1, -1);
 
         var output = process.StandardOutput.ReadToEnd();
         process.WaitForExit();
@@ -87,13 +73,7 @@ class SystemInfoHelper
         var free = double.Parse(memory[3]);
         var percentage = used / total;
 
-        var metrics = new MemoryInfo
-        {
-            Total = total,
-            Used = used,
-            Free = free,
-            Percentage = percentage * 100
-        };
+        var metrics = new MemoryInfo(total, used, free, percentage * 100);
 
         return metrics;
     }
