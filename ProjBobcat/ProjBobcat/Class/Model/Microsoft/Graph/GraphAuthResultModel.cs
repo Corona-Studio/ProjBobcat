@@ -14,7 +14,7 @@ public class GraphAuthResultModel
 
     [JsonPropertyName("refresh_token")] public required string RefreshToken { get; init; }
 
-    [JsonPropertyName("id_token")] public string? IdToken { get; set; }
+    [JsonPropertyName("id_token")] public string? IdToken { get; init; }
 }
 
 [JsonSerializable(typeof(GraphAuthResultModel))]

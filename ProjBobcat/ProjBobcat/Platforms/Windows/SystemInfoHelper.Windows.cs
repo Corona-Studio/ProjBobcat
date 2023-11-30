@@ -216,15 +216,7 @@ public static class SystemInfoHelper
         var used = total - free;
         var percentage = MemUsagePercentageCounter.NextValue();
 
-        var result = new MemoryInfo
-        {
-            Free = free,
-            Percentage = percentage,
-            Total = total,
-            Used = used
-        };
-
-        return result;
+        return new MemoryInfo(total, used, free, percentage);
     }
 
     /// <summary>
@@ -234,12 +226,11 @@ public static class SystemInfoHelper
     public static CPUInfo GetWindowsCpuUsage()
     {
         var percentage = CpuCounter.NextValue();
+        var val = percentage > 100 ? 100 : percentage;
 
-        return new CPUInfo
-        {
-            Name = "Total %",
-            Usage = percentage > 100 ? 100 : percentage
-        };
+        const string name = "Total %";
+
+        return new CPUInfo(val, name);
     }
 
     public static IEnumerable<string> GetLogicalDrives()
