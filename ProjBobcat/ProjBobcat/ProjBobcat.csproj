@@ -1,38 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
-  <PropertyGroup Condition=" '$(OS)' == 'Windows_NT' ">
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-  </PropertyGroup>
-
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFrameworks>net8.0</TargetFrameworks>
+    <TargetFramework>net8.0</TargetFramework>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <WarningsAsErrors>CS8618,CS8619,CS8601,CS8602,CS8603,CS8604,CS8620,CS8622,CS8625,CS8765,CS8766,CS8767</WarningsAsErrors>
   </PropertyGroup>
 
   <PropertyGroup>
     <IsWindows Condition=" '$(OS)' == 'Windows_NT' Or '$(RuntimeIdentifier)' == 'win-x64' Or '$(RuntimeIdentifier)' == 'win7-x64' Or '$(RuntimeIdentifier)' == 'win10-arm64'">true</IsWindows>
-    <IsOSX Condition=" '$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))' Or '$(RuntimeIdentifier)' == 'osx-x64' Or '$(RuntimeIdentifier)' == 'osx.13-arm64' ">true</IsOSX>
-    <IsLinux Condition=" '$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' Or '$(RuntimeIdentifier)' == 'linux-x64' ">true</IsLinux>
   </PropertyGroup>
-
-  <PropertyGroup Condition="'$(TargetFramework)'=='net8.0' OR ('$(TargetFramework)'=='net7.0' AND ('$(IsWindows)'=='true' OR '$(IsLinux)'=='true'))">
-    <PublishAot>true</PublishAot>
-    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-  </PropertyGroup>
-
-  <!-- Symbol Definitions -->
-  <PropertyGroup Condition="'$(IsWindows)'=='true'">
-    <DefineConstants>WINDOWS</DefineConstants>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(IsOSX)'=='true'">
-    <DefineConstants>OSX</DefineConstants>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(IsLinux)'=='true'">
-    <DefineConstants>LINUX</DefineConstants>
-  </PropertyGroup>
-  <!-- Symbol Definitions -->
-  
 
   <PropertyGroup>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -109,15 +85,8 @@ resolved the issue that LaunchWrapper may not return the correct exit code
   <!-- Compile Options -->
   <ItemGroup>
     <Compile Remove="Platforms\**\*.cs" />
-  </ItemGroup>
-
-  <ItemGroup Condition=" '$(IsLinux)'=='true' ">
     <Compile Include="Platforms\Linux\**\*.cs" />
-  </ItemGroup>
-  <ItemGroup Condition=" '$(IsWindows)'=='true' ">
     <Compile Include="Platforms\Windows\**\*.cs" />
-  </ItemGroup>
-  <ItemGroup Condition=" '$(IsOSX)'=='true' ">
     <Compile Include="Platforms\MacOS\**\*.cs" />
   </ItemGroup>
   <!-- Compile Options -->
