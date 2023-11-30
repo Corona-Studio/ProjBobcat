@@ -7,10 +7,6 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <IsWindows Condition=" '$(OS)' == 'Windows_NT' Or '$(RuntimeIdentifier)' == 'win-x64' Or '$(RuntimeIdentifier)' == 'win7-x64' Or '$(RuntimeIdentifier)' == 'win10-arm64'">true</IsWindows>
-  </PropertyGroup>
-
-  <PropertyGroup>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
@@ -72,7 +68,7 @@ resolved the issue that LaunchWrapper may not return the correct exit code
       <Version>0.34.2</Version>
     </PackageReference>
   </ItemGroup>
-  <ItemGroup Condition=" '$(IsWindows)'=='true' ">
+  <ItemGroup>
     <PackageReference Include="System.Management" Version="8.0.0" />
     <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
     <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="8.0.0" />
