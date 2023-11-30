@@ -20,7 +20,7 @@ jobs:
       - name: Build Test
         run: dotnet build ProjBobcat/ProjBobcat.sln -c Release --no-restore
   publish-package:
-    name: Publish package
+    name: Publish Release package
     runs-on: windows-latest
     needs: [test-build]
     if: needs.test-build.result == 'success'
@@ -31,7 +31,9 @@ jobs:
       - uses: actions/checkout@v4
       - name: Restore packages
         run: dotnet restore ProjBobcat/ProjBobcat.sln
+      - name: Build the project
+        run: dotnet build ProjBobcat/ProjBobcat.sln -c Release --no-restore
       - name: Create the package
-        run: dotnet pack ProjBobcat/ProjBobcat.sln -c Release -p:PackageVersion=${{ github.ref }}
+        run: $tag=${{ github.ref }}.replace("v",""); dotnet pack ProjBobcat/ProjBobcat.sln -c Release -p:PackageVersion=$tag --no-build --no-restore
       - name: Publish the package to NuGet.org
         run: dotnet nuget push -k ${{secrets.NUGET_KEY}} -s https://api.nuget.org/v3/index.json "ProjBobcat/ProjBobcat/bin/Release/*.nupkg"
