@@ -7,7 +7,6 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text.RegularExpressions;
-using Windows.Win32;
 
 namespace ProjBobcat.Platforms.MacOS;
 
@@ -126,8 +125,8 @@ static partial class SystemInfoHelper
                 double.TryParse(pair.Item2, out var outVal) ? outVal : 0))
             .ToDictionary(pair => pair.Item1, pair2 => pair2.Item2);
 
-        var pageSize = uint.TryParse(Regex.Match(split[0], "\\d+").Value, out var pageSizeOut) ? pageSizeOut : 0;
-        var active = (infoDic.TryGetValue("Pages active", out var activeOut) ? activeOut : 0) * pageSize;
+        var pageSize = uint.TryParse(NumberMatchRegex().Match(split[0]).Value, out var pageSizeOut) ? pageSizeOut : 0;
+        var active = (infoDic.GetValueOrDefault("Pages active", 0)) * pageSize;
 
         var used = active / Math.Pow(1024, 2);
         var total = GetTotalMemory() / Math.Pow(1024, 2);
@@ -140,10 +139,13 @@ static partial class SystemInfoHelper
     public static bool IsRunningUnderTranslation()
     {
         var size = (IntPtr)sizeof(int);
-        var res = sysctlbyname("sysctl.proc_translated", out var value, ref size, IntPtr.Zero, (IntPtr)0);
+        var res = sysctlbyname("sysctl.proc_translated", out var value, ref size, IntPtr.Zero, IntPtr.Zero);
 
         if (res != 0) return false;
 
         return value == 1;
     }
+
+    [GeneratedRegex("\\d+")]
+    private static partial Regex NumberMatchRegex();
 }
