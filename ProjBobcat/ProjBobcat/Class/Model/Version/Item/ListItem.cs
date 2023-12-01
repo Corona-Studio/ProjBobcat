@@ -58,7 +58,7 @@ public class ListItem : List<IItem>, IItem
 
     public bool IsNull()
     {
-        return !this.Any();
+        return Count == 0;
     }
 
     public void Normalize()

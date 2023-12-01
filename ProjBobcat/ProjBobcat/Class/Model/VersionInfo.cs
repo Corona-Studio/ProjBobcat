@@ -26,7 +26,7 @@ public class VersionInfo
     public required List<FileInfo> Libraries { get; set; }
     public required List<NativeFileInfo> Natives { get; set; }
     public Logging? Logging { get; init; }
-    public IEnumerable<string>? JvmArguments { get; set; }
+    public IReadOnlyList<string>? JvmArguments { get; set; }
     public required IEnumerable<string> GameArguments { get; set; }
     public IReadOnlyDictionary<string, string>? AvailableGameArguments { get; set; }
 

@@ -1,7 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -22,7 +21,7 @@ public class GameConfigurationManager : IEnumerable<KeyValuePair<string, string>
         _configuration = GetConfigurationDictionary(content);
     }
 
-    public GameConfigurationManager(IEnumerable<string> list)
+    public GameConfigurationManager(IReadOnlyCollection<string> list)
     {
         _configuration = GetConfigurationDictionary(list);
     }
@@ -52,13 +51,13 @@ public class GameConfigurationManager : IEnumerable<KeyValuePair<string, string>
         await File.WriteAllTextAsync(path, sb.ToString());
     }
 
-    public static Dictionary<string, string> GetConfigurationDictionary(IEnumerable<string>? lines)
+    public static Dictionary<string, string> GetConfigurationDictionary(IReadOnlyCollection<string>? lines)
     {
         var result = new Dictionary<string, string>();
 
-        if (!(lines?.Any() ?? false)) return result;
+        if ((lines?.Count ?? 0) == 0) return result;
 
-        foreach (var line in lines)
+        foreach (var line in lines!)
         {
             if (string.IsNullOrWhiteSpace(line)) continue;
             if (!line.Contains(':')) continue;

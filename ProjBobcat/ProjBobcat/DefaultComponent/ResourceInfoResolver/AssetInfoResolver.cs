@@ -27,7 +27,7 @@ public sealed class AssetInfoResolver : ResolverBase
 
     public string AssetUriRoot { get; init; } = "https://resources.download.minecraft.net/";
 
-    public IEnumerable<VersionManifestVersionsModel>? Versions { get; init; }
+    public IReadOnlyList<VersionManifestVersionsModel>? Versions { get; init; }
 
     public override async IAsyncEnumerable<IGameResource> ResolveResourceAsync()
     {
@@ -38,7 +38,7 @@ public sealed class AssetInfoResolver : ResolverBase
         if (VersionInfo?.AssetInfo == null) yield break;
 
         var versions = Versions;
-        if (!(Versions?.Any() ?? false))
+        if ((Versions?.Count ?? 0) == 0)
         {
             OnResolve("没有提供 Version Manifest， 开始下载");
 
@@ -48,7 +48,7 @@ public sealed class AssetInfoResolver : ResolverBase
             versions = vm?.Versions?.ToList();
         }
 
-        if (!(versions?.Any() ?? false)) yield break;
+        if ((versions?.Count ?? 0) == 0) yield break;
 
         var isAssetInfoNotExists =
             string.IsNullOrEmpty(VersionInfo.AssetInfo?.Url) &&
@@ -75,7 +75,9 @@ public sealed class AssetInfoResolver : ResolverBase
 
             if (isAssetInfoNotExists)
             {
-                var versionObject = versions.FirstOrDefault(v => v.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+                var versionObject =
+                    versions?.FirstOrDefault(v => v.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+
                 if (versionObject == default) yield break;
 
                 using var jsonRes = await HttpHelper.Get(versionObject.Url);

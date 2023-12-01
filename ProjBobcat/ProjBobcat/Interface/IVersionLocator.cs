@@ -29,5 +29,5 @@ public interface IVersionLocator
     /// </summary>
     /// <param name="arguments"></param>
     /// <returns></returns>
-    IEnumerable<string> ParseJvmArguments(IEnumerable<JsonElement> arguments);
+    IEnumerable<string> ParseJvmArguments(JsonElement[] arguments);
 }

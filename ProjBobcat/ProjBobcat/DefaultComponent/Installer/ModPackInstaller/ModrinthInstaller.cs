@@ -79,7 +79,7 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
             {
                 CheckSum = checkSum,
                 DownloadPath = downloadDir,
-                DownloadUri = file.Downloads.RandomSample()!,
+                DownloadUri = Random.Shared.GetItems(file.Downloads, 1)[0],
                 FileName = fileName,
                 FileSize = file.Size
             };

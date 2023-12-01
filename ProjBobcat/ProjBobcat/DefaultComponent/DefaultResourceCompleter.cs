@@ -38,7 +38,7 @@ public class DefaultResourceCompleter : IResourceCompleter
     public int MaxDegreeOfParallelism { get; set; } = 1;
     public int TotalRetry { get; set; } = 2;
     public bool CheckFile { get; set; } = true;
-    public IEnumerable<IResourceInfoResolver>? ResourceInfoResolvers { get; set; }
+    public IReadOnlyList<IResourceInfoResolver>? ResourceInfoResolvers { get; set; }
 
     public event EventHandler<GameResourceInfoResolveEventArgs> GameResourceInfoResolveStatus
     {
@@ -65,7 +65,7 @@ public class DefaultResourceCompleter : IResourceCompleter
 
     public async Task<TaskResult<ResourceCompleterCheckResult?>> CheckAndDownloadTaskAsync()
     {
-        if (!(ResourceInfoResolvers?.Any() ?? false))
+        if ((ResourceInfoResolvers?.Count ?? 0) == 0)
             return new TaskResult<ResourceCompleterCheckResult?>(TaskResultStatus.Success, value: null);
 
         _needToDownload = 0;
@@ -146,7 +146,10 @@ public class DefaultResourceCompleter : IResourceCompleter
             Interlocked.Add(ref _needToDownload, count);
         }
 
-        var chunks = ResourceInfoResolvers.Chunk(MaxDegreeOfParallelism).ToImmutableArray();
+        var chunks =
+            ResourceInfoResolvers!
+                .Chunk(MaxDegreeOfParallelism)
+                .ToImmutableArray();
         foreach (var chunk in chunks)
         {
             var tasks = new Task[chunk.Length];

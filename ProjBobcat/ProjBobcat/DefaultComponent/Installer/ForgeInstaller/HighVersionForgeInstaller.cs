@@ -360,8 +360,8 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
             var outputs = new Dictionary<string, string>();
 
-            if (proc.Outputs?.Any() ?? false)
-                foreach (var (k, v) in proc.Outputs)
+            if ((proc.Outputs?.Count ?? 0) > 0)
+                foreach (var (k, v) in proc.Outputs!)
                 {
                     var resolvedKey = ResolveVariableRegex(k);
                     var resolvedValue = ResolveVariableRegex(v);
@@ -395,10 +395,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
         _failedFiles.Clear();
 
-        var libs = ipModel.Libraries.ToList();
-        libs.AddRange(versionJsonModel.Libraries);
-
-        var resolvedLibs = VersionLocator.GetNatives(libs).Item2;
+        var resolvedLibs = VersionLocator.GetNatives([.. ipModel.Libraries, .. versionJsonModel.Libraries]).Item2;
         var libDownloadInfo = new List<DownloadFile>();
 
         foreach (var lib in resolvedLibs)

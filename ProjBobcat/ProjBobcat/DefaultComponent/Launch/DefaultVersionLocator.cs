@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -55,12 +56,12 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
         return version;
     }
 
-    public override IEnumerable<string> ParseJvmArguments(IEnumerable<JsonElement>? arguments)
+    public override IEnumerable<string> ParseJvmArguments(JsonElement[]? arguments)
     {
-        if (!(arguments?.Any() ?? false))
+        if ((arguments?.Length ?? 0) == 0)
             yield break;
 
-        foreach (var jvmRule in arguments)
+        foreach (var jvmRule in arguments!)
         {
             if (jvmRule.ValueKind == JsonValueKind.String)
             {
@@ -104,7 +105,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
     /// <param name="arguments"></param>
     /// <returns></returns>
     private protected override (IEnumerable<string>, Dictionary<string, string>) ParseGameArguments(
-        (string?, IEnumerable<JsonElement>?) arguments)
+        (string?, JsonElement[]?) arguments)
     {
         var argList = new List<string>();
         var availableArguments = new Dictionary<string, string>();
@@ -116,10 +117,10 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             return (argList, availableArguments);
         }
 
-        if (!(item2?.Any() ?? false))
+        if ((item2?.Length ?? 0) == 0)
             return (argList, availableArguments);
 
-        foreach (var gameRule in item2)
+        foreach (var gameRule in item2!)
         {
             if (gameRule.ValueKind == JsonValueKind.String)
             {
@@ -154,7 +155,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                 {
                     JsonValueKind.String => value.GetString(),
                     JsonValueKind.Array => string.Join(' ',
-                        value.Deserialize(StringContext.Default.StringArray) ?? Array.Empty<string>()),
+                        value.Deserialize(StringContext.Default.StringArray) ?? []),
                     _ => string.Empty
                 };
             }
@@ -171,10 +172,11 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
     /// </summary>
     /// <param name="libraries">反序列化后的库数据。Deserialized library data.</param>
     /// <returns>二元组（包含一组list，T1是Natives列表，T2是Libraries列表）。A tuple.(T1 -> Natives, T2 -> Libraries)</returns>
-    public override (List<NativeFileInfo>, List<FileInfo>) GetNatives(IEnumerable<Library> libraries)
+    public override (List<NativeFileInfo>, List<FileInfo>) GetNatives(Library[] libraries)
     {
         var result = (new List<NativeFileInfo>(), new List<FileInfo>());
-        var isForge = libraries.Any(l => l.Name.Contains("minecraftforge", StringComparison.OrdinalIgnoreCase));
+        var isForge = libraries
+            .Any(l => l.Name.Contains("minecraftforge", StringComparison.OrdinalIgnoreCase));
 
         // 扫描库数据。
         // Scan the library data.
@@ -186,7 +188,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             // 不同版本的Minecraft有不同的library JSON字符串的结构。
             // Different versions of Minecraft have different library JSON's structure.
 
-            var isNative = lib.Natives?.Any() ?? false;
+            var isNative = (lib.Natives?.Count ?? 0) > 0;
             if (isNative)
             {
                 /*
@@ -271,7 +273,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             }
             else
             {
-                if (!(lib.Natives?.Any() ?? false))
+                if ((lib.Natives?.Count ?? 0) == 0)
                     if (!result.Item2.Any(l => l.Name!.Equals(lib.Name, StringComparison.OrdinalIgnoreCase)))
                         result.Item2.Add(new FileInfo
                         {
@@ -482,25 +484,30 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                 }
                 else
                 {
-                    result.JvmArguments = jvmArgs;
+                    result.JvmArguments = jvmArgs.ToList();
                     result.GameArguments = middleGameArgs.Item1;
                     result.AvailableGameArguments = middleGameArgs.Item2;
                 }
 
-                result.Id = inherits[i]!.Id ?? result.Id;
-                result.MainClass = inherits[i]!.MainClass ?? result.MainClass;
+                result.Id = inherits[i]?.Id ?? result.Id;
+                result.MainClass = inherits[i]?.MainClass ?? result.MainClass;
             }
 
-            var finalJvmArgs = result.JvmArguments?.ToList() ?? [];
-            finalJvmArgs.AddRange(jvmArgList);
-            result.JvmArguments = finalJvmArgs;
+            if (result.JvmArguments != null)
+                jvmArgList.AddRange(result.JvmArguments);
 
-            var finalGameArgs = result.GameArguments?.ToList() ?? [];
-            finalGameArgs.AddRange(gameArgList);
-            finalGameArgs = finalGameArgs.Select(arg => arg.Split(' ')).SelectMany(a => a).Distinct().ToList();
-            result.GameArguments = finalGameArgs;
+            result.JvmArguments = jvmArgList;
+
+            if (result.GameArguments != null)
+                gameArgList.AddRange(result.GameArguments);
+
+            result.GameArguments = gameArgList
+                .Select(arg => arg.Split(' '))
+                .SelectMany(a => a)
+                .ToFrozenSet();
 
             ProcessProfile(result, id);
+
             return result;
         }
 
@@ -508,7 +515,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
         result.Libraries = libs.Item2;
         result.Natives = libs.Item1;
 
-        result.JvmArguments = ParseJvmArguments(rawVersion.Arguments?.Jvm);
+        result.JvmArguments = ParseJvmArguments(rawVersion.Arguments?.Jvm).ToList();
 
         var gameArgs =
             ParseGameArguments((rawVersion.MinecraftArguments,

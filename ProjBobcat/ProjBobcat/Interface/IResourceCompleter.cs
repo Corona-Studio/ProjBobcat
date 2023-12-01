@@ -33,7 +33,7 @@ public interface IResourceCompleter : IDisposable
     /// <summary>
     ///     游戏资源解析器集合
     /// </summary>
-    IEnumerable<IResourceInfoResolver>? ResourceInfoResolvers { get; set; }
+    IReadOnlyList<IResourceInfoResolver>? ResourceInfoResolvers { get; set; }
 
     /// <summary>
     ///     检查并下载（同步）

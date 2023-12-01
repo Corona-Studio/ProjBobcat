@@ -80,8 +80,8 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
 
         var gameArgs = LaunchSettings.GameArguments ?? LaunchSettings.FallBackGameArguments;
 
-        if (gameArgs!.AdditionalJvmArguments?.Any() ?? false)
-            foreach (var jvmArg in gameArgs.AdditionalJvmArguments)
+        if ((gameArgs!.AdditionalJvmArguments?.Count ?? 0) > 0)
+            foreach (var jvmArg in gameArgs.AdditionalJvmArguments!)
                 yield return jvmArg;
 
         if (string.IsNullOrEmpty(GameProfile?.JavaArgs))

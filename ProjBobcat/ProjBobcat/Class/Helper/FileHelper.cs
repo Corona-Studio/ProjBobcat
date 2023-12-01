@@ -42,7 +42,6 @@ public static class FileHelper
             catch (IOException)
             {
                 await Task.Delay(1000, token);
-                continue;
             }
         }
         
