@@ -228,5 +228,3 @@ public static class TommyExtensions
         return self;
     }
 }
-
-#nullable restore

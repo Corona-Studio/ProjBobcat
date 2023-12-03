@@ -53,5 +53,3 @@ public static class ArchiveHelper
         return true;
     }
 }
-
-#nullable restore

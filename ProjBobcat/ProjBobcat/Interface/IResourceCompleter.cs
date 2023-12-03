@@ -5,7 +5,7 @@ using ProjBobcat.Class.Model;
 using ProjBobcat.Event;
 
 namespace ProjBobcat.Interface;
-#nullable enable
+
 public interface IResourceCompleter : IDisposable
 {
     /// <summary>
@@ -19,6 +19,11 @@ public interface IResourceCompleter : IDisposable
     ///     下载分片数量
     /// </summary>
     int DownloadParts { get; set; }
+
+    /// <summary>
+    ///    最大并行下载数量
+    /// </summary>
+    int DownloadThread { get; set; }
 
     int MaxDegreeOfParallelism { get; set; }
 
@@ -62,4 +67,3 @@ public interface IResourceCompleter : IDisposable
     /// </summary>
     event EventHandler<DownloadFileCompletedEventArgs> DownloadFileCompletedEvent;
 }
-#nullable restore

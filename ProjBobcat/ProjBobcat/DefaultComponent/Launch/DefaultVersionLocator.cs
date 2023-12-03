@@ -528,7 +528,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
         return result;
     }
 
-    private void ProcessProfile(VersionInfo result, string id)
+    void ProcessProfile(VersionInfo result, string id)
     {
         if (LauncherProfileParser == null) return;
 
@@ -536,7 +536,9 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             p.Value.LastVersionId?.Equals(id, StringComparison.Ordinal) ?? true);
 
         var gamePath = Path.Combine(RootPath, GamePathHelper.GetGamePath(id));
-        if (oldProfile.Equals(default(KeyValuePair<string, GameProfileModel>)))
+        if (oldProfile.Equals(default(KeyValuePair<string, GameProfileModel>)) ||
+            string.IsNullOrEmpty(oldProfile.Key) ||
+            oldProfile.Value == null)
         {
             LauncherProfileParser.LauncherProfile.Profiles!.Add(id.ToGuidHash().ToString("N"),
                 new GameProfileModel
@@ -547,6 +549,8 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                     Created = DateTime.Now
                 });
             LauncherProfileParser.SaveProfile();
+
+            return;
         }
 
         result.Name = oldProfile.Value.Name!;

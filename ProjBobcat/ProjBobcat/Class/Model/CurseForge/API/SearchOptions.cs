@@ -1,5 +1,5 @@
 ﻿namespace ProjBobcat.Class.Model.CurseForge.API;
-#nullable enable
+
 public class SearchOptions
 {
     public int? CategoryId { get; init; }
@@ -33,4 +33,3 @@ public class SearchOptions
         return result;
     }
 }
-#nullable restore

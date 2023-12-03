@@ -35,6 +35,7 @@ public class DefaultResourceCompleter : IResourceCompleter
 
     public TimeSpan TimeoutPerFile { get; set; } = TimeSpan.FromSeconds(10);
     public int DownloadParts { get; set; } = 16;
+    public int DownloadThread { get; set; } = 16;
     public int MaxDegreeOfParallelism { get; set; } = 1;
     public int TotalRetry { get; set; } = 2;
     public bool CheckFile { get; set; } = true;
@@ -67,6 +68,8 @@ public class DefaultResourceCompleter : IResourceCompleter
     {
         if ((ResourceInfoResolvers?.Count ?? 0) == 0)
             return new TaskResult<ResourceCompleterCheckResult?>(TaskResultStatus.Success, value: null);
+
+        DownloadThread = DownloadThread <= 1 ? 16 : DownloadThread;
 
         _needToDownload = 0;
         _failedFiles.Clear();
@@ -112,8 +115,8 @@ public class DefaultResourceCompleter : IResourceCompleter
             df.Dispose();
         }, new ExecutionDataflowBlockOptions
         {
-            MaxDegreeOfParallelism = processorCount,
-            BoundedCapacity = processorCount
+            MaxDegreeOfParallelism = DownloadThread,
+            BoundedCapacity = DownloadThread
         });
 
         gameResourceTransBlock.LinkTo(downloadFileBlock, linkOptions);
