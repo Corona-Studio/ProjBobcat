@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -413,7 +414,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             var fileName = lib.Path[(symbolIndex + 1)..];
             var path = Path.Combine(RootPath,
                 GamePathHelper.GetLibraryPath(lib.Path[..symbolIndex]));
-
+            
             /*
             if (!string.IsNullOrEmpty(DownloadUrlRoot))
             {
@@ -425,6 +426,19 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
                 lib.Url = $"{DownloadUrlRoot}{url}";
             }
             */
+
+            var fullFilePath = Path.Combine(path, fileName);
+            if (File.Exists(fullFilePath))
+            {
+                if (!string.IsNullOrEmpty(lib.Sha1))
+                {
+                    await using var fs = File.OpenRead(fullFilePath);
+                    var hashBytes = await SHA1.HashDataAsync(fs);
+
+                    if (hashBytes.BytesToString().Equals(lib.Sha1, StringComparison.OrdinalIgnoreCase))
+                        continue;
+                }
+            }
 
             var libDi = new DirectoryInfo(path);
 
@@ -452,7 +466,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             DownloadParts = 4,
             HashType = HashType.SHA1,
             RetryCount = 3,
-            Timeout = 5000
+            Timeout = 20000
         });
 
         if (!_failedFiles.IsEmpty)
@@ -542,12 +556,9 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
                 logSb.AppendLine(args.Data);
 
-                var data = args.Data ?? string.Empty;
+                var data = args.Data;
                 var progress = (double)_totalProcessed / _needToProcess;
-                var dataLength = data.Length;
-                var dataStr = dataLength > 30
-                    ? $"..{data[(dataLength - 30)..]}"
-                    : data;
+                var dataStr = data.CropStr(40);
 
                 InvokeStatusChangedEvent($"{dataStr} <安装信息> ( {_totalProcessed} / {_needToProcess} )", progress);
             };
@@ -560,11 +571,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
                 var data = args.Data ?? string.Empty;
                 var progress = (double)_totalProcessed / _needToProcess;
-                var dataLength = data.Length;
-                var dataStr = dataLength > 30
-                    ? $"{data[(dataLength - 30)..]}"
-                    : data;
-
+                var dataStr = data.CropStr(40);
 
                 InvokeStatusChangedEvent($"{dataStr} <错误> ( {_totalProcessed} / {_needToProcess} )", progress);
             };

@@ -11,9 +11,7 @@ using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using Microsoft.Extensions.ObjectPool;
 using ProjBobcat.Class.Model;
-using ProjBobcat.Class.Model.ObjectPool;
 
 namespace ProjBobcat.Class.Helper;
 
@@ -27,8 +25,9 @@ public static class DownloadHelper
     /// </summary>
     public static int DownloadThread { get; set; } = 8;
 
-    const int DefaultBufferSize = 40960;
-    static readonly ObjectPool<HttpClient> HttpClientPool = new DefaultObjectPool<HttpClient>(new HttpClientPooledPolicy(), 100);
+    const int DefaultBufferSize = 1024 * 1024 * 4;
+    static HttpClient Head => HttpClientHelper.HeadClient;
+    static HttpClient Data => HttpClientHelper.DataClient;
 
     #region 下载数据
 
@@ -44,7 +43,6 @@ public static class DownloadHelper
 
         var filePath = Path.Combine(downloadFile.DownloadPath, downloadFile.FileName);
         var exceptions = new List<Exception>();
-        var client = HttpClientPool.Get();
 
         for (var i = 0; i <= downloadSettings.RetryCount; i++)
         {
@@ -60,7 +58,7 @@ public static class DownloadHelper
                     request.Headers.Host = downloadSettings.Host;
 
                 using var res =
-                    await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token);
+                    await Head.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token);
 
                 res.EnsureSuccessStatusCode();
 
@@ -88,8 +86,8 @@ public static class DownloadHelper
 
                     downloadedBytesCount += bytesRead;
 
-                    var elapsedTime = Math.Ceiling(sw.Elapsed.TotalSeconds);
-                    var speed = CalculateDownloadSpeed(bytesRead, elapsedTime, SizeUnit.Kb);
+                    var elapsedTime = sw.Elapsed.TotalSeconds == 0 ? 1 : sw.Elapsed.TotalSeconds;
+                    var speed = bytesRead / elapsedTime;
 
                     tSpeed += speed;
                     cSpeed++;
@@ -120,8 +118,6 @@ public static class DownloadHelper
                 var aSpeed = tSpeed / cSpeed;
                 downloadFile.OnCompleted(true, null, aSpeed);
 
-                HttpClientPool.Return(client);
-
                 return;
             }
             catch (Exception e)
@@ -133,26 +129,46 @@ public static class DownloadHelper
             }
         }
 
-        HttpClientPool.Return(client);
         downloadFile.OnCompleted(false, new AggregateException(exceptions), 0);
     }
 
     #endregion
 
-    public static double CalculateDownloadSpeed(int bytesReceived, double passedSeconds,
-        SizeUnit unit = SizeUnit.Mb)
+    public static (double Speed, SizeUnit Unit) AutoFormatSpeed(double transferSpeed)
     {
         const double baseNum = 1024;
 
-        return unit switch
+        // Auto choose the unit
+        var unit = SizeUnit.B;
+
+        if (transferSpeed > baseNum)
         {
-            SizeUnit.B => bytesReceived / passedSeconds,
-            SizeUnit.Kb => bytesReceived / baseNum / passedSeconds,
-            SizeUnit.Mb => bytesReceived / Math.Pow(baseNum, 2) / passedSeconds,
-            SizeUnit.Gb => bytesReceived / Math.Pow(baseNum, 3) / passedSeconds,
-            SizeUnit.Tb => bytesReceived / Math.Pow(baseNum, 4) / passedSeconds,
-            _ => bytesReceived / passedSeconds
+            unit = SizeUnit.Kb;
+            if (transferSpeed > Math.Pow(baseNum, 2))
+            {
+                unit = SizeUnit.Mb;
+                if (transferSpeed > Math.Pow(baseNum, 3))
+                {
+                    unit = SizeUnit.Gb;
+                    if (transferSpeed > Math.Pow(baseNum, 4))
+                    {
+                        unit = SizeUnit.Tb;
+                    }
+                }
+            }
+        }
+
+        var convertedSpeed = unit switch
+        {
+            SizeUnit.B => transferSpeed,
+            SizeUnit.Kb => transferSpeed / baseNum,
+            SizeUnit.Mb => transferSpeed / Math.Pow(baseNum, 2),
+            SizeUnit.Gb => transferSpeed / Math.Pow(baseNum, 3),
+            SizeUnit.Tb => transferSpeed / Math.Pow(baseNum, 4),
+            _ => transferSpeed
         };
+
+        return (convertedSpeed, unit);
     }
 
     #region 下载一个列表中的文件（自动确定是否使用分片下载）
@@ -231,8 +247,6 @@ public static class DownloadHelper
         var isLatestFileCheckSucceeded = true;
         List<DownloadRange>? readRanges = null;
 
-        var client = HttpClientPool.Get();
-
         for (var r = 0; r <= downloadSettings.RetryCount; r++)
         {
             using var cts = new CancellationTokenSource(timeout * Math.Max(1, r + 1));
@@ -248,7 +262,7 @@ public static class DownloadHelper
                 if (!string.IsNullOrEmpty(downloadSettings.Host))
                     headReq.Headers.Host = downloadSettings.Host;
 
-                using var headRes = await client.SendAsync(headReq, cts.Token);
+                using var headRes = await Head.SendAsync(headReq, cts.Token);
 
                 headRes.EnsureSuccessStatusCode();
 
@@ -263,7 +277,7 @@ public static class DownloadHelper
                 if (!string.IsNullOrEmpty(downloadSettings.Host))
                     rangeGetMessage.Headers.Host = downloadSettings.Host;
 
-                using var rangeGetRes = await client.SendAsync(rangeGetMessage, cts.Token);
+                using var rangeGetRes = await Head.SendAsync(rangeGetMessage, cts.Token);
 
                 var parallelDownloadSupported =
                     responseLength != 0 &&
@@ -274,7 +288,6 @@ public static class DownloadHelper
 
                 if (!parallelDownloadSupported)
                 {
-                    HttpClientPool.Return(client);
                     await DownloadData(downloadFile, downloadSettings);
                     return;
                 }
@@ -329,7 +342,7 @@ public static class DownloadHelper
 
                             request.Headers.Range = new RangeHeaderValue(p.Start, p.End);
 
-                            var downloadTask = await client.SendAsync(
+                            var downloadTask = await Data.SendAsync(
                                 request,
                                 HttpCompletionOption.ResponseHeadersRead,
                                 cts.Token);
@@ -368,7 +381,7 @@ public static class DownloadHelper
                         Interlocked.Add(ref downloadedBytesCount, bytesRead);
 
                         var elapsedTime = Math.Ceiling(sw.Elapsed.TotalSeconds);
-                        var speed = CalculateDownloadSpeed(bytesRead, elapsedTime, SizeUnit.Kb);
+                        var speed = bytesRead / elapsedTime;
 
                         tSpeed += speed;
                         cSpeed++;
@@ -448,7 +461,6 @@ public static class DownloadHelper
 
                 #endregion
 
-                HttpClientPool.Return(client);
                 downloadFile.OnCompleted(true, null, aSpeed);
                 return;
             }
@@ -470,8 +482,6 @@ public static class DownloadHelper
                 // downloadFile.OnCompleted(false, ex, 0);
             }
         }
-
-        HttpClientPool.Return(client);
 
         if (exceptions.Count > 0)
         {

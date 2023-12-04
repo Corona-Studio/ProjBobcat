@@ -1,12 +1,9 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.ComponentModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Event;
@@ -19,19 +16,9 @@ namespace ProjBobcat.DefaultComponent;
 /// </summary>
 public class DefaultResourceCompleter : IResourceCompleter
 {
-    static readonly object ResolveEventKey = new();
-    static readonly object ChangedEventKey = new();
-    static readonly object CompletedEventKey = new();
-
     readonly ConcurrentBag<DownloadFile> _failedFiles = [];
-    readonly EventHandlerList _listEventDelegates = new();
-
-    bool _disposedValue;
 
     ulong _needToDownload, _totalDownloaded;
-
-    public ulong TotalDownloaded => Interlocked.Read(ref _totalDownloaded);
-    public ulong NeedToDownload => Interlocked.Read(ref _needToDownload);
 
     public TimeSpan TimeoutPerFile { get; set; } = TimeSpan.FromSeconds(10);
     public int DownloadParts { get; set; } = 16;
@@ -41,23 +28,9 @@ public class DefaultResourceCompleter : IResourceCompleter
     public bool CheckFile { get; set; } = true;
     public IReadOnlyList<IResourceInfoResolver>? ResourceInfoResolvers { get; set; }
 
-    public event EventHandler<GameResourceInfoResolveEventArgs> GameResourceInfoResolveStatus
-    {
-        add => _listEventDelegates.AddHandler(ResolveEventKey, value);
-        remove => _listEventDelegates.RemoveHandler(ResolveEventKey, value);
-    }
-
-    public event EventHandler<DownloadFileChangedEventArgs> DownloadFileChangedEvent
-    {
-        add => _listEventDelegates.AddHandler(ChangedEventKey, value);
-        remove => _listEventDelegates.RemoveHandler(ChangedEventKey, value);
-    }
-
-    public event EventHandler<DownloadFileCompletedEventArgs> DownloadFileCompletedEvent
-    {
-        add => _listEventDelegates.AddHandler(CompletedEventKey, value);
-        remove => _listEventDelegates.RemoveHandler(CompletedEventKey, value);
-    }
+    public event EventHandler<GameResourceInfoResolveEventArgs>? GameResourceInfoResolveStatus;
+    public event EventHandler<DownloadFileChangedEventArgs>? DownloadFileChangedEvent;
+    public event EventHandler<DownloadFileCompletedEventArgs>? DownloadFileCompletedEvent;
 
     public TaskResult<ResourceCompleterCheckResult?> CheckAndDownload()
     {
@@ -172,44 +145,50 @@ public class DefaultResourceCompleter : IResourceCompleter
 
     public void Dispose()
     {
-        _listEventDelegates.Dispose();
     }
 
     void OnResolveComplete(object? sender, GameResourceInfoResolveEventArgs e)
     {
-        var eventList = _listEventDelegates;
-        var @event = (EventHandler<GameResourceInfoResolveEventArgs>)eventList[ResolveEventKey]!;
-        @event?.Invoke(sender, e);
+        GameResourceInfoResolveStatus?.Invoke(sender, e);
+    }
+
+    static bool ShouldUpdateInfo(ref DateTime time)
+    {
+        if (DateTime.Now - time > TimeSpan.FromSeconds(1))
+        {
+            time = DateTime.Now;
+            return true;
+        }
+
+        return false;
     }
 
     void OnCompleted(object? sender, DownloadFileCompletedEventArgs e)
     {
-        var eventList = _listEventDelegates;
-        var @event = (EventHandler<DownloadFileCompletedEventArgs>)eventList[CompletedEventKey]!;
-        @event?.Invoke(sender, e);
+        DownloadFileCompletedEvent?.Invoke(sender, e);
     }
 
     void OnChanged(double progress, double speed)
     {
-        var eventList = _listEventDelegates;
-        var @event = (EventHandler<DownloadFileChangedEventArgs>)eventList[ChangedEventKey]!;
-
-        @event?.Invoke(this, new DownloadFileChangedEventArgs
+        DownloadFileChangedEvent?.Invoke(this, new DownloadFileChangedEventArgs
         {
             ProgressPercentage = progress,
             Speed = speed
         });
     }
 
+    DateTime _lastUpdate = DateTime.Now;
     void WhenCompleted(object? sender, DownloadFileCompletedEventArgs e)
     {
         if (sender is not DownloadFile df) return;
 
         if (!(e.Success ?? false)) _failedFiles.Add(df);
 
-        Interlocked.Increment(ref _totalDownloaded);
+        var downloaded = Interlocked.Increment(ref _totalDownloaded);
         
-        OnChanged((double)TotalDownloaded / NeedToDownload, e.AverageSpeed);
+        if (!ShouldUpdateInfo(ref _lastUpdate)) return;
+
+        OnChanged((double)downloaded / _needToDownload, e.AverageSpeed);
         OnCompleted(sender, e);
     }
 }

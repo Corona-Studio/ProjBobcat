@@ -1,5 +1,4 @@
 ﻿using System;
-using System.ComponentModel;
 using ProjBobcat.Event;
 
 namespace ProjBobcat.Class.Model;
@@ -7,14 +6,8 @@ namespace ProjBobcat.Class.Model;
 /// <summary>
 ///     下载文件信息类
 /// </summary>
-public class DownloadFile : IDisposable
+public class DownloadFile
 {
-    static readonly object CompletedEventKey = new();
-    static readonly object ChangedEventKey = new();
-
-    readonly EventHandlerList _listEventDelegates = new();
-    bool _disposedValue;
-
     /// <summary>
     ///     下载Uri
     /// </summary>
@@ -50,37 +43,19 @@ public class DownloadFile : IDisposable
     /// </summary>
     public string? CheckSum { get; init; }
 
-    public void Dispose()
-    {
-        // 不要更改此代码。请将清理代码放入“Dispose(bool disposing)”方法中
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
-
     /// <summary>
     ///     下载完成事件
     /// </summary>
-    public event EventHandler<DownloadFileCompletedEventArgs> Completed
-    {
-        add => _listEventDelegates.AddHandler(CompletedEventKey, value);
-        remove => _listEventDelegates.RemoveHandler(CompletedEventKey, value);
-    }
+    public event EventHandler<DownloadFileCompletedEventArgs>? Completed;
 
     /// <summary>
     ///     下载改变事件
     /// </summary>
-    public event EventHandler<DownloadFileChangedEventArgs> Changed
-    {
-        add => _listEventDelegates.AddHandler(ChangedEventKey, value);
-        remove => _listEventDelegates.RemoveHandler(ChangedEventKey, value);
-    }
+    public event EventHandler<DownloadFileChangedEventArgs>? Changed;
 
     public void OnChanged(double speed, double progress, long bytesReceived, long totalBytes)
     {
-        var eventList = _listEventDelegates;
-        var @event = (EventHandler<DownloadFileChangedEventArgs>?)eventList[ChangedEventKey];
-        
-        @event?.Invoke(this, new DownloadFileChangedEventArgs
+        Changed?.Invoke(this, new DownloadFileChangedEventArgs
         {
             Speed = speed,
             ProgressPercentage = progress,
@@ -91,22 +66,6 @@ public class DownloadFile : IDisposable
 
     public void OnCompleted(bool? success, Exception? ex, double averageSpeed)
     {
-        var eventList = _listEventDelegates;
-        var @event = (EventHandler<DownloadFileCompletedEventArgs>?)eventList[CompletedEventKey];
-        @event?.Invoke(this, new DownloadFileCompletedEventArgs(success, ex, averageSpeed));
-    }
-
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!_disposedValue)
-        {
-            if (disposing)
-                // TODO: 释放托管状态(托管对象)
-                _listEventDelegates.Dispose();
-
-            // TODO: 释放未托管的资源(未托管的对象)并重写终结器
-            // TODO: 将大型字段设置为 null
-            _disposedValue = true;
-        }
+        Completed?.Invoke(this, new DownloadFileCompletedEventArgs(success, ex, averageSpeed));
     }
 }
