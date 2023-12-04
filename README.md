@@ -19,7 +19,7 @@ Developed and maintained by Corona Studio.
 
 ## NativeAOT (ahead-of-time compilation) Support
 
-ProjBobcat provides full support for [NativeAot](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/). Native AOT apps start up very quickly and use less memory. Users of the application can run it on a machine that doesn't have the .NET runtime installed. If you want to use NativeAot in your project, please switch your target framework to **net7.0 or higher**.
+ProjBobcat provides full support for [NativeAot](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/). Native AOT apps start up very quickly and use less memory. Users of the application can run it on a machine that doesn't have the .NET runtime installed. 
 
 ## Multi-Platform Support
 
@@ -37,7 +37,7 @@ All you need for Minecraft launcher in typescript. https://voxelum.github.io/min
 
 ## Reminder before installation
 
-+ Because Projbobcat uses tons of the latest language features and data structures from .NET Core and .NET 6+. As a result, you need to switch your project target to at least **.NET 6 or above** to use this package.
++ <del>Because Projbobcat uses tons of the latest language features and data structures from .NET Core and .NET 6+. As a result, you need to switch your project target to at least **.NET 6 or above** to use this package.</del> Projbobcat now only supports the latest LTS .NET version 8.0.
 + Due to the limitation of the default number of connections in .NET, you need to manually override the number of connections to ensure that some methods in <DownloadHelper> are executed typically. You can add the following code in App.xaml.cs or the entry point of the program to complete the modification (The maximum value should not exceed 1024)
 
 ```c#
