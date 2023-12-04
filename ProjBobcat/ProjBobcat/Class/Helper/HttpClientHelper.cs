@@ -9,30 +9,16 @@ namespace ProjBobcat.Class.Helper;
 /// </summary>
 public static class HttpClientHelper
 {
-    static readonly Lazy<HttpClient> DefaultClientFactory = new(HttpClientFactory);
-    static readonly Lazy<HttpClient> DataClientFactory = new(HttpClientFactory);
-    static readonly Lazy<HttpClient> HeadClientFactory = new(HttpClientFactory);
-
-    static readonly Lazy<HttpClient> MultiPartClientFactory = new(() =>
-    {
-        var client = HttpClientFactory();
-
-        client.DefaultRequestHeaders.ConnectionClose = false;
-
-        return client;
-    });
+    static readonly Lazy<HttpClient> DefaultClientFactory = new(CreateInstance);
 
     public static HttpClient DefaultClient => DefaultClientFactory.Value;
-    public static HttpClient DataClient => DataClientFactory.Value;
-    public static HttpClient HeadClient => HeadClientFactory.Value;
-    public static HttpClient MultiPartClient => MultiPartClientFactory.Value;
 
     /// <summary>
     ///     获取或设置用户代理信息。
     /// </summary>
     public static string Ua { get; set; } = "ProjBobcat";
 
-    static HttpClient HttpClientFactory()
+    public static HttpClient CreateInstance()
     {
         var handlers = new RedirectHandler(new RetryHandler(new HttpClientHandler
         {

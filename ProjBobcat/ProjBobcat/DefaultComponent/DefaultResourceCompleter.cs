@@ -74,52 +74,15 @@ public class DefaultResourceCompleter : IResourceCompleter
         _needToDownload = 0;
         _failedFiles.Clear();
 
-        var processorCount = Environment.ProcessorCount;
-        var linkOptions = new DataflowLinkOptions { PropagateCompletion = true };
-        var gameResourceTransBlock =
-            new TransformBlock<IGameResource, DownloadFile>(f =>
-                {
-                    var dF = new DownloadFile
-                    {
-                        DownloadPath = f.Path,
-                        DownloadUri = f.Url,
-                        FileName = f.FileName,
-                        FileSize = f.FileSize,
-                        CheckSum = f.CheckSum,
-                        FileType = f.Type
-                    };
-                    dF.Completed += WhenCompleted;
-
-                    return dF;
-                },
-                new ExecutionDataflowBlockOptions
-                {
-                    MaxDegreeOfParallelism = processorCount,
-                    BoundedCapacity = processorCount
-                });
-        
-        var downloadFileBlock = new ActionBlock<DownloadFile>(async df =>
+        var downloadBag = new ConcurrentBag<DownloadFile>();
+        var downloadSettings = new DownloadSettings
         {
-            var downloadSettings = new DownloadSettings
-            {
-                CheckFile = CheckFile,
-                DownloadParts = DownloadParts,
-                HashType = HashType.SHA1,
-                RetryCount = TotalRetry,
-                Timeout = (int)TimeoutPerFile.TotalMilliseconds
-            };
-
-            await DownloadHelper.AdvancedDownloadFile(df, downloadSettings);
-
-            df.Completed -= WhenCompleted;
-            df.Dispose();
-        }, new ExecutionDataflowBlockOptions
-        {
-            MaxDegreeOfParallelism = DownloadThread,
-            BoundedCapacity = DownloadThread
-        });
-
-        gameResourceTransBlock.LinkTo(downloadFileBlock, linkOptions);
+            CheckFile = CheckFile,
+            DownloadParts = DownloadParts,
+            HashType = HashType.SHA1,
+            RetryCount = TotalRetry,
+            Timeout = (int)TimeoutPerFile.TotalMilliseconds
+        };
 
         async Task ReceiveGameResourceTask(IAsyncEnumerable<IGameResource> asyncEnumerable)
         {
@@ -132,11 +95,23 @@ public class DefaultResourceCompleter : IResourceCompleter
 
                 OnResolveComplete(this, new GameResourceInfoResolveEventArgs
                 {
-                    Progress = -1,
+                    Progress = 0,
                     Status = $"发现未下载的 {element.FileName.CropStr()}({element.Type})，已加入下载队列"
                 });
 
-                await gameResourceTransBlock.SendAsync(element);
+                var dF = new DownloadFile
+                {
+                    DownloadPath = element.Path,
+                    DownloadUri = element.Url,
+                    FileName = element.FileName,
+                    FileSize = element.FileSize,
+                    CheckSum = element.CheckSum,
+                    FileType = element.Type
+                };
+                dF.Completed += WhenCompleted;
+
+                downloadBag.Add(dF);
+
                 refreshCounter++;
 
                 if (refreshCounter % 10 == 0)
@@ -149,10 +124,8 @@ public class DefaultResourceCompleter : IResourceCompleter
             Interlocked.Add(ref _needToDownload, count);
         }
 
-        var chunks =
-            ResourceInfoResolvers!
-                .Chunk(MaxDegreeOfParallelism)
-                .ToImmutableArray();
+        var chunks = ResourceInfoResolvers!.Chunk(MaxDegreeOfParallelism);
+
         foreach (var chunk in chunks)
         {
             var tasks = new Task[chunk.Length];
@@ -167,8 +140,18 @@ public class DefaultResourceCompleter : IResourceCompleter
             await Task.WhenAll(tasks);
         }
 
-        gameResourceTransBlock.Complete();
-        await downloadFileBlock.Completion;
+        var arr = downloadBag
+            .OrderBy(d => d.FileSize)
+            .ToArray();
+
+        /*
+        var breakPoint = (int)(arr.Length * (3 / 4d));
+
+        if (breakPoint > 10)
+            Random.Shared.Shuffle(arr.AsSpan()[breakPoint..]);
+        */
+
+        await DownloadHelper.AdvancedDownloadListFile(arr, downloadSettings);
 
         var isLibraryFailed = _failedFiles.Any(d => d.FileType == ResourceType.LibraryOrNative);
         var result = _failedFiles switch
@@ -189,9 +172,7 @@ public class DefaultResourceCompleter : IResourceCompleter
 
     public void Dispose()
     {
-        // 不要更改此代码。请将清理代码放入“Dispose(bool disposing)”方法中
-        Dispose(true);
-        GC.SuppressFinalize(this);
+        _listEventDelegates.Dispose();
     }
 
     void OnResolveComplete(object? sender, GameResourceInfoResolveEventArgs e)
@@ -230,17 +211,5 @@ public class DefaultResourceCompleter : IResourceCompleter
         
         OnChanged((double)TotalDownloaded / NeedToDownload, e.AverageSpeed);
         OnCompleted(sender, e);
-    }
-
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!_disposedValue)
-        {
-            if (disposing) _listEventDelegates.Dispose();
-
-            // TODO: 释放未托管的资源(未托管的对象)并重写终结器
-            // TODO: 将大型字段设置为 null
-            _disposedValue = true;
-        }
     }
 }

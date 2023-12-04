@@ -23,7 +23,7 @@ public class DownloadSettings
         RetryCount = 0,
         CheckFile = false,
         Timeout = (int)TimeSpan.FromMinutes(5).TotalMilliseconds,
-        DownloadParts = 8
+        DownloadParts = 16
     };
 
     public int RetryCount { get; init; }
@@ -42,32 +42,17 @@ public class DownloadSettings
     /// </summary>
     public string? Host { get; init; }
 
-    public HashAlgorithm GetHashAlgorithm()
-    {
-        return HashType switch
-        {
-            HashType.MD5 => MD5.Create(),
-            HashType.SHA1 => SHA1.Create(),
-            HashType.SHA256 => SHA256.Create(),
-            HashType.SHA384 => SHA384.Create(),
-            HashType.SHA512 => SHA512.Create(),
-            _ => throw new NotSupportedException()
-        };
-    }
-
-    public async Task<byte[]> HashDataAsync(string filePath, CancellationToken? token)
+    public async ValueTask<byte[]> HashDataAsync(Stream stream, CancellationToken? token)
     {
         token ??= CancellationToken.None;
         
-        await using var fs = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-
         return HashType switch
         {
-            HashType.MD5 => await MD5.HashDataAsync(fs, token.Value),
-            HashType.SHA1 => await SHA1.HashDataAsync(fs, token.Value),
-            HashType.SHA256 => await SHA256.HashDataAsync(fs, token.Value),
-            HashType.SHA384 => await SHA384.HashDataAsync(fs, token.Value),
-            HashType.SHA512 => await SHA512.HashDataAsync(fs, token.Value),
+            HashType.MD5 => await MD5.HashDataAsync(stream, token.Value),
+            HashType.SHA1 => await SHA1.HashDataAsync(stream, token.Value),
+            HashType.SHA256 => await SHA256.HashDataAsync(stream, token.Value),
+            HashType.SHA384 => await SHA384.HashDataAsync(stream, token.Value),
+            HashType.SHA512 => await SHA512.HashDataAsync(stream, token.Value),
             _ => throw new NotSupportedException()
         };
     }

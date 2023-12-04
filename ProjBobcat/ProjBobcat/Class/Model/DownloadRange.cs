@@ -1,9 +1,12 @@
-﻿namespace ProjBobcat.Class.Model;
+﻿using System.Diagnostics;
+
+namespace ProjBobcat.Class.Model;
 
 /// <summary>
 ///     下载范围类
 /// </summary>
-public class DownloadRange
+[DebuggerDisplay("[{Start}-{End}]")]
+public readonly struct DownloadRange
 {
     /// <summary>
     ///     开始字节
@@ -19,9 +22,4 @@ public class DownloadRange
     ///     临时文件名称
     /// </summary>
     public required string TempFileName { get; init; }
-
-    public override string ToString()
-    {
-        return $"[{Start}-{End}]";
-    }
 }
