@@ -113,10 +113,6 @@ public class DefaultResourceCompleter : IResourceCompleter
             await Task.WhenAll(tasks);
         }
 
-        var arr = downloadBag
-            .OrderBy(d => d.FileSize)
-            .ToArray();
-
         /*
         var breakPoint = (int)(arr.Length * (3 / 4d));
 
@@ -124,7 +120,7 @@ public class DefaultResourceCompleter : IResourceCompleter
             Random.Shared.Shuffle(arr.AsSpan()[breakPoint..]);
         */
 
-        await DownloadHelper.AdvancedDownloadListFile(arr, downloadSettings);
+        await DownloadHelper.AdvancedDownloadListFile(downloadBag, downloadSettings);
 
         var isLibraryFailed = _failedFiles.Any(d => d.FileType == ResourceType.LibraryOrNative);
         var result = _failedFiles switch
@@ -152,17 +148,6 @@ public class DefaultResourceCompleter : IResourceCompleter
         GameResourceInfoResolveStatus?.Invoke(sender, e);
     }
 
-    static bool ShouldUpdateInfo(ref DateTime time)
-    {
-        if (DateTime.Now - time > TimeSpan.FromSeconds(1))
-        {
-            time = DateTime.Now;
-            return true;
-        }
-
-        return false;
-    }
-
     void OnCompleted(object? sender, DownloadFileCompletedEventArgs e)
     {
         DownloadFileCompletedEvent?.Invoke(sender, e);
@@ -177,7 +162,6 @@ public class DefaultResourceCompleter : IResourceCompleter
         });
     }
 
-    DateTime _lastUpdate = DateTime.Now;
     void WhenCompleted(object? sender, DownloadFileCompletedEventArgs e)
     {
         if (sender is not DownloadFile df) return;
@@ -186,8 +170,6 @@ public class DefaultResourceCompleter : IResourceCompleter
 
         var downloaded = Interlocked.Increment(ref _totalDownloaded);
         
-        if (!ShouldUpdateInfo(ref _lastUpdate)) return;
-
         OnChanged((double)downloaded / _needToDownload, e.AverageSpeed);
         OnCompleted(sender, e);
     }

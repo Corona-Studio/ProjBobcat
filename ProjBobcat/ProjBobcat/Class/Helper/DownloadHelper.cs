@@ -210,27 +210,30 @@ public static class DownloadHelper
     /// </summary>
     /// <param name="fileEnumerable">文件列表</param>
     /// <param name="downloadSettings"></param>
-    public static Task AdvancedDownloadListFile(
+    public static async Task AdvancedDownloadListFile(
         IEnumerable<DownloadFile> fileEnumerable,
         DownloadSettings downloadSettings)
     {
-        var tasks = new Task[DownloadThread];
-        var downloadBag = new ConcurrentBag<DownloadFile>(fileEnumerable);
+        ProcessorHelper.SetMaxThreads();
+        var filesBlock =
+            new TransformManyBlock<IEnumerable<DownloadFile>, DownloadFile>(d => d);
 
-        for (var i = 0; i < DownloadThread; i++)
-        {
-            tasks[i] = DoDownloadList(downloadBag);
-        }
-        
-        return Task.WhenAll(tasks);
-
-        async Task DoDownloadList(ConcurrentBag<DownloadFile> bag)
-        {
-            while (bag.TryTake(out var df))
+        var actionBlock = new ActionBlock<DownloadFile>(
+            d => AdvancedDownloadFile(d, downloadSettings),
+            new ExecutionDataflowBlockOptions
             {
-                await AdvancedDownloadFile(df, downloadSettings);
-            }
-        }
+                BoundedCapacity = DownloadThread,
+                MaxDegreeOfParallelism = DownloadThread,
+                EnsureOrdered = false
+            });
+
+        var linkOptions = new DataflowLinkOptions { PropagateCompletion = true };
+        filesBlock.LinkTo(actionBlock, linkOptions);
+        filesBlock.Post(fileEnumerable);
+        filesBlock.Complete();
+
+        await actionBlock.Completion;
+        actionBlock.Complete();
     }
 
     #endregion
