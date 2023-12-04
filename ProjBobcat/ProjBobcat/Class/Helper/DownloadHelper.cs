@@ -28,6 +28,7 @@ public static class DownloadHelper
     const int DefaultBufferSize = 1024 * 1024 * 4;
     static HttpClient Head => HttpClientHelper.HeadClient;
     static HttpClient Data => HttpClientHelper.DataClient;
+    static HttpClient MultiPart => HttpClientHelper.MultiPartClient;
 
     #region 下载数据
 
@@ -58,7 +59,7 @@ public static class DownloadHelper
                     request.Headers.Host = downloadSettings.Host;
 
                 using var res =
-                    await Head.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token);
+                    await Data.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token);
 
                 res.EnsureSuccessStatusCode();
 
@@ -136,7 +137,7 @@ public static class DownloadHelper
 
     public static string AutoFormatSpeedString(double speedInBytePerSecond)
     {
-        var speed = DownloadHelper.AutoFormatSpeed(speedInBytePerSecond);
+        var speed = AutoFormatSpeed(speedInBytePerSecond);
         var unit = speed.Unit switch
         {
             SizeUnit.B => "B / s",
@@ -214,25 +215,22 @@ public static class DownloadHelper
         DownloadSettings downloadSettings)
     {
         ProcessorHelper.SetMaxThreads();
-        var filesBlock =
-            new TransformManyBlock<IEnumerable<DownloadFile>, DownloadFile>(d => d);
 
         var actionBlock = new ActionBlock<DownloadFile>(
             d => AdvancedDownloadFile(d, downloadSettings),
             new ExecutionDataflowBlockOptions
             {
-                BoundedCapacity = DownloadThread,
-                MaxDegreeOfParallelism = DownloadThread,
-                EnsureOrdered = false
+                BoundedCapacity = DownloadThread * 2,
+                MaxDegreeOfParallelism = DownloadThread
             });
 
-        var linkOptions = new DataflowLinkOptions { PropagateCompletion = true };
-        filesBlock.LinkTo(actionBlock, linkOptions);
-        filesBlock.Post(fileEnumerable);
-        filesBlock.Complete();
+        foreach (var downloadFile in fileEnumerable)
+        {
+            await actionBlock.SendAsync(downloadFile);
+        }
 
-        await actionBlock.Completion;
         actionBlock.Complete();
+        await actionBlock.Completion;
     }
 
     #endregion
@@ -360,7 +358,7 @@ public static class DownloadHelper
 
                             request.Headers.Range = new RangeHeaderValue(p.Start, p.End);
 
-                            var downloadTask = await Data.SendAsync(
+                            var downloadTask = await MultiPart.SendAsync(
                                 request,
                                 HttpCompletionOption.ResponseHeadersRead,
                                 cts.Token);

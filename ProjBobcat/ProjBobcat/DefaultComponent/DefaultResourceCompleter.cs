@@ -113,13 +113,6 @@ public class DefaultResourceCompleter : IResourceCompleter
             await Task.WhenAll(tasks);
         }
 
-        /*
-        var breakPoint = (int)(arr.Length * (3 / 4d));
-
-        if (breakPoint > 10)
-            Random.Shared.Shuffle(arr.AsSpan()[breakPoint..]);
-        */
-
         await DownloadHelper.AdvancedDownloadListFile(downloadBag, downloadSettings);
 
         var isLibraryFailed = _failedFiles.Any(d => d.FileType == ResourceType.LibraryOrNative);

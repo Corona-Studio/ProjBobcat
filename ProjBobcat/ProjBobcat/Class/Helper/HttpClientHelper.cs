@@ -34,8 +34,9 @@ public static class HttpClientHelper
 
     static HttpClient HttpClientFactory()
     {
-        var handlers = new RedirectHandler(new RetryHandler(new HttpClientHandler
+        var handlers = new RedirectHandler(new RetryHandler(new SocketsHttpHandler
         {
+            PooledConnectionLifetime = TimeSpan.FromMinutes(10),
             AllowAutoRedirect = false,
             Proxy = HttpClient.DefaultProxy
         }));
