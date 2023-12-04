@@ -134,6 +134,22 @@ public static class DownloadHelper
 
     #endregion
 
+    public static string AutoFormatSpeedString(double speedInBytePerSecond)
+    {
+        var speed = DownloadHelper.AutoFormatSpeed(speedInBytePerSecond);
+        var unit = speed.Unit switch
+        {
+            SizeUnit.B => "B / s",
+            SizeUnit.Kb => "Kb / s",
+            SizeUnit.Mb => "Mb / s",
+            SizeUnit.Gb => "Gb / s",
+            SizeUnit.Tb => "Tb / s",
+            _ => "B / s"
+        };
+
+        return $"{speed.Speed:F} {unit}";
+    }
+
     public static (double Speed, SizeUnit Unit) AutoFormatSpeed(double transferSpeed)
     {
         const double baseNum = 1024;
