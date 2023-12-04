@@ -176,7 +176,6 @@ public static class DownloadHelper
 
         var convertedSpeed = unit switch
         {
-            SizeUnit.B => transferSpeed,
             SizeUnit.Kb => transferSpeed / baseNum,
             SizeUnit.Mb => transferSpeed / Math.Pow(baseNum, 2),
             SizeUnit.Gb => transferSpeed / Math.Pow(baseNum, 3),
