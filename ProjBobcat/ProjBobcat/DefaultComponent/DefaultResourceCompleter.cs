@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Event;
@@ -97,23 +98,44 @@ public class DefaultResourceCompleter : IResourceCompleter
             Interlocked.Add(ref _needToDownload, count);
         }
 
-        var chunks = ResourceInfoResolvers!.Chunk(MaxDegreeOfParallelism);
-
-        foreach (var chunk in chunks)
+        OnResolveComplete(this, new GameResourceInfoResolveEventArgs
         {
-            var tasks = new Task[chunk.Length];
-            
-            for (var i = 0; i < chunk.Length; i++)
-            {
-                var resolver = chunk[i];
-                var asyncEnumerable = resolver.ResolveResourceAsync();
-                tasks[i] = ReceiveGameResourceTask(asyncEnumerable);
-            }
+            Progress = 0,
+            Status = "正在进行资源检查"
+        });
 
-            await Task.WhenAll(tasks);
-        }
+        var checkAction = new ActionBlock<IResourceInfoResolver>(resolver =>
+        {
+            var asyncEnumerable = resolver.ResolveResourceAsync();
+            return ReceiveGameResourceTask(asyncEnumerable);
+        }, new ExecutionDataflowBlockOptions
+        {
+            BoundedCapacity = MaxDegreeOfParallelism,
+            MaxDegreeOfParallelism = MaxDegreeOfParallelism
+        });
 
-        await DownloadHelper.AdvancedDownloadListFile(downloadBag, downloadSettings);
+        foreach(var r in ResourceInfoResolvers!)
+            await checkAction.SendAsync(r);
+
+        checkAction.Complete();
+        await checkAction.Completion;
+
+        OnResolveComplete(this, new GameResourceInfoResolveEventArgs
+        {
+            Progress = 100,
+            Status = "资源检查完成"
+        });
+
+        if (downloadBag.IsEmpty)
+            return new TaskResult<ResourceCompleterCheckResult?>(
+                TaskResultStatus.Success,
+                value: new ResourceCompleterCheckResult{FailedFiles = [], IsLibDownloadFailed = false});
+
+        var downloads = downloadBag.ToArray();
+
+        Random.Shared.Shuffle(downloads);
+
+        await DownloadHelper.AdvancedDownloadListFile(downloads, downloadSettings);
 
         var isLibraryFailed = _failedFiles.Any(d => d.FileType == ResourceType.LibraryOrNative);
         var result = _failedFiles switch
@@ -158,8 +180,9 @@ public class DefaultResourceCompleter : IResourceCompleter
     void WhenCompleted(object? sender, DownloadFileCompletedEventArgs e)
     {
         if (sender is not DownloadFile df) return;
-
         if (!(e.Success ?? false)) _failedFiles.Add(df);
+
+        df.Completed -= WhenCompleted;
 
         var downloaded = Interlocked.Increment(ref _totalDownloaded);
         
