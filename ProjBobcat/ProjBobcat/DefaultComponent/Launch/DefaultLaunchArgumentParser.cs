@@ -36,8 +36,8 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
         string rootPath,
         string? rootVersion) : base(rootPath, launchSettings, launcherProfileParser, versionLocator, authResult)
     {
-        if (launchSettings == null || launcherProfileParser == null)
-            throw new ArgumentNullException();
+        ArgumentNullException.ThrowIfNull(launchSettings);
+        ArgumentNullException.ThrowIfNull(launcherProfileParser);
 
         _launchSettings = launchSettings;
         _rootVersion = rootVersion;
@@ -74,9 +74,11 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
 
     public IEnumerable<string> ParseJvmHeadArguments()
     {
-        if (LaunchSettings == null ||
-            (LaunchSettings.GameArguments == null && LaunchSettings.FallBackGameArguments == null))
-            throw new ArgumentNullException("重要参数为Null!");
+        ArgumentNullException.ThrowIfNull(LaunchSettings);
+
+        if (LaunchSettings.GameArguments == null &&
+            LaunchSettings.FallBackGameArguments == null)
+            throw new ArgumentNullException("重要参数为 Null!");
 
         var gameArgs = LaunchSettings.GameArguments ?? LaunchSettings.FallBackGameArguments;
 

@@ -138,8 +138,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
         #endregion
 
-        if (ipModel == null)
-            throw new NullReferenceException("Forge install_profile is null, please check downloaded JAR!");
+        ArgumentNullException.ThrowIfNull(ipModel, "Forge install_profile is null, please check downloaded JAR!");
 
         #region 解析 Lzma
 

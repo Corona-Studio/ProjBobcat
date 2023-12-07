@@ -80,17 +80,14 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
     public async Task InstallTaskAsync()
     {
-        if (string.IsNullOrEmpty(GameId))
-            throw new ArgumentNullException(nameof(GameId));
-        if (string.IsNullOrEmpty(RootPath))
-            throw new ArgumentNullException(nameof(RootPath));
+        ArgumentException.ThrowIfNullOrEmpty(GameId);
+        ArgumentException.ThrowIfNullOrEmpty(RootPath);
 
         InvokeStatusChangedEvent("开始安装", 0);
 
         var manifest = await ReadManifestTask();
 
-        if (manifest == default)
-            throw new Exception("无法读取到 CurseForge 的 manifest 文件");
+        ArgumentNullException.ThrowIfNull(manifest, "无法读取到 CurseForge 的 manifest 文件");
 
         var idPath = Path.Combine(RootPath, GamePathHelper.GetGamePath(GameId));
         var downloadPath = Path.Combine(Path.GetFullPath(idPath), "mods");
@@ -152,8 +149,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
                     {
                         var info = await CurseForgeAPIHelper.GetAddon(t.Item1);
 
-                        if (info == null)
-                            throw new Exception();
+                        ArgumentNullException.ThrowIfNull(info);
 
                         var moreInfo = $"""
                                         模组名称：{info.Name}

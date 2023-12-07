@@ -11,7 +11,6 @@ using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Auth;
 using ProjBobcat.Class.Model.LauncherAccount;
-using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.Microsoft.Graph;
 using ProjBobcat.Class.Model.MicrosoftAuth;
 using ProjBobcat.Class.Model.YggdrasilAuth;
