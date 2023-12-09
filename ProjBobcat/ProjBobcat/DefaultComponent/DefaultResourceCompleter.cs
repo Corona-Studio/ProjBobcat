@@ -107,7 +107,24 @@ public class DefaultResourceCompleter : IResourceCompleter
         var checkAction = new ActionBlock<IResourceInfoResolver>(resolver =>
         {
             var asyncEnumerable = resolver.ResolveResourceAsync();
-            return ReceiveGameResourceTask(asyncEnumerable);
+            resolver.GameResourceInfoResolveEvent += (_, args) =>
+            {
+                OnResolveComplete(this, args);
+            };
+
+            var action = new ActionBlock<IAsyncEnumerable<IGameResource>>(
+                ReceiveGameResourceTask,
+                new ExecutionDataflowBlockOptions
+                {
+                    BoundedCapacity = MaxDegreeOfParallelism,
+                    MaxDegreeOfParallelism = MaxDegreeOfParallelism
+                });
+
+            for (var i = 0; i < DownloadThread; i++)
+                action.Post(asyncEnumerable);
+            action.Complete();
+
+            return action.Completion;
         }, new ExecutionDataflowBlockOptions
         {
             BoundedCapacity = MaxDegreeOfParallelism,

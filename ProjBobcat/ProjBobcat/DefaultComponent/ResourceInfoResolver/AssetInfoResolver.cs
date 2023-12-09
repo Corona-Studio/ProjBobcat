@@ -146,9 +146,8 @@ public sealed class AssetInfoResolver : ResolverBase
 
         OnResolve("检索并验证 Asset 资源");
 
-        foreach (var obj in assetObject.Objects)
+        foreach (var (key, fi) in assetObject.Objects)
         {
-            var (_, fi) = obj;
             var hash = fi.Hash;
             var twoDigitsHash = hash[..2];
             var path = Path.Combine(assetObjectsDi.FullName, twoDigitsHash);
@@ -156,7 +155,7 @@ public sealed class AssetInfoResolver : ResolverBase
 
             Interlocked.Increment(ref checkedObject);
             var progress = (double)checkedObject / objectCount * 100;
-            OnResolve(string.Empty, progress);
+            OnResolve(key.CropStr(20), progress);
 
             if (File.Exists(filePath))
             {
