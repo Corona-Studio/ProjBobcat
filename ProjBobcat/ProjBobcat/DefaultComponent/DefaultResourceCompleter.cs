@@ -107,10 +107,19 @@ public class DefaultResourceCompleter : IResourceCompleter
         var checkAction = new ActionBlock<IResourceInfoResolver>(resolver =>
         {
             var asyncEnumerable = resolver.ResolveResourceAsync();
-            resolver.GameResourceInfoResolveEvent += (_, args) =>
+
+            void FireResolveEvent(object? sender, GameResourceInfoResolveEventArgs e)
             {
-                OnResolveComplete(this, args);
-            };
+                if (!downloadBag.IsEmpty)
+                {
+                    resolver.GameResourceInfoResolveEvent -= FireResolveEvent;
+                    return;
+                }
+
+                OnResolveComplete(sender, e);
+            }
+
+            resolver.GameResourceInfoResolveEvent += FireResolveEvent;
 
             var action = new ActionBlock<IAsyncEnumerable<IGameResource>>(
                 ReceiveGameResourceTask,
