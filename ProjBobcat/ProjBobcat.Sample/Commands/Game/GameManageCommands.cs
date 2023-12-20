@@ -158,13 +158,7 @@ public class GameManageCommands(ILogger<GameManageCommands> logger)
             var retry = file.RetryCount == 0
                 ? null
                 : $"<Retry - {file.RetryCount}>";
-            var fileName = file.FileType switch
-            {
-                ResourceType.Asset => file.FileName,
-                ResourceType.LibraryOrNative => file.FileName,
-                _ => file.FileName
-            };
-
+            var fileName = file.FileName;
             var speed = DownloadHelper.AutoFormatSpeedString(args.AverageSpeed);
             var pD = $"<{file.FileType}>{retry}{isSuccess} {fileName} [{speed}]";
 
