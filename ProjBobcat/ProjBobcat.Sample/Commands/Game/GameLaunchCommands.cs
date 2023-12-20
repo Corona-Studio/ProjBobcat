@@ -74,8 +74,6 @@ public class GameLaunchCommands(ILogger<GameLaunchCommands> logger)
 
         var result = await GameHelper.GameCore.LaunchTaskAsync(ls);
         var isSucceed = result.Error == null;
-        var isSucceedStr = isSucceed ? "Succeeded" : "Failed";
-        var type = isSucceed ? "Success" : "Error";
         var errorReason = result.ErrorType switch
         {
             LaunchErrorType.AuthFailed => "AuthFailed",

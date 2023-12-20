@@ -18,10 +18,10 @@ public static class GameHelper
     {
         GameCore = GetGameCore(Path.GetFullPath(".minecraft"));
     }
-    
+
     public static IGameCore GameCore { get; private set; }
     static HttpClient Client => HttpClientHelper.DefaultClient;
-    
+
     static DefaultGameCore GetGameCore(string rootPath)
     {
         var clientToken = Guid.Parse("ea6a16d6-2d03-4280-9b0b-279816834993");
@@ -40,7 +40,7 @@ public static class GameHelper
             GameLogResolver = new DefaultGameLogResolver()
         };
     }
-    
+
     public static async Task<VersionManifest?> GetVersionManifestAsync(
         IDownloadMirror downloadMirror)
     {
@@ -62,6 +62,11 @@ public static class GameHelper
             }
             catch (TaskCanceledException)
             {
+                // ignored
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
             }
             finally
             {
