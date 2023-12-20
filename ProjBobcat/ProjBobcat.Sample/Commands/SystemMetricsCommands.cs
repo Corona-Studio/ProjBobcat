@@ -7,7 +7,7 @@ namespace ProjBobcat.Sample.Commands;
 public class SystemMetricsCommands(ILogger<SystemMetricsCommands> logger)
 {
     [Command("cpu", Description = "Get CPU usage")]
-    public async Task GetCpuUsage(
+    public async Task GetCpuUsageAsync(
         [Argument(Description = "Sample count")] int sampleCount = 6)
     {
         for (var i = 0; i < sampleCount; i++)
@@ -20,7 +20,7 @@ public class SystemMetricsCommands(ILogger<SystemMetricsCommands> logger)
     }
     
     [Command("mem", Description = "Get memory usage")]
-    public async Task GetMemoryUsage(
+    public async Task GetMemoryUsageAsync(
         [Argument(Description = "Sample count")] int sampleCount = 6)
     {
         for (var i = 0; i < sampleCount; i++)
