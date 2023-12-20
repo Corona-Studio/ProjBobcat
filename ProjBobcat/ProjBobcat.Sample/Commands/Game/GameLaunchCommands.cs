@@ -16,7 +16,7 @@ public class GameLaunchCommands(ILogger<GameLaunchCommands> logger)
         [Argument(Description = "Java executable path")] string javaPath,
         [Range(0, 5)] [Option("gc", Description = "Garbage collection type")] int gcType = 0,
         [Range(1024, 1024 * 1024 * 10)] [Option("max-memory", Description = "Max memory size in MB")] uint maxMemory = 1024,
-        [Option("title")] string windowTitle = "Minecraft - By ProjBobcat")
+        [Option("title", Description = "Custom game window title (Windows only)")] string windowTitle = "Minecraft - By ProjBobcat")
     {
         var version = GameHelper.GameCore.VersionLocator.GetGame(gameId);
 
