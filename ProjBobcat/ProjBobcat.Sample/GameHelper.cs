@@ -41,7 +41,7 @@ public static class GameHelper
         };
     }
     
-    public static async Task<VersionManifest?> GetVersionManifestTaskAsync(
+    public static async Task<VersionManifest?> GetVersionManifestAsync(
         IDownloadMirror downloadMirror)
     {
         VersionManifest? result = null;

@@ -88,7 +88,7 @@ public class GameManageCommands(ILogger<GameManageCommands> logger)
         {
             logger.LogInformation("Start to fetch Version Manifest from remote...");
 
-            var vm = await GameHelper.GetVersionManifestTaskAsync(mirror);
+            var vm = await GameHelper.GetVersionManifestAsync(mirror);
 
             if (vm == null)
             {
