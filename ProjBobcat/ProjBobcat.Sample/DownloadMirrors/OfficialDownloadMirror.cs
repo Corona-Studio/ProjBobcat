@@ -10,4 +10,4 @@ public record OfficialDownloadMirror : IDownloadMirror
     public string ForgeMaven => "https://maven.minecraftforge.net/";
     public string ForgeMavenOld => "https://files.minecraftforge.net/maven/";
     public string FabricMaven => "https://maven.fabricmc.net/";
-};
+}
