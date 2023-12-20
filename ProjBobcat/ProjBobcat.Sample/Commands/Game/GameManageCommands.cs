@@ -11,7 +11,7 @@ namespace ProjBobcat.Sample.Commands.Game;
 
 public class GameManageCommands(ILogger<GameManageCommands> logger)
 {
-    [Command("search", Description = "Search games on the local machine")]
+    [Command("search", Aliases = ["list", "find"], Description = "Search games on the local machine")]
     public void GetLocalGames()
     {
         logger.LogInformation("Start searching games...");
@@ -44,6 +44,19 @@ public class GameManageCommands(ILogger<GameManageCommands> logger)
             var mirrorName = mirror[..^"DownloadMirror".Length];
             
             logger.LogInformation("[{Index}] {MirrorName}", i, mirrorName);
+        }
+    }
+
+    [Command("gc", Description = "Get garbage collection types")]
+    public void GetGcTypes()
+    {
+        var arr = Enum.GetNames<GcType>();
+        
+        for (var i = 0; i < arr.Length; i++)
+        {
+            var name = arr[i];
+            
+            logger.LogInformation("[{Index}] {Name}", i, name);
         }
     }
 
