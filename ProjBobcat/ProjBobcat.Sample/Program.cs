@@ -5,7 +5,6 @@ using Serilog;
 
 namespace ProjBobcat.Sample
 {
-    [HasSubCommands(typeof(GameLaunchCommands), "game", Description = "Game launch commands")]
     [HasSubCommands(typeof(GameManageCommands), "game", Description = "Game management commands")]
     [HasSubCommands(typeof(SystemMetricsCommands), "usage", Description = "System usage metrics commands")]
     [HasSubCommands(typeof(SystemInfoCommands), "utils", Description = "System information utilities")]
@@ -24,6 +23,7 @@ namespace ProjBobcat.Sample
 
             app.AddCommands<Program>();
             app.AddCommands<TestCommand>();
+            app.AddCommands<GameLaunchCommands>();
 
             app.Run();
         }
