@@ -97,7 +97,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         if (!di.Exists)
             di.Create();
 
-        NeedToDownload = manifest.Files.Length;
+        NeedToDownload = manifest.Files?.Length ?? 0;
 
         var urlBlock = new TransformManyBlock<IEnumerable<CurseForgeFileModel>, (long, long)>(urls =>
         {
@@ -185,7 +185,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
         var linkOptions = new DataflowLinkOptions { PropagateCompletion = true };
         urlBlock.LinkTo(actionBlock, linkOptions);
-        urlBlock.Post(manifest.Files);
+        urlBlock.Post(manifest.Files ?? []);
         urlBlock.Complete();
 
         await actionBlock.Completion;
