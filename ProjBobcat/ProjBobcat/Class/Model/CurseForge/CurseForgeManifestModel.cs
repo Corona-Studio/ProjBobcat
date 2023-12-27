@@ -16,7 +16,7 @@ public class CurseForgeManifestModel
 
     [JsonPropertyName("author")] public string? Author { get; set; }
 
-    [JsonPropertyName("files")] public required CurseForgeFileModel[] Files { get; init; }
+    [JsonPropertyName("files")] public CurseForgeFileModel[]? Files { get; init; }
 
     [JsonPropertyName("overrides")] public string? Overrides { get; set; }
 }
