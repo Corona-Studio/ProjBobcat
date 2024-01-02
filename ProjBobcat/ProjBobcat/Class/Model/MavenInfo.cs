@@ -4,7 +4,7 @@
 ///     Maven包的有关信息。
 ///     Maven Package Information.
 /// </summary>
-public class MavenInfo
+public record MavenInfo
 {
     /// <summary>
     ///     组织名。

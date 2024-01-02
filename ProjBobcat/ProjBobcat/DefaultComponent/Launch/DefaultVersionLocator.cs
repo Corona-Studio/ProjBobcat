@@ -188,6 +188,19 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             // 不同版本的Minecraft有不同的library JSON字符串的结构。
             // Different versions of Minecraft have different library JSON's structure.
 
+            // Fix for new native format introduced in 1.19
+            if (lib.Name.Contains("natives", StringComparison.OrdinalIgnoreCase) &&
+                lib.Downloads?.Artifact != null)
+            {
+                result.Item1.Add(new NativeFileInfo
+                {
+                    Extract = lib.Extract,
+                    FileInfo = lib.Downloads.Artifact
+                });
+
+                continue;
+            }
+
             var isNative = (lib.Natives?.Count ?? 0) > 0;
             if (isNative)
             {
@@ -263,22 +276,20 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
 
             if (lib.Downloads?.Artifact != null)
             {
-                if (lib.Downloads.Artifact.Name == null)
-                {
+                if (string.IsNullOrEmpty(lib.Downloads.Artifact.Name))
                     lib.Downloads.Artifact.Name = lib.Name;
-
-                    if (!result.Item2.Any(l => l.Name!.Equals(lib.Name, StringComparison.OrdinalIgnoreCase)))
-                        result.Item2.Add(lib.Downloads.Artifact);
-                }
+                
+                if (!result.Item2.Any(l => l.Name!.Equals(lib.Name, StringComparison.OrdinalIgnoreCase)))
+                    result.Item2.Add(lib.Downloads.Artifact);
             }
             else
             {
-                if ((lib.Natives?.Count ?? 0) == 0)
-                    if (!result.Item2.Any(l => l.Name!.Equals(lib.Name, StringComparison.OrdinalIgnoreCase)))
-                        result.Item2.Add(new FileInfo
-                        {
-                            Name = lib.Name
-                        });
+                if ((lib.Natives?.Count ?? 0) != 0) continue;
+                if (!result.Item2.Any(l => l.Name!.Equals(lib.Name, StringComparison.OrdinalIgnoreCase)))
+                    result.Item2.Add(new FileInfo
+                    {
+                        Name = lib.Name
+                    });
             }
         }
 
@@ -441,7 +452,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                             continue;
 
                         var lMaven = result.Libraries[j].Name!.ResolveMavenString()!;
-                        if (!lMaven.GetMavenFullName().Equals(mLMaven.GetMavenFullName(), StringComparison.Ordinal))
+                        if (lMaven != mLMaven)
                             continue;
 
                         var v1 = new ComparableVersion(lMaven.Version);
