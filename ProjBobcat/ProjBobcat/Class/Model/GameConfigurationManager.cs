@@ -65,6 +65,11 @@ public class GameConfigurationManager : IEnumerable<KeyValuePair<string, string>
             var arr = line.Split(':');
 
             if (arr.Length != 2) continue;
+            if (result.ContainsKey(arr[0]))
+            {
+                result[arr[0]] = arr[1];
+                continue;
+            }
 
             result.Add(arr[0], arr[1]);
         }
