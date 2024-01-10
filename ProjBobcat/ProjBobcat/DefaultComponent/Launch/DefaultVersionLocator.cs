@@ -452,7 +452,8 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                             continue;
 
                         var lMaven = result.Libraries[j].Name!.ResolveMavenString()!;
-                        if (lMaven != mLMaven)
+
+                        if (!lMaven.GetMavenFullName().Equals(mLMaven.GetMavenFullName(), StringComparison.OrdinalIgnoreCase))
                             continue;
 
                         var v1 = new ComparableVersion(lMaven.Version);

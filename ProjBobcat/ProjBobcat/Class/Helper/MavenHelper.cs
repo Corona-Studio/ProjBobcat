@@ -74,6 +74,10 @@ public static partial class MavenHelper
     /// <returns>拼接出来的Maven全称</returns>
     public static string GetMavenFullName(this MavenInfo? mavenInfo)
     {
-        return mavenInfo is null ? string.Empty : $"{mavenInfo.OrganizationName}.{mavenInfo.ArtifactId}";
+        return mavenInfo is null
+            ? string.Empty
+            : string.IsNullOrEmpty(mavenInfo.Classifier)
+                ? $"{mavenInfo.OrganizationName}.{mavenInfo.ArtifactId}"
+                : $"{mavenInfo.OrganizationName}.{mavenInfo.ArtifactId}.{mavenInfo.Classifier}";
     }
 }
