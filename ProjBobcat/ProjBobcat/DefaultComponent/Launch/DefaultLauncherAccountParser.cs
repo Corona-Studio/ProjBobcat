@@ -145,7 +145,7 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
         var result = Find(id);
         if (!result.HasValue) return false;
 
-        var (key, value) = result.Value;
+        var (key, _) = result.Value;
 
         LauncherAccount?.Accounts?.Remove(key);
         Save();
@@ -155,13 +155,21 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
 
     public void Save()
     {
-        if (File.Exists(_fullLauncherAccountPath))
-            File.Delete(_fullLauncherAccountPath);
-
         var launcherProfileJson =
             JsonSerializer.Serialize(LauncherAccount, typeof(LauncherAccountModel),
                 new LauncherAccountModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
-        File.WriteAllText(_fullLauncherAccountPath, launcherProfileJson);
+        for (var i = 0; i < 3; i++)
+        {
+            try
+            {
+                File.WriteAllText(_fullLauncherAccountPath, launcherProfileJson);
+                break;
+            }
+            catch (IOException)
+            {
+                if (i == 2) throw;
+            }
+        }
     }
 }
