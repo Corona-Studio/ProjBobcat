@@ -120,14 +120,22 @@ public sealed class DefaultLauncherProfileParser : LauncherParserBase, ILauncher
 
     public void SaveProfile()
     {
-        if (File.Exists(_fullLauncherProfilePath))
-            File.Delete(_fullLauncherProfilePath);
-
         var launcherProfileJson =
             JsonSerializer.Serialize(LauncherProfile, typeof(LauncherProfileModel),
                 new LauncherProfileModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
-        File.WriteAllText(_fullLauncherProfilePath, launcherProfileJson);
+        for (var i = 0; i < 3; i++)
+        {
+            try
+            {
+                File.WriteAllText(_fullLauncherProfilePath, launcherProfileJson);
+                break;
+            }
+            catch (IOException)
+            {
+                if (i == 2) throw;
+            }
+        }
     }
 
     public void SelectGameProfile(string name)
