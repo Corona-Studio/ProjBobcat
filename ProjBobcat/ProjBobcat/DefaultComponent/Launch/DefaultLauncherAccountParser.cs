@@ -143,9 +143,12 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
     public bool RemoveAccount(Guid id)
     {
         var result = Find(id);
+
         if (!result.HasValue) return false;
 
         var (key, _) = result.Value;
+
+        if (string.IsNullOrEmpty(key)) return false;
 
         LauncherAccount?.Accounts?.Remove(key);
         Save();
