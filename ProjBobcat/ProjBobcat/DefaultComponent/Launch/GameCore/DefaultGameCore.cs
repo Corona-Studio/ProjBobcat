@@ -88,6 +88,8 @@ public sealed class DefaultGameCore : GameCoreBase
 
             #region 验证账户凭据 Legal Account Verifier
 
+            InvokeLaunchLogThenStart("正在验证账户凭据", ref prevSpan, ref stopwatch);
+
             //以下代码实现了账户模式从离线到在线的切换。
             //The following code switches account mode between offline and yggdrasil.
             var authResult = settings.Authenticator switch
@@ -97,7 +99,8 @@ public sealed class DefaultGameCore : GameCoreBase
                 MicrosoftAuthenticator mic => await mic.AuthTaskAsync(),
                 _ => null
             };
-            InvokeLaunchLogThenStart("验证账户凭据", ref prevSpan, ref stopwatch);
+
+            InvokeLaunchLogThenStart("账户凭据验证完成", ref prevSpan, ref stopwatch);
 
             //错误处理
             //Error processor
@@ -226,7 +229,7 @@ public sealed class DefaultGameCore : GameCoreBase
                     using var archive = ArchiveFactory.Open(path);
                     foreach (var entry in archive.Entries)
                     {
-                        if (n.Extract?.Exclude?.Any(e => entry.Key.StartsWith(e)) ?? false) continue;
+                        if (n.Extract?.Exclude?.Any(entry.Key.StartsWith) ?? false) continue;
 
                         var extractPath = Path.Combine(nativeRootPath, entry.Key);
                         if (entry.IsDirectory)
@@ -236,6 +239,8 @@ public sealed class DefaultGameCore : GameCoreBase
 
                             continue;
                         }
+
+                        InvokeLaunchLogThenStart($"[解压 Natives] - {entry.Key}", ref prevSpan, ref stopwatch);
 
                         var fi = new FileInfo(extractPath);
                         var di = fi.Directory ?? new DirectoryInfo(Path.GetDirectoryName(extractPath)!);
@@ -261,8 +266,6 @@ public sealed class DefaultGameCore : GameCoreBase
                     RunTime = prevSpan
                 };
             }
-
-            InvokeLaunchLogThenStart("解压Natives", ref prevSpan, ref stopwatch);
 
             #endregion
 

@@ -411,7 +411,7 @@ public class MicrosoftAuthenticator : IAuthenticator
         return JsonSerializer.Deserialize(content, typeInfo);
     }
 
-    public async Task<GraphAuthResultModel?> GetMSAuthResult(Action<DeviceIdResponseModel> deviceTokenNotifier)
+    public static async Task<GraphAuthResultModel?> GetMSAuthResult(Action<DeviceIdResponseModel> deviceTokenNotifier)
     {
         #region SEND DEVICE TOKEN REQUEST
 
