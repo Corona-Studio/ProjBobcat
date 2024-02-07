@@ -34,6 +34,6 @@ public class AssetObjectModel
 }
 
 [JsonSerializable(typeof(AssetObjectModel))]
-partial class AssetObjectModelContext : JsonSerializerContext
+public partial class AssetObjectModelContext : JsonSerializerContext
 {
 }
