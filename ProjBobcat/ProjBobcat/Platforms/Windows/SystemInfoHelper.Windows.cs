@@ -21,10 +21,14 @@ public static class SystemInfoHelper
 
     static SystemInfoHelper()
     {
-        // Performance Counter Pre-Heat
-        FreeMemCounter.NextValue();
-        MemUsagePercentageCounter.NextValue();
-        CpuCounter.NextValue();
+        try
+        {
+            // Performance Counter Pre-Heat
+            FreeMemCounter.NextValue();
+            MemUsagePercentageCounter.NextValue();
+            CpuCounter.NextValue();
+        }
+        catch (Exception) { }
     }
 
     /// <summary>
@@ -63,8 +67,8 @@ public static class SystemInfoHelper
         return SetAppxPackageInfoProperty(appxPackageInfo, values);
     }
 
-    static readonly string[] LineChArr = new[] { "\r\n", "\r", "\n" };
-    static readonly char[] SepArr = new[] { ':' };
+    static readonly string[] LineChArr = ["\r\n", "\r", "\n"];
+    static readonly char[] SepArr = [':'];
 
     /// <summary>
     ///     分析 PowerShell Get-AppxPackage 的输出。
@@ -154,7 +158,7 @@ public static class SystemInfoHelper
         {
             using var rootReg = Registry.LocalMachine.OpenSubKey("SOFTWARE");
 
-            if (rootReg == null) return Enumerable.Empty<string>();
+            if (rootReg == null) return [];
 
             using var wow64Reg = rootReg.OpenSubKey("Wow6432Node");
 
@@ -166,13 +170,13 @@ public static class SystemInfoHelper
         }
         catch
         {
-            return Enumerable.Empty<string>();
+            return [];
         }
     }
 
     public static IEnumerable<string> FindJavaInternal(RegistryKey? registry)
     {
-        if (registry == null) return Enumerable.Empty<string>();
+        if (registry == null) return [];
 
         try
         {
@@ -180,7 +184,7 @@ public static class SystemInfoHelper
             using var javaRuntimeReg = regKey?.OpenSubKey("Java Runtime Environment");
 
             if (javaRuntimeReg == null)
-                return Enumerable.Empty<string>();
+                return [];
 
             var result = new List<string>();
             foreach (var ver in javaRuntimeReg.GetSubKeyNames())
@@ -211,12 +215,19 @@ public static class SystemInfoHelper
     /// <returns></returns>
     public static MemoryInfo GetWindowsMemoryStatus()
     {
-        var free = FreeMemCounter.NextValue();
-        var total = GC.GetGCMemoryInfo().TotalAvailableMemoryBytes / Math.Pow(1024, 2);
-        var used = total - free;
-        var percentage = MemUsagePercentageCounter.NextValue();
+        try
+        {
+            var free = FreeMemCounter.NextValue();
+            var total = GC.GetGCMemoryInfo().TotalAvailableMemoryBytes / Math.Pow(1024, 2);
+            var used = total - free;
+            var percentage = MemUsagePercentageCounter.NextValue();
 
-        return new MemoryInfo(total, used, free, percentage);
+            return new MemoryInfo(total, used, free, percentage);
+        }
+        catch (Exception)
+        {
+            return new MemoryInfo(0, 0, 0, 0);
+        }
     }
 
     /// <summary>
@@ -225,12 +236,19 @@ public static class SystemInfoHelper
     /// <returns></returns>
     public static CPUInfo GetWindowsCpuUsage()
     {
-        var percentage = CpuCounter.NextValue();
-        var val = percentage > 100 ? 100 : percentage;
-
         const string name = "Total %";
 
-        return new CPUInfo(val, name);
+        try
+        {
+            var percentage = CpuCounter.NextValue();
+            var val = percentage > 100 ? 100 : percentage;
+
+            return new CPUInfo(val, name);
+        }
+        catch (Exception)
+        {
+            return new CPUInfo(0, name);
+        }
     }
 
     public static IEnumerable<string> GetLogicalDrives()
