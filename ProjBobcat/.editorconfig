@@ -1,10 +1,14 @@
 ﻿[*.cs]
 
 dotnet_diagnostic.CS1591.severity = suggestion
-
 dotnet_diagnostic.CA2007.severity = none
-
 dotnet_diagnostic.CA1816.severity = silent
 
 # IDE0040: 添加可访问性修饰符
 dotnet_style_require_accessibility_modifiers = never
+
+# this. 和 Me. 首选项
+dotnet_style_qualification_for_event = true:silent
+dotnet_style_qualification_for_field = true:silent
+dotnet_style_qualification_for_method = true:silent
+dotnet_style_qualification_for_property = true:silent
