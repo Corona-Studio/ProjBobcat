@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using ProjBobcat.Class;
@@ -313,7 +314,7 @@ public sealed class DefaultGameCore : GameCoreBase
 
             // arguments.ForEach(psi.ArgumentList.Add);
 
-            var launchWrapper = new LaunchWrapper(authResult)
+            var launchWrapper = new LaunchWrapper(authResult, settings)
             {
                 GameCore = this,
                 Process = Process.Start(psi)

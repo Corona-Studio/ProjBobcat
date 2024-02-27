@@ -16,6 +16,4 @@ public class LauncherAccountModel
 }
 
 [JsonSerializable(typeof(LauncherAccountModel))]
-partial class LauncherAccountModelContext : JsonSerializerContext
-{
-}
+public partial class LauncherAccountModelContext : JsonSerializerContext;

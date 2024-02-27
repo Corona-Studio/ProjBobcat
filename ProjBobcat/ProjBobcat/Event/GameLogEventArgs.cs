@@ -5,6 +5,8 @@ namespace ProjBobcat.Event;
 
 public class GameLogEventArgs : EventArgs
 {
+    public string? GameId { get; set; }
+
     public GameLogType LogType { get; set; }
     public string? Time { get; set; }
     public string? Source { get; set; }

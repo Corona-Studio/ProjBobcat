@@ -10,6 +10,12 @@ namespace ProjBobcat.Class.Helper;
 /// </summary>
 public static class RulesHelper
 {
+    public static bool IsNewNativeLib(this Library lib)
+    {
+        return lib.Name.Contains("natives", StringComparison.OrdinalIgnoreCase) &&
+               lib.Downloads?.Artifact != null;
+    }
+
     /// <summary>
     ///     检查该Rule是否被允许
     /// </summary>
