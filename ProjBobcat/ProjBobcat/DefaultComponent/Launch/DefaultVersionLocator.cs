@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text.Json;
 using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
+using ProjBobcat.Class.Helper.NativeReplace;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.JsonContexts;
 using ProjBobcat.Class.Model.LauncherProfile;
@@ -20,6 +21,8 @@ namespace ProjBobcat.DefaultComponent.Launch;
 /// </summary>
 public sealed class DefaultVersionLocator : VersionLocatorBase
 {
+    public NativeReplacementPolicy NativeReplacementPolicy { get; set; } = NativeReplacementPolicy.LegacyOnly;
+
     /// <summary>
     ///     构造函数。
     ///     Constructor.
@@ -552,6 +555,8 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                 rawLibs.Remove(sortedDuplicates[i]);
             }
         }
+
+        rawLibs = NativeReplaceHelper.Replace([rawVersion, ..inherits ?? []], rawLibs, NativeReplacementPolicy);
 
         var libs = GetNatives([.. rawLibs]);
 
