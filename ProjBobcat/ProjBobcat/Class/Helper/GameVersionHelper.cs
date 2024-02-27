@@ -9,7 +9,7 @@ namespace ProjBobcat.Class.Helper;
 
 public static partial class GameVersionHelper
 {
-    [GeneratedRegex(@"1.\d{1,2}.\d{1,2}")]
+    [GeneratedRegex(@"1.\d{1,2}(.\d{1,2})*")]
     private static partial Regex McVersionMatch();
 
     public static string? TryGetMcVersion(List<RawVersionModel> versions)

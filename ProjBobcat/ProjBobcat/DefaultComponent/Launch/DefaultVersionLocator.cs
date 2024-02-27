@@ -178,6 +178,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
     public override (List<NativeFileInfo>, List<FileInfo>) GetNatives(Library[] libraries)
     {
         var result = (new List<NativeFileInfo>(), new List<FileInfo>());
+
         var isForge = libraries
             .Any(l => l.Name.Contains("minecraftforge", StringComparison.OrdinalIgnoreCase));
 

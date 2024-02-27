@@ -55,7 +55,7 @@ public static partial class NativeReplaceHelper
         var versionsArr = mcVersion?.Split('.', StringSplitOptions.RemoveEmptyEntries);
         var minor = -1;
 
-        if (versionsArr is { Length: 3 })
+        if (versionsArr is { Length: >= 2 })
         {
             minor = int.TryParse(versionsArr[1], out var outMinor) ? outMinor : -1;
         }
@@ -98,8 +98,9 @@ public static partial class NativeReplaceHelper
             var candidateKey = isNative
                 ? $"{originalMaven.OrganizationName}:{originalMaven.ArtifactId}:{originalMaven.Version}:natives"
                 : original.Name;
-
-            replaced.Add(replaceDic.GetValueOrDefault(candidateKey, original));
+            var candidate = replaceDic.GetValueOrDefault(candidateKey, original);
+            
+            replaced.Add(candidate ?? original);
         }
 
         return replaced;
