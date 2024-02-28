@@ -10,7 +10,7 @@ namespace ProjBobcat.Class.Helper.TOMLParser;
 /// <summary>
 ///     Class of various extension methods for Tommy
 /// </summary>
-public static class TommyExtensions
+public static partial class TommyExtensions
 {
     /// <summary>
     ///     Tries to parse TOML file.
@@ -26,13 +26,22 @@ public static class TommyExtensions
         try
         {
             rootNode = self.Parse();
-            errors = new List<TomlSyntaxException>();
+            errors = [];
             return true;
         }
         catch (TomlParseException ex)
         {
             rootNode = ex.ParsedTable;
             errors = ex.SyntaxErrors;
+            return false;
+        }
+        catch (Exception ex)
+        {
+            if (!ex.Message.StartsWith("The character", StringComparison.OrdinalIgnoreCase))
+                throw;
+
+            rootNode = null;
+            errors = [new TomlSyntaxException(ex.Message, TOMLParser.ParseState.None, 0, 0)];
             return false;
         }
     }

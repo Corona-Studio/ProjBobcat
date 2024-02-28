@@ -17,7 +17,8 @@ namespace ProjBobcat.Class.Helper;
 
 public static class GameResourcesResolveHelper
 {
-    public static async IAsyncEnumerable<GameModResolvedInfo> ResolveModListAsync(IEnumerable<string> files,
+    public static async IAsyncEnumerable<GameModResolvedInfo> ResolveModListAsync(
+        IEnumerable<string> files,
         [EnumeratorCancellation] CancellationToken ct)
     {
         foreach (var file in files)
@@ -45,34 +46,68 @@ public static class GameResourcesResolveHelper
 
             var isEnabled = ext.Equals(".jar", StringComparison.OrdinalIgnoreCase);
 
-            async Task<GameModResolvedInfo?> GetLegacyModInfo(IArchiveEntry entry)
+            GameModResolvedInfo? result = null;
+
+            if (modInfoEntry != null)
             {
-                await using var stream = entry.OpenEntryStream();
-                using var sR = new StreamReader(stream);
-                using var parser = new TOMLParser.TOMLParser(sR);
-                var pResult = parser.TryParse(out var table, out _);
+                result = await GetNewModInfo(modInfoEntry);
+                
+                if (result != null) goto ReturnResult;
+            }
 
-                if (!pResult) return null;
-                if (!table.HasKey("mods")) return null;
+            if (tomlInfoEntry != null)
+            {
+                result = await GetLegacyModInfo(tomlInfoEntry);
 
-                var innerTable = table["mods"];
+                if (result != null) goto ReturnResult;
+            }
 
-                if (innerTable is not TomlArray arr) return null;
-                if (arr.ChildrenCount == 0) return null;
+            if (fabricModInfoEntry != null)
+            {
+                result = await GetFabricModInfo(fabricModInfoEntry);
+                goto ReturnResult;
+            }
 
-                var infoTable = arr.Children.First();
+            result ??= new GameModResolvedInfo(
+                null,
+                file,
+                ["[!] 未知的数据包类型"],
+                Path.GetFileName(file),
+                null,
+                "Unknown",
+                isEnabled);
 
-                var title = infoTable.HasKey("modId")
-                    ? (infoTable["modId"]?.AsString ?? "-")
-                    : Path.GetFileName(file);
-                var author = infoTable.HasKey("authors")
-                    ? infoTable["authors"]?.AsString
-                    : null;
-                var version = infoTable.HasKey("version")
-                    ? infoTable["version"]?.AsString
-                    : null;
+            ReturnResult:
+            yield return result;
 
-                return new GameModResolvedInfo(author?.Value, file, null, title, version?.Value, "Forge", isEnabled);
+            continue;
+
+            async Task<GameModResolvedInfo> GetFabricModInfo(IArchiveEntry entry)
+            {
+                try
+                {
+                    await using var stream = entry.OpenEntryStream();
+                    var tempModel = await JsonSerializer.DeserializeAsync(stream,
+                        FabricModInfoModelContext.Default.FabricModInfoModel, ct);
+
+                    var author = tempModel?.Authors is { Length: > 0 }
+                        ? string.Join(',', tempModel.Authors)
+                        : null;
+                    var modList = tempModel?.Depends?.Select(d => d.Key)?.ToImmutableList();
+                    var titleResult = string.IsNullOrEmpty(tempModel?.Id) ? Path.GetFileName(file) : tempModel.Id;
+                    var versionResult = string.IsNullOrEmpty(tempModel?.Version) ? null : tempModel.Version;
+
+                    return new GameModResolvedInfo(author, file, modList, titleResult, versionResult, "Fabric", isEnabled);
+                }
+                catch (JsonException e)
+                {
+                    var errorList = new[]
+                    {
+                        "[!] 数据包 JSON 异常",
+                        e.Message
+                    };
+                    return new GameModResolvedInfo(null, file, errorList.ToImmutableList(), Path.GetFileName(file), null, "Fabric", isEnabled);
+                }
             }
 
             async Task<GameModResolvedInfo?> GetNewModInfo(IArchiveEntry entry)
@@ -125,58 +160,35 @@ public static class GameResourcesResolveHelper
                 return displayModel;
             }
 
-            async Task<GameModResolvedInfo> GetFabricModInfo(IArchiveEntry entry)
+            async Task<GameModResolvedInfo?> GetLegacyModInfo(IArchiveEntry entry)
             {
-                try
-                {
-                    await using var stream = entry.OpenEntryStream();
-                    var tempModel = await JsonSerializer.DeserializeAsync(stream,
-                        FabricModInfoModelContext.Default.FabricModInfoModel, ct);
+                await using var stream = entry.OpenEntryStream();
+                using var sR = new StreamReader(stream);
+                using var parser = new TOMLParser.TOMLParser(sR);
+                var pResult = parser.TryParse(out var table, out _);
 
-                    var author = tempModel?.Authors is { Length: > 0 }
-                        ? string.Join(',', tempModel.Authors)
-                        : null;
-                    var modList = tempModel?.Depends?.Select(d => d.Key)?.ToImmutableList();
-                    var titleResult = string.IsNullOrEmpty(tempModel?.Id) ? Path.GetFileName(file) : tempModel.Id;
-                    var versionResult = string.IsNullOrEmpty(tempModel?.Version) ? null : tempModel.Version;
+                if (!pResult) return null;
+                if (!table.HasKey("mods")) return null;
 
-                    return new GameModResolvedInfo(author, file, modList, titleResult, versionResult, "Fabric", isEnabled);
-                }
-                catch (JsonException e)
-                {
-                    var errorList = new[]
-                    {
-                        "[!] 数据包 JSON 异常",
-                        e.Message
-                    };
-                    return new GameModResolvedInfo(null, file, errorList.ToImmutableList(), Path.GetFileName(file), null, "Fabric", isEnabled);
-                }
+                var innerTable = table["mods"];
+
+                if (innerTable is not TomlArray arr) return null;
+                if (arr.ChildrenCount == 0) return null;
+
+                var infoTable = arr.Children.First();
+
+                var title = infoTable.HasKey("modId")
+                    ? (infoTable["modId"]?.AsString ?? "-")
+                    : Path.GetFileName(file);
+                var author = infoTable.HasKey("authors")
+                    ? infoTable["authors"]?.AsString
+                    : null;
+                var version = infoTable.HasKey("version")
+                    ? infoTable["version"]?.AsString
+                    : null;
+
+                return new GameModResolvedInfo(author?.Value, file, null, title, version?.Value, "Forge", isEnabled);
             }
-
-            GameModResolvedInfo? result = null;
-
-            if (modInfoEntry != null)
-            {
-                result = await GetNewModInfo(modInfoEntry);
-                goto ReturnResult;
-            }
-
-            if (tomlInfoEntry != null)
-            {
-                var info = await GetLegacyModInfo(tomlInfoEntry);
-
-                if (info == null) continue;
-
-                result = info;
-
-                goto ReturnResult;
-            }
-
-            if (fabricModInfoEntry != null) result = await GetFabricModInfo(fabricModInfoEntry);
-
-            ReturnResult:
-            if (result != null)
-                yield return result;
         }
     }
 
