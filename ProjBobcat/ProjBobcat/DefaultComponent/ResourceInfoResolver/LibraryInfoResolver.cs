@@ -4,6 +4,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Threading;
 using ProjBobcat.Class.Helper;
+using ProjBobcat.Class.Helper.NativeReplace;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.GameResource;
 using ProjBobcat.Interface;
@@ -123,7 +124,9 @@ public sealed class LibraryInfoResolver : ResolverBase
             Path = path,
             Title = lL.Name?.Split(':')[1] ?? fileName,
             Type = ResourceType.LibraryOrNative,
-            Url = uri,
+            Url = lL.Url?.StartsWith("[X]", StringComparison.OrdinalIgnoreCase) ?? false
+                ? lL.Url["[X]".Length..]
+                : uri,
             FileSize = lL.Size,
             CheckSum = lL.Sha1,
             FileName = fileName
