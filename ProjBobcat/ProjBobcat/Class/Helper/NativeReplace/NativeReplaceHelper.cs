@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -55,7 +56,7 @@ public static partial class NativeReplaceHelper
         var versionsArr = mcVersion?.Split('.', StringSplitOptions.RemoveEmptyEntries);
         var minor = -1;
 
-        if (versionsArr is { Length: 3 })
+        if (versionsArr is { Length: >= 2 })
         {
             minor = int.TryParse(versionsArr[1], out var outMinor) ? outMinor : -1;
         }
@@ -99,7 +100,31 @@ public static partial class NativeReplaceHelper
                 ? $"{originalMaven.OrganizationName}:{originalMaven.ArtifactId}:{originalMaven.Version}:natives"
                 : original.Name;
 
-            replaced.Add(replaceDic.GetValueOrDefault(candidateKey, original));
+            if (!replaceDic.TryGetValue(candidateKey, out var candidate))
+            {
+                replaced.Add(original);
+                continue;
+            }
+
+            if (candidate == null)
+            {
+                replaced.Add(original);
+                continue;
+            }
+
+            if (candidate.Downloads?.Artifact != null &&
+                !(candidate.Downloads.Artifact.Url?.StartsWith("[X]", StringComparison.OrdinalIgnoreCase) ?? false))
+                candidate.Downloads.Artifact.Url = $"[X]{candidate.Downloads.Artifact.Url}";
+            if (candidate.Downloads?.Classifiers != null)
+            {
+                foreach (var (_, fi) in candidate.Downloads.Classifiers)
+                {
+                    if (fi.Url?.StartsWith("[X]", StringComparison.OrdinalIgnoreCase) ?? false) continue;
+                    fi.Url = $"[X]{fi.Url}";
+                }
+            }
+            
+            replaced.Add(candidate);
         }
 
         return replaced;
