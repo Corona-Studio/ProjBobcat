@@ -1,10 +1,10 @@
 ﻿using System;
-using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using ProjBobcat.Class.Model;
+using ProjBobcat.Class.Model.JsonContexts;
 
 namespace ProjBobcat.Class.Helper.NativeReplace;
 

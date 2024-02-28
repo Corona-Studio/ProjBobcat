@@ -5,6 +5,4 @@ namespace ProjBobcat.Class.Model.JsonContexts;
 
 [JsonSerializable(typeof(JsonElement))]
 [JsonSerializable(typeof(JsonElement[]))]
-partial class JsonElementContext : JsonSerializerContext
-{
-}
+partial class JsonElementContext : JsonSerializerContext;

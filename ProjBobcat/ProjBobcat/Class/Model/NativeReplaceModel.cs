@@ -38,6 +38,3 @@ public class NativeReplaceModel
     [JsonPropertyName("freebsd-x86_64")]
     public required IReadOnlyDictionary<string, Library?> FreeBsdX64 { get; init; }
 }
-
-[JsonSerializable(typeof(NativeReplaceModel))]
-partial class NativeReplaceModelContext : JsonSerializerContext;
