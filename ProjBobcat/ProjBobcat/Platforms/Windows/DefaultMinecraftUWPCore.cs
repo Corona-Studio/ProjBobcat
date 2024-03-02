@@ -47,7 +47,7 @@ public class DefaultMineCraftUWPCore : GameCoreBase
         /*using var process = new Process
             { StartInfo = psi };*/
 
-        var launchWrapper = new LaunchWrapper(null!)
+        var launchWrapper = new LaunchWrapper(null!, launchSettings)
         {
             GameCore = this,
             Process = uwpProcess!

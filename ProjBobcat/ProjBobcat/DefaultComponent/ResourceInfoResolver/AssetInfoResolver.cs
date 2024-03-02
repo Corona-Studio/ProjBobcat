@@ -130,14 +130,26 @@ public sealed class AssetInfoResolver : ResolverBase
         catch (Exception ex)
         {
             OnResolve($"解析Asset Indexes 文件失败！原因：{ex.Message}");
-            File.Delete(assetIndexesPath);
+
+            try
+            {
+                File.Delete(assetIndexesPath);
+            }
+            catch (IOException) { }
+
             yield break;
         }
 
         if (assetObject == null)
         {
             OnResolve("解析Asset Indexes 文件失败！原因：文件可能损坏或为空");
-            File.Delete(assetIndexesPath);
+
+            try
+            {
+                File.Delete(assetIndexesPath);
+            }
+            catch (IOException) { }
+
             yield break;
         }
 

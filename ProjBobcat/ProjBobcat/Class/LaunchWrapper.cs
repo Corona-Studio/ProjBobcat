@@ -16,7 +16,7 @@ namespace ProjBobcat.Class;
 ///     构造函数
 /// </remarks>
 /// <param name="authResult">验证结果</param>
-public class LaunchWrapper(AuthResultBase authResult) : IDisposable
+public class LaunchWrapper(AuthResultBase authResult, LaunchSettings launchSettings) : IDisposable
 {
     bool _disposedValue;
 
@@ -24,6 +24,11 @@ public class LaunchWrapper(AuthResultBase authResult) : IDisposable
     ///     验证结果
     /// </summary>
     public AuthResultBase AuthResult { get; } = authResult;
+
+    /// <summary>
+    /// 启动设置
+    /// </summary>
+    public LaunchSettings LaunchSettings { get; } = launchSettings;
 
     /// <summary>
     ///     退出码
@@ -125,6 +130,7 @@ public class LaunchWrapper(AuthResultBase authResult) : IDisposable
         if (GameCore is GameCoreBase coreBase)
             coreBase.OnLogGameData(sender, new GameLogEventArgs
             {
+                GameId = LaunchSettings.Version,
                 LogType = type,
                 RawContent = e.Data,
                 Content = e.Data[(totalPrefix?.Length ?? 0)..],

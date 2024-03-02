@@ -9,9 +9,7 @@ using ProjBobcat.Class.Model.YggdrasilAuth;
 namespace ProjBobcat.Class.Helper;
 
 [JsonSerializable(typeof(Dictionary<string, string[]>))]
-partial class UserPropertiesContext : JsonSerializerContext
-{
-}
+partial class UserPropertiesContext : JsonSerializerContext;
 
 /// <summary>
 ///     AuthProperty工具类

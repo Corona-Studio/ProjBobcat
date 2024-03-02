@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text.Json;
 using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
+using ProjBobcat.Class.Helper.NativeReplace;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.JsonContexts;
 using ProjBobcat.Class.Model.LauncherProfile;
@@ -20,6 +21,8 @@ namespace ProjBobcat.DefaultComponent.Launch;
 /// </summary>
 public sealed class DefaultVersionLocator : VersionLocatorBase
 {
+    public NativeReplacementPolicy NativeReplacementPolicy { get; set; } = NativeReplacementPolicy.LegacyOnly;
+
     /// <summary>
     ///     构造函数。
     ///     Constructor.
@@ -175,6 +178,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
     public override (List<NativeFileInfo>, List<FileInfo>) GetNatives(Library[] libraries)
     {
         var result = (new List<NativeFileInfo>(), new List<FileInfo>());
+
         var isForge = libraries
             .Any(l => l.Name.Contains("minecraftforge", StringComparison.OrdinalIgnoreCase));
 
@@ -189,13 +193,12 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             // Different versions of Minecraft have different library JSON's structure.
 
             // Fix for new native format introduced in 1.19
-            if (lib.Name.Contains("natives", StringComparison.OrdinalIgnoreCase) &&
-                lib.Downloads?.Artifact != null)
+            if (lib.IsNewNativeLib())
             {
                 result.Item1.Add(new NativeFileInfo
                 {
                     Extract = lib.Extract,
-                    FileInfo = lib.Downloads.Artifact
+                    FileInfo = lib.Downloads!.Artifact!
                 });
 
                 continue;
@@ -471,7 +474,6 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                     result.Libraries.Add(mL);
                 }
 
-
                 var currentNativesNames = new List<string>(result.Natives
                     .Where(mL => !string.IsNullOrEmpty(mL.FileInfo.Name))
                     .Select(mL => mL.FileInfo.Name!));
@@ -523,10 +525,44 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             return result;
         }
 
-        var libs = GetNatives(rawVersion.Libraries);
+        var rawLibs = rawVersion.Libraries.ToList();
+        var duplicateLibs = new Dictionary<string, List<Library>>();
+        foreach (var lib in rawLibs)
+        {
+            var maven = lib.Name.ResolveMavenString();
+            var fullName = maven.GetMavenFullName();
+
+            if (duplicateLibs.TryGetValue(fullName, out var value))
+                value.Add(lib);
+            else
+                duplicateLibs.Add(fullName, [lib]);
+        }
+
+        var filteredLibs = duplicateLibs
+            .Select(p => p.Value
+                .Where(lib => !lib.IsNewNativeLib() && (lib.Natives?.Count ?? 0) == 0 && lib.Downloads?.Classifiers == null)
+                .Where(lib => lib.Rules?.CheckAllow() ?? true)
+                .ToList())
+            .Where(libs => libs.Count > 1);
+
+        foreach (var duplicates in filteredLibs)
+        {
+            var sortedDuplicates = duplicates
+                .OrderByDescending(l => new ComparableVersion(l.Name.ResolveMavenString()?.Version ?? "0"))
+                .ToList();
+
+            for (var i = 1; i < sortedDuplicates.Count; i++)
+            {
+                rawLibs.Remove(sortedDuplicates[i]);
+            }
+        }
+
+        rawLibs = NativeReplaceHelper.Replace([rawVersion, ..inherits ?? []], rawLibs, NativeReplacementPolicy);
+
+        var libs = GetNatives([.. rawLibs]);
+
         result.Libraries = libs.Item2;
         result.Natives = libs.Item1;
-
         result.JvmArguments = ParseJvmArguments(rawVersion.Arguments?.Jvm).ToList();
 
         var gameArgs =
