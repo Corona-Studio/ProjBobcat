@@ -133,11 +133,10 @@ public partial class DefaultLogAnalyzer : ILogAnalyzer
             var logType = GetLogFileType(log);
 
             if (logType == LogFileType.Unknown) continue;
-
-            var lines = File.ReadAllText(log.FullName);
-            var encoding = EncodingHelper.GuessEncoding(lines);
-
-            lines = encoding.GetString(encoding.GetBytes(lines));
+            
+            var rawLines = File.ReadAllText(log.FullName);
+            var encoding = EncodingHelper.GuessEncoding(rawLines);
+            var lines = File.ReadAllText(log.FullName, encoding);
 
             if (lines.Length == 0) continue;
 
