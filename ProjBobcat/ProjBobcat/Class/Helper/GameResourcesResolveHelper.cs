@@ -56,52 +56,59 @@ public static class GameResourcesResolveHelper
         bool isEnabled,
         CancellationToken ct)
     {
-        List<GameModInfoModel>? model = null;
-
-        await using var stream = entry.OpenEntryStream();
-        var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
-
-        switch (doc.RootElement.ValueKind)
+        try
         {
-            case JsonValueKind.Object:
-                var val = doc.RootElement.Deserialize(GameModInfoModelContext.Default.GameModInfoModel);
+            List<GameModInfoModel>? model = null;
 
-                if (val != null) model = [val];
+            await using var stream = entry.OpenEntryStream();
+            var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
 
-                break;
-            case JsonValueKind.Array:
-                model = doc.RootElement.Deserialize(GameModInfoModelContext.Default.ListGameModInfoModel) ?? [];
-                break;
+            switch (doc.RootElement.ValueKind)
+            {
+                case JsonValueKind.Object:
+                    var val = doc.RootElement.Deserialize(GameModInfoModelContext.Default.GameModInfoModel);
+
+                    if (val != null) model = [val];
+
+                    break;
+                case JsonValueKind.Array:
+                    model = doc.RootElement.Deserialize(GameModInfoModelContext.Default.ListGameModInfoModel) ?? [];
+                    break;
+            }
+
+            if (model == null || model.Count == 0)
+                return null;
+
+            var authors = new HashSet<string>();
+            foreach (var author in model.Where(m => m.AuthorList != null).SelectMany(m => m.AuthorList!))
+                authors.Add(author);
+
+            var baseMod = model.FirstOrDefault(m => string.IsNullOrEmpty(m.Parent));
+
+            if (baseMod == null)
+            {
+                baseMod = model.First();
+                model.RemoveAt(0);
+            }
+            else
+            {
+                model.Remove(baseMod);
+            }
+
+            var authorStr = string.Join(',', authors);
+            var authorResult = string.IsNullOrEmpty(authorStr) ? null : authorStr;
+            var modList = model.Where(m => !string.IsNullOrEmpty(m.Name)).Select(m => m.Name!).ToImmutableList();
+            var titleResult = string.IsNullOrEmpty(baseMod.Name) ? Path.GetFileName(file) : baseMod.Name;
+
+            var displayModel = new GameModResolvedInfo(authorResult, file, modList, titleResult, baseMod.Version,
+                "Forge *", isEnabled);
+
+            return displayModel;
         }
-
-        if (model == null || model.Count == 0)
+        catch (Exception)
+        {
             return null;
-
-        var authors = new HashSet<string>();
-        foreach (var author in model.Where(m => m.AuthorList != null).SelectMany(m => m.AuthorList!))
-            authors.Add(author);
-
-        var baseMod = model.FirstOrDefault(m => string.IsNullOrEmpty(m.Parent));
-
-        if (baseMod == null)
-        {
-            baseMod = model.First();
-            model.RemoveAt(0);
         }
-        else
-        {
-            model.Remove(baseMod);
-        }
-
-        var authorStr = string.Join(',', authors);
-        var authorResult = string.IsNullOrEmpty(authorStr) ? null : authorStr;
-        var modList = model.Where(m => !string.IsNullOrEmpty(m.Name)).Select(m => m.Name!).ToImmutableList();
-        var titleResult = string.IsNullOrEmpty(baseMod.Name) ? Path.GetFileName(file) : baseMod.Name;
-
-        var displayModel = new GameModResolvedInfo(authorResult, file, modList, titleResult, baseMod.Version,
-            "Forge *", isEnabled);
-
-        return displayModel;
     }
 
     static async Task<GameModResolvedInfo> GetFabricModInfo(
