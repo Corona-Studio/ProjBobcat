@@ -15,6 +15,4 @@ public class LauncherProfileModel
 }
 
 [JsonSerializable(typeof(LauncherProfileModel))]
-partial class LauncherProfileModelContext : JsonSerializerContext
-{
-}
+public partial class LauncherProfileModelContext : JsonSerializerContext;
