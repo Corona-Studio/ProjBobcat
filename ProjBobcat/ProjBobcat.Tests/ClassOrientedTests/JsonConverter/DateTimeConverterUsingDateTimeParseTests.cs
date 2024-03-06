@@ -7,7 +7,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace ProjBobcatTests.TestsClassOriented.JsonConverter;
+namespace ProjBobcat.Tests.ClassOrientedTests.JsonConverter;
 
 [TestClass()]
 public class DateTimeConverterUsingDateTimeParseTests
