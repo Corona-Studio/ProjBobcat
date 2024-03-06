@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Interface;
@@ -134,13 +135,11 @@ public partial class DefaultLogAnalyzer : ILogAnalyzer
 
             if (logType == LogFileType.Unknown) continue;
             
-            var rawLines = File.ReadAllText(log.FullName);
-            var encoding = EncodingHelper.GuessEncoding(rawLines);
-            var lines = File.ReadAllText(log.FullName, encoding);
+            var content = File.ReadAllText(log.FullName, Encoding.GetEncoding("GB2312"));
 
-            if (lines.Length == 0) continue;
+            if (string.IsNullOrWhiteSpace(content)) continue;
 
-            yield return (logType, (log.FullName, lines));
+            yield return (logType, (log.FullName, content));
         }
     }
 
