@@ -20,6 +20,7 @@ public static partial class GameVersionHelper
                             TryGetMcVersionByFabric(version) ??
                             TryGetMcVersionByOptifine(version) ??
                             TryGetMcVersionByInheritFrom(version) ??
+                            TryGetMcVersionByClientVersion(version) ??
                             TryGetMcVersionById(version);
 
             if (string.IsNullOrEmpty(mcVersion)) continue;
@@ -31,17 +32,22 @@ public static partial class GameVersionHelper
         return null;
     }
 
-    private static string TryGetMcVersionById(RawVersionModel version)
+    static string TryGetMcVersionById(RawVersionModel version)
     {
         return version.Id;
     }
 
-    private static string? TryGetMcVersionByInheritFrom(RawVersionModel version)
+    static string? TryGetMcVersionByClientVersion(RawVersionModel version)
+    {
+        return version.ClientVersion;
+    }
+
+    static string? TryGetMcVersionByInheritFrom(RawVersionModel version)
     {
         return version.InheritsFrom;
     }
 
-    private static string? TryGetMcVersionByForgeGameArgs(RawVersionModel version)
+    static string? TryGetMcVersionByForgeGameArgs(RawVersionModel version)
     {
         var gameArgs = version.Arguments?.Game?
             .Where(arg => arg.ValueKind == JsonValueKind.String)
@@ -61,7 +67,7 @@ public static partial class GameVersionHelper
         return mcVersion;
     }
 
-    private static string? TryGetMcVersionByFabric(RawVersionModel version)
+    static string? TryGetMcVersionByFabric(RawVersionModel version)
     {
         const string fabricLibPrefix = "net.fabricmc:intermediary:";
 
@@ -73,7 +79,7 @@ public static partial class GameVersionHelper
         return mcVersion;
     }
 
-    private static string? TryGetMcVersionByOptifine(RawVersionModel version)
+    static string? TryGetMcVersionByOptifine(RawVersionModel version)
     {
         const string optifineLibPrefix = "optifine:OptiFine:";
 

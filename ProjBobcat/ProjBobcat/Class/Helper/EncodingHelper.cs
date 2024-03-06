@@ -1,10 +1,16 @@
 ﻿using System.Text;
 using System;
+using System.IO;
 
 namespace ProjBobcat.Class.Helper;
 
 public static class EncodingHelper
 {
+    static EncodingHelper()
+    {
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+    }
+
     public static Encoding GuessEncoding(string input)
     {
         if (IsUtf8(input)) return Encoding.UTF8;

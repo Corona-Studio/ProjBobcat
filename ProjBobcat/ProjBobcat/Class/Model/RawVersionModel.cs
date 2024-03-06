@@ -164,6 +164,12 @@ public class RawVersionModel
     [JsonPropertyName("id")]
     public required string Id { get; set; }
 
+    /// <summary>
+    /// ClientVersion（Reserved field for other third-party launchers）
+    /// </summary>
+    [JsonPropertyName("clientVersion")]
+    public string? ClientVersion { get; set; }
+
     [JsonPropertyName("javaVersion")] public JavaVersionModel? JavaVersion { get; set; }
 
     /// <summary>
