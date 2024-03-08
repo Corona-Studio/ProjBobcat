@@ -1,11 +1,5 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using ProjBobcat.JsonConverter;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using ProjBobcat.JsonConverter;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace ProjBobcat.Tests.ClassOrientedTests.JsonConverter;
 
@@ -35,8 +29,7 @@ public class DateTimeConverterUsingDateTimeParseTests
             converter.Write(writer, dateTime, JsonSerializerOptions.Default);
 
         var actual = stream.ToArray();
-        var expected = JsonSerializer.SerializeToUtf8Bytes($"{dateTime}");
-#warning different result in different culture. is this really expected?
+        var expected = JsonSerializer.SerializeToUtf8Bytes(dateTime);
         CollectionAssert.AreEqual(expected, actual);
     }
 }
