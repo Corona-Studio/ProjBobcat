@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ProjBobcat.Class.Helper;
@@ -71,7 +72,8 @@ public static partial class HttpHelper
     /// <returns>获取到的字符串</returns>
     public static async Task<HttpResponseMessage> Get(
         string address,
-        ValueTuple<string, string> auth = default)
+        ValueTuple<string, string> auth = default,
+        CancellationToken ct = default)
     {
         using var req = new HttpRequestMessage(HttpMethod.Get, new Uri(address));
 
@@ -83,7 +85,7 @@ public static partial class HttpHelper
             !string.IsNullOrEmpty(auth.Item2))
             req.Headers.Authorization = new AuthenticationHeaderValue(auth.Item1, auth.Item2);
 
-        var res = await Client.SendAsync(req);
+        var res = await Client.SendAsync(req, ct);
         return res;
     }
 

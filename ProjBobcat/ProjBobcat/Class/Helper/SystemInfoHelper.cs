@@ -71,32 +71,30 @@ public static class SystemInfoHelper
     [SupportedOSPlatform(nameof(OSPlatform.Linux))]
     public static async IAsyncEnumerable<string> FindJava(bool fullSearch = false)
     {
-        var result = new HashSet<string>();
+        var searched = new HashSet<string>();
 
         if (fullSearch)
             await foreach (var path in DeepJavaSearcher.DeepSearch())
-                result.Add(path);
-        
+                if (searched.Add(path)) yield return path;
+
         if (OperatingSystem.IsWindows())
             foreach (var path in Platforms.Windows.SystemInfoHelper.FindJavaWindows())
-                result.Add(path);
+                if (searched.Add(path)) yield return path;
 
         if (OperatingSystem.IsMacOS())
             foreach (var path in Platforms.MacOS.SystemInfoHelper.FindJavaMacOS())
-                result.Add(path);
+                if (searched.Add(path)) yield return path;
 
         if (OperatingSystem.IsLinux())
             foreach(var path in Platforms.Linux.SystemInfoHelper.FindJavaLinux())
-                result.Add(path);
+                if (searched.Add(path)) yield return path;
 
-        foreach (var path in result)
-            yield return path;
         foreach (var path in FindJavaInOfficialGamePath())
-            yield return path;
+            if (searched.Add(path)) yield return path;
 
         var evJava = FindJavaUsingEnvironmentVariable();
 
-        if (!string.IsNullOrEmpty(evJava))
+        if (!string.IsNullOrEmpty(evJava) && searched.Add(evJava))
             yield return Path.Combine(evJava, Constants.JavaExecutablePath);
     }
 
