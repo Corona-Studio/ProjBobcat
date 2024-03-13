@@ -9,7 +9,6 @@ public static class DeepJavaSearcher
 {
     public static async IAsyncEnumerable<string> DeepSearch(string drive, string fileName)
     {
-        var result = new HashSet<string>();
         ProcessStartInfo psi;
         if (OperatingSystem.IsWindows())
             psi = new ProcessStartInfo(Constants.WhereCommand)
@@ -40,34 +39,33 @@ public static class DeepJavaSearcher
             };
 
         var process = Process.Start(psi);
-        var isFailed = false;
 
         if (process == null)
             yield break;
 
-        process.ErrorDataReceived += (_, args) =>
+        while (!process.HasExited)
         {
-            if (string.IsNullOrEmpty(args.Data)) return;
+            // ReSharper disable once MethodHasAsyncOverload
+            var line = process.StandardOutput.ReadLine();
 
-            isFailed = true;
-        };
+            if (!IsValid(line)) continue;
 
-        process.OutputDataReceived += (_, args) =>
-        {
-            if (string.IsNullOrEmpty(args.Data)) return;
-            if (File.Exists(args.Data))
-                result.Add(args.Data);
-        };
-
-        process.BeginErrorReadLine();
-        process.BeginOutputReadLine();
+            yield return line!;
+        }
 
         await process.WaitForExitAsync();
 
-        if (isFailed || process.ExitCode != 0)
-            yield break;
+        var lastLine = await process.StandardOutput.ReadLineAsync();
 
-        foreach (var path in result) yield return path;
+        if (IsValid(lastLine))
+            yield return lastLine!;
+
+        yield break;
+
+        static bool IsValid(string? line)
+        {
+            return !string.IsNullOrEmpty(line) && File.Exists(line);
+        }
     }
 
     public static async IAsyncEnumerable<string> DeepSearch()
