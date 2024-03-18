@@ -14,6 +14,10 @@ public static class Constants
         ? Windows.JavaExecutableExtension
         : UnixKind.JavaExecutableExtension;
 
+    public static string JavaConsoleExecutableExtension => OperatingSystem.IsWindows()
+        ? Windows.JavaConsoleExecutable
+        : UnixKind.JavaExecutable;
+
     public static string JavaExecutablePath => RuntimeInformation.RuntimeIdentifier switch
     {
         _ when RuntimeInformation.IsOSPlatform(OSPlatform.Windows) => Windows.JavaExecutablePath,
@@ -34,6 +38,7 @@ public static class Constants
     {
         public const string WhereCommand = "where";
         public const string JavaExecutable = "javaw.exe";
+        public const string JavaConsoleExecutable = "java.exe";
         public const string JavaExecutablePath = $"bin\\{JavaExecutable}";
         public const string JavaExecutableExtension = "exe";
         public const string OsSymbol = "windows";
