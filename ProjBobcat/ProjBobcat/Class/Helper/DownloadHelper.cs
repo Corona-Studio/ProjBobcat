@@ -72,18 +72,17 @@ public static class DownloadHelper
 
                 var tSpeed = 0d;
                 var cSpeed = 0;
-
-                using var rentMemory = Pool.Rent(DefaultBufferSize);
+                var lastWrotePos = 0L;
 
                 while (true)
                 {
                     sw.Restart();
-                    var bytesRead = await stream.ReadAsync(rentMemory.Memory, cts.Token);
+                    await stream.CopyToAsync(outputStream, cts.Token);
+                    var bytesRead = outputStream.Position - lastWrotePos;
+                    lastWrotePos = outputStream.Position;
                     sw.Stop();
 
                     if (bytesRead == 0) break;
-
-                    await outputStream.WriteAsync(rentMemory.Memory[..bytesRead], cts.Token);
 
                     downloadedBytesCount += bytesRead;
 
@@ -237,8 +236,6 @@ public static class DownloadHelper
 
     #region 分片下载
 
-    static readonly MemoryPool<byte> Pool = MemoryPool<byte>.Shared;
-
     /// <summary>
     ///     分片下载方法（异步）
     /// </summary>
@@ -379,20 +376,22 @@ public static class DownloadHelper
 
                     await using var stream = await res.Content.ReadAsStreamAsync(cts.Token);
                     await using var fileToWriteTo = File.Create(t.Item2.TempFileName);
-                    using var rentMemory = Pool.Rent(DefaultBufferSize);
-
+                    
                     var sw = new Stopwatch();
+                    var lastWrotePos = 0L;
 
                     while (true)
                     {
                         sw.Restart();
-                        var bytesRead = await stream.ReadAsync(rentMemory.Memory, cts.Token);
+
+                        await stream.CopyToAsync(fileToWriteTo, cts.Token);
+                        var bytesRead = fileToWriteTo.Position - lastWrotePos;
+                        lastWrotePos = fileToWriteTo.Position;
+
                         sw.Stop();
 
                         if (bytesRead == 0)
                             break;
-
-                        await fileToWriteTo.WriteAsync(rentMemory.Memory[..bytesRead], cts.Token);
 
                         Interlocked.Add(ref downloadedBytesCount, bytesRead);
 

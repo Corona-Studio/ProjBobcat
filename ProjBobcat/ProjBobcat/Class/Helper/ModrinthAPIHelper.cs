@@ -1,5 +1,6 @@
 ﻿using System.Net.Http;
 using System.Net.Http.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using ProjBobcat.Class.Model.Modrinth;
 
@@ -9,9 +10,9 @@ public static class ModrinthAPIHelper
 {
     const string BaseUrl = "https://api.modrinth.com/v2";
 
-    static async Task<HttpResponseMessage> Get(string reqUrl)
+    static async Task<HttpResponseMessage> Get(string reqUrl, CancellationToken ct = default)
     {
-        var req = await HttpHelper.Get(reqUrl);
+        var req = await HttpHelper.Get(reqUrl, ct: ct);
         req.EnsureSuccessStatusCode();
 
         return req;
@@ -40,12 +41,12 @@ public static class ModrinthAPIHelper
         return resModel;
     }
 
-    public static async Task<ModrinthProjectInfo?> GetProject(string projectId)
+    public static async Task<ModrinthProjectInfo?> GetProject(string projectId, CancellationToken ct)
     {
         var reqUrl = $"{BaseUrl}/project/{projectId}";
 
-        using var res = await Get(reqUrl);
-        var resModel = await res.Content.ReadFromJsonAsync(ModrinthProjectInfoContext.Default.ModrinthProjectInfo);
+        using var res = await Get(reqUrl, ct);
+        var resModel = await res.Content.ReadFromJsonAsync(ModrinthProjectInfoContext.Default.ModrinthProjectInfo, ct);
 
         return resModel;
     }
