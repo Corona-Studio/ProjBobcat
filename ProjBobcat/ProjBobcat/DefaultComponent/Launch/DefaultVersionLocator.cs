@@ -580,15 +580,16 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
     {
         if (LauncherProfileParser == null) return;
 
-        var oldProfile = LauncherProfileParser.LauncherProfile.Profiles!.FirstOrDefault(p =>
-            p.Value.LastVersionId?.Equals(id, StringComparison.Ordinal) ?? true);
+        var gameId = id.ToGuidHash().ToString("N");
+        var (oldProfileKey, oldProfileModel) =
+            LauncherProfileParser.LauncherProfile.Profiles!
+                .FirstOrDefault(p => p.Key.Equals(gameId, StringComparison.OrdinalIgnoreCase));
 
         var gamePath = Path.Combine(RootPath, GamePathHelper.GetGamePath(id));
-        if (oldProfile.Equals(default(KeyValuePair<string, GameProfileModel>)) ||
-            string.IsNullOrEmpty(oldProfile.Key) ||
-            oldProfile.Value == null)
+
+        if (string.IsNullOrEmpty(oldProfileKey) || oldProfileModel == null)
         {
-            LauncherProfileParser.LauncherProfile.Profiles!.Add(id.ToGuidHash().ToString("N"),
+            LauncherProfileParser.LauncherProfile.Profiles!.Add(gameId,
                 new GameProfileModel
                 {
                     GameDir = gamePath,
@@ -601,10 +602,10 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             return;
         }
 
-        result.Name = oldProfile.Value.Name!;
-        oldProfile.Value.GameDir = gamePath;
-        oldProfile.Value.LastVersionId = id;
-        LauncherProfileParser.LauncherProfile.Profiles![oldProfile.Key] = oldProfile.Value;
+        result.Name = oldProfileModel.Name!;
+        oldProfileModel.GameDir = gamePath;
+        oldProfileModel.LastVersionId = id;
+        LauncherProfileParser.LauncherProfile.Profiles![oldProfileKey] = oldProfileModel;
         LauncherProfileParser.SaveProfile();
     }
 }
