@@ -390,6 +390,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             Natives = [],
             Logging = rawVersion.Logging,
             Id = rawVersion.Id,
+            GameBaseVersion = GameVersionHelper.TryGetMcVersion([.. (inherits ?? []), rawVersion]) ?? id,
             DirName = id,
             Name = id,
             JavaVersion = rawVersion.JavaVersion,
