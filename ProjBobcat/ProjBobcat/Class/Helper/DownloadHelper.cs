@@ -153,33 +153,26 @@ public static class DownloadHelper
     public static (double Speed, SizeUnit Unit) AutoFormatSpeed(double transferSpeed)
     {
         const double baseNum = 1024;
+        const double mbNum = baseNum * baseNum;
+        const double gbNum = baseNum * mbNum;
+        const double tbNum = baseNum * gbNum;
 
         // Auto choose the unit
-        var unit = SizeUnit.B;
-
-        if (transferSpeed > baseNum)
+        var unit = transferSpeed switch
         {
-            unit = SizeUnit.Kb;
-            if (transferSpeed > Math.Pow(baseNum, 2))
-            {
-                unit = SizeUnit.Mb;
-                if (transferSpeed > Math.Pow(baseNum, 3))
-                {
-                    unit = SizeUnit.Gb;
-                    if (transferSpeed > Math.Pow(baseNum, 4))
-                    {
-                        unit = SizeUnit.Tb;
-                    }
-                }
-            }
-        }
+            >= tbNum => SizeUnit.Tb,
+            >= gbNum => SizeUnit.Gb,
+            >= mbNum => SizeUnit.Mb,
+            >= baseNum => SizeUnit.Kb,
+            _ => SizeUnit.B
+        };
 
         var convertedSpeed = unit switch
         {
             SizeUnit.Kb => transferSpeed / baseNum,
-            SizeUnit.Mb => transferSpeed / Math.Pow(baseNum, 2),
-            SizeUnit.Gb => transferSpeed / Math.Pow(baseNum, 3),
-            SizeUnit.Tb => transferSpeed / Math.Pow(baseNum, 4),
+            SizeUnit.Mb => transferSpeed / mbNum,
+            SizeUnit.Gb => transferSpeed / gbNum,
+            SizeUnit.Tb => transferSpeed / tbNum,
             _ => transferSpeed
         };
 
@@ -494,7 +487,6 @@ public static class DownloadHelper
 
                 downloadFile.RetryCount++;
                 exceptions.Add(ex);
-                // downloadFile.OnCompleted(false, ex, 0);
             }
         }
 
