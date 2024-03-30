@@ -31,7 +31,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
     /// <param name="clientToken"></param>
     public DefaultVersionLocator(string rootPath, Guid clientToken) : base(rootPath)
     {
-        LauncherProfileParser = new DefaultLauncherProfileParser(rootPath, clientToken);
+        LauncherProfileParser ??= new DefaultLauncherProfileParser(rootPath, clientToken);
 
         //防止给定路径不存在的时候Parser遍历文件夹爆炸。
         //Prevents errors in the parser's folder traversal when the given path does not exist.
@@ -590,14 +590,21 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
 
         if (string.IsNullOrEmpty(oldProfileKey) || oldProfileModel == null)
         {
-            LauncherProfileParser.LauncherProfile.Profiles!.Add(gameId,
-                new GameProfileModel
-                {
-                    GameDir = gamePath,
-                    LastVersionId = id,
-                    Name = id,
-                    Created = DateTime.Now
-                });
+            var gameProfile = new GameProfileModel
+            {
+                GameDir = gamePath,
+                LastVersionId = id,
+                Name = id,
+                Created = DateTime.Now
+            };
+
+            if (!string.IsNullOrEmpty(oldProfileKey) &&
+                LauncherProfileParser.LauncherProfile.Profiles!.ContainsKey(oldProfileKey))
+            {
+                LauncherProfileParser.LauncherProfile.Profiles![oldProfileKey] = gameProfile;
+            }
+
+            LauncherProfileParser.LauncherProfile.Profiles!.Add(gameId, gameProfile);
             LauncherProfileParser.SaveProfile();
 
             return;
