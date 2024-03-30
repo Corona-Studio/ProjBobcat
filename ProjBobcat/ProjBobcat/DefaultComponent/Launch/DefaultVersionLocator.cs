@@ -602,6 +602,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                 LauncherProfileParser.LauncherProfile.Profiles!.ContainsKey(oldProfileKey))
             {
                 LauncherProfileParser.LauncherProfile.Profiles![oldProfileKey] = gameProfile;
+                LauncherProfileParser.SaveProfile();
                 return;
             }
 
