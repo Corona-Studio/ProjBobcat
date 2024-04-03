@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Immutable;
 using System.IO;
 
 namespace ProjBobcat.Class.Helper;
@@ -42,22 +41,17 @@ public static class GamePathHelper
     /// <returns></returns>
     public static string GetGameJsonPath(string rootPath, string id)
     {
-        var dir = Path.Combine(rootPath, "versions", id);
-        var possibleFiles = Directory.EnumerateFiles(dir, "*.json").ToImmutableList();
-
-        if (possibleFiles.Count == 1) return possibleFiles[0];
-        if (possibleFiles.Count > 1)
+        var versions = Path.Combine(rootPath, "versions", id);
+        string? bestChoice = null;
+        foreach (var file in Directory.EnumerateFiles(versions, "*.json"))
         {
-            foreach (var file in possibleFiles)
-            {
-                var name = Path.GetFileNameWithoutExtension(file);
-
-                if (name.Equals(id, StringComparison.OrdinalIgnoreCase)) return file;
-                if (id.Contains(name, StringComparison.OrdinalIgnoreCase)) return file;
-            }
+            var name = Path.GetFileNameWithoutExtension(file);
+            if (name.Equals(id, StringComparison.OrdinalIgnoreCase))
+                return file;
+            if (bestChoice is not null && id.Contains(name, StringComparison.OrdinalIgnoreCase))
+                bestChoice = file;
         }
-
-        return Path.Combine(dir, $"{id}.json");
+        return bestChoice ?? Path.Combine(versions, $"{id}.json");
     }
 
     /// <summary>
