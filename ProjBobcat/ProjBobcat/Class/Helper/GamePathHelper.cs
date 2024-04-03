@@ -43,13 +43,18 @@ public static class GamePathHelper
     {
         var versions = Path.Combine(rootPath, "versions", id);
         string? bestChoice = null;
+        bool notGoodEnough = true;
         foreach (var file in Directory.EnumerateFiles(versions, "*.json"))
         {
             var name = Path.GetFileNameWithoutExtension(file);
             if (name.Equals(id, StringComparison.OrdinalIgnoreCase))
                 return file;
-            if (bestChoice is not null && id.Contains(name, StringComparison.OrdinalIgnoreCase))
+
+            if (notGoodEnough)
+            {
                 bestChoice = file;
+                notGoodEnough = !id.Contains(name, StringComparison.OrdinalIgnoreCase);
+            }
         }
         return bestChoice ?? Path.Combine(versions, $"{id}.json");
     }
