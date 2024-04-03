@@ -42,21 +42,19 @@ public static class GamePathHelper
     public static string GetGameJsonPath(string rootPath, string id)
     {
         var versions = Path.Combine(rootPath, "versions", id);
-        string? bestChoice = null;
-        bool notGoodEnough = true;
+
         foreach (var file in Directory.EnumerateFiles(versions, "*.json"))
         {
             var name = Path.GetFileNameWithoutExtension(file);
-            if (name.Equals(id, StringComparison.OrdinalIgnoreCase))
+
+            if (name.Contains(id, StringComparison.OrdinalIgnoreCase))
                 return file;
 
-            if (notGoodEnough)
-            {
-                bestChoice = file;
-                notGoodEnough = !id.Contains(name, StringComparison.OrdinalIgnoreCase);
-            }
+            if (id.Contains(name, StringComparison.OrdinalIgnoreCase))
+                return file;
         }
-        return bestChoice ?? Path.Combine(versions, $"{id}.json");
+
+        return Path.Combine(versions, $"{id}.json");
     }
 
     /// <summary>
