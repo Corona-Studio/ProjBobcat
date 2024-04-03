@@ -31,7 +31,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
     /// <param name="clientToken"></param>
     public DefaultVersionLocator(string rootPath, Guid clientToken) : base(rootPath)
     {
-        LauncherProfileParser = new DefaultLauncherProfileParser(rootPath, clientToken);
+        LauncherProfileParser ??= new DefaultLauncherProfileParser(rootPath, clientToken);
 
         //防止给定路径不存在的时候Parser遍历文件夹爆炸。
         //Prevents errors in the parser's folder traversal when the given path does not exist.
@@ -390,6 +390,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             Natives = [],
             Logging = rawVersion.Logging,
             Id = rawVersion.Id,
+            GameBaseVersion = GameVersionHelper.TryGetMcVersion([.. (inherits ?? []), rawVersion]) ?? id,
             DirName = id,
             Name = id,
             JavaVersion = rawVersion.JavaVersion,
@@ -580,31 +581,41 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
     {
         if (LauncherProfileParser == null) return;
 
-        var oldProfile = LauncherProfileParser.LauncherProfile.Profiles!.FirstOrDefault(p =>
-            p.Value.LastVersionId?.Equals(id, StringComparison.Ordinal) ?? true);
+        var gameId = id.ToGuidHash().ToString("N");
+        var (oldProfileKey, oldProfileModel) =
+            LauncherProfileParser.LauncherProfile.Profiles!
+                .FirstOrDefault(p => p.Key.Equals(gameId, StringComparison.OrdinalIgnoreCase));
 
         var gamePath = Path.Combine(RootPath, GamePathHelper.GetGamePath(id));
-        if (oldProfile.Equals(default(KeyValuePair<string, GameProfileModel>)) ||
-            string.IsNullOrEmpty(oldProfile.Key) ||
-            oldProfile.Value == null)
+
+        if (string.IsNullOrEmpty(oldProfileKey) || oldProfileModel == null)
         {
-            LauncherProfileParser.LauncherProfile.Profiles!.Add(id.ToGuidHash().ToString("N"),
-                new GameProfileModel
-                {
-                    GameDir = gamePath,
-                    LastVersionId = id,
-                    Name = id,
-                    Created = DateTime.Now
-                });
+            var gameProfile = new GameProfileModel
+            {
+                GameDir = gamePath,
+                LastVersionId = id,
+                Name = id,
+                Created = DateTime.Now
+            };
+
+            if (!string.IsNullOrEmpty(oldProfileKey) &&
+                LauncherProfileParser.LauncherProfile.Profiles!.ContainsKey(oldProfileKey))
+            {
+                LauncherProfileParser.LauncherProfile.Profiles![oldProfileKey] = gameProfile;
+                LauncherProfileParser.SaveProfile();
+                return;
+            }
+
+            LauncherProfileParser.LauncherProfile.Profiles!.Add(gameId, gameProfile);
             LauncherProfileParser.SaveProfile();
 
             return;
         }
 
-        result.Name = oldProfile.Value.Name!;
-        oldProfile.Value.GameDir = gamePath;
-        oldProfile.Value.LastVersionId = id;
-        LauncherProfileParser.LauncherProfile.Profiles![oldProfile.Key] = oldProfile.Value;
+        result.Name = oldProfileModel.Name!;
+        oldProfileModel.GameDir = gamePath;
+        oldProfileModel.LastVersionId = id;
+        LauncherProfileParser.LauncherProfile.Profiles![oldProfileKey] = oldProfileModel;
         LauncherProfileParser.SaveProfile();
     }
 }

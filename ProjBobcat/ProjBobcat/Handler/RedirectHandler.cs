@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Threading;
@@ -23,8 +24,40 @@ public class RedirectHandler : DelegatingHandler
         _maxRetries = maxRetries;
     }
 
-    async Task<HttpResponseMessage> CreateRedirectResponse(HttpRequestMessage request,
-        HttpResponseMessage response, CancellationToken cancellationToken)
+    static async Task<HttpRequestMessage> CloneHttpRequestMessageAsync(
+        HttpRequestMessage req,
+        Uri? reqUri = null)
+    {
+        var clone = new HttpRequestMessage(req.Method, reqUri ?? req.RequestUri);
+
+        if (req.Content != null)
+        {
+            var ms = new MemoryStream();
+
+            await req.Content.CopyToAsync(ms).ConfigureAwait(false);
+
+            ms.Seek(0, SeekOrigin.Begin);
+            clone.Content = new StreamContent(ms);
+            
+            foreach (var h in req.Content.Headers)
+                clone.Content.Headers.Add(h.Key, h.Value);
+        }
+
+        clone.Version = req.Version;
+
+        foreach (var option in req.Options)
+            clone.Options.Set(new HttpRequestOptionsKey<object?>(option.Key), option.Value);
+
+        foreach (var header in req.Headers)
+            clone.Headers.TryAddWithoutValidation(header.Key, header.Value);
+
+        return clone;
+    }
+
+    async Task<HttpResponseMessage?> CreateRedirectResponse(
+        HttpRequestMessage request,
+        HttpResponseMessage response,
+        CancellationToken cancellationToken)
     {
         var redirectUri = response.Headers.Location;
 
@@ -34,8 +67,7 @@ public class RedirectHandler : DelegatingHandler
         if (!redirectUri.IsAbsoluteUri)
             redirectUri = new Uri(request.RequestUri.GetLeftPart(UriPartial.Authority) + redirectUri);
 
-        using var newRequest = new HttpRequestMessage(request.Method, redirectUri);
-        newRequest.Headers.Host = request.Headers.Host;
+        using var newRequest = await CloneHttpRequestMessageAsync(request, redirectUri);
 
         return await base.SendAsync(newRequest, cancellationToken);
     }
@@ -55,7 +87,24 @@ public class RedirectHandler : DelegatingHandler
                    HttpStatusCode.PermanentRedirect)
         {
             Debug.WriteLine($"第{currentRedirect}次重定向");
-            response = await CreateRedirectResponse(request, response, cancellationToken);
+
+            var redirectedRes = await CreateRedirectResponse(request, response, cancellationToken);
+
+            try
+            {
+                request.Dispose();
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+            catch (Exception)
+            {
+                return new HttpResponseMessage(HttpStatusCode.BadRequest);
+            }
+
+            if (redirectedRes == null) return new HttpResponseMessage(HttpStatusCode.BadRequest);
+
+            response = redirectedRes;
             statusCode = response.StatusCode;
             currentRedirect++;
         }

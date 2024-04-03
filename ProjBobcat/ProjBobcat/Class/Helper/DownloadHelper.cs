@@ -72,18 +72,17 @@ public static class DownloadHelper
 
                 var tSpeed = 0d;
                 var cSpeed = 0;
-
-                using var rentMemory = Pool.Rent(DefaultBufferSize);
+                var lastWrotePos = 0L;
 
                 while (true)
                 {
                     sw.Restart();
-                    var bytesRead = await stream.ReadAsync(rentMemory.Memory, cts.Token);
+                    await stream.CopyToAsync(outputStream, cts.Token);
+                    var bytesRead = outputStream.Position - lastWrotePos;
+                    lastWrotePos = outputStream.Position;
                     sw.Stop();
 
                     if (bytesRead == 0) break;
-
-                    await outputStream.WriteAsync(rentMemory.Memory[..bytesRead], cts.Token);
 
                     downloadedBytesCount += bytesRead;
 
@@ -154,33 +153,26 @@ public static class DownloadHelper
     public static (double Speed, SizeUnit Unit) AutoFormatSpeed(double transferSpeed)
     {
         const double baseNum = 1024;
+        const double mbNum = baseNum * baseNum;
+        const double gbNum = baseNum * mbNum;
+        const double tbNum = baseNum * gbNum;
 
         // Auto choose the unit
-        var unit = SizeUnit.B;
-
-        if (transferSpeed > baseNum)
+        var unit = transferSpeed switch
         {
-            unit = SizeUnit.Kb;
-            if (transferSpeed > Math.Pow(baseNum, 2))
-            {
-                unit = SizeUnit.Mb;
-                if (transferSpeed > Math.Pow(baseNum, 3))
-                {
-                    unit = SizeUnit.Gb;
-                    if (transferSpeed > Math.Pow(baseNum, 4))
-                    {
-                        unit = SizeUnit.Tb;
-                    }
-                }
-            }
-        }
+            >= tbNum => SizeUnit.Tb,
+            >= gbNum => SizeUnit.Gb,
+            >= mbNum => SizeUnit.Mb,
+            >= baseNum => SizeUnit.Kb,
+            _ => SizeUnit.B
+        };
 
         var convertedSpeed = unit switch
         {
             SizeUnit.Kb => transferSpeed / baseNum,
-            SizeUnit.Mb => transferSpeed / Math.Pow(baseNum, 2),
-            SizeUnit.Gb => transferSpeed / Math.Pow(baseNum, 3),
-            SizeUnit.Tb => transferSpeed / Math.Pow(baseNum, 4),
+            SizeUnit.Mb => transferSpeed / mbNum,
+            SizeUnit.Gb => transferSpeed / gbNum,
+            SizeUnit.Tb => transferSpeed / tbNum,
             _ => transferSpeed
         };
 
@@ -236,8 +228,6 @@ public static class DownloadHelper
     #endregion
 
     #region 分片下载
-
-    static readonly MemoryPool<byte> Pool = MemoryPool<byte>.Shared;
 
     /// <summary>
     ///     分片下载方法（异步）
@@ -379,20 +369,22 @@ public static class DownloadHelper
 
                     await using var stream = await res.Content.ReadAsStreamAsync(cts.Token);
                     await using var fileToWriteTo = File.Create(t.Item2.TempFileName);
-                    using var rentMemory = Pool.Rent(DefaultBufferSize);
-
+                    
                     var sw = new Stopwatch();
+                    var lastWrotePos = 0L;
 
                     while (true)
                     {
                         sw.Restart();
-                        var bytesRead = await stream.ReadAsync(rentMemory.Memory, cts.Token);
+
+                        await stream.CopyToAsync(fileToWriteTo, cts.Token);
+                        var bytesRead = fileToWriteTo.Position - lastWrotePos;
+                        lastWrotePos = fileToWriteTo.Position;
+
                         sw.Stop();
 
                         if (bytesRead == 0)
                             break;
-
-                        await fileToWriteTo.WriteAsync(rentMemory.Memory[..bytesRead], cts.Token);
 
                         Interlocked.Add(ref downloadedBytesCount, bytesRead);
 
@@ -495,7 +487,6 @@ public static class DownloadHelper
 
                 downloadFile.RetryCount++;
                 exceptions.Add(ex);
-                // downloadFile.OnCompleted(false, ex, 0);
             }
         }
 

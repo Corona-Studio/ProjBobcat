@@ -41,7 +41,20 @@ public static class GamePathHelper
     /// <returns></returns>
     public static string GetGameJsonPath(string rootPath, string id)
     {
-        return Path.Combine(rootPath, "versions", id, $"{id}.json");
+        var versions = Path.Combine(rootPath, "versions", id);
+
+        foreach (var file in Directory.EnumerateFiles(versions, "*.json"))
+        {
+            var name = Path.GetFileNameWithoutExtension(file);
+
+            if (name.Contains(id, StringComparison.OrdinalIgnoreCase))
+                return file;
+
+            if (id.Contains(name, StringComparison.OrdinalIgnoreCase))
+                return file;
+        }
+
+        return Path.Combine(versions, $"{id}.json");
     }
 
     /// <summary>

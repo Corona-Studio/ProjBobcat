@@ -63,7 +63,7 @@ public class VersionInfo
 
     [JsonPropertyName("assets")] public string? Assets { get; set; }
 
-    [JsonPropertyName("logging")] public JsonElement Logging { get; set; }
+    [JsonPropertyName("logging")] public JsonElement? Logging { get; set; }
 
     [JsonPropertyName("libraries")] public ForgeLibraries[] Libraries { get; set; } = [];
 }
