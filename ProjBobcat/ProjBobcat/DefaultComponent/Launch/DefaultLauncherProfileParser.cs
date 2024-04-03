@@ -18,6 +18,7 @@ namespace ProjBobcat.DefaultComponent.Launch;
 /// </summary>
 public sealed class DefaultLauncherProfileParser : LauncherParserBase, ILauncherProfileParser
 {
+    readonly object _lock = new();
     readonly string _fullLauncherProfilePath;
 
     /// <summary>
@@ -87,35 +88,51 @@ public sealed class DefaultLauncherProfileParser : LauncherParserBase, ILauncher
         if (string.IsNullOrEmpty(gameProfile.Name)) return;
         if (IsGameProfileExist(gameProfile.Name)) return;
 
-        LauncherProfile.Profiles!.Add(gameProfile.Name, gameProfile);
-        SaveProfile();
+        lock (_lock)
+        {
+            LauncherProfile.Profiles!.Add(gameProfile.Name, gameProfile);
+            SaveProfile();
+        }
     }
 
     public void EmptyGameProfiles()
     {
-        LauncherProfile.Profiles?.Clear();
-        SaveProfile();
+        lock (_lock)
+        {
+            LauncherProfile.Profiles?.Clear();
+            SaveProfile();
+        }
     }
 
     public GameProfileModel GetGameProfile(string name)
     {
-        var profile = LauncherProfile.Profiles!.FirstOrDefault(
-                          p => p.Value.Name?.Equals(name, StringComparison.Ordinal) ?? false).Value ??
-                      throw new UnknownGameNameException(name);
+        lock (_lock)
+        {
+            var profile = LauncherProfile.Profiles!.FirstOrDefault(
+                              p => p.Value.Name?.Equals(name, StringComparison.Ordinal) ?? false).Value ??
+                          throw new UnknownGameNameException(name);
 
-        profile.Resolution ??= new ResolutionModel();
+            profile.Resolution ??= new ResolutionModel();
 
-        return profile;
+            return profile;
+        }
     }
 
     public bool IsGameProfileExist(string name)
     {
-        return LauncherProfile.Profiles!.Any(p => p.Value.Name?.Equals(name, StringComparison.Ordinal) ?? false);
+        lock (_lock)
+        {
+            return LauncherProfile.Profiles!
+                .Any(p => p.Value.Name?.Equals(name, StringComparison.Ordinal) ?? false);
+        }
     }
 
     public void RemoveGameProfile(string name)
     {
-        LauncherProfile.Profiles!.Remove(name);
+        lock (_lock)
+        {
+            LauncherProfile.Profiles!.Remove(name);
+        }
     }
 
     public void SaveProfile()

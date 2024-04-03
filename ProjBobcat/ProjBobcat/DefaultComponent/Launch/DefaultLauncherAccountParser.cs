@@ -13,6 +13,7 @@ namespace ProjBobcat.DefaultComponent.Launch;
 
 public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccountParser
 {
+    readonly object _lock = new();
     readonly string _fullLauncherAccountPath;
 
     /// <summary>
@@ -69,12 +70,15 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
 
     public bool ActivateAccount(string uuid)
     {
-        if (!(LauncherAccount?.Accounts?.ContainsKey(uuid) ?? false))
-            return false;
+        lock (_lock)
+        {
+            if (!(LauncherAccount?.Accounts?.ContainsKey(uuid) ?? false))
+                return false;
 
-        LauncherAccount.ActiveAccountLocalId = uuid;
-
-        Save();
+            LauncherAccount.ActiveAccountLocalId = uuid;
+            Save();
+        }
+        
         return true;
     }
 
@@ -87,35 +91,33 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
         }
         
         LauncherAccount.Accounts ??= [];
-        
-        if (LauncherAccount.Accounts.ContainsKey(uuid))
+
+        lock (_lock)
         {
-            id = null;
-            return false;
+            if (LauncherAccount.Accounts.ContainsKey(uuid))
+            {
+                id = null;
+                return false;
+            }
         }
 
-        var oldRecord = LauncherAccount.Accounts
-            .FirstOrDefault(a => a.Value.MinecraftProfile?.Id == account.MinecraftProfile?.Id).Value;
-        if (oldRecord != null)
+        lock (_lock)
         {
-            id = oldRecord.Id;
-            return true;
+            var oldRecord = LauncherAccount.Accounts
+                .FirstOrDefault(a => a.Value.MinecraftProfile?.Id == account.MinecraftProfile?.Id).Value;
+            if (oldRecord != null)
+            {
+                id = oldRecord.Id;
+                return true;
+            }
         }
         
-        var newId = Guid.NewGuid();
-        /*
-        var existsAccount = LauncherAccount.Accounts
-            .FirstOrDefault(p => p.Value?.RemoteId?.Equals(account.RemoteId, StringComparison.OrdinalIgnoreCase) ?? false);
-        var (key, value) = existsAccount;
 
-        if(!string.IsNullOrEmpty(key) && value != null)
+        lock (_lock)
         {
-            LauncherAccount.Accounts[key] = value;
-        }
-        else
-        */
-        {
+            var newId = Guid.NewGuid();
             var findResult = Find(account.Id);
+
             if (findResult is { Key: not null, Value: not null })
             {
                 newId = account.Id;
@@ -127,17 +129,20 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
 
                 LauncherAccount.Accounts.Add(uuid, account);
             }
+
+            Save();
+            id = newId;
         }
-
-        Save();
-
-        id = newId;
+        
         return true;
     }
 
     public KeyValuePair<string, AccountModel>? Find(Guid id)
     {
-        return LauncherAccount?.Accounts?.FirstOrDefault(a => a.Value.Id == id);
+        lock (_lock)
+        {
+            return LauncherAccount?.Accounts?.FirstOrDefault(a => a.Value.Id == id);
+        }
     }
 
     public bool RemoveAccount(Guid id)
@@ -150,8 +155,11 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
 
         if (string.IsNullOrEmpty(key)) return false;
 
-        LauncherAccount?.Accounts?.Remove(key);
-        Save();
+        lock (_lock)
+        {
+            LauncherAccount?.Accounts?.Remove(key);
+            Save();
+        }
         
         return true;
     }
