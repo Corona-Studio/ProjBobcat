@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -25,7 +24,6 @@ public static class DownloadHelper
     /// </summary>
     public static int DownloadThread { get; set; } = 8;
 
-    const int DefaultBufferSize = 1024 * 1024 * 4;
     static HttpClient Head => HttpClientHelper.HeadClient;
     static HttpClient Data => HttpClientHelper.DataClient;
     static HttpClient MultiPart => HttpClientHelper.MultiPartClient;
