@@ -1,7 +1,9 @@
-﻿using System.Net.Http;
+﻿using System;
+using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Modrinth;
 
 namespace ProjBobcat.Class.Helper;
@@ -77,6 +79,24 @@ public static class ModrinthAPIHelper
 
         using var res = await Get(reqUrl);
         var resModel = await res.Content.ReadFromJsonAsync(ModrinthVersionInfoContext.Default.ModrinthVersionInfoArray);
+
+        return resModel;
+    }
+
+    public static async Task<ModrinthVersionInfo?> TryMatchVersionFileByHash(
+        string hash,
+        HashType hashType)
+    {
+        var para = hashType switch
+        {
+            HashType.SHA1 => "?algorithm=sha1",
+            HashType.SHA512 => "?algorithm=sha512",
+            _ => throw new ArgumentOutOfRangeException(nameof(hashType), hashType, null)
+        };
+        var reqUrl = $"{BaseUrl}/version_file/{hash}{para}";
+
+        using var res = await Get(reqUrl);
+        var resModel = await res.Content.ReadFromJsonAsync(ModrinthVersionInfoContext.Default.ModrinthVersionInfo);
 
         return resModel;
     }

@@ -48,6 +48,4 @@ public class ModrinthProjectInfo : ModrinthProjectInfoBase
 }
 
 [JsonSerializable(typeof(ModrinthProjectInfo))]
-partial class ModrinthProjectInfoContext : JsonSerializerContext
-{
-}
+partial class ModrinthProjectInfoContext : JsonSerializerContext;

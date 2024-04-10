@@ -13,6 +13,8 @@ public class ModrinthFileInfo
     [JsonPropertyName("filename")] public required string FileName { get; init; }
 
     [JsonPropertyName("primary")] public bool Primary { get; set; }
+
+    [JsonPropertyName("size")] public long Size { get; set; }
 }
 
 public class ModrinthDependency
@@ -59,6 +61,4 @@ public class ModrinthVersionInfo
 
 [JsonSerializable(typeof(ModrinthVersionInfo))]
 [JsonSerializable(typeof(ModrinthVersionInfo[]))]
-partial class ModrinthVersionInfoContext : JsonSerializerContext
-{
-}
+partial class ModrinthVersionInfoContext : JsonSerializerContext;

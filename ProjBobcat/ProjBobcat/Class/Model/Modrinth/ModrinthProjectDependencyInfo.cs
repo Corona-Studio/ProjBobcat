@@ -10,6 +10,4 @@ public class ModrinthProjectDependencyInfo
 }
 
 [JsonSerializable(typeof(ModrinthProjectDependencyInfo))]
-partial class ModrinthProjectDependencyInfoContext : JsonSerializerContext
-{
-}
+partial class ModrinthProjectDependencyInfoContext : JsonSerializerContext;
