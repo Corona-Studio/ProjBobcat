@@ -230,6 +230,4 @@ public class RawVersionModel
 }
 
 [JsonSerializable(typeof(RawVersionModel))]
-public partial class RawVersionModelContext : JsonSerializerContext
-{
-}
+public partial class RawVersionModelContext : JsonSerializerContext;

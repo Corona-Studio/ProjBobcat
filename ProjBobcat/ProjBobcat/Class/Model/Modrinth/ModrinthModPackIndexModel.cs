@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.Modrinth;
@@ -18,7 +19,7 @@ public class ModrinthModPackIndexModel
     [JsonPropertyName("files")] public ModrinthModPackFileModel[] Files { get; set; } = [];
 
     [JsonPropertyName("dependencies")]
-    public IReadOnlyDictionary<string, string> Dependencies { get; set; } = new Dictionary<string, string>();
+    public IReadOnlyDictionary<string, string> Dependencies { get; set; } = ImmutableDictionary<string, string>.Empty;
 }
 
 [JsonSerializable(typeof(ModrinthModPackIndexModel))]

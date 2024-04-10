@@ -17,4 +17,4 @@ public class UserProfilePropertyValue
 }
 
 [JsonSerializable(typeof(UserProfilePropertyValue))]
-public partial class UserProfilePropertyValueContext : JsonSerializerContext{}
+public partial class UserProfilePropertyValueContext : JsonSerializerContext;
