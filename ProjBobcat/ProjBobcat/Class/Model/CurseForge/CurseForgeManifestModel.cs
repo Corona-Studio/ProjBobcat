@@ -22,6 +22,4 @@ public class CurseForgeManifestModel
 }
 
 [JsonSerializable(typeof(CurseForgeManifestModel))]
-partial class CurseForgeManifestModelContext : JsonSerializerContext
-{
-}
+public partial class CurseForgeManifestModelContext : JsonSerializerContext;

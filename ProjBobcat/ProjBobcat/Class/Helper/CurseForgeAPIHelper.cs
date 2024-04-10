@@ -16,20 +16,20 @@ namespace ProjBobcat.Class.Helper;
 
 record AddonInfoReqModel(IEnumerable<long> modIds);
 record FileInfoReqModel(IEnumerable<long> fileIds);
+record FuzzyFingerPrintReqModel(IEnumerable<long> fingerprints);
 
 [JsonSerializable(typeof(AddonInfoReqModel))]
 [JsonSerializable(typeof(FileInfoReqModel))]
+[JsonSerializable(typeof(FuzzyFingerPrintReqModel))]
 [JsonSerializable(typeof(DataModelWithPagination<CurseForgeAddonInfo[]>))]
 [JsonSerializable(typeof(DataModel<CurseForgeAddonInfo>))]
 [JsonSerializable(typeof(DataModel<CurseForgeAddonInfo[]>))]
 [JsonSerializable(typeof(DataModel<CurseForgeLatestFileModel[]>))]
 [JsonSerializable(typeof(DataModel<CurseForgeSearchCategoryModel[]>))]
 [JsonSerializable(typeof(DataModel<CurseForgeFeaturedAddonModel>))]
+[JsonSerializable(typeof(DataModel<CurseForgeFuzzySearchResponseModel>))]
 [JsonSerializable(typeof(DataModel<string>))]
-partial class CurseForgeModelContext : JsonSerializerContext
-{
-    
-}
+partial class CurseForgeModelContext : JsonSerializerContext;
 
 #endregion
 
@@ -109,7 +109,7 @@ public static class CurseForgeAPIHelper
 
     public static async Task<CurseForgeLatestFileModel[]?> GetFiles(IEnumerable<long> fileIds)
     {
-        var reqUrl = $"{BaseUrl}/mods/files";
+        const string reqUrl = $"{BaseUrl}/mods/files";
         var data = JsonSerializer.Serialize(new FileInfoReqModel(fileIds),
             CurseForgeModelContext.Default.FileInfoReqModel);
 
@@ -172,5 +172,22 @@ public static class CurseForgeAPIHelper
         res.EnsureSuccessStatusCode();
 
         return (await res.Content.ReadFromJsonAsync(CurseForgeModelContext.Default.DataModelString))?.Data;
+    }
+
+    public static async Task<CurseForgeFuzzySearchResponseModel?> TryFuzzySearchFile(long fingerprint, int gameId = 432)
+    {
+        var reqUrl = $"{BaseUrl}/fingerprints/{gameId}";
+
+        var data = JsonSerializer.Serialize(new FuzzyFingerPrintReqModel([fingerprint]),
+            CurseForgeModelContext.Default.FuzzyFingerPrintReqModel);
+
+        using var req = Req(HttpMethod.Post, reqUrl);
+        req.Content = new StringContent(data, Encoding.UTF8, "application/json");
+
+        using var res = await Client.SendAsync(req);
+        res.EnsureSuccessStatusCode();
+
+        return (await res.Content.ReadFromJsonAsync(CurseForgeModelContext.Default
+            .DataModelCurseForgeFuzzySearchResponseModel))?.Data;
     }
 }

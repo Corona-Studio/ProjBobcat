@@ -22,6 +22,4 @@ public class ModrinthModPackIndexModel
 }
 
 [JsonSerializable(typeof(ModrinthModPackIndexModel))]
-partial class ModrinthModPackIndexModelContext : JsonSerializerContext
-{
-}
+public partial class ModrinthModPackIndexModelContext : JsonSerializerContext;
