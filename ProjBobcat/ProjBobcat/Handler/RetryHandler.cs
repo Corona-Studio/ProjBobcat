@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
 using System.Threading;
@@ -42,7 +43,7 @@ public class RetryHandler : DelegatingHandler
             return response;
         }
 
-        return response!;
+        return response ?? new HttpResponseMessage(HttpStatusCode.BadRequest);
     }
 
     static bool IsNetworkError(Exception ex)
