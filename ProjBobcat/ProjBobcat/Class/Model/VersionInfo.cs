@@ -18,6 +18,8 @@ public class VersionInfo
 
     public required string DirName { get; init; }
 
+    public required string? InheritsFrom { get; set; }
+
     public required string GameBaseVersion { get; init; }
 
     public JavaVersionModel? JavaVersion { get; set; }

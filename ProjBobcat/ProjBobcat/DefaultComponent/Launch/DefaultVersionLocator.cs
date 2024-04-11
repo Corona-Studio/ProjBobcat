@@ -21,7 +21,7 @@ namespace ProjBobcat.DefaultComponent.Launch;
 /// </summary>
 public sealed class DefaultVersionLocator : VersionLocatorBase
 {
-    public NativeReplacementPolicy NativeReplacementPolicy { get; set; } = NativeReplacementPolicy.LegacyOnly;
+    public NativeReplacementPolicy NativeReplacementPolicy { get; init; } = NativeReplacementPolicy.LegacyOnly;
 
     /// <summary>
     ///     构造函数。
@@ -390,6 +390,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             Natives = [],
             Logging = rawVersion.Logging,
             Id = rawVersion.Id,
+            InheritsFrom = rawVersion.InheritsFrom,
             GameBaseVersion = GameVersionHelper.TryGetMcVersion([.. (inherits ?? []), rawVersion]) ?? id,
             DirName = id,
             Name = id,
