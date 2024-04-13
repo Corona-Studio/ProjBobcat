@@ -4,6 +4,22 @@ using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.Modrinth;
 
+public class ModrinthDependencyModelComparer : IEqualityComparer<ModrinthDependency>
+{
+    public bool Equals(ModrinthDependency? x, ModrinthDependency? y)
+    {
+        if (x == null && y == null) return false;
+        if (x == null || y == null) return false;
+
+        return x.ProjectId == y.ProjectId;
+    }
+
+    public int GetHashCode(ModrinthDependency obj)
+    {
+        return (obj.ProjectId ?? string.Empty).GetHashCode();
+    }
+}
+
 public class ModrinthFileInfo
 {
     [JsonPropertyName("hashes")] public IReadOnlyDictionary<string, string>? Hashes { get; set; }

@@ -100,4 +100,14 @@ public static class ModrinthAPIHelper
 
         return resModel;
     }
+
+    public static async Task<ModrinthVersionInfo?> GetVersionInfo(string projectId, string versionId)
+    {
+        var reqUrl = $"{BaseUrl}/project/{projectId}/version/{versionId}";
+
+        using var res = await Get(reqUrl);
+        var resModel = await res.Content.ReadFromJsonAsync(ModrinthVersionInfoContext.Default.ModrinthVersionInfo);
+
+        return resModel;
+    }
 }

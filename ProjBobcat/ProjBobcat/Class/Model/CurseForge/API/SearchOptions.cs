@@ -3,6 +3,8 @@
 public class SearchOptions
 {
     public int? CategoryId { get; init; }
+    public int? ClassId { get; init; }
+    public int? ParentCategoryId { get; init; }
     public int? GameId { get; init; }
     public string? GameVersion { get; init; }
     public int? Index { get; init; }
@@ -27,8 +29,10 @@ public class SearchOptions
             result += $"&gameVersion={GameVersion}";
         if (!string.IsNullOrEmpty(SearchFilter))
             result += $"&searchFilter={SearchFilter}";
+        if (ClassId != null && ParentCategoryId is null)
+            result += $"&classId={ClassId}";
         if (CategoryId != null)
-            result += $"&classId={CategoryId}";
+            result += $"&categoryId={CategoryId}";
 
         return result;
     }
