@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.Forge;
@@ -47,7 +48,7 @@ public class ForgeInstallProfile
 
     [JsonPropertyName("data")]
     public IReadOnlyDictionary<string, ForgeInstallProfileData> Data { get; set; } =
-        new Dictionary<string, ForgeInstallProfileData>();
+        ImmutableDictionary<string, ForgeInstallProfileData>.Empty;
 
     [JsonPropertyName("processors")] public ForgeInstallProfileProcessor[] Processors { get; set; } = [];
 

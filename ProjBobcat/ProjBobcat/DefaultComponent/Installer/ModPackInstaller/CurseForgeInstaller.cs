@@ -28,17 +28,17 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         InstallTaskAsync().Wait();
     }
 
-    async ValueTask<(bool, DownloadFile?)> TryGuessModDownloadLink(long fileId, string downloadPath)
+    public static async ValueTask<(string? FileName, string? Url)> TryGuessModDownloadLink(long fileId)
     {
         try
         {
             var files = await CurseForgeAPIHelper.GetFiles(new[] { fileId });
 
-            if (files == null || files.Length == 0) return (false, null);
+            if (files == null || files.Length == 0) return default;
 
             var file = files.FirstOrDefault(f => f.Id == fileId);
 
-            if (file == null || string.IsNullOrEmpty(file.FileName)) return (false, null);
+            if (file == null || string.IsNullOrEmpty(file.FileName)) return default;
 
             var fileName = file.FileName;
             var fileIdStr = fileId.ToString();
@@ -57,25 +57,34 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
                 if (!checkRes.IsSuccessStatusCode) continue;
 
-                var df = new DownloadFile
-                {
-                    DownloadPath = downloadPath,
-                    DownloadUri = url,
-                    FileName = fileName
-                };
-
-                df.Completed += WhenCompleted;
-
-                return (true, df);
+                return (fileName, url);
             }
 
-            return (false, null);
+            return default;
         }
         catch (Exception e)
         {
             Debug.WriteLine(e);
-            return (false, null);
+            return default;
         }
+    }
+
+    async ValueTask<(bool, DownloadFile?)> TryGuessModDownloadLink(long fileId, string downloadPath)
+    {
+        var pair = await TryGuessModDownloadLink(fileId);
+
+        if (string.IsNullOrEmpty(pair.FileName) || string.IsNullOrEmpty(pair.Url)) return (false, null);
+
+        var df = new DownloadFile
+        {
+            DownloadPath = downloadPath,
+            DownloadUri = pair.Url,
+            FileName = pair.FileName
+        };
+
+        df.Completed += WhenCompleted;
+
+        return (true, df);
     }
 
     public async Task InstallTaskAsync()

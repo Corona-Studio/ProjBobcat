@@ -20,7 +20,7 @@ public class CurseForgeLatestFileModel
 
     [JsonPropertyName("fileStatus")] public int FileStatus { get; set; }
 
-    [JsonPropertyName("downloadUrl")] public required string DownloadUrl { get; init; }
+    [JsonPropertyName("downloadUrl")] public string? DownloadUrl { get; set; }
 
     [JsonPropertyName("isAlternate")] public bool IsAlternate { get; set; }
 

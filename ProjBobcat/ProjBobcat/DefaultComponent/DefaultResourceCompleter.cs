@@ -58,55 +58,22 @@ public class DefaultResourceCompleter : IResourceCompleter
             Timeout = (int)TimeoutPerFile.TotalMilliseconds
         };
 
-        async Task ReceiveGameResourceTask(IAsyncEnumerable<IGameResource> asyncEnumerable)
-        {
-            var count = 0UL;
-            var refreshCounter = 0;
-
-            await foreach (var element in asyncEnumerable)
-            {
-                count++;
-
-                OnResolveComplete(this, new GameResourceInfoResolveEventArgs
-                {
-                    Progress = 0,
-                    Status = $"发现未下载的 {element.FileName.CropStr()}({element.Type})，已加入下载队列"
-                });
-
-                var dF = new DownloadFile
-                {
-                    DownloadPath = element.Path,
-                    DownloadUri = element.Url,
-                    FileName = element.FileName,
-                    FileSize = element.FileSize,
-                    CheckSum = element.CheckSum,
-                    FileType = element.Type
-                };
-                dF.Completed += WhenCompleted;
-
-                downloadBag.Add(dF);
-
-                refreshCounter++;
-
-                if (refreshCounter % 10 == 0)
-                {
-                    Interlocked.Add(ref _needToDownload, count);
-                    count = 0;
-                }
-            }
-
-            Interlocked.Add(ref _needToDownload, count);
-        }
-
         OnResolveComplete(this, new GameResourceInfoResolveEventArgs
         {
             Progress = 0,
             Status = "正在进行资源检查"
         });
 
-        var checkAction = new ActionBlock<IResourceInfoResolver>(resolver =>
+        var checkAction = new ActionBlock<IResourceInfoResolver>(async resolver =>
         {
-            var asyncEnumerable = resolver.ResolveResourceAsync();
+            resolver.GameResourceInfoResolveEvent += FireResolveEvent;
+
+            await Parallel.ForEachAsync(
+                resolver.ResolveResourceAsync(),
+                new ParallelOptions { MaxDegreeOfParallelism = MaxDegreeOfParallelism },
+                ReceiveGameResourceTask);
+
+            return;
 
             void FireResolveEvent(object? sender, GameResourceInfoResolveEventArgs e)
             {
@@ -118,22 +85,6 @@ public class DefaultResourceCompleter : IResourceCompleter
 
                 OnResolveComplete(sender, e);
             }
-
-            resolver.GameResourceInfoResolveEvent += FireResolveEvent;
-
-            var action = new ActionBlock<IAsyncEnumerable<IGameResource>>(
-                ReceiveGameResourceTask,
-                new ExecutionDataflowBlockOptions
-                {
-                    BoundedCapacity = MaxDegreeOfParallelism,
-                    MaxDegreeOfParallelism = MaxDegreeOfParallelism
-                });
-
-            for (var i = 0; i < DownloadThread; i++)
-                action.Post(asyncEnumerable);
-            action.Complete();
-
-            return action.Completion;
         }, new ExecutionDataflowBlockOptions
         {
             BoundedCapacity = MaxDegreeOfParallelism,
@@ -171,13 +122,39 @@ public class DefaultResourceCompleter : IResourceCompleter
             _ => TaskResultStatus.Success
         };
 
-        var resultTuple = (result, new ResourceCompleterCheckResult
+        var resultArgs = new ResourceCompleterCheckResult
         {
             IsLibDownloadFailed = isLibraryFailed,
             FailedFiles = _failedFiles
-        });
+        };
 
-        return new TaskResult<ResourceCompleterCheckResult?>(resultTuple.result, value: resultTuple.Item2);
+        return new TaskResult<ResourceCompleterCheckResult?>(result, value: resultArgs);
+
+        ValueTask ReceiveGameResourceTask(IGameResource element, CancellationToken ct)
+        {
+            OnResolveComplete(this, new GameResourceInfoResolveEventArgs
+            {
+                Progress = 0,
+                Status = $"发现未下载的 {element.FileName.CropStr()}({element.Type})，已加入下载队列"
+            });
+
+            var dF = new DownloadFile
+            {
+                DownloadPath = element.Path,
+                DownloadUri = element.Url,
+                FileName = element.FileName,
+                FileSize = element.FileSize,
+                CheckSum = element.CheckSum,
+                FileType = element.Type
+            };
+            dF.Completed += WhenCompleted;
+
+            downloadBag.Add(dF);
+
+            Interlocked.Add(ref _needToDownload, 1);
+
+            return default;
+        }
     }
 
     public void Dispose()

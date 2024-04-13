@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.CurseForge;
@@ -20,7 +21,7 @@ public class CurseForgeAddonInfo
     [JsonPropertyName("gameId")] public int GameId { get; set; }
 
     [JsonPropertyName("summary")] public string? Summary { get; set; }
-    [JsonPropertyName("links")] public IReadOnlyDictionary<string, string> Links { get; set; } = new Dictionary<string, string>();
+    [JsonPropertyName("links")] public IReadOnlyDictionary<string, string> Links { get; set; } = ImmutableDictionary<string, string>.Empty;
 
     [JsonPropertyName("defaultFileId")] public int DefaultFileId { get; set; }
     [JsonPropertyName("releaseType")] public int ReleaseType { get; set; }

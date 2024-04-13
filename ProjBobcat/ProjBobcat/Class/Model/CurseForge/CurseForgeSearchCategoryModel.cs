@@ -23,5 +23,7 @@ public class CurseForgeSearchCategoryModel
 
     [JsonPropertyName("gameId")] public int? GameId { get; set; }
 
+    [JsonPropertyName("classId")] public int? ClassId { get; set; }
+
     [JsonPropertyName("isClass")] public bool? IsClass { get; set; }
 }

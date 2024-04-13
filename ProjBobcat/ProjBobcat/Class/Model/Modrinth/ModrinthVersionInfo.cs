@@ -4,6 +4,22 @@ using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.Modrinth;
 
+public class ModrinthDependencyModelComparer : IEqualityComparer<ModrinthDependency>
+{
+    public bool Equals(ModrinthDependency? x, ModrinthDependency? y)
+    {
+        if (x == null && y == null) return false;
+        if (x == null || y == null) return false;
+
+        return x.ProjectId == y.ProjectId;
+    }
+
+    public int GetHashCode(ModrinthDependency obj)
+    {
+        return (obj.ProjectId ?? string.Empty).GetHashCode();
+    }
+}
+
 public class ModrinthFileInfo
 {
     [JsonPropertyName("hashes")] public IReadOnlyDictionary<string, string>? Hashes { get; set; }
@@ -13,6 +29,8 @@ public class ModrinthFileInfo
     [JsonPropertyName("filename")] public required string FileName { get; init; }
 
     [JsonPropertyName("primary")] public bool Primary { get; set; }
+
+    [JsonPropertyName("size")] public long Size { get; set; }
 }
 
 public class ModrinthDependency
@@ -59,6 +77,4 @@ public class ModrinthVersionInfo
 
 [JsonSerializable(typeof(ModrinthVersionInfo))]
 [JsonSerializable(typeof(ModrinthVersionInfo[]))]
-partial class ModrinthVersionInfoContext : JsonSerializerContext
-{
-}
+partial class ModrinthVersionInfoContext : JsonSerializerContext;
