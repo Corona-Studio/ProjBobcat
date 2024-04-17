@@ -9,4 +9,7 @@ public record GameModResolvedInfo(
     string? Title,
     string? Version,
     string? ModType,
-    bool IsEnabled);
+    bool IsEnabled)
+{
+    public ModLoaderType LoaderType { get; init; }
+}

@@ -103,6 +103,8 @@ public static class CurseForgeAPIHelper
         using var req = Req(HttpMethod.Get, reqUrl);
         using var res = await Client.SendAsync(req);
 
+        res.EnsureSuccessStatusCode();
+
         return (await res.Content.ReadFromJsonAsync(CurseForgeModelContext.Default
             .DataModelCurseForgeLatestFileModelArray))?.Data;
     }

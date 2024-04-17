@@ -4,6 +4,12 @@ using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.CurseForge;
 
+public class CurseForgeFileHashModel
+{
+    [JsonPropertyName("algo")] public int Algorithm { get; init; }
+    [JsonPropertyName("value")] public string? Value { get; init; }
+}
+
 public class CurseForgeLatestFileModel
 {
     [JsonPropertyName("id")] public int Id { get; set; }
@@ -27,6 +33,8 @@ public class CurseForgeLatestFileModel
     [JsonPropertyName("alternateFileId")] public int AlternateFileId { get; set; }
 
     [JsonPropertyName("dependencies")] public CurseForgeDependencyModel[]? Dependencies { get; set; }
+
+    [JsonPropertyName("hashes")] public CurseForgeFileHashModel[]? Hashes { get; set; }
 
     [JsonPropertyName("isAvailable")] public bool IsAvailable { get; set; }
 

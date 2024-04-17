@@ -8,6 +8,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using ProjBobcat.Class.Helper.TOMLParser;
+using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Fabric;
 using ProjBobcat.Class.Model.GameResource;
 using ProjBobcat.Class.Model.GameResource.ResolvedInfo;
@@ -143,6 +144,26 @@ public static class GameResourcesResolveHelper
         }
     }
 
+    public static ModLoaderType GetModLoaderType(IArchive archive)
+    {
+        var neoforgeEntry = archive.Entries.Any(e =>
+            e.Key.EndsWith("_neoforge.mixins.json", StringComparison.OrdinalIgnoreCase));
+
+        if (neoforgeEntry) return ModLoaderType.NeoForge;
+
+        var forgeEntry = archive.Entries.Any(e =>
+            e.Key.EndsWith(".mixins.json", StringComparison.OrdinalIgnoreCase));
+
+        if (forgeEntry) return ModLoaderType.Forge;
+
+        var fabricEntry = archive.Entries.Any(e =>
+            e.Key.EndsWith("fabric.mod.json", StringComparison.OrdinalIgnoreCase));
+
+        if (fabricEntry) return ModLoaderType.Fabric;
+
+        return ModLoaderType.Unknown;
+    }
+
     public static async IAsyncEnumerable<GameModResolvedInfo> ResolveModListAsync(
         IEnumerable<string> files,
         [EnumeratorCancellation] CancellationToken ct)
@@ -202,6 +223,7 @@ public static class GameResourcesResolveHelper
                 null,
                 "Unknown",
                 isEnabled);
+            result = result with { LoaderType = GetModLoaderType(archive) };
 
             ReturnResult:
             yield return result;
