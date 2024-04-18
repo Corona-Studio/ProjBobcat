@@ -176,11 +176,11 @@ public static class CurseForgeAPIHelper
         return (await res.Content.ReadFromJsonAsync(CurseForgeModelContext.Default.DataModelString))?.Data;
     }
 
-    public static async Task<CurseForgeFuzzySearchResponseModel?> TryFuzzySearchFile(long fingerprint, int gameId = 432)
+    public static async Task<CurseForgeFuzzySearchResponseModel?> TryFuzzySearchFile(long[] fingerprint, int gameId = 432)
     {
         var reqUrl = $"{BaseUrl}/fingerprints/{gameId}";
 
-        var data = JsonSerializer.Serialize(new FuzzyFingerPrintReqModel([fingerprint]),
+        var data = JsonSerializer.Serialize(new FuzzyFingerPrintReqModel(fingerprint),
             CurseForgeModelContext.Default.FuzzyFingerPrintReqModel);
 
         using var req = Req(HttpMethod.Post, reqUrl);

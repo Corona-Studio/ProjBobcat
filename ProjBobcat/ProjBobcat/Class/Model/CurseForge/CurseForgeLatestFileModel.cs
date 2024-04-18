@@ -43,6 +43,9 @@ public class CurseForgeLatestFileModel
     [JsonPropertyName("packageFingerprint")]
     public long PackageFingerprint { get; set; }
 
+    [JsonPropertyName("fileFingerprint")]
+    public long FileFingerprint { get; set; }
+
     [JsonPropertyName("gameVersions")] public required string[] GameVersions { get; init; }
 
     [JsonPropertyName("sortableGameVersion")]
