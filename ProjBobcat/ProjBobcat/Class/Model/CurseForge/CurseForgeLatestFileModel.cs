@@ -12,7 +12,7 @@ public class CurseForgeFileHashModel
 
 public class CurseForgeLatestFileModel
 {
-    [JsonPropertyName("id")] public int Id { get; set; }
+    [JsonPropertyName("id")] public long Id { get; set; }
 
     [JsonPropertyName("displayName")] public required string DisplayName { get; init; }
 

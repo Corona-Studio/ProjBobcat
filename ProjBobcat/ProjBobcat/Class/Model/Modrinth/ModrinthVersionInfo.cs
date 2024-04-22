@@ -77,4 +77,5 @@ public class ModrinthVersionInfo
 
 [JsonSerializable(typeof(ModrinthVersionInfo))]
 [JsonSerializable(typeof(ModrinthVersionInfo[]))]
+[JsonSerializable(typeof(IReadOnlyDictionary<string, ModrinthVersionInfo>))]
 partial class ModrinthVersionInfoContext : JsonSerializerContext;

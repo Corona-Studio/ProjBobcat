@@ -13,6 +13,4 @@ public class ModrinthCategoryInfo
 
 [JsonSerializable(typeof(ModrinthCategoryInfo))]
 [JsonSerializable(typeof(ModrinthCategoryInfo[]))]
-partial class ModrinthCategoryInfoContext : JsonSerializerContext
-{
-}
+partial class ModrinthCategoryInfoContext : JsonSerializerContext;
