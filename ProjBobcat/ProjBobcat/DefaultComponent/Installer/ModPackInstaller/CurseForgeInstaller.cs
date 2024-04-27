@@ -28,7 +28,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         InstallTaskAsync().Wait();
     }
 
-    public static async ValueTask<(string? FileName, string? Url)> TryGuessModDownloadLink(long fileId)
+    public static async Task<(string? FileName, string? Url)> TryGuessModDownloadLink(long fileId)
     {
         try
         {
@@ -69,7 +69,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         }
     }
 
-    async ValueTask<(bool, DownloadFile?)> TryGuessModDownloadLink(long fileId, string downloadPath)
+    async Task<(bool, DownloadFile?)> TryGuessModDownloadLink(long fileId, string downloadPath)
     {
         var pair = await TryGuessModDownloadLink(fileId);
 

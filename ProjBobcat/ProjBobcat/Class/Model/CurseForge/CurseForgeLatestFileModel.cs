@@ -4,9 +4,15 @@ using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.CurseForge;
 
+public class CurseForgeFileHashModel
+{
+    [JsonPropertyName("algo")] public int Algorithm { get; init; }
+    [JsonPropertyName("value")] public string? Value { get; init; }
+}
+
 public class CurseForgeLatestFileModel
 {
-    [JsonPropertyName("id")] public int Id { get; set; }
+    [JsonPropertyName("id")] public long Id { get; set; }
 
     [JsonPropertyName("displayName")] public required string DisplayName { get; init; }
 
@@ -28,12 +34,17 @@ public class CurseForgeLatestFileModel
 
     [JsonPropertyName("dependencies")] public CurseForgeDependencyModel[]? Dependencies { get; set; }
 
+    [JsonPropertyName("hashes")] public CurseForgeFileHashModel[]? Hashes { get; set; }
+
     [JsonPropertyName("isAvailable")] public bool IsAvailable { get; set; }
 
     [JsonPropertyName("modules")] public CurseForgeModuleModel[]? Modules { get; set; }
 
     [JsonPropertyName("packageFingerprint")]
     public long PackageFingerprint { get; set; }
+
+    [JsonPropertyName("fileFingerprint")]
+    public long FileFingerprint { get; set; }
 
     [JsonPropertyName("gameVersions")] public required string[] GameVersions { get; init; }
 

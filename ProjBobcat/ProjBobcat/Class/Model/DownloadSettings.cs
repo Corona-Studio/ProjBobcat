@@ -42,7 +42,7 @@ public class DownloadSettings
     /// </summary>
     public string? Host { get; init; }
 
-    public async ValueTask<byte[]> HashDataAsync(Stream stream, CancellationToken? token)
+    public async Task<byte[]> HashDataAsync(Stream stream, CancellationToken? token)
     {
         token ??= CancellationToken.None;
         

@@ -391,7 +391,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             Logging = rawVersion.Logging,
             Id = rawVersion.Id,
             InheritsFrom = rawVersion.InheritsFrom,
-            GameBaseVersion = GameVersionHelper.TryGetMcVersion([.. (inherits ?? []), rawVersion]) ?? id,
+            GameBaseVersion = GameVersionHelper.TryGetMcVersion([.. inherits ?? [], rawVersion]) ?? id,
             DirName = id,
             Name = id,
             JavaVersion = rawVersion.JavaVersion,
@@ -559,7 +559,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             }
         }
 
-        rawLibs = NativeReplaceHelper.Replace([rawVersion, ..inherits ?? []], rawLibs, NativeReplacementPolicy);
+        rawLibs = NativeReplaceHelper.Replace([rawVersion, .. inherits ?? []], rawLibs, NativeReplacementPolicy);
 
         var libs = GetNatives([.. rawLibs]);
 
@@ -583,40 +583,28 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
         if (LauncherProfileParser == null) return;
 
         var gameId = id.ToGuidHash().ToString("N");
-        var (oldProfileKey, oldProfileModel) =
-            LauncherProfileParser.LauncherProfile.Profiles!
-                .FirstOrDefault(p => p.Key.Equals(gameId, StringComparison.OrdinalIgnoreCase));
-
         var gamePath = Path.Combine(RootPath, GamePathHelper.GetGamePath(id));
 
-        if (string.IsNullOrEmpty(oldProfileKey) || oldProfileModel == null)
+        if (LauncherProfileParser.LauncherProfile.Profiles!.TryGetValue(gameId, out var oldProfileModel))
         {
-            var gameProfile = new GameProfileModel
-            {
-                GameDir = gamePath,
-                LastVersionId = id,
-                Name = id,
-                Created = DateTime.Now
-            };
-
-            if (!string.IsNullOrEmpty(oldProfileKey) &&
-                LauncherProfileParser.LauncherProfile.Profiles!.ContainsKey(oldProfileKey))
-            {
-                LauncherProfileParser.LauncherProfile.Profiles![oldProfileKey] = gameProfile;
-                LauncherProfileParser.SaveProfile();
-                return;
-            }
-
-            LauncherProfileParser.LauncherProfile.Profiles!.Add(gameId, gameProfile);
+            result.Name = oldProfileModel.Name!;
+            oldProfileModel.GameDir = gamePath;
+            oldProfileModel.LastVersionId = id;
+            LauncherProfileParser.LauncherProfile.Profiles![gameId] = oldProfileModel;
             LauncherProfileParser.SaveProfile();
 
             return;
         }
 
-        result.Name = oldProfileModel.Name!;
-        oldProfileModel.GameDir = gamePath;
-        oldProfileModel.LastVersionId = id;
-        LauncherProfileParser.LauncherProfile.Profiles![oldProfileKey] = oldProfileModel;
+        var gameProfile = new GameProfileModel
+        {
+            GameDir = gamePath,
+            LastVersionId = id,
+            Name = id,
+            Created = DateTime.Now
+        };
+
+        LauncherProfileParser.LauncherProfile.Profiles!.Add(gameId, gameProfile);
         LauncherProfileParser.SaveProfile();
     }
 }

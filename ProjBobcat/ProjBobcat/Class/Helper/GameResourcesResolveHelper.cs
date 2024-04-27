@@ -8,6 +8,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using ProjBobcat.Class.Helper.TOMLParser;
+using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Fabric;
 using ProjBobcat.Class.Model.GameResource;
 using ProjBobcat.Class.Model.GameResource.ResolvedInfo;
@@ -143,6 +144,28 @@ public static class GameResourcesResolveHelper
         }
     }
 
+    public static ModLoaderType GetModLoaderType(IArchive archive)
+    {
+        var fabricEntry = archive.Entries.Any(e =>
+            e.Key.EndsWith("fabric.mod.json", StringComparison.OrdinalIgnoreCase));
+
+        if (fabricEntry) return ModLoaderType.Fabric;
+
+        var neoforgeEntry = archive.Entries.Any(e =>
+            e.Key.EndsWith("_neoforge.mixins.json", StringComparison.OrdinalIgnoreCase));
+
+        if (neoforgeEntry) return ModLoaderType.NeoForge;
+
+        var forgeEntry = archive.Entries.Any(e =>
+            e.Key.EndsWith("META-INF/mods.toml", StringComparison.OrdinalIgnoreCase));
+        var forgeNewEntry = archive.Entries.Any(e =>
+            e.Key.EndsWith("mcmod.info", StringComparison.OrdinalIgnoreCase));
+
+        if (forgeEntry || forgeNewEntry) return ModLoaderType.Forge;
+
+        return ModLoaderType.Unknown;
+    }
+
     public static async IAsyncEnumerable<GameModResolvedInfo> ResolveModListAsync(
         IEnumerable<string> files,
         [EnumeratorCancellation] CancellationToken ct)
@@ -174,23 +197,31 @@ public static class GameResourcesResolveHelper
 
             GameModResolvedInfo? result = null;
 
-            if (modInfoEntry != null)
+            try
             {
-                result = await GetNewModInfo(modInfoEntry, file, isEnabled, ct);
-                
-                if (result != null) goto ReturnResult;
+                if (modInfoEntry != null)
+                {
+                    result = await GetNewModInfo(modInfoEntry, file, isEnabled, ct);
+
+                    if (result != null) goto ReturnResult;
+                }
+
+                if (tomlInfoEntry != null)
+                {
+                    result = await GetLegacyModInfo(tomlInfoEntry, file, isEnabled);
+
+                    if (result != null) goto ReturnResult;
+                }
+
+                if (fabricModInfoEntry != null)
+                {
+                    result = await GetFabricModInfo(fabricModInfoEntry, file, isEnabled, ct);
+                    goto ReturnResult;
+                }
             }
-
-            if (tomlInfoEntry != null)
+            catch (Exception e)
             {
-                result = await GetLegacyModInfo(tomlInfoEntry, file, isEnabled);
-
-                if (result != null) goto ReturnResult;
-            }
-
-            if (fabricModInfoEntry != null)
-            {
-                result = await GetFabricModInfo(fabricModInfoEntry, file, isEnabled, ct);
+                Console.WriteLine(e);
                 goto ReturnResult;
             }
 
@@ -202,8 +233,9 @@ public static class GameResourcesResolveHelper
                 null,
                 "Unknown",
                 isEnabled);
-
+            
             ReturnResult:
+            result = result! with { LoaderType = GetModLoaderType(archive) };
             yield return result;
         }
     }
