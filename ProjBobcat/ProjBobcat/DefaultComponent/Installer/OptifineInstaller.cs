@@ -57,7 +57,7 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
 
         var launchWrapperVersion = "1.12";
         var launchWrapperOfEntry =
-            entries.FirstOrDefault(e => e.Key.Equals("launchwrapper-of.txt", StringComparison.OrdinalIgnoreCase));
+            entries.FirstOrDefault(e => e.Key?.Equals("launchwrapper-of.txt", StringComparison.OrdinalIgnoreCase) ?? false);
 
         if (launchWrapperOfEntry != null)
         {
@@ -67,7 +67,7 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
         }
 
         var launchWrapperEntry =
-            entries.FirstOrDefault(x => x.Key.Equals($"launchwrapper-of-{launchWrapperVersion}.jar"));
+            entries.FirstOrDefault(x => x.Key?.Equals($"launchwrapper-of-{launchWrapperVersion}.jar") ?? false);
 
         InvokeStatusChangedEvent("生成版本总成", 40);
 

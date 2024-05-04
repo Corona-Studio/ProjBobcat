@@ -24,9 +24,9 @@ public static class ForgeInstallerFactory
         using var archive = ArchiveFactory.Open(Path.GetFullPath(forgeExecutable));
 
         var legacyUniversalJar =
-            archive.Entries.Any(entry => entry.Key.Equals($"forge-{forgeVersion}-universal.jar"));
+            archive.Entries.Any(entry => entry.Key?.Equals($"forge-{forgeVersion}-universal.jar") ?? false);
         var installProfileJson = archive.Entries.Any(entry =>
-            entry.Key.Equals("install_profile.json", StringComparison.OrdinalIgnoreCase));
+            entry.Key?.Equals("install_profile.json", StringComparison.OrdinalIgnoreCase) ?? false);
 
         return legacyUniversalJar && installProfileJson;
     }

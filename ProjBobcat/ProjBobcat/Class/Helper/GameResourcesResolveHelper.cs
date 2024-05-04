@@ -147,19 +147,19 @@ public static class GameResourcesResolveHelper
     public static ModLoaderType GetModLoaderType(IArchive archive)
     {
         var fabricEntry = archive.Entries.Any(e =>
-            e.Key.EndsWith("fabric.mod.json", StringComparison.OrdinalIgnoreCase));
+            e.Key?.EndsWith("fabric.mod.json", StringComparison.OrdinalIgnoreCase) ?? false);
 
         if (fabricEntry) return ModLoaderType.Fabric;
 
         var neoforgeEntry = archive.Entries.Any(e =>
-            e.Key.EndsWith("_neoforge.mixins.json", StringComparison.OrdinalIgnoreCase));
+            e.Key?.EndsWith("_neoforge.mixins.json", StringComparison.OrdinalIgnoreCase) ?? false);
 
         if (neoforgeEntry) return ModLoaderType.NeoForge;
 
         var forgeEntry = archive.Entries.Any(e =>
-            e.Key.EndsWith("META-INF/mods.toml", StringComparison.OrdinalIgnoreCase));
+            e.Key?.EndsWith("META-INF/mods.toml", StringComparison.OrdinalIgnoreCase) ?? false);
         var forgeNewEntry = archive.Entries.Any(e =>
-            e.Key.EndsWith("mcmod.info", StringComparison.OrdinalIgnoreCase));
+            e.Key?.EndsWith("mcmod.info", StringComparison.OrdinalIgnoreCase) ?? false);
 
         if (forgeEntry || forgeNewEntry) return ModLoaderType.Forge;
 
@@ -185,13 +185,13 @@ public static class GameResourcesResolveHelper
 
             var modInfoEntry =
                 archive.Entries.FirstOrDefault(e =>
-                    e.Key.Equals("mcmod.info", StringComparison.OrdinalIgnoreCase));
+                    e.Key?.Equals("mcmod.info", StringComparison.OrdinalIgnoreCase) ?? false);
             var fabricModInfoEntry =
                 archive.Entries.FirstOrDefault(e =>
-                    e.Key.Equals("fabric.mod.json", StringComparison.OrdinalIgnoreCase));
+                    e.Key?.Equals("fabric.mod.json", StringComparison.OrdinalIgnoreCase) ?? false);
             var tomlInfoEntry =
                 archive.Entries.FirstOrDefault(e =>
-                    e.Key.Equals("META-INF/mods.toml", StringComparison.OrdinalIgnoreCase));
+                    e.Key?.Equals("META-INF/mods.toml", StringComparison.OrdinalIgnoreCase) ?? false);
 
             var isEnabled = ext.Equals(".jar", StringComparison.OrdinalIgnoreCase);
 
@@ -251,9 +251,9 @@ public static class GameResourcesResolveHelper
         if (archive == null) return null;
 
         var packIconEntry =
-            archive.Entries.FirstOrDefault(e => e.Key.Equals("pack.png", StringComparison.OrdinalIgnoreCase));
+            archive.Entries.FirstOrDefault(e => e.Key?.Equals("pack.png", StringComparison.OrdinalIgnoreCase) ?? false);
         var packInfoEntry = archive.Entries.FirstOrDefault(e =>
-            e.Key.Equals("pack.mcmeta", StringComparison.OrdinalIgnoreCase));
+            e.Key?.Equals("pack.mcmeta", StringComparison.OrdinalIgnoreCase) ?? false);
 
         var fileName = Path.GetFileName(file);
         byte[]? imageBytes;
@@ -360,7 +360,7 @@ public static class GameResourcesResolveHelper
     {
         if (!ArchiveHelper.TryOpen(file, out var archive)) return null;
         if (archive == null) return null;
-        if (!archive.Entries.Any(e => e.Key.StartsWith("shaders/", StringComparison.OrdinalIgnoreCase)))
+        if (!archive.Entries.Any(e => e.Key?.StartsWith("shaders/", StringComparison.OrdinalIgnoreCase) ?? false))
             return null;
 
         var model = new GameShaderPackResolvedInfo(Path.GetFileName(file), false);

@@ -94,7 +94,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
         InvokeStatusChangedEvent("解析 Version.json", 0.1);
 
         var versionJsonEntry =
-            archive.Entries.FirstOrDefault(e => e.Key.Equals("version.json", StringComparison.OrdinalIgnoreCase));
+            archive.Entries.FirstOrDefault(e => e.Key?.Equals("version.json", StringComparison.OrdinalIgnoreCase) ?? false);
 
         if (versionJsonEntry == default)
             return GetCorruptedFileResult();
@@ -127,7 +127,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
         var installProfileEntry =
             archive.Entries.FirstOrDefault(e =>
-                e.Key.Equals("install_profile.json", StringComparison.OrdinalIgnoreCase));
+                e.Key?.Equals("install_profile.json", StringComparison.OrdinalIgnoreCase) ?? false);
         
         if (installProfileEntry == default)
             return GetCorruptedFileResult();
@@ -145,9 +145,9 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
         InvokeStatusChangedEvent("解析 Lzma", 0.4);
 
         var serverLzma = archive.Entries.FirstOrDefault(e =>
-            e.Key.Equals("data/server.lzma", StringComparison.OrdinalIgnoreCase));
+            e.Key?.Equals("data/server.lzma", StringComparison.OrdinalIgnoreCase) ?? false);
         var clientLzma = archive.Entries.FirstOrDefault(e =>
-            e.Key.Equals("data/client.lzma", StringComparison.OrdinalIgnoreCase));
+            e.Key?.Equals("data/client.lzma", StringComparison.OrdinalIgnoreCase) ?? false);
 
         if (serverLzma != default)
         {
@@ -195,17 +195,17 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
         InvokeStatusChangedEvent("解压 Forge Jar", 0.5);
 
         var forgeJar = archive.Entries.FirstOrDefault(e =>
-            e.Key.Equals($"maven/net/minecraftforge/forge/{forgeVersion}/forge-{forgeVersion}.jar",
-                StringComparison.OrdinalIgnoreCase));
+            e.Key?.Equals($"maven/net/minecraftforge/forge/{forgeVersion}/forge-{forgeVersion}.jar",
+                StringComparison.OrdinalIgnoreCase) ?? false);
         var forgeUniversalJar = archive.Entries.FirstOrDefault(e =>
-            e.Key.Equals($"maven/net/minecraftforge/forge/{forgeVersion}/forge-{forgeVersion}-universal.jar",
-                StringComparison.OrdinalIgnoreCase));
+            e.Key?.Equals($"maven/net/minecraftforge/forge/{forgeVersion}/forge-{forgeVersion}-universal.jar",
+                StringComparison.OrdinalIgnoreCase) ?? false);
 
         if (forgeJar != default)
         {
             if (forgeUniversalJar != default)
             {
-                var forgeUniversalSubPath = forgeUniversalJar.Key[(forgeUniversalJar.Key.IndexOf('/') + 1)..];
+                var forgeUniversalSubPath = forgeUniversalJar.Key![(forgeUniversalJar.Key!.IndexOf('/') + 1)..];
                 var forgeUniversalLibPath = Path.Combine(RootPath,
                     GamePathHelper.GetLibraryPath(forgeUniversalSubPath));
 
@@ -228,7 +228,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
                 forgeUniversalJar.WriteTo(forgeUniversalFs);
             }
 
-            var forgeSubPath = forgeJar.Key[(forgeJar.Key.IndexOf('/') + 1)..];
+            var forgeSubPath = forgeJar.Key![(forgeJar.Key!.IndexOf('/') + 1)..];
             var forgeLibPath =
                 Path.Combine(RootPath, GamePathHelper.GetLibraryPath(forgeSubPath));
 
@@ -493,7 +493,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             using var libArchive = ArchiveFactory.Open(Path.GetFullPath(libPath));
             var libEntry =
                 libArchive.Entries.FirstOrDefault(e =>
-                    e.Key.Equals("META-INF/MANIFEST.MF", StringComparison.OrdinalIgnoreCase));
+                    e.Key?.Equals("META-INF/MANIFEST.MF", StringComparison.OrdinalIgnoreCase) ?? false);
 
             if (libEntry == null)
                 return GetCorruptedFileResult();
