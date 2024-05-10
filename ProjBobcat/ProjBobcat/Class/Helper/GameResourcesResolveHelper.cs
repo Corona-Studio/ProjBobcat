@@ -301,7 +301,7 @@ public static class GameResourcesResolveHelper
 
         if (!File.Exists(iconPath)) return null;
 
-        var fileName = dir.Split('\\').Last();
+        var fileName = Path.GetFileName(dir);
         var imageBytes = await File.ReadAllBytesAsync(iconPath, ct);
         string? description = null;
         var version = -1;
@@ -371,7 +371,7 @@ public static class GameResourcesResolveHelper
 
         if (!Directory.Exists(shaderPath)) return null;
 
-        return new GameShaderPackResolvedInfo(dir.Split('\\').Last(), true);
+        return new GameShaderPackResolvedInfo(Path.GetFileName(dir), true);
     }
 
     public static IEnumerable<GameShaderPackResolvedInfo> ResolveShaderPack(
