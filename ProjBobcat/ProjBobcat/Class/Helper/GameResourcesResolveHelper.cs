@@ -181,7 +181,6 @@ public static class GameResourcesResolveHelper
                 continue;
 
             if (!ArchiveHelper.TryOpen(file, out var archive)) continue;
-            if (archive == null) continue;
 
             var modInfoEntry =
                 archive.Entries.FirstOrDefault(e =>
@@ -248,7 +247,6 @@ public static class GameResourcesResolveHelper
 
         if (!ext.Equals(".zip", StringComparison.OrdinalIgnoreCase)) return null;
         if (!ArchiveHelper.TryOpen(file, out var archive)) return null;
-        if (archive == null) return null;
 
         var packIconEntry =
             archive.Entries.FirstOrDefault(e => e.Key.Equals("pack.png", StringComparison.OrdinalIgnoreCase));
@@ -359,7 +357,6 @@ public static class GameResourcesResolveHelper
     static GameShaderPackResolvedInfo? ResolveShaderPackFile(string file)
     {
         if (!ArchiveHelper.TryOpen(file, out var archive)) return null;
-        if (archive == null) return null;
         if (!archive.Entries.Any(e => e.Key.StartsWith("shaders/", StringComparison.OrdinalIgnoreCase)))
             return null;
 
