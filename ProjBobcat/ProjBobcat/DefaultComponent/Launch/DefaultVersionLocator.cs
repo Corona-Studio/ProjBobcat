@@ -599,18 +599,15 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
 
                 return;
             }
-        }
 
-        var gameProfile = new GameProfileModel
-        {
-            GameDir = gamePath,
-            LastVersionId = id,
-            Name = id,
-            Created = DateTime.Now
-        };
+            var gameProfile = new GameProfileModel
+            {
+                GameDir = gamePath,
+                LastVersionId = id,
+                Name = id,
+                Created = DateTime.Now
+            };
 
-        lock (_lock)
-        {
             LauncherProfileParser.LauncherProfile.Profiles!.Add(gameId, gameProfile);
             LauncherProfileParser.SaveProfile();
         }
