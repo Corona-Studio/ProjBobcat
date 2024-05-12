@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -9,6 +10,8 @@ using Windows.Win32.Foundation;
 using Windows.Win32.System.SystemInformation;
 using Microsoft.Win32;
 using ProjBobcat.Class.Model;
+using System.IO;
+using System.Security;
 
 namespace ProjBobcat.Platforms.Windows;
 
@@ -148,8 +151,18 @@ public static class SystemInfoHelper
         return appxPackageInfo;
     }
 
+    static readonly FrozenSet<string> PossibleJavaDirs = new []
+    {
+        "java", "jdk", "env", "环境", "run", "软件", "jre", "mc", "soft", "cache", "temp", "corretto", "roaming",
+        "users", "craft", "program", "世界", "net", "游戏", "oracle", "game", "file", "data", "jvm", "服务", "server", "客户",
+        "client", "整合", "应用", "运行", "前置", "mojang", "官启", "新建文件夹", "eclipse", "microsoft", "hotspot", "runtime", "x86",
+        "x64", "forge", "原版", "optifine", "官方", "启动", "hmcl", "mod", "高清", "download", "launch", "程序", "path",
+        "version", "baka", "pcl", "zulu", "local", "packages", "4297127d64ec6", "国服", "网易", "ext", "netease", "1.", "启动",
+        "jdks"
+    }.ToFrozenSet();
+
     /// <summary>
-    ///     从注册表中查找可能的 javaw.exe 的路径。
+    /// 查找可能的 javaw.exe 的路径。
     /// </summary>
     /// <returns>可能的 Java 路径构成的列表。</returns>
     public static IEnumerable<string> FindJavaWindows()
@@ -166,11 +179,68 @@ public static class SystemInfoHelper
                 .Union(FindJavaInternal(wow64Reg))
                 .ToHashSet();
 
+            var drives = DriveInfo.GetDrives();
+
+            foreach (var drive in drives)
+                FindJavaBlur(drive.RootDirectory, javas);
+
+            FindJavaBlur(new DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)), javas);
+            FindJavaBlur(new DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)), javas);
+            FindJavaBlur(new DirectoryInfo(Environment.CurrentDirectory), javas);
+
             return javas;
         }
         catch
         {
             return [];
+        }
+    }
+
+    static void FindJavaBlur(DirectoryInfo di, HashSet<string> javas, int maxDepth = 24)
+    {
+        if (!di.Exists) return;
+
+        var stack = new Stack<(DirectoryInfo, int)>();
+
+        stack.Push((di, 0));
+
+        while (stack.Count > 0)
+        {
+            var (current, currentDepth) = stack.Pop();
+
+            var javaPath = Path.Combine(current.FullName, "javaw.exe");
+
+            if (File.Exists(javaPath))
+            {
+                javas.Add(javaPath);
+                continue;
+            }
+
+            if (currentDepth >= maxDepth) continue;
+
+            try
+            {
+                foreach (var subDi in current.EnumerateDirectories())
+                {
+                    if (subDi.Attributes.HasFlag(FileAttributes.ReparsePoint)) continue;
+
+                    var dirName = subDi.Name.ToLowerInvariant();
+
+                    if (dirName == "bin")
+                    {
+                        stack.Push((subDi, currentDepth - 1));
+                        continue;
+                    }
+
+                    if (PossibleJavaDirs.Any(possibleName => dirName.Contains(possibleName, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        stack.Push((subDi, currentDepth + 1));
+                    }
+                }
+            }
+            catch(SecurityException) { }
+            catch (UnauthorizedAccessException) { }
+            catch (AccessViolationException) { }
         }
     }
 
@@ -205,7 +275,7 @@ public static class SystemInfoHelper
         }
         catch
         {
-            return Enumerable.Empty<string>();
+            return [];
         }
     }
 
