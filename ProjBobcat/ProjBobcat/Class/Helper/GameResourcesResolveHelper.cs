@@ -360,7 +360,9 @@ public static class GameResourcesResolveHelper
     {
         if (!ArchiveHelper.TryOpen(file, out var archive)) return null;
         if (archive == null) return null;
-        if (!archive.Entries.Any(e => e.Key?.StartsWith("shaders/", StringComparison.OrdinalIgnoreCase) ?? false))
+        if (!archive.Entries.Any(e =>
+                Path.GetFileName(e.Key?.TrimEnd(Path.DirectorySeparatorChar))
+                    ?.Equals("shaders", StringComparison.OrdinalIgnoreCase) ?? false))
             return null;
 
         var model = new GameShaderPackResolvedInfo(Path.GetFileName(file), false);

@@ -449,7 +449,7 @@ public class MicrosoftAuthenticator : IAuthenticator
         GraphAuthResultModel? result;
         while (true)
         {
-            await Task.Delay(TimeSpan.FromSeconds(deviceTokenResModel.Interval));
+            await Task.Delay(TimeSpan.FromSeconds(deviceTokenResModel.Interval + 2));
 
             using var userAuthResultReq = new HttpRequestMessage(HttpMethod.Post, MSDeviceTokenStatusUrl)
             {
@@ -480,15 +480,6 @@ public class MicrosoftAuthenticator : IAuthenticator
         #endregion
 
         return result;
-    }
-
-    public static string GetLoginUri(string clientId, string redirectUri)
-    {
-        return Uri.EscapeDataString("https://login.live.com/oauth20_authorize.srf"
-                                    + $"?client_id={clientId}"
-                                    + "&response_type=code"
-                                    + $"&scope={MSAuthScope}"
-                                    + $"&redirect_uri={redirectUri}");
     }
 
     static async Task<T?> SendRequest<T, TReq>(string url, TReq model, JsonTypeInfo<T> typeInfo,
