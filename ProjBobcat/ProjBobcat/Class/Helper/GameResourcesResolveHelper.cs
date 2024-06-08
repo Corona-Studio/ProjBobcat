@@ -181,7 +181,6 @@ public static class GameResourcesResolveHelper
                 continue;
 
             if (!ArchiveHelper.TryOpen(file, out var archive)) continue;
-            if (archive == null) continue;
 
             var modInfoEntry =
                 archive.Entries.FirstOrDefault(e =>
@@ -248,7 +247,6 @@ public static class GameResourcesResolveHelper
 
         if (!ext.Equals(".zip", StringComparison.OrdinalIgnoreCase)) return null;
         if (!ArchiveHelper.TryOpen(file, out var archive)) return null;
-        if (archive == null) return null;
 
         var packIconEntry =
             archive.Entries.FirstOrDefault(e => e.Key?.Equals("pack.png", StringComparison.OrdinalIgnoreCase) ?? false);
@@ -303,7 +301,7 @@ public static class GameResourcesResolveHelper
 
         if (!File.Exists(iconPath)) return null;
 
-        var fileName = dir.Split('\\').Last();
+        var fileName = Path.GetFileName(dir);
         var imageBytes = await File.ReadAllBytesAsync(iconPath, ct);
         string? description = null;
         var version = -1;
@@ -363,7 +361,7 @@ public static class GameResourcesResolveHelper
         if (!archive.Entries.Any(e =>
                 Path.GetFileName(e.Key?.TrimEnd(Path.DirectorySeparatorChar))
                     ?.Equals("shaders", StringComparison.OrdinalIgnoreCase) ?? false))
-            return null;
+          return null;
 
         var model = new GameShaderPackResolvedInfo(Path.GetFileName(file), false);
 
@@ -376,7 +374,7 @@ public static class GameResourcesResolveHelper
 
         if (!Directory.Exists(shaderPath)) return null;
 
-        return new GameShaderPackResolvedInfo(dir.Split('\\').Last(), true);
+        return new GameShaderPackResolvedInfo(Path.GetFileName(dir), true);
     }
 
     public static IEnumerable<GameShaderPackResolvedInfo> ResolveShaderPack(
