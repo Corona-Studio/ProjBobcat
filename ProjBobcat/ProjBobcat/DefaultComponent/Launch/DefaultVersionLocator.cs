@@ -422,8 +422,10 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
 
                 if (flag)
                 {
-                    var rootLibs = GetNatives(inherits[i]!.Libraries);
-
+                    var inheritsLibs = inherits[i]!.Libraries.ToList();
+                    inheritsLibs = NativeReplaceHelper.Replace([rawVersion, ..inherits ?? []], inheritsLibs, NativeReplacementPolicy);
+                    
+                    var rootLibs = GetNatives([.. inheritsLibs]);
                     result.Libraries = rootLibs.Item2;
                     result.Natives = rootLibs.Item1;
 
