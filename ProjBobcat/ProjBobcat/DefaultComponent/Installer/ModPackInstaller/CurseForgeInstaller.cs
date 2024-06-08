@@ -220,6 +220,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
         foreach (var entry in archive.Entries)
         {
+            if (string.IsNullOrEmpty(entry.Key)) continue;
             if (string.IsNullOrEmpty(manifest.Overrides) ||
                 !entry.Key.StartsWith(manifest.Overrides, StringComparison.OrdinalIgnoreCase)) continue;
 
@@ -258,7 +259,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
     {
         using var archive = ArchiveFactory.Open(Path.GetFullPath(ModPackPath));
         var manifestEntry =
-            archive.Entries.FirstOrDefault(x => x.Key.Equals("manifest.json", StringComparison.OrdinalIgnoreCase));
+            archive.Entries.FirstOrDefault(x => x.Key?.Equals("manifest.json", StringComparison.OrdinalIgnoreCase) ?? false);
 
         if (manifestEntry == default)
             return default;

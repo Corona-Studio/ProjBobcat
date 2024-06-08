@@ -64,16 +64,16 @@ resolved the issue that LaunchWrapper may not return the correct exit code
   <!-- Dependencies -->
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="8.0.4" />
+    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="8.0.6" />
     <PackageReference Include="SharpCompress">
-      <Version>0.36.0</Version>
+      <Version>0.37.2</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="System.Management" Version="8.0.0" />
     <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
     <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Windows.CsWin32" Version="0.3.49-beta">
+    <PackageReference Include="Microsoft.Windows.CsWin32" Version="0.3.106">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
   </ItemGroup>

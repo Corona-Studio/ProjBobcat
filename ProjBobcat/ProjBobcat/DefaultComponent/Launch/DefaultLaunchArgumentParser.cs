@@ -162,7 +162,13 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
         {
             foreach (var jvmArg in VersionInfo.JvmArguments)
             {
-                yield return StringHelper.ReplaceByDic(jvmArg, jvmArgumentsDic);
+                var arg = jvmArg;
+
+                // Patch for PCL2
+                if (jvmArg?.Equals("-DFabricMcEmu= net.minecraft.client.main.Main ", StringComparison.OrdinalIgnoreCase) ?? false)
+                    arg = "-DFabricMcEmu=net.minecraft.client.main.Main";
+
+                yield return StringHelper.ReplaceByDic(arg, jvmArgumentsDic);
             }
                 
             yield break;

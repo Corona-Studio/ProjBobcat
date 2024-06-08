@@ -23,7 +23,7 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
         using var archive = ArchiveFactory.Open(Path.GetFullPath(ModPackPath));
         var manifestEntry =
             archive.Entries.FirstOrDefault(x =>
-                x.Key.Equals("modrinth.index.json", StringComparison.OrdinalIgnoreCase));
+                x.Key?.Equals("modrinth.index.json", StringComparison.OrdinalIgnoreCase) ?? false);
 
         if (manifestEntry == default)
             return default;
@@ -111,6 +111,7 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
 
         foreach (var entry in archive.Entries)
         {
+            if (string.IsNullOrEmpty(entry.Key)) continue;
             if (!entry.Key.StartsWith(decompressPrefix, StringComparison.OrdinalIgnoreCase)) continue;
 
             var subPath = entry.Key[(decompressPrefix.Length + 1)..];

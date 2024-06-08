@@ -23,6 +23,8 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
 {
     public NativeReplacementPolicy NativeReplacementPolicy { get; init; } = NativeReplacementPolicy.LegacyOnly;
 
+    readonly object _lock = new();
+
     /// <summary>
     ///     构造函数。
     ///     Constructor.
@@ -587,26 +589,29 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
         var gameId = id.ToGuidHash().ToString("N");
         var gamePath = Path.Combine(RootPath, GamePathHelper.GetGamePath(id));
 
-        if (LauncherProfileParser.LauncherProfile.Profiles!.TryGetValue(gameId, out var oldProfileModel))
+        lock (_lock)
         {
-            result.Name = oldProfileModel.Name!;
-            oldProfileModel.GameDir = gamePath;
-            oldProfileModel.LastVersionId = id;
-            LauncherProfileParser.LauncherProfile.Profiles![gameId] = oldProfileModel;
+            if (LauncherProfileParser.LauncherProfile.Profiles!.TryGetValue(gameId, out var oldProfileModel))
+            {
+                result.Name = oldProfileModel.Name!;
+                oldProfileModel.GameDir = gamePath;
+                oldProfileModel.LastVersionId = id;
+                LauncherProfileParser.LauncherProfile.Profiles![gameId] = oldProfileModel;
+                LauncherProfileParser.SaveProfile();
+
+                return;
+            }
+
+            var gameProfile = new GameProfileModel
+            {
+                GameDir = gamePath,
+                LastVersionId = id,
+                Name = id,
+                Created = DateTime.Now
+            };
+
+            LauncherProfileParser.LauncherProfile.Profiles!.Add(gameId, gameProfile);
             LauncherProfileParser.SaveProfile();
-
-            return;
         }
-
-        var gameProfile = new GameProfileModel
-        {
-            GameDir = gamePath,
-            LastVersionId = id,
-            Name = id,
-            Created = DateTime.Now
-        };
-
-        LauncherProfileParser.LauncherProfile.Profiles!.Add(gameId, gameProfile);
-        LauncherProfileParser.SaveProfile();
     }
 }

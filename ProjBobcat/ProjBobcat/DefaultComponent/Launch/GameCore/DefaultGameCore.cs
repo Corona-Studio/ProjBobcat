@@ -230,6 +230,7 @@ public sealed class DefaultGameCore : GameCoreBase
                     using var archive = ArchiveFactory.Open(path);
                     foreach (var entry in archive.Entries)
                     {
+                        if (string.IsNullOrEmpty(entry.Key)) continue;
                         if (n.Extract?.Exclude?.Any(entry.Key.StartsWith) ?? false) continue;
 
                         var extractPath = Path.Combine(nativeRootPath, entry.Key);

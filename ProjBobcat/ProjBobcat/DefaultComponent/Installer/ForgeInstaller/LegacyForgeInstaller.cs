@@ -45,10 +45,11 @@ public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
 
             using var reader = ArchiveFactory.Open(ForgeExecutablePath);
             var profileEntry =
-                reader.Entries.FirstOrDefault(e => e.Key.Equals("install_profile.json", StringComparison.Ordinal));
+                reader.Entries.FirstOrDefault(e =>
+                    e.Key?.Equals("install_profile.json", StringComparison.Ordinal) ?? false);
             var legacyJarEntry =
                 reader.Entries.FirstOrDefault(e =>
-                    e.Key.Equals($"forge-{ForgeVersion}-universal.jar", StringComparison.OrdinalIgnoreCase));
+                    e.Key?.Equals($"forge-{ForgeVersion}-universal.jar", StringComparison.OrdinalIgnoreCase) ?? false);
 
             if (profileEntry == default)
                 return new ForgeInstallResult
