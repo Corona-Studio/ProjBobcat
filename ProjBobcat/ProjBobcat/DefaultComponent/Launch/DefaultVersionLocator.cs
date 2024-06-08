@@ -351,7 +351,8 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
         if (rawVersion == null)
             return null;
 
-        List<RawVersionModel?>? inherits = null;
+        var inherits = new List<RawVersionModel>();
+
         // 检查游戏是否存在继承关系。
         // Check if there is inheritance.
         if (!string.IsNullOrEmpty(rawVersion.InheritsFrom))
@@ -359,7 +360,6 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             // 存在继承关系。
             // Inheritance exists.
 
-            inherits = [];
             var current = rawVersion;
             var first = true;
 
@@ -372,15 +372,20 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                     inherits.Add(current);
                     first = false;
                     current = ParseRawVersion(current.InheritsFrom);
+
+                    if (current == null) return null;
+
                     inherits.Add(current);
                     continue;
                 }
 
-                inherits.Add(ParseRawVersion(current.InheritsFrom));
+                var inheritVersion = ParseRawVersion(current.InheritsFrom);
+
+                if (inheritVersion == null) return null;
+
+                inherits.Add(inheritVersion);
                 current = ParseRawVersion(current.InheritsFrom);
             }
-
-            if (inherits.Contains(null)) return null;
         }
 
         var result = new VersionInfo
@@ -393,7 +398,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             Logging = rawVersion.Logging,
             Id = rawVersion.Id,
             InheritsFrom = rawVersion.InheritsFrom,
-            GameBaseVersion = GameVersionHelper.TryGetMcVersion([.. inherits ?? [], rawVersion]) ?? id,
+            GameBaseVersion = GameVersionHelper.TryGetMcVersion([.. inherits, rawVersion]) ?? id,
             DirName = id,
             Name = id,
             JavaVersion = rawVersion.JavaVersion,
@@ -425,7 +430,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                 if (flag)
                 {
                     var inheritsLibs = inherits[i]!.Libraries.ToList();
-                    inheritsLibs = NativeReplaceHelper.Replace([rawVersion, ..inherits ?? []], inheritsLibs, NativeReplacementPolicy);
+                    inheritsLibs = NativeReplaceHelper.Replace([rawVersion, ..inherits!], inheritsLibs, NativeReplacementPolicy);
                     
                     var rootLibs = GetNatives([.. inheritsLibs]);
                     result.Libraries = rootLibs.Item2;
