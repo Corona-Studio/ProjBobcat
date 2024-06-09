@@ -78,13 +78,5 @@ resolved the issue that LaunchWrapper may not return the correct exit code
     </PackageReference>
   </ItemGroup>
   <!-- Dependencies -->
-
-  <!-- Compile Options -->
-  <ItemGroup>
-    <Compile Remove="Platforms\**\*.cs" />
-    <Compile Include="Platforms\Linux\**\*.cs" />
-    <Compile Include="Platforms\Windows\**\*.cs" />
-    <Compile Include="Platforms\MacOS\**\*.cs" />
-  </ItemGroup>
-  <!-- Compile Options -->
+  
 </Project>
