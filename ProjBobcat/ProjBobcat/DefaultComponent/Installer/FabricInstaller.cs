@@ -81,7 +81,7 @@ public class FabricInstaller : InstallerBase, IFabricInstaller
             Id = id,
             InheritsFrom = inheritsFrom,
             MainClass = mainClass,
-            Libraries = libraries.ToArray(),
+            Libraries = [.. libraries],
             Arguments = new Arguments(),
             ReleaseTime = DateTime.Now,
             Time = DateTime.Now

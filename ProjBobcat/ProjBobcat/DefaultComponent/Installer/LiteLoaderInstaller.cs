@@ -85,7 +85,7 @@ public class LiteLoaderInstaller : InstallerBase, ILiteLoaderInstaller
             Id = id,
             Time = time,
             ReleaseTime = time,
-            Libraries = libraries.ToArray(),
+            Libraries = [.. libraries],
             MainClass = mainClass,
             InheritsFrom = string.IsNullOrEmpty(InheritsFrom) ? VersionModel.McVersion : InheritsFrom,
             BuildType = VersionModel.Type,
@@ -95,11 +95,11 @@ public class LiteLoaderInstaller : InstallerBase, ILiteLoaderInstaller
         if (InheritVersion.Arguments != null)
             resultModel.Arguments = new Arguments
             {
-                Game = new[]
-                {
+                Game =
+                [
                     JsonSerializer.SerializeToElement("--tweakClass", StringContext.Default.String),
                     JsonSerializer.SerializeToElement(VersionModel.Build.TweakClass, StringContext.Default.String)
-                }
+                ]
             };
         else
             resultModel.MinecraftArguments =

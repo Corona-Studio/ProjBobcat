@@ -88,7 +88,7 @@ class SystemInfoHelper
             _ => string.Empty
         };
 
-        if (string.IsNullOrEmpty(jvmPath)) return Enumerable.Empty<string>();
+        if (string.IsNullOrEmpty(jvmPath)) return [];
 
         var subJvmDirectories = Directory.GetDirectories(jvmPath);
 

@@ -77,18 +77,18 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
             InheritsFrom = InheritsFrom ?? mcVersion,
             Arguments = new Arguments
             {
-                Game = new[]
-                {
+                Game =
+                [
                     JsonSerializer.SerializeToElement("--tweakClass", StringContext.Default.String),
                     JsonSerializer.SerializeToElement("optifine.OptiFineTweaker", StringContext.Default.String)
-                },
-                Jvm = Array.Empty<JsonElement>()
+                ],
+                Jvm = []
             },
             ReleaseTime = DateTime.Now,
             Time = DateTime.Now,
             BuildType = "release",
-            Libraries = new[]
-            {
+            Libraries =
+            [
                 new Library
                 {
                     Name = launchWrapperVersion == "1.12"
@@ -99,7 +99,7 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
                 {
                     Name = $"optifine:Optifine:{OptifineDownloadVersion.McVersion}_{editionRelease}"
                 }
-            },
+            ],
             MainClass = "net.minecraft.launchwrapper.Launch",
             MinimumLauncherVersion = 21
         };

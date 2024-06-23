@@ -21,10 +21,7 @@ public class AuthXSTSRequestModel
             Properties = new XSTSProperties
             {
                 SandboxId = "RETAIL",
-                UserTokens = new[]
-                {
-                    token
-                }
+                UserTokens = [token]
             },
             RelyingParty = relyingParty,
             TokenType = "JWT"

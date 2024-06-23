@@ -32,7 +32,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
     {
         try
         {
-            var files = await CurseForgeAPIHelper.GetFiles(new[] { fileId });
+            var files = await CurseForgeAPIHelper.GetFiles([fileId]);
 
             if (files == null || files.Length == 0) return default;
 

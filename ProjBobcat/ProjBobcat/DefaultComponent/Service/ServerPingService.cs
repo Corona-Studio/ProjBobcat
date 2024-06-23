@@ -206,7 +206,7 @@ public class ServerPingService : ProgressReportBase
         if (id >= 0)
         {
             WriteVarInt(id);
-            packetData = _buffer.ToArray();
+            packetData = [.. _buffer];
             add = packetData.Length;
             _buffer.Clear();
         }

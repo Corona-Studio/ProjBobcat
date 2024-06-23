@@ -200,8 +200,7 @@ public class YggdrasilAuthenticator : IAuthenticator
             Persistent = true,
             RemoteId = result.User?.UUID.ToString() ?? new Guid().ToString(),
             Type = "Mojang",
-            UserProperites = result.User?.Properties?.ToAuthProperties(profiles).ToArray() ??
-                             Array.Empty<AuthPropertyModel>(),
+            UserProperites = result.User?.Properties?.ToAuthProperties(profiles).ToArray() ?? [],
             Username = Email
         };
 
@@ -286,8 +285,8 @@ public class YggdrasilAuthenticator : IAuthenticator
             {
                 AuthStatus = AuthStatus.Succeeded,
                 AccessToken = profile.AccessToken,
-                Profiles = new[]
-                {
+                Profiles =
+                [
                     new ProfileInfoModel
                     {
                         Name = profile.Username,
@@ -298,7 +297,7 @@ public class YggdrasilAuthenticator : IAuthenticator
                         }).ToArray(),
                         UUID = new PlayerUUID(profile.RemoteId)
                     }
-                },
+                ],
                 SelectedProfile = new ProfileInfoModel
                 {
                     Name = profile.MinecraftProfile?.Name ?? Email,
@@ -401,8 +400,7 @@ public class YggdrasilAuthenticator : IAuthenticator
                     Persistent = true,
                     RemoteId = authResponse.User?.UUID.ToString() ?? new Guid().ToString(),
                     Type = "Mojang",
-                    UserProperites = authResponse.User?.Properties?.ToAuthProperties(profiles).ToArray() ??
-                                     Array.Empty<AuthPropertyModel>(),
+                    UserProperites = authResponse.User?.Properties?.ToAuthProperties(profiles).ToArray() ?? [],
                     Username = Email
                 };
 
