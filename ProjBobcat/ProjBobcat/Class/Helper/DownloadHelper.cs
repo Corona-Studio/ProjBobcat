@@ -246,7 +246,7 @@ public static class DownloadHelper
 
         var exceptions = new List<Exception>();
         var filePath = Path.Combine(downloadFile.DownloadPath, downloadFile.FileName);
-        var timeout = TimeSpan.FromMilliseconds(downloadSettings.Timeout * 2);
+        var timeout = downloadSettings.Timeout;
 
         var isLatestFileCheckSucceeded = true;
         List<DownloadRange>? readRanges = null;
@@ -355,7 +355,8 @@ public static class DownloadHelper
                         }, new ExecutionDataflowBlockOptions
                         {
                             BoundedCapacity = downloadSettings.DownloadParts,
-                            MaxDegreeOfParallelism = downloadSettings.DownloadParts
+                            MaxDegreeOfParallelism = downloadSettings.DownloadParts,
+                            CancellationToken = cts.Token
                         });
 
                 var tSpeed = 0D;

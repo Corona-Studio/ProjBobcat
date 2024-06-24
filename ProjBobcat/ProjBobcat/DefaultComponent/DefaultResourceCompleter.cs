@@ -21,7 +21,7 @@ public class DefaultResourceCompleter : IResourceCompleter
 
     ulong _needToDownload, _totalDownloaded;
 
-    public TimeSpan TimeoutPerFile { get; set; } = TimeSpan.FromSeconds(10);
+    public TimeSpan TimeoutPerFile { get; set; } = TimeSpan.FromSeconds(8);
     public int DownloadParts { get; set; } = 16;
     public int DownloadThread { get; set; } = 16;
     public int MaxDegreeOfParallelism { get; set; } = 1;
@@ -55,7 +55,7 @@ public class DefaultResourceCompleter : IResourceCompleter
             DownloadParts = DownloadParts,
             HashType = HashType.SHA1,
             RetryCount = TotalRetry,
-            Timeout = (int)TimeoutPerFile.TotalMilliseconds
+            Timeout = TimeoutPerFile
         };
 
         OnResolveComplete(this, new GameResourceInfoResolveEventArgs

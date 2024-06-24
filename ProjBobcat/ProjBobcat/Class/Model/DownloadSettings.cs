@@ -22,13 +22,13 @@ public class DownloadSettings
     {
         RetryCount = 0,
         CheckFile = false,
-        Timeout = (int)TimeSpan.FromMinutes(5).TotalMilliseconds,
+        Timeout = TimeSpan.FromMinutes(1),
         DownloadParts = 16
     };
 
     public int RetryCount { get; init; }
     public bool CheckFile { get; init; }
-    public int Timeout { get; init; }
+    public TimeSpan Timeout { get; init; }
     public int DownloadParts { get; set; }
     public HashType HashType { get; init; }
 

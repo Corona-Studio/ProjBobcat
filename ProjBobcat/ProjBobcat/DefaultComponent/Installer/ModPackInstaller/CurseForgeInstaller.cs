@@ -207,7 +207,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         {
             DownloadParts = 4,
             RetryCount = 10,
-            Timeout = (int)TimeSpan.FromMinutes(1).TotalMilliseconds
+            Timeout = TimeSpan.FromMinutes(1)
         });
 
         if (!FailedFiles.IsEmpty)
