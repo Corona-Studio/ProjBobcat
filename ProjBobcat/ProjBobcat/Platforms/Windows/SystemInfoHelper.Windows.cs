@@ -18,14 +18,18 @@ namespace ProjBobcat.Platforms.Windows;
 [SupportedOSPlatform(nameof(OSPlatform.Windows))]
 public static class SystemInfoHelper
 {
-    static readonly PerformanceCounter FreeMemCounter = new("Memory", "Available MBytes", true);
-    static readonly PerformanceCounter MemUsagePercentageCounter = new("Memory", "% Committed Bytes In Use", true);
-    static readonly PerformanceCounter CpuCounter = new("Processor Information", "% Processor Utility", "_Total", true);
+    static readonly PerformanceCounter? FreeMemCounter;
+    static readonly PerformanceCounter? MemUsagePercentageCounter;
+    static readonly PerformanceCounter? CpuCounter;
 
     static SystemInfoHelper()
     {
         try
         {
+            FreeMemCounter = new PerformanceCounter("Memory", "Available MBytes", true);
+            MemUsagePercentageCounter = new PerformanceCounter("Memory", "% Committed Bytes In Use", true);
+            CpuCounter = new PerformanceCounter("Processor Information", "% Processor Utility", "_Total", true);
+
             // Performance Counter Pre-Heat
             FreeMemCounter.NextValue();
             MemUsagePercentageCounter.NextValue();
@@ -285,6 +289,9 @@ public static class SystemInfoHelper
     /// <returns></returns>
     public static MemoryInfo GetWindowsMemoryStatus()
     {
+        if (FreeMemCounter == null) return new MemoryInfo(0, 0, 0, 0);
+        if (MemUsagePercentageCounter == null) return new MemoryInfo(0, 0, 0, 0);
+
         try
         {
             var free = FreeMemCounter.NextValue();
@@ -307,6 +314,8 @@ public static class SystemInfoHelper
     public static CPUInfo GetWindowsCpuUsage()
     {
         const string name = "Total %";
+
+        if (CpuCounter == null) return new CPUInfo(0, name);
 
         try
         {
