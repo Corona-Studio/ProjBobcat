@@ -2,8 +2,8 @@
 
 # [English](https://github.com/Corona-Studio/ProjBobcat/)
 
-## 查看我们在MCBBS的教程贴
-[MCBBS教程](https://www.mcbbs.net/thread-956299-1-1.html)
+## 查看我们在 CSKB 的教程贴
+[CSKB 启动器教程](https://kb.corona.studio/)
 
 ![Hx18lYLKR43WAb2](https://user-images.githubusercontent.com/25716486/172503112-95515b07-52ee-4d1e-868e-b87137c6034e.png)
 ![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/corona-studio/projbobcat?logo=codefactor&label=CODEFACTOR评分&style=for-the-badge)
@@ -22,7 +22,7 @@
 
 ## Native AOT （提前编译为本地代码） 支持
 
-ProjBobcat 为 [NativeAot](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/) 提供全面支持。Native AOT 应用程序启动非常快，并且使用较少的内存。应用程序的用户可以在没有安装 .NET 运行时的机器上运行它。如果你想在你的项目中使用Native AOT，请将你的目标框架切换到 **net7.0 或更高版本**。
+ProjBobcat 为 [NativeAot](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/) 提供全面支持。Native AOT 应用程序启动非常快，并且使用较少的内存。应用程序的用户可以在没有安装 .NET 运行时的机器上运行它。如果你想在你的项目中使用Native AOT，请将你的目标框架切换到 **net8.0 或更高版本**。
 
 ## 跨平台支持
 
@@ -52,7 +52,7 @@ All you need for Minecraft launcher in typescript. https://voxelum.github.io/min
 + 日冕开发组官方审核群：1040526762
 
 ## 安装前提醒
-+ 由于 Projbobcat 使用了来自 .NET Core 和 .NET 6.0+ 的诸多最新语言特性。如果您想使用本项目，您需要将您的项目框架版本设置为 **.NET 6 或更高版本**。
++ <del>由于 Projbobcat 使用了来自 .NET Core 和 .NET 6.0+ 的诸多最新语言特性。如果您想使用本项目，您需要将您的项目框架版本设置为 **.NET 6 或更高版本**</del> 现在 ProjBobcat 将仅支持 .NET8.0 LTS 及以上的版本。
 + 由于.NET的默认连接数限制，您需要手动覆盖掉默认的连接数才能保证 <DownloadHelper> 中的部分方法正常执行，您可以在App.xaml.cs或程序入口点添加下面的代码来完成修改（最大值不宜超过1024）
 
 ```c#
