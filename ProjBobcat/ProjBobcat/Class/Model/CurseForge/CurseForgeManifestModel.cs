@@ -12,7 +12,7 @@ public class CurseForgeManifestModel
 
     [JsonPropertyName("name")] public required string Name { get; init; }
 
-    [JsonPropertyName("version")] public required string Version { get; init; }
+    [JsonPropertyName("version")] public string? Version { get; init; }
 
     [JsonPropertyName("author")] public string? Author { get; set; }
 
