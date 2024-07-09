@@ -18,6 +18,7 @@ public class GameArguments
     public ResolutionModel? Resolution { get; set; }
     public required GcType GcType { get; init; }
     public IReadOnlyList<string>? AdditionalJvmArguments { get; set; }
+    public IReadOnlyList<string>? AdditionalArguments { get; set; }
     public ServerSettings? ServerSettings { get; set; }
     public string? AdvanceArguments { get; set; }
 }
