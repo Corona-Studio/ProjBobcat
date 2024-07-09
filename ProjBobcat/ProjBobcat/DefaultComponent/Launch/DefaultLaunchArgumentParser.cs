@@ -365,6 +365,10 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
             yield return "--height";
             yield return GameProfile.Resolution.Height.ToString();
         }
+        
+        if ((LaunchSettings.GameArguments?.AdditionalArguments?.Count ?? 0) > 0)
+            foreach (var arg in LaunchSettings.GameArguments?.AdditionalArguments!)
+                yield return arg;
 
         if (LaunchSettings.GameArguments?.ServerSettings == null &&
             LaunchSettings.FallBackGameArguments?.ServerSettings == null) yield break;
