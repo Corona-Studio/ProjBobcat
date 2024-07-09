@@ -341,7 +341,7 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
         if ((VersionInfo.AvailableGameArguments?.Count ?? 0) == 0) yield break;
         if (!VersionInfo.AvailableGameArguments!.ContainsKey("has_custom_resolution")) yield break;
 
-        if (!(LaunchSettings.GameArguments?.Resolution?.IsDefault() ?? true))
+        if (!(LaunchSettings.GameArguments.Resolution?.IsDefault() ?? true))
         {
             yield return "--width";
             yield return LaunchSettings.GameArguments.Resolution.Width.ToString();
@@ -366,10 +366,10 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
             yield return GameProfile.Resolution.Height.ToString();
         }
 
-        if (LaunchSettings.GameArguments?.ServerSettings == null &&
+        if (LaunchSettings.GameArguments.ServerSettings == null &&
             LaunchSettings.FallBackGameArguments?.ServerSettings == null) yield break;
 
-        var serverSettings = LaunchSettings.GameArguments?.ServerSettings ??
+        var serverSettings = LaunchSettings.GameArguments.ServerSettings ??
                              LaunchSettings.FallBackGameArguments?.ServerSettings;
 
         if (serverSettings != null && !serverSettings.IsDefault())
@@ -381,6 +381,15 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
 
             yield return "--port";
             yield return serverSettings.Port.ToString();
+        }
+
+        if (!string.IsNullOrEmpty(LaunchSettings.GameArguments.AdvanceArguments))
+        {
+            yield return LaunchSettings.GameArguments.AdvanceArguments;
+        }
+        else if (!string.IsNullOrEmpty(LaunchSettings.FallBackGameArguments?.AdvanceArguments))
+        {
+            yield return LaunchSettings.FallBackGameArguments.AdvanceArguments;
         }
     }
 
