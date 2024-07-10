@@ -40,7 +40,7 @@ jobs:
         id: currentdatetime
         uses: Kaven-Universe/github-action-current-date-time@v1
         with:
-          format: "yyyyMMddHHmmss"
+          format: "YYYYMMDDHHmmssSSS"
       - name: Restore packages
         run: dotnet restore ProjBobcat/ProjBobcat/ProjBobcat.csproj
       - name: Build the project
