@@ -1,6 +1,6 @@
 name: Publish Pre-Release Version NuGet Package
 
-on: 
+on:
   push:
     branches: [master]
 jobs:
@@ -36,11 +36,16 @@ jobs:
         uses: "WyriHaximus/github-action-get-previous-tag@v1"
         with:
           fallback: 1.0.0
+      - name: Get current datetime
+        id: currentdatetime
+        uses: Kaven-Universe/github-action-current-date-time@v1
+        with:
+          format: "YYYYMMDDHHmmssSSS"
       - name: Restore packages
         run: dotnet restore ProjBobcat/ProjBobcat/ProjBobcat.csproj
       - name: Build the project
         run: dotnet build ProjBobcat/ProjBobcat/ProjBobcat.csproj -c Release --no-restore
       - name: Create the package
-        run: $tag="${{ steps.previoustag.outputs.tag }}".replace("v",""); dotnet pack ProjBobcat/ProjBobcat/ProjBobcat.csproj -c Release -p:PackageVersion="$tag-CI${{ github.sha }}-beta" --no-build --no-restore -o .
+        run: $tag="${{ steps.previoustag.outputs.tag }}".replace("v",""); dotnet pack ProjBobcat/ProjBobcat/ProjBobcat.csproj -c Release -p:PackageVersion="$tag-CI${{ steps.currentdatetime.outputs.time }}-beta" --no-build --no-restore -o .
       - name: Publish the package to NuGet.org
         run: dotnet nuget push *.nupkg -k ${{secrets.NUGET_KEY}} -s https://api.nuget.org/v3/index.json
