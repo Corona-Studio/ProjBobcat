@@ -31,7 +31,7 @@ public class FabricModInfoModel
 
     [JsonPropertyName("environment")] public string? Environment { get; set; }
 
-    [JsonPropertyName("entrypoints")] public IReadOnlyDictionary<string, string[]>? Entrypoints { get; set; }
+    [JsonPropertyName("entrypoints")] public IReadOnlyDictionary<string, JsonElement[]>? Entrypoints { get; set; }
 
     [JsonPropertyName("custom")] public Custom? Custom { get; set; }
 
