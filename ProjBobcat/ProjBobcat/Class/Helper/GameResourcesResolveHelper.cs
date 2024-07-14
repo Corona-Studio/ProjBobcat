@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,6 +19,58 @@ namespace ProjBobcat.Class.Helper;
 
 public static class GameResourcesResolveHelper
 {
+    static string ProcessJsonString(string json)
+    {
+        json = json.Replace("\"dependencies\": [mod_minecraftForge]", "\"dependencies\": \"\"");
+        var jsonSplit = json.Split('\n');
+        if (jsonSplit.Length < 2) return json;
+
+        var startIndex = 0;
+        var endIndex = 0;
+
+        for (var i = 0; i < jsonSplit.Length; i++)
+        {
+            if (jsonSplit[i].Trim().EndsWith("{") || jsonSplit[i].Trim() == "\n" ||
+                string.IsNullOrWhiteSpace(jsonSplit[i].Trim()))
+            {
+                continue;
+            }
+
+            if (startIndex == 0)
+            {
+                if ((!jsonSplit[i].Trim().EndsWith("\"") && !jsonSplit[i].Trim().EndsWith(",")) ||
+                    (jsonSplit[i].Replace(" ", "").EndsWith(":\"")))
+                {
+                    startIndex = i;
+                    continue;
+                }
+            }
+
+            if (startIndex == 0) continue;
+            if ((!jsonSplit[i].Trim().StartsWith("\"") || !jsonSplit[i + 1].Trim().StartsWith("}")) &&
+                (!jsonSplit[i].Trim().StartsWith("\",")) && (!jsonSplit[i].Trim().EndsWith("\","))) continue;
+
+            endIndex = i;
+            break;
+        }
+
+        if (startIndex == 0 || endIndex == 0) return json;
+        {
+            var tempInt = endIndex - 1;
+            for (var i = endIndex; i > startIndex; i--)
+            {
+                jsonSplit[tempInt] = $"{jsonSplit[tempInt]}\\n{jsonSplit[tempInt + 1]}";
+                tempInt -= 1;
+            }
+
+            var newJsonArray = jsonSplit.Where((s, index) => index < startIndex + 1 || index > endIndex).ToArray();
+
+            var newJson = string.Join("\n", newJsonArray);
+            return newJson;
+        }
+    }
+
+
     static async Task<GameModResolvedInfo?> GetLegacyModInfo(
         IArchiveEntry entry,
         string file,
@@ -62,6 +115,13 @@ public static class GameResourcesResolveHelper
             List<GameModInfoModel>? model = null;
 
             await using var stream = entry.OpenEntryStream();
+            using var sr = new StreamReader(stream, leaveOpen: true);
+
+            var json = await sr.ReadToEndAsync(ct);
+            var fixedJson = ProcessJsonString(json);
+
+            await using var fixedStream = new MemoryStream(Encoding.UTF8.GetBytes(fixedJson));
+
             var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
 
             switch (doc.RootElement.ValueKind)

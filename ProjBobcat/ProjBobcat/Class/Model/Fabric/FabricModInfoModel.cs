@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.Fabric;
@@ -34,7 +35,7 @@ public class FabricModInfoModel
 
     [JsonPropertyName("custom")] public Custom? Custom { get; set; }
 
-    [JsonPropertyName("depends")] public IReadOnlyDictionary<string, string>? Depends { get; set; }
+    [JsonPropertyName("depends")] public IReadOnlyDictionary<string, JsonElement>? Depends { get; set; }
 
     [JsonPropertyName("recommends")] public IReadOnlyDictionary<string, string>? Recommends { get; set; }
 
@@ -44,7 +45,7 @@ public class FabricModInfoModel
 
     [JsonPropertyName("icon")] public string? Icon { get; set; }
 
-    [JsonPropertyName("authors")] public string[] Authors { get; set; } = [];
+    [JsonPropertyName("authors")] public JsonElement[] Authors { get; set; } = [];
 
     [JsonPropertyName("contacts")] public IReadOnlyDictionary<string, string>? Contacts { get; set; }
 
@@ -52,6 +53,4 @@ public class FabricModInfoModel
 }
 
 [JsonSerializable(typeof(FabricModInfoModel))]
-partial class FabricModInfoModelContext : JsonSerializerContext
-{
-}
+partial class FabricModInfoModelContext : JsonSerializerContext;
