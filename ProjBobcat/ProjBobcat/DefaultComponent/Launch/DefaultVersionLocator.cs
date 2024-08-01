@@ -309,32 +309,58 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
     /// <returns></returns>
     public override RawVersionModel? ParseRawVersion(string id)
     {
+        var gamePath = Path.Combine(RootPath, GamePathHelper.GetGamePath(id));
+        var possibleFiles = new List<string>
+        {
+            GamePathHelper.GetGameJsonPath(RootPath, id)
+        };
+        
         // 预防 I/O 的错误。
         // Prevents errors related to I/O.
-        if (!Directory.Exists(Path.Combine(RootPath, GamePathHelper.GetGamePath(id))))
+        if (!Directory.Exists(gamePath))
             return null;
         if (!File.Exists(GamePathHelper.GetGameJsonPath(RootPath, id)))
-            return null;
-
-        using var fs = File.OpenRead(GamePathHelper.GetGameJsonPath(RootPath, id));
-        var options = new JsonSerializerOptions
         {
-            Converters =
+            var files = Directory
+                .EnumerateFiles(gamePath, "*.json", SearchOption.TopDirectoryOnly)
+                .ToArray();
+
+            if (files.Length == 0) return null;
+            
+            possibleFiles.AddRange(files);
+        }
+
+        foreach (var possibleFile in possibleFiles)
+        {
+            try
             {
-                new DateTimeConverterUsingDateTimeParse()
+                using var fs = File.OpenRead(possibleFile);
+                var options = new JsonSerializerOptions
+                {
+                    Converters =
+                    {
+                        new DateTimeConverterUsingDateTimeParse()
+                    }
+                };
+                var versionJsonObj = JsonSerializer.Deserialize(
+                    fs, typeof(RawVersionModel), new RawVersionModelContext(options));
+
+                if (versionJsonObj is not RawVersionModel versionJson)
+                    return null;
+                if (string.IsNullOrEmpty(versionJson.MainClass))
+                    return null;
+                if (string.IsNullOrEmpty(versionJson.MinecraftArguments) && versionJson.Arguments == null)
+                    return null;
+
+                return versionJson;
             }
-        };
-        var versionJsonObj = JsonSerializer.Deserialize(
-            fs, typeof(RawVersionModel), new RawVersionModelContext(options));
+            catch (JsonException)
+            {
+                continue;
+            }
+        }
 
-        if (versionJsonObj is not RawVersionModel versionJson)
-            return null;
-        if (string.IsNullOrEmpty(versionJson.MainClass))
-            return null;
-        if (string.IsNullOrEmpty(versionJson.MinecraftArguments) && versionJson.Arguments == null)
-            return null;
-
-        return versionJson;
+        return null;
     }
 
     /// <summary>
