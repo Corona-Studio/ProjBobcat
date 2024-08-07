@@ -332,6 +332,8 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
 
         foreach (var possibleFile in possibleFiles)
         {
+            if (!File.Exists(possibleFile)) continue;
+            
             try
             {
                 using var fs = File.OpenRead(possibleFile);
