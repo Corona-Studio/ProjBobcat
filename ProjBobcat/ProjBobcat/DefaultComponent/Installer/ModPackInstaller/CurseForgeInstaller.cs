@@ -205,7 +205,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         TotalDownloaded = 0;
         await DownloadHelper.AdvancedDownloadListFile(urlBags, new DownloadSettings
         {
-            DownloadParts = 4,
+            DownloadParts = 8,
             RetryCount = 10,
             Timeout = TimeSpan.FromMinutes(1)
         });

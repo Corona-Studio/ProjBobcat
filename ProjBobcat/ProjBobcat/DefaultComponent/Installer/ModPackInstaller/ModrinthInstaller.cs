@@ -92,7 +92,7 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
         NeedToDownload = downloadFiles.Count;
         await DownloadHelper.AdvancedDownloadListFile(downloadFiles, new DownloadSettings
         {
-            DownloadParts = 4,
+            DownloadParts = 8,
             RetryCount = 10,
             Timeout = TimeSpan.FromMinutes(1),
             CheckFile = true,
