@@ -417,9 +417,8 @@ public static class GameResourcesResolveHelper
     static GameShaderPackResolvedInfo? ResolveShaderPackFile(string file)
     {
         if (!ArchiveHelper.TryOpen(file, out var archive)) return null;
-        if (archive == null) return null;
         if (!archive.Entries.Any(e =>
-                Path.GetFileName(e.Key?.TrimEnd(Path.DirectorySeparatorChar))
+                Path.GetFileName(e.Key?.TrimEnd('/'))
                     ?.Equals("shaders", StringComparison.OrdinalIgnoreCase) ?? false))
           return null;
 
