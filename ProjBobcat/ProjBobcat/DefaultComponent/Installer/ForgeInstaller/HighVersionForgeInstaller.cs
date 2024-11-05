@@ -44,7 +44,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
     public ForgeInstallResult InstallForge()
     {
-        return InstallForgeTaskAsync().Result;
+        return InstallForgeTaskAsync().GetAwaiter().GetResult();
     }
 
     ForgeInstallResult GetCorruptedFileResult()

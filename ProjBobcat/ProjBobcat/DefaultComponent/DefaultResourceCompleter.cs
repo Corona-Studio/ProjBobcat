@@ -35,7 +35,7 @@ public class DefaultResourceCompleter : IResourceCompleter
 
     public TaskResult<ResourceCompleterCheckResult?> CheckAndDownload()
     {
-        return CheckAndDownloadTaskAsync().Result;
+        return CheckAndDownloadTaskAsync().GetAwaiter().GetResult();
     }
 
     public async Task<TaskResult<ResourceCompleterCheckResult?>> CheckAndDownloadTaskAsync()

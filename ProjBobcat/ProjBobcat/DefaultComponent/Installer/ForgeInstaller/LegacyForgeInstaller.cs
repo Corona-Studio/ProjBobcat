@@ -34,7 +34,7 @@ public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
 
     public ForgeInstallResult InstallForge()
     {
-        return InstallForgeTaskAsync().Result;
+        return InstallForgeTaskAsync().GetAwaiter().GetResult();
     }
 
     public async Task<ForgeInstallResult> InstallForgeTaskAsync()

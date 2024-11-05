@@ -81,7 +81,7 @@ public class YggdrasilAuthenticator : IAuthenticator
     /// <returns></returns>
     public AuthResultBase Auth(bool userField = false)
     {
-        return AuthTaskAsync().Result;
+        return AuthTaskAsync().GetAwaiter().GetResult();
     }
 
     /// <summary>

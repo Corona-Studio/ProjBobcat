@@ -24,7 +24,7 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
 
     public string Install()
     {
-        return InstallTaskAsync().Result;
+        return InstallTaskAsync().GetAwaiter().GetResult();
     }
 
     public async Task<string> InstallTaskAsync()

@@ -110,7 +110,7 @@ public class OfflineAuthenticator : IAuthenticator
     /// <returns></returns>
     public Task<AuthResultBase> AuthTaskAsync(bool userField)
     {
-        return Task.Run(() => Auth());
+        return Task.FromResult(Auth());
     }
 
     /// <summary>

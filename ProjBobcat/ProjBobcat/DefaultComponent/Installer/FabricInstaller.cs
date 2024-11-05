@@ -19,7 +19,7 @@ public class FabricInstaller : InstallerBase, IFabricInstaller
 
     public string Install()
     {
-        return InstallTaskAsync().Result;
+        return InstallTaskAsync().GetAwaiter().GetResult();
     }
 
     public async Task<string> InstallTaskAsync()

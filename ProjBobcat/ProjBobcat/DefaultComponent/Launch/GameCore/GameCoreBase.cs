@@ -46,7 +46,7 @@ public abstract class GameCoreBase : IGameCore
     /// <returns></returns>
     public virtual LaunchResult Launch(LaunchSettings settings)
     {
-        return LaunchTaskAsync(settings).Result;
+        return LaunchTaskAsync(settings).GetAwaiter().GetResult();
     }
 
     /// <summary>

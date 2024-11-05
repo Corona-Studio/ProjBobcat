@@ -66,7 +66,7 @@ public class MicrosoftAuthenticator : IAuthenticator
 
     public AuthResultBase Auth(bool userField = false)
     {
-        return AuthTaskAsync(userField).Result;
+        return AuthTaskAsync(userField).GetAwaiter().GetResult();
     }
 
     public async Task<AuthResultBase> AuthTaskAsync(bool userField = false)

@@ -28,7 +28,7 @@ public abstract class ResolverBase : IResourceInfoResolver
 
     public virtual IEnumerable<IGameResource> ResolveResource()
     {
-        return ResolveResourceAsync().ToListAsync().Result;
+        return ResolveResourceAsync().ToListAsync().GetAwaiter().GetResult();
     }
 
     public void Dispose()

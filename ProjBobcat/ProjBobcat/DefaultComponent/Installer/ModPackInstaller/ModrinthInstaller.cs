@@ -38,7 +38,7 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
 
     public void Install()
     {
-        InstallTaskAsync().Wait();
+        InstallTaskAsync().GetAwaiter().GetResult();
     }
 
     public async Task InstallTaskAsync()

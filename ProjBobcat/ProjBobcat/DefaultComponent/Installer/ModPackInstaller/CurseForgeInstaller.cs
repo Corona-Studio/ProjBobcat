@@ -25,7 +25,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
     public void Install()
     {
-        InstallTaskAsync().Wait();
+        InstallTaskAsync().GetAwaiter().GetResult();
     }
 
     public static async Task<(string? FileName, string? Url)> TryGuessModDownloadLink(long fileId)
