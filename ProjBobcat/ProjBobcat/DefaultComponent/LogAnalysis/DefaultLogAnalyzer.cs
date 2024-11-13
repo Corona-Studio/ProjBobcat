@@ -113,7 +113,7 @@ public partial class DefaultLogAnalyzer : ILogAnalyzer
         var fullRootPath = Path.GetFullPath(RootPath);
         var versionPath = Path.Combine(fullRootPath, GamePathHelper.GetGamePath(GameId));
 
-        var crashReportDi = new DirectoryInfo(Path.Combine(versionPath, "crash-reports"));
+        var crashReportDi = new DirectoryInfo(Path.Combine(VersionIsolation ? versionPath : RootPath, "crash-reports"));
         if (crashReportDi.Exists)
             logFiles.AddRange(crashReportDi.GetFiles().Where(fi => fi.Extension is ".log" or ".txt"));
 
@@ -121,8 +121,8 @@ public partial class DefaultLogAnalyzer : ILogAnalyzer
         if (versionDi.Exists)
             logFiles.AddRange(versionDi.GetFiles().Where(fi => fi.Extension == ".log"));
 
-        logFiles.Add(new FileInfo(Path.Combine(versionPath, "logs", "latest.log")));
-        logFiles.Add(new FileInfo(Path.Combine(versionPath, "logs", "debug.log")));
+        logFiles.Add(new FileInfo(Path.Combine(VersionIsolation ? versionPath : RootPath, "logs", "latest.log")));
+        logFiles.Add(new FileInfo(Path.Combine(VersionIsolation ? versionPath : RootPath, "logs", "debug.log")));
 
         if (CustomLogFiles is { Count: > 0 })
             logFiles.AddRange(CustomLogFiles.Select(custom => new FileInfo(custom)));
@@ -134,7 +134,7 @@ public partial class DefaultLogAnalyzer : ILogAnalyzer
             var logType = GetLogFileType(log);
 
             if (logType == LogFileType.Unknown) continue;
-            
+
             var content = File.ReadAllText(log.FullName, Encoding.GetEncoding("GB2312"));
 
             if (string.IsNullOrWhiteSpace(content)) continue;
