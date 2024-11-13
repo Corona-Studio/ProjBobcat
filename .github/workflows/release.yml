@@ -5,7 +5,7 @@ on:
     types: [published]
 jobs:
   test-build:
-    name: Test build on ${{ matrix.os }} .NET 8.0
+    name: Test build on ${{ matrix.os }} .NET 9.0
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0
+          dotnet-version: 9.0
       - uses: actions/checkout@v4
       - name: Restore packages
         run: dotnet restore ProjBobcat/ProjBobcat.sln
@@ -27,7 +27,7 @@ jobs:
     steps:
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0
+          dotnet-version: 9.0
       - uses: actions/checkout@v4
       - name: Restore packages
         run: dotnet restore ProjBobcat/ProjBobcat/ProjBobcat.csproj
