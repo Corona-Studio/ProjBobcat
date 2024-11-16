@@ -60,9 +60,7 @@ public sealed class DefaultGameCore : GameCoreBase
         {
             //逐步测量启动时间。
             //Measure the launch time step by step.
-            var prevSpan = new TimeSpan();
-            var stopwatch = new Stopwatch();
-            stopwatch.Start();
+            var currentTimestamp = Stopwatch.GetTimestamp();
 
             #region 解析游戏 Game Info Resolver
 
@@ -70,7 +68,7 @@ public sealed class DefaultGameCore : GameCoreBase
 
             //在以下方法中，我们存储前一个步骤的时间并且重置秒表，以此逐步测量启动时间。
             //In the method InvokeLaunchLogThenStart(args), we storage the time span of the previous process and restart the watch in order that the time used in each step is recorded.
-            this.InvokeLaunchLogThenStart("解析游戏", ref prevSpan, ref stopwatch);
+            this.InvokeLaunchLogThenStart("解析游戏", ref currentTimestamp);
 
             //错误处理
             //Error processor
@@ -90,7 +88,7 @@ public sealed class DefaultGameCore : GameCoreBase
 
             #region 验证账户凭据 Legal Account Verifier
 
-            this.InvokeLaunchLogThenStart("正在验证账户凭据", ref prevSpan, ref stopwatch);
+            this.InvokeLaunchLogThenStart("正在验证账户凭据", ref currentTimestamp);
 
             //以下代码实现了账户模式从离线到在线的切换。
             //The following code switches account mode between offline and yggdrasil.
@@ -102,7 +100,7 @@ public sealed class DefaultGameCore : GameCoreBase
                 _ => null
             };
 
-            this.InvokeLaunchLogThenStart("账户凭据验证完成", ref prevSpan, ref stopwatch);
+            this.InvokeLaunchLogThenStart("账户凭据验证完成", ref currentTimestamp);
 
             //错误处理
             //Error processor
@@ -179,7 +177,7 @@ public sealed class DefaultGameCore : GameCoreBase
             //以字符串数组形式生成启动参数。
             //Generates launch cmd arguments in string[].
             var arguments = argumentParser.GenerateLaunchArguments();
-            this.InvokeLaunchLogThenStart("解析启动参数", ref prevSpan, ref stopwatch);
+            this.InvokeLaunchLogThenStart("解析启动参数", ref currentTimestamp);
 
             if (string.IsNullOrEmpty(arguments.First()))
                 return new LaunchResult
@@ -201,7 +199,7 @@ public sealed class DefaultGameCore : GameCoreBase
             //通过String Builder格式化参数。（转化成字符串）
             //Format the arguments using string builder.(Convert to string)
             // arguments.ForEach(arg => sb.Append(arg.Trim()).Append(' '));
-            this.InvokeLaunchLogThenStart(string.Join(Environment.NewLine, arguments), ref prevSpan, ref stopwatch);
+            this.InvokeLaunchLogThenStart(string.Join(Environment.NewLine, arguments), ref currentTimestamp);
 
             #endregion
 
@@ -240,7 +238,7 @@ public sealed class DefaultGameCore : GameCoreBase
                             continue;
                         }
 
-                        this.InvokeLaunchLogThenStart($"[解压 Natives] - {entry.Key}", ref prevSpan, ref stopwatch);
+                        this.InvokeLaunchLogThenStart($"[解压 Natives] - {entry.Key}", ref currentTimestamp);
 
                         var fi = new FileInfo(extractPath);
                         var di = fi.Directory ?? new DirectoryInfo(Path.GetDirectoryName(extractPath)!);
@@ -263,7 +261,7 @@ public sealed class DefaultGameCore : GameCoreBase
                     },
                     ErrorType = LaunchErrorType.DecompressFailed,
                     LaunchSettings = settings,
-                    RunTime = prevSpan
+                    RunTime = Stopwatch.GetElapsedTime(currentTimestamp)
                 };
             }
 
@@ -307,7 +305,7 @@ public sealed class DefaultGameCore : GameCoreBase
                 }
             });
 
-            this.InvokeLaunchLogThenStart("设置 log4j 缓解措施", ref prevSpan, ref stopwatch);
+            this.InvokeLaunchLogThenStart("设置 log4j 缓解措施", ref currentTimestamp);
 
             #endregion
 
@@ -320,7 +318,7 @@ public sealed class DefaultGameCore : GameCoreBase
             };
 
             launchWrapper.Do();
-            this.InvokeLaunchLogThenStart("启动游戏", ref prevSpan, ref stopwatch);
+            this.InvokeLaunchLogThenStart("启动游戏", ref currentTimestamp);
 
             if (launchWrapper.Process == null)
             {
@@ -332,7 +330,7 @@ public sealed class DefaultGameCore : GameCoreBase
 
                 return new LaunchResult
                 {
-                    RunTime = stopwatch.Elapsed,
+                    RunTime = Stopwatch.GetElapsedTime(currentTimestamp),
                     LaunchSettings = settings
                 };
             }
@@ -373,7 +371,7 @@ public sealed class DefaultGameCore : GameCoreBase
             //Return the launch result.
             return new LaunchResult
             {
-                RunTime = stopwatch.Elapsed,
+                RunTime = Stopwatch.GetElapsedTime(currentTimestamp),
                 GameProcess = launchWrapper.Process,
                 LaunchSettings = settings
             };
@@ -398,17 +396,16 @@ public sealed class DefaultGameCore : GameCoreBase
     ///     Write the log and record the time.
     /// </summary>
     /// <param name="item"></param>
-    /// <param name="time"></param>
-    /// <param name="sw"></param>
-    void InvokeLaunchLogThenStart(string item, ref TimeSpan time, ref Stopwatch sw)
+    /// <param name="timestamp"></param>
+    void InvokeLaunchLogThenStart(string item, ref long timestamp)
     {
         this.OnLogLaunchData(this, new LaunchLogEventArgs
         {
             Item = item,
-            ItemRunTime = sw.Elapsed - time
+            ItemRunTime = Stopwatch.GetElapsedTime(timestamp)
         });
-        time = sw.Elapsed;
-        sw.Start();
+
+        timestamp = Stopwatch.GetTimestamp();
     }
 
     #endregion
