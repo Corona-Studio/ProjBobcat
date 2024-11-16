@@ -175,7 +175,7 @@ public class DefaultResourceCompleter : IResourceCompleter
     void WhenCompleted(object? sender, DownloadFileCompletedEventArgs e)
     {
         if (sender is not DownloadFile df) return;
-        if (!(e.Success ?? false)) this._failedFiles.Add(df);
+        if (!e.Success) this._failedFiles.Add(df);
 
         df.Completed -= this.WhenCompleted;
 

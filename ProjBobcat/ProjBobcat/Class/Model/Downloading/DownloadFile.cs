@@ -64,7 +64,7 @@ public class DownloadFile
         });
     }
 
-    public void OnCompleted(bool? success, Exception? ex, double averageSpeed)
+    public void OnCompleted(bool success, Exception? ex, double averageSpeed)
     {
         this.Completed?.Invoke(this, new DownloadFileCompletedEventArgs(success, ex, averageSpeed));
     }

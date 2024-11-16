@@ -626,6 +626,6 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             $"{retryStr}下载 - {file.FileName} ( {this._totalDownloaded} / {this._needToDownload} )",
             progress);
 
-        if (!(e.Success ?? false)) this._failedFiles.Add(file);
+        if (!e.Success) this._failedFiles.Add(file);
     }
 }

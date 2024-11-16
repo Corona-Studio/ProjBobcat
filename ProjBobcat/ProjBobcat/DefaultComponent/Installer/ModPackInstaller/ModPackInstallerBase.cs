@@ -26,6 +26,6 @@ public abstract class ModPackInstallerBase : InstallerBase
             $"{retryStr}下载整合包中的 Mods - {fileName} ({this.TotalDownloaded} / {this.NeedToDownload})",
             progress);
 
-        if (!(e.Success ?? false)) this.FailedFiles.Add(file);
+        if (!e.Success) this.FailedFiles.Add(file);
     }
 }
