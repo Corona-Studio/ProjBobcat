@@ -383,6 +383,7 @@ public sealed class DefaultGameCore : GameCoreBase
             return new LaunchResult
             {
                 LaunchSettings = settings,
+                ErrorType = LaunchErrorType.OperationFailed,
                 Error = new ErrorModel
                 {
                     Exception = ex
