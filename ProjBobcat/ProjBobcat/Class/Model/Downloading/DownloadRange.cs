@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 
-namespace ProjBobcat.Class.Model;
+namespace ProjBobcat.Class.Model.Downloading;
 
 /// <summary>
 ///     下载范围类

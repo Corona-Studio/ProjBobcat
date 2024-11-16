@@ -10,13 +10,11 @@ public class ListItem : List<IItem>, IItem
     public int CompareTo(object? obj)
     {
         if (obj is not IItem item)
-        {
             // 1-0 = 1- (normalize) = 1
             // Compare the entire list of items with null - not just the first one, MNG-6964
-            return Count == 0
+            return this.Count == 0
                 ? 0
                 : this.Select(i => i.CompareTo(null)).FirstOrDefault(result => result != 0);
-        }
 
         switch (item)
         {
@@ -27,7 +25,7 @@ public class ListItem : List<IItem>, IItem
             case StringItem:
                 return 1; // 1-1 > 1-sp
             case ListItem listItem:
-                var left = GetEnumerator();
+                var left = this.GetEnumerator();
                 var right = listItem.GetEnumerator();
 
                 var hasNextLeft = left.MoveNext();
@@ -58,18 +56,18 @@ public class ListItem : List<IItem>, IItem
 
     public bool IsNull()
     {
-        return Count == 0;
+        return this.Count == 0;
     }
 
     public void Normalize()
     {
-        for (var i = Count - 1; i >= 0; i--)
+        for (var i = this.Count - 1; i >= 0; i--)
         {
             var lastItem = this[i];
 
             if (lastItem.IsNull())
                 // remove null trailing items: 0, "", empty list
-                RemoveAt(i);
+                this.RemoveAt(i);
             else if (lastItem is not ListItem)
                 break;
         }

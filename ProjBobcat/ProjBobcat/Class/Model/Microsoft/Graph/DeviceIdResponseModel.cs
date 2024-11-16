@@ -18,6 +18,4 @@ public class DeviceIdResponseModel
 }
 
 [JsonSerializable(typeof(DeviceIdResponseModel))]
-partial class DeviceIdResponseModelContext : JsonSerializerContext
-{
-}
+partial class DeviceIdResponseModelContext : JsonSerializerContext;

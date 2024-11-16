@@ -1,5 +1,4 @@
-﻿using ProjBobcat.Class.Model;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -7,6 +6,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text.RegularExpressions;
+using ProjBobcat.Class.Model;
 
 namespace ProjBobcat.Platforms.MacOS;
 
@@ -14,7 +14,8 @@ namespace ProjBobcat.Platforms.MacOS;
 static partial class SystemInfoHelper
 {
     [LibraryImport("libc", StringMarshalling = StringMarshalling.Utf8)]
-    private static partial int sysctlbyname(string name, out int int_val, ref IntPtr length, IntPtr newp, IntPtr newlen);
+    private static partial int sysctlbyname(string name, out int int_val, ref IntPtr length, IntPtr newp,
+        IntPtr newlen);
 
     public static IEnumerable<string> FindJavaMacOS()
     {
@@ -34,10 +35,12 @@ static partial class SystemInfoHelper
     }
 
     /// <summary>
-    /// Get the system overall CPU usage percentage.
+    ///     Get the system overall CPU usage percentage.
     /// </summary>
-    /// <returns>The percentange value with the '%' sign. e.g. if the usage is 30.1234 %,
-    /// then it will return 30.12.</returns>
+    /// <returns>
+    ///     The percentange value with the '%' sign. e.g. if the usage is 30.1234 %,
+    ///     then it will return 30.12.
+    /// </returns>
     public static CPUInfo GetOSXCpuUsage()
     {
         var info = new ProcessStartInfo
@@ -126,7 +129,7 @@ static partial class SystemInfoHelper
             .ToDictionary(pair => pair.Item1, pair2 => pair2.Item2);
 
         var pageSize = uint.TryParse(NumberMatchRegex().Match(split[0]).Value, out var pageSizeOut) ? pageSizeOut : 0;
-        var active = (infoDic.GetValueOrDefault("Pages active", 0)) * pageSize;
+        var active = infoDic.GetValueOrDefault("Pages active", 0) * pageSize;
 
         var used = active / Math.Pow(1024, 2);
         var total = GetTotalMemory() / Math.Pow(1024, 2);

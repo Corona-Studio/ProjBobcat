@@ -15,6 +15,4 @@ public class ErrorModel
 }
 
 [JsonSerializable(typeof(ErrorModel))]
-partial class ErrorModelContext : JsonSerializerContext
-{
-}
+partial class ErrorModelContext : JsonSerializerContext;

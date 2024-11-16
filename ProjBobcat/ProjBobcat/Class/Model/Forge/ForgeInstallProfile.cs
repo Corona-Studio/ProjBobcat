@@ -56,6 +56,4 @@ public class ForgeInstallProfile
 }
 
 [JsonSerializable(typeof(ForgeInstallProfile))]
-partial class ForgeInstallProfileContext : JsonSerializerContext
-{
-}
+partial class ForgeInstallProfileContext : JsonSerializerContext;

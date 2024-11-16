@@ -8,6 +8,7 @@ using System.Text.Json;
 using System.Threading;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
+using ProjBobcat.Class.Model.Downloading;
 using ProjBobcat.Class.Model.GameResource;
 using ProjBobcat.Class.Model.Mojang;
 using ProjBobcat.Interface;
@@ -21,8 +22,8 @@ public sealed class AssetInfoResolver : ResolverBase
 
     public string? AssetIndexUriRoot
     {
-        get => _assetIndexUrlRoot;
-        init => _assetIndexUrlRoot = value?.TrimEnd('/');
+        get => this._assetIndexUrlRoot;
+        init => this._assetIndexUrlRoot = value?.TrimEnd('/');
     }
 
     public string AssetUriRoot { get; init; } = "https://resources.download.minecraft.net/";
@@ -31,16 +32,16 @@ public sealed class AssetInfoResolver : ResolverBase
 
     public override async IAsyncEnumerable<IGameResource> ResolveResourceAsync()
     {
-        if (!CheckLocalFiles) yield break;
+        if (!this.CheckLocalFiles) yield break;
 
-        OnResolve("开始进行游戏资源(Asset)检查");
+        this.OnResolve("开始进行游戏资源(Asset)检查");
 
-        if (VersionInfo?.AssetInfo == null) yield break;
+        if (this.VersionInfo?.AssetInfo == null) yield break;
 
-        var versions = Versions;
-        if ((Versions?.Count ?? 0) == 0)
+        var versions = this.Versions;
+        if ((this.Versions?.Count ?? 0) == 0)
         {
-            OnResolve("没有提供 Version Manifest， 开始下载");
+            this.OnResolve("没有提供 Version Manifest， 开始下载");
 
             using var vmJsonRes = await HttpHelper.Get(DefaultVersionManifestUrl);
             var vm = await vmJsonRes.Content.ReadFromJsonAsync(VersionManifestContext.Default.VersionManifest);
@@ -51,27 +52,27 @@ public sealed class AssetInfoResolver : ResolverBase
         if ((versions?.Count ?? 0) == 0) yield break;
 
         var isAssetInfoNotExists =
-            string.IsNullOrEmpty(VersionInfo.AssetInfo?.Url) &&
-            string.IsNullOrEmpty(VersionInfo.AssetInfo?.Id);
+            string.IsNullOrEmpty(this.VersionInfo.AssetInfo?.Url) &&
+            string.IsNullOrEmpty(this.VersionInfo.AssetInfo?.Id);
         if (isAssetInfoNotExists &&
-            string.IsNullOrEmpty(VersionInfo.Assets))
+            string.IsNullOrEmpty(this.VersionInfo.Assets))
             yield break;
 
         var assetIndexesDi =
-            new DirectoryInfo(Path.Combine(BasePath, GamePathHelper.GetAssetsRoot(), "indexes"));
+            new DirectoryInfo(Path.Combine(this.BasePath, GamePathHelper.GetAssetsRoot(), "indexes"));
         var assetObjectsDi =
-            new DirectoryInfo(Path.Combine(BasePath, GamePathHelper.GetAssetsRoot(), "objects"));
+            new DirectoryInfo(Path.Combine(this.BasePath, GamePathHelper.GetAssetsRoot(), "objects"));
 
         if (!assetIndexesDi.Exists) assetIndexesDi.Create();
         if (!assetObjectsDi.Exists) assetObjectsDi.Create();
 
-        var id = VersionInfo.AssetInfo?.Id ?? VersionInfo.Assets;
+        var id = this.VersionInfo.AssetInfo?.Id ?? this.VersionInfo.Assets;
         var assetIndexesPath = Path.Combine(assetIndexesDi.FullName, $"{id}.json");
         if (!File.Exists(assetIndexesPath))
         {
-            OnResolve("没有发现 Asset Indexes 文件， 开始下载");
+            this.OnResolve("没有发现 Asset Indexes 文件， 开始下载");
 
-            var assetIndexDownloadUri = VersionInfo?.AssetInfo?.Url;
+            var assetIndexDownloadUri = this.VersionInfo?.AssetInfo?.Url;
 
             if (isAssetInfoNotExists)
             {
@@ -91,11 +92,11 @@ public sealed class AssetInfoResolver : ResolverBase
 
             if (string.IsNullOrEmpty(assetIndexDownloadUri)) yield break;
 
-            if (!string.IsNullOrEmpty(AssetIndexUriRoot))
+            if (!string.IsNullOrEmpty(this.AssetIndexUriRoot))
             {
                 var assetIndexUriRoot = HttpHelper.RegexMatchUri(assetIndexDownloadUri);
                 assetIndexDownloadUri =
-                    $"{AssetIndexUriRoot}{assetIndexDownloadUri[assetIndexUriRoot.Length..]}";
+                    $"{this.AssetIndexUriRoot}{assetIndexDownloadUri[assetIndexUriRoot.Length..]}";
             }
 
             var dp = new DownloadFile
@@ -111,14 +112,14 @@ public sealed class AssetInfoResolver : ResolverBase
             }
             catch (Exception e)
             {
-                OnResolve($"解析Asset Indexes 文件失败！原因：{e.Message}");
+                this.OnResolve($"解析Asset Indexes 文件失败！原因：{e.Message}");
                 yield break;
             }
 
-            OnResolve("Asset Indexes 文件下载完成", 100);
+            this.OnResolve("Asset Indexes 文件下载完成", 100);
         }
 
-        OnResolve("开始解析Asset Indexes 文件...");
+        this.OnResolve("开始解析Asset Indexes 文件...");
 
         AssetObjectModel? assetObject;
         try
@@ -129,26 +130,30 @@ public sealed class AssetInfoResolver : ResolverBase
         }
         catch (Exception ex)
         {
-            OnResolve($"解析Asset Indexes 文件失败！原因：{ex.Message}");
+            this.OnResolve($"解析Asset Indexes 文件失败！原因：{ex.Message}");
 
             try
             {
                 File.Delete(assetIndexesPath);
             }
-            catch (IOException) { }
+            catch (IOException)
+            {
+            }
 
             yield break;
         }
 
         if (assetObject == null)
         {
-            OnResolve("解析Asset Indexes 文件失败！原因：文件可能损坏或为空");
+            this.OnResolve("解析Asset Indexes 文件失败！原因：文件可能损坏或为空");
 
             try
             {
                 File.Delete(assetIndexesPath);
             }
-            catch (IOException) { }
+            catch (IOException)
+            {
+            }
 
             yield break;
         }
@@ -156,7 +161,7 @@ public sealed class AssetInfoResolver : ResolverBase
         var checkedObject = 0;
         var objectCount = assetObject.Objects.Count;
 
-        OnResolve("检索并验证 Asset 资源");
+        this.OnResolve("检索并验证 Asset 资源");
 
         foreach (var (key, fi) in assetObject.Objects)
         {
@@ -167,13 +172,13 @@ public sealed class AssetInfoResolver : ResolverBase
 
             Interlocked.Increment(ref checkedObject);
             var progress = (double)checkedObject / objectCount * 100;
-            OnResolve(key.CropStr(20), progress);
+            this.OnResolve(key.CropStr(20), progress);
 
             if (File.Exists(filePath))
             {
                 await using var fs = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-                var computedHash = (await SHA1.HashDataAsync(fs)).BytesToString();
-                
+                var computedHash = Convert.ToHexString(await SHA1.HashDataAsync(fs));
+
                 if (computedHash.Equals(fi.Hash, StringComparison.OrdinalIgnoreCase)) continue;
             }
 
@@ -182,13 +187,13 @@ public sealed class AssetInfoResolver : ResolverBase
                 Title = hash,
                 Path = path,
                 Type = ResourceType.Asset,
-                Url = $"{AssetUriRoot}{twoDigitsHash}/{fi.Hash}",
+                Url = $"{this.AssetUriRoot}{twoDigitsHash}/{fi.Hash}",
                 FileSize = fi.Size,
                 CheckSum = hash,
                 FileName = hash
             };
         }
 
-        OnResolve("Assets 解析完成", 100);
+        this.OnResolve("Assets 解析完成", 100);
     }
 }

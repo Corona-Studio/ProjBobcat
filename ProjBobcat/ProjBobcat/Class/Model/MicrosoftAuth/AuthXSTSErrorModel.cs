@@ -11,6 +11,4 @@ public class AuthXSTSErrorModel
 }
 
 [JsonSerializable(typeof(AuthXSTSErrorModel))]
-partial class AuthXSTSErrorModelContext : JsonSerializerContext
-{
-}
+partial class AuthXSTSErrorModelContext : JsonSerializerContext;

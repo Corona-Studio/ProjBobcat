@@ -8,17 +8,17 @@ public class ServerSettings : IDefaultValueChecker
     public string? Address { get; set; }
     public ushort Port { get; set; }
 
-    [JsonIgnore] public bool IsDefaultValue => IsDefault();
-    [JsonIgnore] public string DisplayStr => ToString();
+    [JsonIgnore] public bool IsDefaultValue => this.IsDefault();
+    [JsonIgnore] public string DisplayStr => this.ToString();
 
     public bool IsDefault()
     {
-        return string.IsNullOrEmpty(Address) && Port == 0;
+        return string.IsNullOrEmpty(this.Address) && this.Port == 0;
     }
 
     public override string ToString()
     {
-        if (IsDefault()) return "[N/A]";
-        return $"{Address}:{Port}";
+        if (this.IsDefault()) return "[N/A]";
+        return $"{this.Address}:{this.Port}";
     }
 }

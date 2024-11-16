@@ -60,7 +60,7 @@ public abstract class TomlNode : IEnumerable
 
     public IEnumerator GetEnumerator()
     {
-        return Children.GetEnumerator();
+        return this.Children.GetEnumerator();
     }
 
     public virtual bool TryGetNode(string key, out TomlNode? node)
@@ -101,17 +101,17 @@ public abstract class TomlNode : IEnumerable
 
     public virtual void AddRange(IEnumerable<TomlNode> nodes)
     {
-        foreach (var tomlNode in nodes) Add(tomlNode);
+        foreach (var tomlNode in nodes) this.Add(tomlNode);
     }
 
     public virtual void WriteTo(TextWriter tw, string name = null)
     {
-        tw.WriteLine(ToInlineToml());
+        tw.WriteLine(this.ToInlineToml());
     }
 
     public virtual string ToInlineToml()
     {
-        return ToString();
+        return this.ToString();
     }
 
     #region Native type to TOML cast
@@ -206,15 +206,16 @@ public class TomlString : TomlNode
 
     public override string ToString()
     {
-        return Value;
+        return this.Value;
     }
 
     public override string ToInlineToml()
     {
-        if (Value.IndexOf(TomlSyntax.LITERAL_STRING_SYMBOL) != -1 && PreferLiteral) PreferLiteral = false;
-        var quotes = new string(PreferLiteral ? TomlSyntax.LITERAL_STRING_SYMBOL : TomlSyntax.BASIC_STRING_SYMBOL,
-            IsMultiline ? 3 : 1);
-        var result = PreferLiteral ? Value : Value.Escape(!IsMultiline);
+        if (this.Value.IndexOf(TomlSyntax.LITERAL_STRING_SYMBOL) != -1 && this.PreferLiteral)
+            this.PreferLiteral = false;
+        var quotes = new string(this.PreferLiteral ? TomlSyntax.LITERAL_STRING_SYMBOL : TomlSyntax.BASIC_STRING_SYMBOL,
+            this.IsMultiline ? 3 : 1);
+        var result = this.PreferLiteral ? this.Value : this.Value.Escape(!this.IsMultiline);
         return $"{quotes}{result}{quotes}";
     }
 }
@@ -237,14 +238,14 @@ public class TomlInteger : TomlNode
 
     public override string ToString()
     {
-        return Value.ToString();
+        return this.Value.ToString();
     }
 
     public override string ToInlineToml()
     {
-        return IntegerBase != Base.Decimal
-            ? $"0{TomlSyntax.BaseIdentifiers[(int)IntegerBase]}{Convert.ToString(Value, (int)IntegerBase)}"
-            : Value.ToString(CultureInfo.InvariantCulture);
+        return this.IntegerBase != Base.Decimal
+            ? $"0{TomlSyntax.BaseIdentifiers[(int)this.IntegerBase]}{Convert.ToString(this.Value, (int)this.IntegerBase)}"
+            : this.Value.ToString(CultureInfo.InvariantCulture);
     }
 }
 
@@ -257,22 +258,22 @@ public class TomlFloat : TomlNode, IFormattable
 
     public string ToString(string? format, IFormatProvider? formatProvider)
     {
-        return Value.ToString(format, formatProvider);
+        return this.Value.ToString(format, formatProvider);
     }
 
     public override string ToString()
     {
-        return Value.ToString(CultureInfo.CurrentCulture);
+        return this.Value.ToString(CultureInfo.CurrentCulture);
     }
 
     public string ToString(IFormatProvider formatProvider)
     {
-        return Value.ToString(formatProvider);
+        return this.Value.ToString(formatProvider);
     }
 
     public override string ToInlineToml()
     {
-        return Value switch
+        return this.Value switch
         {
             var v when double.IsNaN(v) => TomlSyntax.NAN_VALUE,
             var v when double.IsPositiveInfinity(v) => TomlSyntax.INF_VALUE,
@@ -291,12 +292,12 @@ public class TomlBoolean : TomlNode
 
     public override string ToString()
     {
-        return Value.ToString();
+        return this.Value.ToString();
     }
 
     public override string ToInlineToml()
     {
-        return Value ? TomlSyntax.TRUE_VALUE : TomlSyntax.FALSE_VALUE;
+        return this.Value ? TomlSyntax.TRUE_VALUE : TomlSyntax.FALSE_VALUE;
     }
 }
 
@@ -312,28 +313,28 @@ public class TomlDateTime : TomlNode, IFormattable
 
     public string ToString(string? format, IFormatProvider? formatProvider)
     {
-        return Value.ToString(format, formatProvider);
+        return this.Value.ToString(format, formatProvider);
     }
 
     public override string ToString()
     {
-        return Value.ToString(CultureInfo.CurrentCulture);
+        return this.Value.ToString(CultureInfo.CurrentCulture);
     }
 
     public string ToString(IFormatProvider formatProvider)
     {
-        return Value.ToString(formatProvider);
+        return this.Value.ToString(formatProvider);
     }
 
     public override string ToInlineToml()
     {
-        return Value switch
+        return this.Value switch
         {
-            var v when OnlyDate => v.ToString(TomlSyntax.LocalDateFormat),
-            var v when OnlyTime => v.ToString(TomlSyntax.RFC3339LocalTimeFormats[SecondsPrecision]),
+            var v when this.OnlyDate => v.ToString(TomlSyntax.LocalDateFormat),
+            var v when this.OnlyTime => v.ToString(TomlSyntax.RFC3339LocalTimeFormats[this.SecondsPrecision]),
             var v when v.Kind is DateTimeKind.Local =>
-                v.ToString(TomlSyntax.RFC3339LocalDateTimeFormats[SecondsPrecision]),
-            var v => v.ToString(TomlSyntax.RFC3339Formats[SecondsPrecision])
+                v.ToString(TomlSyntax.RFC3339LocalDateTimeFormats[this.SecondsPrecision]),
+            var v => v.ToString(TomlSyntax.RFC3339Formats[this.SecondsPrecision])
         };
     }
 }
@@ -345,48 +346,48 @@ public class TomlArray : TomlNode
     public override bool HasValue { get; } = true;
     public override bool IsArray { get; } = true;
     public bool IsTableArray { get; set; }
-    public List<TomlNode> RawArray => values ??= new List<TomlNode>();
+    public List<TomlNode> RawArray => this.values ??= new List<TomlNode>();
 
     public override TomlNode this[int index]
     {
         get
         {
-            if (index < RawArray.Count) return RawArray[index];
+            if (index < this.RawArray.Count) return this.RawArray[index];
             var lazy = new TomlLazy(this);
             this[index] = lazy;
             return lazy;
         }
         set
         {
-            if (index == RawArray.Count)
-                RawArray.Add(value);
+            if (index == this.RawArray.Count)
+                this.RawArray.Add(value);
             else
-                RawArray[index] = value;
+                this.RawArray[index] = value;
         }
     }
 
-    public override int ChildrenCount => RawArray.Count;
+    public override int ChildrenCount => this.RawArray.Count;
 
-    public override IEnumerable<TomlNode> Children => RawArray.AsEnumerable();
+    public override IEnumerable<TomlNode> Children => this.RawArray.AsEnumerable();
 
     public override void Add(TomlNode node)
     {
-        RawArray.Add(node);
+        this.RawArray.Add(node);
     }
 
     public override void AddRange(IEnumerable<TomlNode> nodes)
     {
-        RawArray.AddRange(nodes);
+        this.RawArray.AddRange(nodes);
     }
 
     public override void Delete(TomlNode node)
     {
-        RawArray.Remove(node);
+        this.RawArray.Remove(node);
     }
 
     public override void Delete(int index)
     {
-        RawArray.RemoveAt(index);
+        this.RawArray.RemoveAt(index);
     }
 
     public override string ToString()
@@ -394,9 +395,9 @@ public class TomlArray : TomlNode
         var sb = new StringBuilder();
         sb.Append(TomlSyntax.ARRAY_START_SYMBOL);
 
-        if (ChildrenCount != 0)
+        if (this.ChildrenCount != 0)
             sb.Append(' ')
-                .Append($"{TomlSyntax.ITEM_SEPARATOR} ".Join(RawArray.Select(n => n.ToInlineToml())))
+                .Append($"{TomlSyntax.ITEM_SEPARATOR} ".Join(this.RawArray.Select(n => n.ToInlineToml())))
                 .Append(' ');
 
         sb.Append(TomlSyntax.ARRAY_END_SYMBOL);
@@ -406,14 +407,14 @@ public class TomlArray : TomlNode
     public override void WriteTo(TextWriter tw, string name = null)
     {
         // If it's a normal array, write it as usual
-        if (!IsTableArray)
+        if (!this.IsTableArray)
         {
-            tw.Write(ToInlineToml());
+            tw.Write(this.ToInlineToml());
             return;
         }
 
         tw.WriteLine();
-        Comment?.AsComment(tw);
+        this.Comment?.AsComment(tw);
         tw.Write(TomlSyntax.ARRAY_START_SYMBOL);
         tw.Write(TomlSyntax.ARRAY_START_SYMBOL);
         tw.Write(name);
@@ -423,7 +424,7 @@ public class TomlArray : TomlNode
 
         var first = true;
 
-        foreach (var tomlNode in RawArray)
+        foreach (var tomlNode in this.RawArray)
         {
             if (tomlNode is not TomlTable tbl)
                 throw new TomlFormatException("The array is marked as array table but contains non-table nodes!");
@@ -435,7 +436,7 @@ public class TomlArray : TomlNode
             {
                 tw.WriteLine();
 
-                Comment?.AsComment(tw);
+                this.Comment?.AsComment(tw);
                 tw.Write(TomlSyntax.ARRAY_START_SYMBOL);
                 tw.Write(TomlSyntax.ARRAY_START_SYMBOL);
                 tw.Write(name);
@@ -461,47 +462,47 @@ public class TomlTable : TomlNode
     public override bool HasValue { get; } = false;
     public override bool IsTable { get; } = true;
     public bool IsInline { get; set; }
-    public Dictionary<string, TomlNode> RawTable => children ??= new Dictionary<string, TomlNode>();
+    public Dictionary<string, TomlNode> RawTable => this.children ??= new Dictionary<string, TomlNode>();
 
     public override TomlNode this[string key]
     {
         get
         {
-            if (RawTable.TryGetValue(key, out var result)) return result;
+            if (this.RawTable.TryGetValue(key, out var result)) return result;
             var lazy = new TomlLazy(this);
-            RawTable[key] = lazy;
+            this.RawTable[key] = lazy;
             return lazy;
         }
-        set => RawTable[key] = value;
+        set => this.RawTable[key] = value;
     }
 
-    public override int ChildrenCount => RawTable.Count;
-    public override IEnumerable<TomlNode> Children => RawTable.Select(kv => kv.Value);
-    public override IEnumerable<string> Keys => RawTable.Select(kv => kv.Key);
+    public override int ChildrenCount => this.RawTable.Count;
+    public override IEnumerable<TomlNode> Children => this.RawTable.Select(kv => kv.Value);
+    public override IEnumerable<string> Keys => this.RawTable.Select(kv => kv.Key);
 
     public override bool HasKey(string key)
     {
-        return RawTable.ContainsKey(key);
+        return this.RawTable.ContainsKey(key);
     }
 
     public override void Add(string key, TomlNode node)
     {
-        RawTable.Add(key, node);
+        this.RawTable.Add(key, node);
     }
 
     public override bool TryGetNode(string key, out TomlNode node)
     {
-        return RawTable.TryGetValue(key, out node);
+        return this.RawTable.TryGetValue(key, out node);
     }
 
     public override void Delete(TomlNode node)
     {
-        RawTable.Remove(RawTable.First(kv => kv.Value == node).Key);
+        this.RawTable.Remove(this.RawTable.First(kv => kv.Value == node).Key);
     }
 
     public override void Delete(string key)
     {
-        RawTable.Remove(key);
+        this.RawTable.Remove(key);
     }
 
     public override string ToString()
@@ -509,12 +510,12 @@ public class TomlTable : TomlNode
         var sb = new StringBuilder();
         sb.Append(TomlSyntax.INLINE_TABLE_START_SYMBOL);
 
-        if (ChildrenCount != 0)
+        if (this.ChildrenCount != 0)
         {
-            var collapsed = CollectCollapsedItems(out var nonCollapsible);
+            var collapsed = this.CollectCollapsedItems(out var nonCollapsible);
 
             sb.Append(' ');
-            sb.Append($"{TomlSyntax.ITEM_SEPARATOR} ".Join(RawTable.Where(n => nonCollapsible.Contains(n.Key))
+            sb.Append($"{TomlSyntax.ITEM_SEPARATOR} ".Join(this.RawTable.Where(n => nonCollapsible.Contains(n.Key))
                 .Select(n =>
                     $"{n.Key.AsKey()} {TomlSyntax.KEY_VALUE_SEPARATOR} {n.Value.ToInlineToml()}")));
 
@@ -539,7 +540,7 @@ public class TomlTable : TomlNode
         if (nodes == null)
         {
             nodes = new Dictionary<string, TomlNode>();
-            foreach (var keyValuePair in RawTable)
+            foreach (var keyValuePair in this.RawTable)
             {
                 var node = keyValuePair.Value;
                 var key = keyValuePair.Key.AsKey();
@@ -558,7 +559,7 @@ public class TomlTable : TomlNode
             return nodes;
         }
 
-        foreach (var keyValuePair in RawTable)
+        foreach (var keyValuePair in this.RawTable)
         {
             var node = keyValuePair.Value;
             var key = keyValuePair.Key.AsKey();
@@ -585,20 +586,20 @@ public class TomlTable : TomlNode
     public override void WriteTo(TextWriter tw, string name = null)
     {
         // The table is inline table
-        if (IsInline && name != null)
+        if (this.IsInline && name != null)
         {
-            tw.Write(ToInlineToml());
+            tw.Write(this.ToInlineToml());
             return;
         }
 
-        if (RawTable.All(n => n.Value.CollapseLevel != 0))
+        if (this.RawTable.All(n => n.Value.CollapseLevel != 0))
             return;
 
-        var hasRealValues = !RawTable.All(n => n.Value is TomlTable { IsInline: false });
+        var hasRealValues = !this.RawTable.All(n => n.Value is TomlTable { IsInline: false });
 
-        var collapsedItems = CollectCollapsedItems(out _);
+        var collapsedItems = this.CollectCollapsedItems(out _);
 
-        Comment?.AsComment(tw);
+        this.Comment?.AsComment(tw);
 
         if (name != null && (hasRealValues || collapsedItems.Count > 0))
         {
@@ -607,7 +608,7 @@ public class TomlTable : TomlNode
             tw.Write(TomlSyntax.ARRAY_END_SYMBOL);
             tw.WriteLine();
         }
-        else if (Comment != null) // Add some spacing between the first node and the comment
+        else if (this.Comment != null) // Add some spacing between the first node and the comment
         {
             tw.WriteLine();
         }
@@ -617,7 +618,7 @@ public class TomlTable : TomlNode
 
         var sectionableItems = new Dictionary<string, TomlNode>();
 
-        foreach (var child in RawTable)
+        foreach (var child in this.RawTable)
         {
             // If value should be parsed as section, separate if from the bunch
             if (child.Value is TomlArray { IsTableArray: true } || child.Value is TomlTable { IsInline: false })
@@ -690,59 +691,60 @@ class TomlLazy : TomlNode
 
     public override TomlNode this[int index]
     {
-        get => Set<TomlArray>()[index];
-        set => Set<TomlArray>()[index] = value;
+        get => this.Set<TomlArray>()[index];
+        set => this.Set<TomlArray>()[index] = value;
     }
 
     public override TomlNode this[string key]
     {
-        get => Set<TomlTable>()[key];
-        set => Set<TomlTable>()[key] = value;
+        get => this.Set<TomlTable>()[key];
+        set => this.Set<TomlTable>()[key] = value;
     }
 
     public override void Add(TomlNode node)
     {
-        Set<TomlArray>().Add(node);
+        this.Set<TomlArray>().Add(node);
     }
 
     public override void Add(string key, TomlNode node)
     {
-        Set<TomlTable>().Add(key, node);
+        this.Set<TomlTable>().Add(key, node);
     }
 
     public override void AddRange(IEnumerable<TomlNode> nodes)
     {
-        Set<TomlArray>().AddRange(nodes);
+        this.Set<TomlArray>().AddRange(nodes);
     }
 
     TomlNode Set<T>() where T : TomlNode, new()
     {
-        if (replacement != null) return replacement;
+        if (this.replacement != null) return this.replacement;
 
         var newNode = new T
         {
-            Comment = Comment
+            Comment = this.Comment
         };
 
-        if (parent.IsTable)
+        if (this.parent.IsTable)
         {
-            var key = parent.Keys.FirstOrDefault(s => parent.TryGetNode(s, out var node) && node.Equals(this));
+            var key = this.parent.Keys.FirstOrDefault(s =>
+                this.parent.TryGetNode(s, out var node) && node.Equals(this));
             if (key == null) return default(T);
 
-            parent[key] = newNode;
+            this.parent[key] = newNode;
         }
-        else if (parent.IsArray)
+        else if (this.parent.IsArray)
         {
-            var index = parent.Children.TakeWhile(child => child != this).Count();
-            if (index == parent.ChildrenCount) return default(T);
-            parent[index] = newNode;
+            var index = this.parent.Children.TakeWhile(child => child != this).Count();
+            if (index == this.parent.ChildrenCount) return default(T);
+            this.parent[index] = newNode;
         }
         else
         {
             return default(T);
         }
 
-        replacement = newNode;
+        this.replacement = newNode;
         return newNode;
     }
 }
@@ -769,34 +771,34 @@ public class TOMLParser : IDisposable
     public TOMLParser(TextReader reader)
     {
         this.reader = reader;
-        line = col = 0;
+        this.line = this.col = 0;
     }
 
     public bool ForceASCII { get; set; }
 
     public void Dispose()
     {
-        reader?.Dispose();
+        this.reader?.Dispose();
     }
 
     public TomlTable Parse()
     {
-        syntaxErrors = new List<TomlSyntaxException>();
-        line = col = 0;
+        this.syntaxErrors = new List<TomlSyntaxException>();
+        this.line = this.col = 0;
         var rootNode = new TomlTable();
         var currentNode = rootNode;
-        currentState = ParseState.None;
+        this.currentState = ParseState.None;
         var keyParts = new List<string>();
         var arrayTable = false;
         var latestComment = new StringBuilder();
         var firstComment = true;
 
         int currentChar;
-        while ((currentChar = reader.Peek()) >= 0)
+        while ((currentChar = this.reader.Peek()) >= 0)
         {
             var c = (char)currentChar;
 
-            if (currentState == ParseState.None)
+            if (this.currentState == ParseState.None)
             {
                 // Skip white space
                 if (TomlSyntax.IsWhiteSpace(c)) goto consume_character;
@@ -811,8 +813,7 @@ public class TOMLParser : IDisposable
                         firstComment = false;
                     }
 
-                    if (TomlSyntax.IsLineBreak(c))
-                        AdvanceLine();
+                    if (TomlSyntax.IsLineBreak(c)) this.AdvanceLine();
 
                     goto consume_character;
                 }
@@ -821,9 +822,9 @@ public class TOMLParser : IDisposable
                 if (c == TomlSyntax.COMMENT_SYMBOL)
                 {
                     // Consume the comment symbol and buffer the whole comment line
-                    reader.Read();
-                    latestComment.AppendLine(reader.ReadLine()?.Trim());
-                    AdvanceLine(0);
+                    this.reader.Read();
+                    latestComment.AppendLine(this.reader.ReadLine()?.Trim());
+                    this.AdvanceLine(0);
                     continue;
                 }
 
@@ -832,45 +833,43 @@ public class TOMLParser : IDisposable
 
                 if (c == TomlSyntax.TABLE_START_SYMBOL)
                 {
-                    currentState = ParseState.Table;
+                    this.currentState = ParseState.Table;
                     goto consume_character;
                 }
 
                 if (TomlSyntax.IsBareKey(c) || TomlSyntax.IsQuoted(c))
                 {
-                    currentState = ParseState.KeyValuePair;
+                    this.currentState = ParseState.KeyValuePair;
                 }
                 else
                 {
-                    AddError($"Unexpected character \"{c}\"");
+                    this.AddError($"Unexpected character \"{c}\"");
                     continue;
                 }
             }
 
-            if (currentState == ParseState.KeyValuePair)
+            if (this.currentState == ParseState.KeyValuePair)
             {
-                var keyValuePair = ReadKeyValuePair(keyParts);
+                var keyValuePair = this.ReadKeyValuePair(keyParts);
 
                 if (keyValuePair == null)
                 {
                     latestComment.Length = 0;
                     keyParts.Clear();
 
-                    if (currentState != ParseState.None)
-                        AddError("Failed to parse key-value pair!");
+                    if (this.currentState != ParseState.None) this.AddError("Failed to parse key-value pair!");
                     continue;
                 }
 
                 keyValuePair.Comment = latestComment.ToString().TrimEnd();
-                var inserted = InsertNode(keyValuePair, currentNode, keyParts);
+                var inserted = this.InsertNode(keyValuePair, currentNode, keyParts);
                 latestComment.Length = 0;
                 keyParts.Clear();
-                if (inserted)
-                    currentState = ParseState.SkipToNextLine;
+                if (inserted) this.currentState = ParseState.SkipToNextLine;
                 continue;
             }
 
-            if (currentState == ParseState.Table)
+            if (this.currentState == ParseState.Table)
             {
                 if (keyParts.Count == 0)
                 {
@@ -878,11 +877,11 @@ public class TOMLParser : IDisposable
                     if (c == TomlSyntax.TABLE_START_SYMBOL)
                     {
                         // Consume the character
-                        ConsumeChar();
+                        this.ConsumeChar();
                         arrayTable = true;
                     }
 
-                    if (!ReadKeyName(ref keyParts, TomlSyntax.TABLE_END_SYMBOL, true))
+                    if (!this.ReadKeyName(ref keyParts, TomlSyntax.TABLE_END_SYMBOL, true))
                     {
                         keyParts.Clear();
                         continue;
@@ -890,7 +889,7 @@ public class TOMLParser : IDisposable
 
                     if (keyParts.Count == 0)
                     {
-                        AddError("Table name is emtpy.");
+                        this.AddError("Table name is emtpy.");
                         arrayTable = false;
                         latestComment.Length = 0;
                         keyParts.Clear();
@@ -904,11 +903,11 @@ public class TOMLParser : IDisposable
                     if (arrayTable)
                     {
                         // Consume the ending bracket so we can peek the next character
-                        ConsumeChar();
-                        var nextChar = reader.Peek();
+                        this.ConsumeChar();
+                        var nextChar = this.reader.Peek();
                         if (nextChar < 0 || (char)nextChar != TomlSyntax.TABLE_END_SYMBOL)
                         {
-                            AddError($"Array table {".".Join(keyParts)} has only one closing bracket.");
+                            this.AddError($"Array table {".".Join(keyParts)} has only one closing bracket.");
                             keyParts.Clear();
                             arrayTable = false;
                             latestComment.Length = 0;
@@ -916,7 +915,7 @@ public class TOMLParser : IDisposable
                         }
                     }
 
-                    currentNode = CreateTable(rootNode, keyParts, arrayTable);
+                    currentNode = this.CreateTable(rootNode, keyParts, arrayTable);
                     if (currentNode != null)
                     {
                         currentNode.IsInline = false;
@@ -929,81 +928,80 @@ public class TOMLParser : IDisposable
 
                     if (currentNode == null)
                     {
-                        if (currentState != ParseState.None)
-                            AddError("Error creating table array!");
+                        if (this.currentState != ParseState.None) this.AddError("Error creating table array!");
                         continue;
                     }
 
-                    currentState = ParseState.SkipToNextLine;
+                    this.currentState = ParseState.SkipToNextLine;
                     goto consume_character;
                 }
 
                 if (keyParts.Count != 0)
                 {
-                    AddError($"Unexpected character \"{c}\"");
+                    this.AddError($"Unexpected character \"{c}\"");
                     keyParts.Clear();
                     arrayTable = false;
                     latestComment.Length = 0;
                 }
             }
 
-            if (currentState == ParseState.SkipToNextLine)
+            if (this.currentState == ParseState.SkipToNextLine)
             {
                 if (TomlSyntax.IsWhiteSpace(c) || c == TomlSyntax.NEWLINE_CARRIAGE_RETURN_CHARACTER)
                     goto consume_character;
 
                 if (c == TomlSyntax.COMMENT_SYMBOL || c == TomlSyntax.NEWLINE_CHARACTER)
                 {
-                    currentState = ParseState.None;
-                    AdvanceLine();
+                    this.currentState = ParseState.None;
+                    this.AdvanceLine();
 
                     if (c == TomlSyntax.COMMENT_SYMBOL)
                     {
-                        col++;
-                        reader.ReadLine();
+                        this.col++;
+                        this.reader.ReadLine();
                         continue;
                     }
 
                     goto consume_character;
                 }
 
-                AddError($"Unexpected character \"{c}\" at the end of the line.");
+                this.AddError($"Unexpected character \"{c}\" at the end of the line.");
             }
 
             consume_character:
-            reader.Read();
-            col++;
+            this.reader.Read();
+            this.col++;
         }
 
-        if (currentState != ParseState.None && currentState != ParseState.SkipToNextLine)
-            AddError("Unexpected end of file!");
+        if (this.currentState != ParseState.None && this.currentState != ParseState.SkipToNextLine)
+            this.AddError("Unexpected end of file!");
 
-        if (syntaxErrors.Count > 0)
-            throw new TomlParseException(rootNode, syntaxErrors);
+        if (this.syntaxErrors.Count > 0)
+            throw new TomlParseException(rootNode, this.syntaxErrors);
 
         return rootNode;
     }
 
     bool AddError(string message)
     {
-        syntaxErrors.Add(new TomlSyntaxException(message, currentState, line, col));
+        this.syntaxErrors.Add(new TomlSyntaxException(message, this.currentState, this.line, this.col));
         // Skip the whole line in hope that it was only a single faulty value (and non-multiline one at that)
-        reader.ReadLine();
-        AdvanceLine(0);
-        currentState = ParseState.None;
+        this.reader.ReadLine();
+        this.AdvanceLine(0);
+        this.currentState = ParseState.None;
         return false;
     }
 
     void AdvanceLine(int startCol = -1)
     {
-        line++;
-        col = startCol;
+        this.line++;
+        this.col = startCol;
     }
 
     int ConsumeChar()
     {
-        col++;
-        return reader.Read();
+        this.col++;
+        return this.reader.Read();
     }
 
     #region Key-Value pair parsing
@@ -1012,7 +1010,7 @@ public class TOMLParser : IDisposable
          * Reads a single key-value pair.
          * Assumes the cursor is at the first character that belong to the pair (including possible whitespace).
          * Consumes all characters that belong to the key and the value (ignoring possible trailing whitespace at the end).
-         * 
+         *
          * Example:
          * foo = "bar"  ==> foo = "bar"
          * ^                           ^
@@ -1020,7 +1018,7 @@ public class TOMLParser : IDisposable
     TomlNode ReadKeyValuePair(List<string> keyParts)
     {
         int cur;
-        while ((cur = reader.Peek()) >= 0)
+        while ((cur = this.reader.Peek()) >= 0)
         {
             var c = (char)cur;
 
@@ -1028,11 +1026,11 @@ public class TOMLParser : IDisposable
             {
                 if (keyParts.Count != 0)
                 {
-                    AddError("Encountered extra characters in key definition!");
+                    this.AddError("Encountered extra characters in key definition!");
                     return null;
                 }
 
-                if (!ReadKeyName(ref keyParts, TomlSyntax.KEY_VALUE_SEPARATOR))
+                if (!this.ReadKeyName(ref keyParts, TomlSyntax.KEY_VALUE_SEPARATOR))
                     return null;
 
                 continue;
@@ -1040,17 +1038,17 @@ public class TOMLParser : IDisposable
 
             if (TomlSyntax.IsWhiteSpace(c))
             {
-                ConsumeChar();
+                this.ConsumeChar();
                 continue;
             }
 
             if (c == TomlSyntax.KEY_VALUE_SEPARATOR)
             {
-                ConsumeChar();
-                return ReadValue();
+                this.ConsumeChar();
+                return this.ReadValue();
             }
 
-            AddError($"Unexpected character \"{c}\" in key name.");
+            this.AddError($"Unexpected character \"{c}\" in key name.");
             return null;
         }
 
@@ -1061,7 +1059,7 @@ public class TOMLParser : IDisposable
          * Reads a single value.
          * Assumes the cursor is at the first character that belongs to the value (including possible starting whitespace).
          * Consumes all characters belonging to the value (ignoring possible trailing whitespace at the end).
-         * 
+         *
          * Example:
          * "test"  ==> "test"
          * ^                 ^
@@ -1069,19 +1067,19 @@ public class TOMLParser : IDisposable
     TomlNode ReadValue(bool skipNewlines = false)
     {
         int cur;
-        while ((cur = reader.Peek()) >= 0)
+        while ((cur = this.reader.Peek()) >= 0)
         {
             var c = (char)cur;
 
             if (TomlSyntax.IsWhiteSpace(c))
             {
-                ConsumeChar();
+                this.ConsumeChar();
                 continue;
             }
 
             if (c == TomlSyntax.COMMENT_SYMBOL)
             {
-                AddError("No value found!");
+                this.AddError("No value found!");
                 return null;
             }
 
@@ -1089,26 +1087,26 @@ public class TOMLParser : IDisposable
             {
                 if (skipNewlines)
                 {
-                    reader.Read();
-                    AdvanceLine(0);
+                    this.reader.Read();
+                    this.AdvanceLine(0);
                     continue;
                 }
 
-                AddError("Encountered a newline when expecting a value!");
+                this.AddError("Encountered a newline when expecting a value!");
                 return null;
             }
 
             if (TomlSyntax.IsQuoted(c))
             {
-                var isMultiline = IsTripleQuote(c, out var excess);
+                var isMultiline = this.IsTripleQuote(c, out var excess);
 
                 // Error occurred in triple quote parsing
-                if (currentState == ParseState.None)
+                if (this.currentState == ParseState.None)
                     return null;
 
                 var value = isMultiline
-                    ? ReadQuotedValueMultiLine(c)
-                    : ReadQuotedValueSingleLine(c, excess);
+                    ? this.ReadQuotedValueMultiLine(c)
+                    : this.ReadQuotedValueSingleLine(c, excess);
 
                 return new TomlString
                 {
@@ -1120,9 +1118,9 @@ public class TOMLParser : IDisposable
 
             return c switch
             {
-                TomlSyntax.INLINE_TABLE_START_SYMBOL => ReadInlineTable(),
-                TomlSyntax.ARRAY_START_SYMBOL => ReadArray(),
-                _ => ReadTomlValue()
+                TomlSyntax.INLINE_TABLE_START_SYMBOL => this.ReadInlineTable(),
+                TomlSyntax.ARRAY_START_SYMBOL => this.ReadArray(),
+                _ => this.ReadTomlValue()
             };
         }
 
@@ -1133,11 +1131,11 @@ public class TOMLParser : IDisposable
          * Reads a single key name.
          * Assumes the cursor is at the first character belonging to the key (with possible trailing whitespace if `skipWhitespace = true`).
          * Consumes all the characters until the `until` character is met (but does not consume the character itself).
-         * 
+         *
          * Example 1:
          * foo.bar  ==>  foo.bar           (`skipWhitespace = false`, `until = ' '`)
          * ^                    ^
-         * 
+         *
          * Example 2:
          * [ foo . bar ] ==>  [ foo . bar ]     (`skipWhitespace = true`, `until = ']'`)
          * ^                             ^
@@ -1148,7 +1146,7 @@ public class TOMLParser : IDisposable
         var quoted = false;
         var prevWasSpace = false;
         int cur;
-        while ((cur = reader.Peek()) >= 0)
+        while ((cur = this.reader.Peek()) >= 0)
         {
             var c = (char)cur;
 
@@ -1171,7 +1169,7 @@ public class TOMLParser : IDisposable
             if (c == TomlSyntax.SUBKEY_SEPARATOR)
             {
                 if (buffer.Length == 0)
-                    return AddError($"Found an extra subkey separator in {".".Join(parts)}...");
+                    return this.AddError($"Found an extra subkey separator in {".".Join(parts)}...");
 
                 parts.Add(buffer.ToString());
                 buffer.Length = 0;
@@ -1181,20 +1179,20 @@ public class TOMLParser : IDisposable
             }
 
             if (prevWasSpace)
-                return AddError("Invalid spacing in key name");
+                return this.AddError("Invalid spacing in key name");
 
             if (TomlSyntax.IsQuoted(c))
             {
                 if (quoted)
 
-                    return AddError("Expected a subkey separator but got extra data instead!");
+                    return this.AddError("Expected a subkey separator but got extra data instead!");
 
                 if (buffer.Length != 0)
-                    return AddError("Encountered a quote in the middle of subkey name!");
+                    return this.AddError("Encountered a quote in the middle of subkey name!");
 
                 // Consume the quote character and read the key name
-                col++;
-                buffer.Append(ReadQuotedValueSingleLine((char)reader.Read()));
+                this.col++;
+                buffer.Append(this.ReadQuotedValueSingleLine((char)this.reader.Read()));
                 quoted = true;
                 continue;
             }
@@ -1209,12 +1207,12 @@ public class TOMLParser : IDisposable
             break;
 
             consume_character:
-            reader.Read();
-            col++;
+            this.reader.Read();
+            this.col++;
         }
 
         if (buffer.Length == 0)
-            return AddError($"Found an extra subkey separator in {".".Join(parts)}...");
+            return this.AddError($"Found an extra subkey separator in {".".Join(parts)}...");
 
         parts.Add(buffer.ToString());
 
@@ -1229,7 +1227,7 @@ public class TOMLParser : IDisposable
          * Reads the whole raw value until the first non-value character is encountered.
          * Assumes the cursor start position at the first value character and consumes all characters that may be related to the value.
          * Example:
-         * 
+         *
          * 1_0_0_0  ==>  1_0_0_0
          * ^                    ^
          */
@@ -1237,12 +1235,12 @@ public class TOMLParser : IDisposable
     {
         var result = new StringBuilder();
         int cur;
-        while ((cur = reader.Peek()) >= 0)
+        while ((cur = this.reader.Peek()) >= 0)
         {
             var c = (char)cur;
             if (c == TomlSyntax.COMMENT_SYMBOL || TomlSyntax.IsNewLine(c) || TomlSyntax.IsValueSeparator(c)) break;
             result.Append(c);
-            ConsumeChar();
+            this.ConsumeChar();
         }
 
         // Replace trim with manual space counting?
@@ -1253,7 +1251,7 @@ public class TOMLParser : IDisposable
          * Reads and parses a non-string, non-composite TOML value.
          * Assumes the cursor at the first character that is related to the value (with possible spaces).
          * Consumes all the characters that are related to the value.
-         * 
+         *
          * Example
          * 1_0_0_0 # This is a comment
          * <newline>
@@ -1262,7 +1260,7 @@ public class TOMLParser : IDisposable
          */
     TomlNode ReadTomlValue()
     {
-        var value = ReadRawValue();
+        var value = this.ReadRawValue();
         TomlNode node = value switch
         {
             var v when TomlSyntax.IsBoolean(v) => bool.Parse(v),
@@ -1329,14 +1327,14 @@ public class TOMLParser : IDisposable
                 SecondsPrecision = precision
             };
 
-        AddError($"Value \"{value}\" is not a valid TOML 0.5.0 value!");
+        this.AddError($"Value \"{value}\" is not a valid TOML 0.5.0 value!");
         return null;
     }
 
     /**
          * Reads an array value.
          * Assumes the cursor is at the start of the array definition. Reads all character until the array closing bracket.
-         * 
+         *
          * Example:
          * [1, 2, 3]  ==>  [1, 2, 3]
          * ^                        ^
@@ -1344,32 +1342,31 @@ public class TOMLParser : IDisposable
     TomlArray ReadArray()
     {
         // Consume the start of array character
-        ConsumeChar();
+        this.ConsumeChar();
         var result = new TomlArray();
         TomlNode currentValue = null;
 
         int cur;
-        while ((cur = reader.Peek()) >= 0)
+        while ((cur = this.reader.Peek()) >= 0)
         {
             var c = (char)cur;
 
             if (c == TomlSyntax.ARRAY_END_SYMBOL)
             {
-                ConsumeChar();
+                this.ConsumeChar();
                 break;
             }
 
             if (c == TomlSyntax.COMMENT_SYMBOL)
             {
-                reader.ReadLine();
-                AdvanceLine(0);
+                this.reader.ReadLine();
+                this.AdvanceLine(0);
                 continue;
             }
 
             if (TomlSyntax.IsWhiteSpace(c) || TomlSyntax.IsNewLine(c))
             {
-                if (TomlSyntax.IsLineBreak(c))
-                    AdvanceLine();
+                if (TomlSyntax.IsLineBreak(c)) this.AdvanceLine();
                 goto consume_character;
             }
 
@@ -1377,7 +1374,7 @@ public class TOMLParser : IDisposable
             {
                 if (currentValue == null)
                 {
-                    AddError("Encountered multiple value separators in an array!");
+                    this.AddError("Encountered multiple value separators in an array!");
                     return null;
                 }
 
@@ -1386,24 +1383,23 @@ public class TOMLParser : IDisposable
                 goto consume_character;
             }
 
-            currentValue = ReadValue(true);
+            currentValue = this.ReadValue(true);
             if (currentValue == null)
             {
-                if (currentState != ParseState.None)
-                    AddError("Failed to determine and parse a value!");
+                if (this.currentState != ParseState.None) this.AddError("Failed to determine and parse a value!");
                 return null;
             }
 
             if (result.ChildrenCount != 0 && result[0].GetType() != currentValue.GetType())
             {
-                AddError(
+                this.AddError(
                     $"Arrays cannot have mixed types! Inferred type: {result[0].GetType().FullName}. Element type: {currentValue.GetType().FullName}");
                 return null;
             }
 
             continue;
             consume_character:
-            ConsumeChar();
+            this.ConsumeChar();
         }
 
         if (currentValue != null) result.Add(currentValue);
@@ -1413,37 +1409,37 @@ public class TOMLParser : IDisposable
     /**
          * Reads an inline table.
          * Assumes the cursor is at the start of the table definition. Reads all character until the table closing bracket.
-         * 
+         *
          * Example:
          * { test = "foo", value = 1 }  ==>  { test = "foo", value = 1 }
          * ^                                                            ^
          */
     TomlNode ReadInlineTable()
     {
-        ConsumeChar();
+        this.ConsumeChar();
         var result = new TomlTable { IsInline = true };
         TomlNode currentValue = null;
         var keyParts = new List<string>();
         int cur;
-        while ((cur = reader.Peek()) >= 0)
+        while ((cur = this.reader.Peek()) >= 0)
         {
             var c = (char)cur;
 
             if (c == TomlSyntax.INLINE_TABLE_END_SYMBOL)
             {
-                ConsumeChar();
+                this.ConsumeChar();
                 break;
             }
 
             if (c == TomlSyntax.COMMENT_SYMBOL)
             {
-                AddError("Incomplete inline table definition!");
+                this.AddError("Incomplete inline table definition!");
                 return null;
             }
 
             if (TomlSyntax.IsNewLine(c))
             {
-                AddError("Inline tables are only allowed to be on single line");
+                this.AddError("Inline tables are only allowed to be on single line");
                 return null;
             }
 
@@ -1454,25 +1450,25 @@ public class TOMLParser : IDisposable
             {
                 if (currentValue == null)
                 {
-                    AddError("Encountered multiple value separators in inline table!");
+                    this.AddError("Encountered multiple value separators in inline table!");
                     return null;
                 }
 
-                if (!InsertNode(currentValue, result, keyParts))
+                if (!this.InsertNode(currentValue, result, keyParts))
                     return null;
                 keyParts.Clear();
                 currentValue = null;
                 goto consume_character;
             }
 
-            currentValue = ReadKeyValuePair(keyParts);
+            currentValue = this.ReadKeyValuePair(keyParts);
             continue;
 
             consume_character:
-            ConsumeChar();
+            this.ConsumeChar();
         }
 
-        if (currentValue != null && !InsertNode(currentValue, result, keyParts))
+        if (currentValue != null && !this.InsertNode(currentValue, result, keyParts))
             return null;
 
         return result;
@@ -1485,17 +1481,17 @@ public class TOMLParser : IDisposable
     /**
          * Checks if the string value a multiline string (i.e. a triple quoted string).
          * Assumes the cursor is at the first quote character. Consumes the least amount of characters needed to determine if the string is multiline.
-         * 
+         *
          * If the result is false, returns the consumed character through the `excess` variable.
-         * 
+         *
          * Example 1:
          * """test"""  ==>  """test"""
          * ^                   ^
-         * 
+         *
          * Example 2:
          * "test"  ==>  "test"         (doesn't return the first quote)
          * ^             ^
-         * 
+         *
          * Example 3:
          * ""  ==>  ""        (returns the extra `"` through the `excess` variable)
          * ^          ^
@@ -1506,11 +1502,11 @@ public class TOMLParser : IDisposable
 
         int cur;
         // Consume the first quote
-        ConsumeChar();
-        if ((cur = reader.Peek()) < 0)
+        this.ConsumeChar();
+        if ((cur = this.reader.Peek()) < 0)
         {
             excess = '\0';
-            return AddError("Unexpected end of file!");
+            return this.AddError("Unexpected end of file!");
         }
 
         if ((char)cur != quote)
@@ -1520,11 +1516,11 @@ public class TOMLParser : IDisposable
         }
 
         // Consume the second quote
-        excess = (char)ConsumeChar();
-        if ((cur = reader.Peek()) < 0 || (char)cur != quote) return false;
+        excess = (char)this.ConsumeChar();
+        if ((cur = this.reader.Peek()) < 0 || (char)cur != quote) return false;
 
         // Consume the final quote
-        ConsumeChar();
+        this.ConsumeChar();
         excess = '\0';
         return true;
     }
@@ -1539,7 +1535,7 @@ public class TOMLParser : IDisposable
         ref bool escaped)
     {
         if (TomlSyntax.ShouldBeEscaped(c))
-            return AddError($"The character U+{c:X8} must be escaped in a string!");
+            return this.AddError($"The character U+{c:X8} must be escaped in a string!");
 
         if (escaped)
         {
@@ -1552,7 +1548,7 @@ public class TOMLParser : IDisposable
         if (isNonLiteral && c == TomlSyntax.ESCAPE_SYMBOL)
             escaped = true;
         if (c == TomlSyntax.NEWLINE_CHARACTER)
-            return AddError("Encountered newline in single line string!");
+            return this.AddError("Encountered newline in single line string!");
 
         sb.Append(c);
         return false;
@@ -1562,7 +1558,7 @@ public class TOMLParser : IDisposable
          * Reads a single-line string.
          * Assumes the cursor is at the first character that belongs to the string.
          * Consumes all characters that belong to the string (including the closing quote).
-         * 
+         *
          * Example:
          * "test"  ==>  "test"
          * ^                 ^
@@ -1575,21 +1571,20 @@ public class TOMLParser : IDisposable
 
         if (initialData != '\0')
         {
-            var shouldReturn =
-                ProcessQuotedValueCharacter(quote, isNonLiteral, initialData, sb, ref escaped);
-            if (currentState == ParseState.None) return null;
+            var shouldReturn = this.ProcessQuotedValueCharacter(quote, isNonLiteral, initialData, sb, ref escaped);
+            if (this.currentState == ParseState.None) return null;
             if (shouldReturn) return isNonLiteral ? sb.ToString().Unescape() : sb.ToString();
         }
 
         int cur;
-        while ((cur = reader.Read()) >= 0)
+        while ((cur = this.reader.Read()) >= 0)
         {
             // Consume the character
-            col++;
+            this.col++;
             var c = (char)cur;
-            if (ProcessQuotedValueCharacter(quote, isNonLiteral, c, sb, ref escaped))
+            if (this.ProcessQuotedValueCharacter(quote, isNonLiteral, c, sb, ref escaped))
             {
-                if (currentState == ParseState.None) return null;
+                if (this.currentState == ParseState.None) return null;
                 break;
             }
         }
@@ -1601,7 +1596,7 @@ public class TOMLParser : IDisposable
          * Reads a multiline string.
          * Assumes the cursor is at the first character that belongs to the string.
          * Consumes all characters that belong to the string and the three closing quotes.
-         * 
+         *
          * Example:
          * """test"""  ==>  """test"""
          * ^                       ^
@@ -1615,7 +1610,7 @@ public class TOMLParser : IDisposable
         var quotesEncountered = 0;
         var first = true;
         int cur;
-        while ((cur = ConsumeChar()) >= 0)
+        while ((cur = this.ConsumeChar()) >= 0)
         {
             var c = (char)cur;
             if (TomlSyntax.ShouldBeEscaped(c))
@@ -1626,7 +1621,7 @@ public class TOMLParser : IDisposable
                 if (TomlSyntax.IsLineBreak(c))
                     first = false;
                 else
-                    AdvanceLine();
+                    this.AdvanceLine();
                 continue;
             }
 
@@ -1645,8 +1640,7 @@ public class TOMLParser : IDisposable
             {
                 if (TomlSyntax.IsEmptySpace(c))
                 {
-                    if (TomlSyntax.IsLineBreak(c))
-                        AdvanceLine();
+                    if (TomlSyntax.IsLineBreak(c)) this.AdvanceLine();
                     continue;
                 }
 
@@ -1656,7 +1650,7 @@ public class TOMLParser : IDisposable
             // If we encounter an escape sequence...
             if (isBasic && c == TomlSyntax.ESCAPE_SYMBOL)
             {
-                var next = reader.Peek();
+                var next = this.reader.Peek();
                 if (next >= 0)
                 {
                     // ...and the next char is empty space, we must skip all whitespaces
@@ -1702,7 +1696,7 @@ public class TOMLParser : IDisposable
                 if (latestNode.TryGetNode(subkey, out var currentNode))
                 {
                     if (currentNode.HasValue)
-                        return AddError($"The key {".".Join(path)} already has a value assigned to it!");
+                        return this.AddError($"The key {".".Join(path)} already has a value assigned to it!");
                 }
                 else
                 {
@@ -1714,7 +1708,7 @@ public class TOMLParser : IDisposable
             }
 
         if (latestNode.HasKey(path[^1]))
-            return AddError($"The key {".".Join(path)} is already defined!");
+            return this.AddError($"The key {".".Join(path)} is already defined!");
         latestNode[path[^1]] = node;
         node.CollapseLevel = path.Count - 1;
         return true;
@@ -1736,7 +1730,7 @@ public class TOMLParser : IDisposable
 
                     if (!arr.IsTableArray)
                     {
-                        AddError($"The array {".".Join(path)} cannot be redefined as an array table!");
+                        this.AddError($"The array {".".Join(path)} cannot be redefined as an array table!");
                         return null;
                     }
 
@@ -1755,7 +1749,7 @@ public class TOMLParser : IDisposable
                 {
                     if (node is not TomlArray { IsTableArray: true } array)
                     {
-                        AddError($"The key {".".Join(path)} has a value assigned to it!");
+                        this.AddError($"The key {".".Join(path)} has a value assigned to it!");
                         return null;
                     }
 
@@ -1767,13 +1761,13 @@ public class TOMLParser : IDisposable
                 {
                     if (arrayTable && !node.IsArray)
                     {
-                        AddError($"The table {".".Join(path)} cannot be redefined as an array table!");
+                        this.AddError($"The table {".".Join(path)} cannot be redefined as an array table!");
                         return null;
                     }
 
                     if (node is TomlTable { IsInline: false })
                     {
-                        AddError($"The table {".".Join(path)} is defined multiple times!");
+                        this.AddError($"The table {".".Join(path)} is defined multiple times!");
                         return null;
                     }
                 }
@@ -1837,8 +1831,8 @@ public class TomlParseException : Exception
     public TomlParseException(TomlTable parsed, IEnumerable<TomlSyntaxException> exceptions) :
         base("TOML file contains format errors")
     {
-        ParsedTable = parsed;
-        SyntaxErrors = exceptions;
+        this.ParsedTable = parsed;
+        this.SyntaxErrors = exceptions;
     }
 
     public TomlTable ParsedTable { get; }
@@ -1850,9 +1844,9 @@ public class TomlSyntaxException : Exception
 {
     public TomlSyntaxException(string message, TOMLParser.ParseState state, int line, int col) : base(message)
     {
-        ParseState = state;
-        Line = line;
-        Column = col;
+        this.ParseState = state;
+        this.Line = line;
+        this.Column = col;
     }
 
     public TOMLParser.ParseState ParseState { get; }
@@ -1899,14 +1893,20 @@ static partial class TomlSyntax
         return s is NAN_VALUE or POS_NAN_VALUE or NEG_NAN_VALUE;
     }
 
-    public static bool IsInteger(string s) => IntegerPattern().IsMatch(s);
+    public static bool IsInteger(string s)
+    {
+        return IntegerPattern().IsMatch(s);
+    }
 
-    public static bool IsFloat(string s) => FloatPattern().IsMatch(s);
+    public static bool IsFloat(string s)
+    {
+        return FloatPattern().IsMatch(s);
+    }
 
     public static bool IsIntegerWithBase(string s, out int numberBase)
     {
         numberBase = 10;
-        
+
         var match = BasedIntegerPattern().Match(s);
 
         if (!match.Success) return false;
@@ -2033,11 +2033,13 @@ static partial class TomlSyntax
     {
         return c is ITEM_SEPARATOR or ARRAY_END_SYMBOL or INLINE_TABLE_END_SYMBOL;
     }
-    
+
     [GeneratedRegex("^(\\+|-)?(?!_)(0|(?!0)(_?\\d)*)$")]
     private static partial Regex IntegerPattern();
 
-    [GeneratedRegex("^(\\+|-)?(?!_)(0|(?!0)(_?\\d)+)(((e(\\+|-)?(?!_)(_?\\d)+)?)|(\\.(?!_)(_?\\d)+(e(\\+|-)?(?!_)(_?\\d)+)?))$", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(
+        "^(\\+|-)?(?!_)(0|(?!0)(_?\\d)+)(((e(\\+|-)?(?!_)(_?\\d)+)?)|(\\.(?!_)(_?\\d)+(e(\\+|-)?(?!_)(_?\\d)+)?))$",
+        RegexOptions.IgnoreCase)]
     private static partial Regex FloatPattern();
 
     [GeneratedRegex("^(\\+|-)?0(?<base>x|b|o)(?!_)(_?[0-9A-F])*$", RegexOptions.IgnoreCase)]

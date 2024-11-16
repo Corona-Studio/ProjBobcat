@@ -13,8 +13,8 @@ public static class ForgeInstallerFactory
 
         return (mcVer.Minor, mcVer.Build) switch
         {
-            ( 8, 8 or -1) => $"{mcVersion}-{forgeVersion}", //1.8.8, 1.8
-            ( >= 7 and <= 8, _) => $"{mcVersion}-{forgeVersion}-{mcVersion}", //1.7 - 1.8, 1.8.9
+            (8, 8 or -1) => $"{mcVersion}-{forgeVersion}", //1.8.8, 1.8
+            (>= 7 and <= 8, _) => $"{mcVersion}-{forgeVersion}-{mcVersion}", //1.7 - 1.8, 1.8.9
             _ => $"{mcVersion}-{forgeVersion}" //1.8.9+
         };
     }

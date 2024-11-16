@@ -24,12 +24,12 @@ public class ServerPingService : ProgressReportBase
 
     public override string ToString()
     {
-        return $"{Address}:{Port}";
+        return $"{this.Address}:{this.Port}";
     }
 
     public ServerPingResult? Run()
     {
-        return RunAsync().Result;
+        return this.RunAsync().Result;
     }
 
     public async Task<ServerPingResult?> RunAsync()
@@ -48,7 +48,7 @@ public class ServerPingService : ProgressReportBase
 
         try
         {
-            await client.ConnectAsync(Address, Port, cts.Token);
+            await client.ConnectAsync(this.Address, this.Port, cts.Token);
         }
         catch (TaskCanceledException)
         {
@@ -57,37 +57,37 @@ public class ServerPingService : ProgressReportBase
 
         sw.Stop();
 
-        InvokeStatusChangedEvent("正在连接到服务器...", 10);
+        this.InvokeStatusChangedEvent("正在连接到服务器...", 10);
 
         if (!client.Connected)
         {
-            InvokeStatusChangedEvent("无法连接到服务器", 10);
+            this.InvokeStatusChangedEvent("无法连接到服务器", 10);
             return null;
         }
 
-        _buffer = [];
-        _stream = client.GetStream();
+        this._buffer = [];
+        this._stream = client.GetStream();
 
-        InvokeStatusChangedEvent("发送请求...", 30);
+        this.InvokeStatusChangedEvent("发送请求...", 30);
 
         /*
          * Send a "Handshake" packet
          * http://wiki.vg/Server_List_Ping#Ping_Process
          */
-        WriteVarInt(VersionId == 0 ? 47 : VersionId);
-        WriteString(Address);
-        WriteShort(Port);
-        WriteVarInt(1);
-        await Flush(0);
+        this.WriteVarInt(this.VersionId == 0 ? 47 : this.VersionId);
+        this.WriteString(this.Address);
+        this.WriteShort(this.Port);
+        this.WriteVarInt(1);
+        await this.Flush(0);
 
         /*
          * Send a "Status Request" packet
          * http://wiki.vg/Server_List_Ping#Ping_Process
          */
-        await Flush(0);
+        await this.Flush(0);
 
         /*
-         * If you are using a modded server then use a larger buffer to account, 
+         * If you are using a modded server then use a larger buffer to account,
          * see link for explanation and a motd to HTML snippet
          * https://gist.github.com/csh/2480d14fbbb33b4bbae3#gistcomment-2672658
          */
@@ -100,12 +100,12 @@ public class ServerPingService : ProgressReportBase
 
         do
         {
-            var readLength = await _stream.ReadAsync(batch.AsMemory());
+            var readLength = await this._stream.ReadAsync(batch.AsMemory());
             await ms.WriteAsync(batch.AsMemory(0, readLength), cts.Token);
             if (!flag)
             {
-                var packetLength = ReadVarInt(ms.ToArray());
-                remaining = packetLength - _offset;
+                var packetLength = this.ReadVarInt(ms.ToArray());
+                remaining = packetLength - this._offset;
                 flag = true;
             }
 
@@ -116,14 +116,14 @@ public class ServerPingService : ProgressReportBase
         } while (remaining > 0);
 
         var buffer = ms.ToArray();
-        _offset = 0;
-        var length = ReadVarInt(buffer);
-        var packet = ReadVarInt(buffer);
-        var jsonLength = ReadVarInt(buffer);
+        this._offset = 0;
+        var length = this.ReadVarInt(buffer);
+        var packet = this.ReadVarInt(buffer);
+        var jsonLength = this.ReadVarInt(buffer);
 
-        InvokeStatusChangedEvent($"收到包 0x{packet:X2} ， 长度为 {length}", 80);
+        this.InvokeStatusChangedEvent($"收到包 0x{packet:X2} ， 长度为 {length}", 80);
 
-        var json = ReadString(buffer, jsonLength);
+        var json = this.ReadString(buffer, jsonLength);
         var ping = JsonSerializer.Deserialize(json, PingPayloadContext.Default.PingPayload);
 
         if (ping == null)
@@ -140,16 +140,16 @@ public class ServerPingService : ProgressReportBase
 
     byte ReadByte(IReadOnlyList<byte> buffer)
     {
-        var b = buffer[_offset];
-        _offset += 1;
+        var b = buffer[this._offset];
+        this._offset += 1;
         return b;
     }
 
     byte[] Read(byte[] buffer, int length)
     {
         var data = new byte[length];
-        Array.Copy(buffer, _offset, data, 0, length);
-        _offset += length;
+        Array.Copy(buffer, this._offset, data, 0, length);
+        this._offset += length;
         return data;
     }
 
@@ -158,7 +158,7 @@ public class ServerPingService : ProgressReportBase
         var value = 0;
         var size = 0;
         int b;
-        while (((b = ReadByte(buffer)) & 0x80) == 0x80)
+        while (((b = this.ReadByte(buffer)) & 0x80) == 0x80)
         {
             value |= (b & 0x7F) << (size++ * 7);
             if (size > 5) throw new IOException("This VarInt is an imposter!");
@@ -169,7 +169,7 @@ public class ServerPingService : ProgressReportBase
 
     string ReadString(byte[] buffer, int length)
     {
-        var data = Read(buffer, length);
+        var data = this.Read(buffer, length);
         return Encoding.UTF8.GetString(data);
     }
 
@@ -177,47 +177,47 @@ public class ServerPingService : ProgressReportBase
     {
         while ((value & 128) != 0)
         {
-            _buffer.Add((byte)((value & 127) | 128));
+            this._buffer.Add((byte)((value & 127) | 128));
             value = (int)(uint)value >> 7;
         }
 
-        _buffer.Add((byte)value);
+        this._buffer.Add((byte)value);
     }
 
     void WriteShort(ushort value)
     {
-        _buffer.AddRange(BitConverter.GetBytes(value));
+        this._buffer.AddRange(BitConverter.GetBytes(value));
     }
 
     void WriteString(string data)
     {
         var buffer = Encoding.UTF8.GetBytes(data);
-        WriteVarInt(buffer.Length);
-        _buffer.AddRange(buffer);
+        this.WriteVarInt(buffer.Length);
+        this._buffer.AddRange(buffer);
     }
 
     async Task Flush(int id = -1)
     {
-        var buffer = _buffer.ToArray();
-        _buffer.Clear();
+        var buffer = this._buffer.ToArray();
+        this._buffer.Clear();
 
         var add = 0;
         var packetData = new[] { (byte)0x00 };
         if (id >= 0)
         {
-            WriteVarInt(id);
-            packetData = [.. _buffer];
+            this.WriteVarInt(id);
+            packetData = [.. this._buffer];
             add = packetData.Length;
-            _buffer.Clear();
+            this._buffer.Clear();
         }
 
-        WriteVarInt(buffer.Length + add);
-        var bufferLength = _buffer.ToArray();
-        _buffer.Clear();
+        this.WriteVarInt(buffer.Length + add);
+        var bufferLength = this._buffer.ToArray();
+        this._buffer.Clear();
 
-        await _stream.WriteAsync(bufferLength.AsMemory());
-        await _stream.WriteAsync(packetData.AsMemory());
-        await _stream.WriteAsync(buffer.AsMemory());
+        await this._stream.WriteAsync(bufferLength.AsMemory());
+        await this._stream.WriteAsync(packetData.AsMemory());
+        await this._stream.WriteAsync(buffer.AsMemory());
     }
 
     #endregion

@@ -1,16 +1,16 @@
-﻿using System;
+﻿#nullable disable
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-
-#nullable disable
 
 namespace ProjBobcat.Class.Helper.TOMLParser;
 
 /// <summary>
 ///     Class of various extension methods for Tommy
 /// </summary>
-public static partial class TommyExtensions
+public static class TommyExtensions
 {
     /// <summary>
     ///     Tries to parse TOML file.

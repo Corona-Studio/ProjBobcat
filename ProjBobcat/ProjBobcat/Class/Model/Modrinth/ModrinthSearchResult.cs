@@ -14,6 +14,4 @@ public class ModrinthSearchResult
 }
 
 [JsonSerializable(typeof(ModrinthSearchResult))]
-partial class ModrinthSearchResultContext : JsonSerializerContext
-{
-}
+partial class ModrinthSearchResultContext : JsonSerializerContext;

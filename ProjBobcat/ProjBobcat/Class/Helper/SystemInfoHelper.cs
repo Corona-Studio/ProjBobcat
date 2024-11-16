@@ -75,22 +75,27 @@ public static class SystemInfoHelper
 
         if (fullSearch)
             await foreach (var path in DeepJavaSearcher.DeepSearch())
-                if (searched.Add(path)) yield return path;
+                if (searched.Add(path))
+                    yield return path;
 
         if (OperatingSystem.IsWindows())
             foreach (var path in Platforms.Windows.SystemInfoHelper.FindJavaWindows())
-                if (searched.Add(path)) yield return path;
+                if (searched.Add(path))
+                    yield return path;
 
         if (OperatingSystem.IsMacOS())
             foreach (var path in Platforms.MacOS.SystemInfoHelper.FindJavaMacOS())
-                if (searched.Add(path)) yield return path;
+                if (searched.Add(path))
+                    yield return path;
 
         if (OperatingSystem.IsLinux())
-            foreach(var path in Platforms.Linux.SystemInfoHelper.FindJavaLinux())
-                if (searched.Add(path)) yield return path;
+            foreach (var path in Platforms.Linux.SystemInfoHelper.FindJavaLinux())
+                if (searched.Add(path))
+                    yield return path;
 
         foreach (var path in FindJavaInOfficialGamePath())
-            if (searched.Add(path)) yield return path;
+            if (searched.Add(path))
+                yield return path;
 
         var evJava = FindJavaUsingEnvironmentVariable();
 

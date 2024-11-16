@@ -54,12 +54,12 @@ public class DefaultMineCraftUWPCore : GameCoreBase
         };
         launchWrapper.Do();
 
-        InvokeLaunchLogThenStart("启动游戏", ref prevSpan, ref stopwatch);
+        this.InvokeLaunchLogThenStart("启动游戏", ref prevSpan, ref stopwatch);
 
         Task.Run(launchWrapper.Process.WaitForExit)
             .ContinueWith(task =>
             {
-                OnGameExit(launchWrapper, new GameExitEventArgs
+                this.OnGameExit(launchWrapper, new GameExitEventArgs
                 {
                     Exception = task.Exception,
                     ExitCode = launchWrapper.ExitCode
@@ -93,7 +93,7 @@ public class DefaultMineCraftUWPCore : GameCoreBase
     /// <param name="sw"></param>
     void InvokeLaunchLogThenStart(string item, ref TimeSpan time, ref Stopwatch sw)
     {
-        OnLogLaunchData(this, new LaunchLogEventArgs
+        this.OnLogLaunchData(this, new LaunchLogEventArgs
         {
             Item = item,
             ItemRunTime = sw.Elapsed - time

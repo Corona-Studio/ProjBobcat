@@ -15,36 +15,15 @@ public partial class DefaultGameLogResolver : IGameLogResolver
     const string LogSourceAndTypeRegex = $"[\\w\\W\\s]{{2,}}/({LogTypeRegexStr})";
     const string LogDateRegex = $"\\[{LogTimeRegexStr}\\]";
     const string LogTotalPrefixRegex = $"\\[{LogTimeRegexStr}\\] \\[{LogSourceAndTypeRegex}\\]";
-    
-    [GeneratedRegex(LogSourceAndTypeRegex)]
-    private static partial Regex SourceAndTypeRegex();
-    
-    [GeneratedRegex(LogTotalPrefixRegex)]
-    private static partial Regex TotalPrefixRegex();
-    
-    [GeneratedRegex(LogTypeRegexStr)]
-    private static partial Regex TypeRegex();
-    
-    [GeneratedRegex(LogTimeRegexStr)]
-    private static partial Regex TimeRegex();
-    
-    [GeneratedRegex(LogDateRegex)]
-    private static partial Regex TimeFullRegex();
-    
-    [GeneratedRegex(StackTraceAtStr)]
-    private static partial Regex StackTraceAtRegex();
-    
-    [GeneratedRegex(ExceptionRegexStr)]
-    private static partial Regex ExceptionRegex();
 
     public GameLogType ResolveLogType(string log)
     {
-        if (!string.IsNullOrEmpty(ResolveExceptionMsg(log)))
+        if (!string.IsNullOrEmpty(this.ResolveExceptionMsg(log)))
             return GameLogType.ExceptionMessage;
 
-        if (!string.IsNullOrEmpty(ResolveStackTrace(log)))
+        if (!string.IsNullOrEmpty(this.ResolveStackTrace(log)))
             return GameLogType.StackTrace;
-        
+
         return TypeRegex().Match(log).Value switch
         {
             "FATAL" => GameLogType.Fatal,
@@ -66,7 +45,7 @@ public partial class DefaultGameLogResolver : IGameLogResolver
     public string ResolveExceptionMsg(string log)
     {
         var exceptionMsg = ExceptionRegex().Match(log).Value;
-        
+
         return exceptionMsg;
     }
 
@@ -75,7 +54,7 @@ public partial class DefaultGameLogResolver : IGameLogResolver
         var content = SourceAndTypeRegex().Match(log).Value.Split('/').FirstOrDefault();
 
         if (string.IsNullOrEmpty(content)) return string.Empty;
-        
+
         var date = TimeFullRegex().Match(log).Value;
         var result = content.Replace($"{date} [", string.Empty);
 
@@ -91,4 +70,25 @@ public partial class DefaultGameLogResolver : IGameLogResolver
     {
         return TotalPrefixRegex().Match(log).Value;
     }
+
+    [GeneratedRegex(LogSourceAndTypeRegex)]
+    private static partial Regex SourceAndTypeRegex();
+
+    [GeneratedRegex(LogTotalPrefixRegex)]
+    private static partial Regex TotalPrefixRegex();
+
+    [GeneratedRegex(LogTypeRegexStr)]
+    private static partial Regex TypeRegex();
+
+    [GeneratedRegex(LogTimeRegexStr)]
+    private static partial Regex TimeRegex();
+
+    [GeneratedRegex(LogDateRegex)]
+    private static partial Regex TimeFullRegex();
+
+    [GeneratedRegex(StackTraceAtStr)]
+    private static partial Regex StackTraceAtRegex();
+
+    [GeneratedRegex(ExceptionRegexStr)]
+    private static partial Regex ExceptionRegex();
 }

@@ -32,23 +32,19 @@ public static class GameResourcesResolveHelper
         {
             if (jsonSplit[i].Trim().EndsWith("{") || jsonSplit[i].Trim() == "\n" ||
                 string.IsNullOrWhiteSpace(jsonSplit[i].Trim()))
-            {
                 continue;
-            }
 
             if (startIndex == 0)
-            {
                 if ((!jsonSplit[i].Trim().EndsWith("\"") && !jsonSplit[i].Trim().EndsWith(",")) ||
-                    (jsonSplit[i].Replace(" ", "").EndsWith(":\"")))
+                    jsonSplit[i].Replace(" ", "").EndsWith(":\""))
                 {
                     startIndex = i;
                     continue;
                 }
-            }
 
             if (startIndex == 0) continue;
             if ((!jsonSplit[i].Trim().StartsWith("\"") || !jsonSplit[i + 1].Trim().StartsWith("}")) &&
-                (!jsonSplit[i].Trim().StartsWith("\",")) && (!jsonSplit[i].Trim().EndsWith("\","))) continue;
+                !jsonSplit[i].Trim().StartsWith("\",") && !jsonSplit[i].Trim().EndsWith("\",")) continue;
 
             endIndex = i;
             break;
@@ -92,7 +88,7 @@ public static class GameResourcesResolveHelper
         var infoTable = arr.Children.First();
 
         var title = infoTable.HasKey("modId")
-            ? (infoTable["modId"]?.AsString ?? "-")
+            ? infoTable["modId"]?.AsString ?? "-"
             : Path.GetFileName(file);
         var author = infoTable.HasKey("authors")
             ? infoTable["authors"]?.AsString
@@ -200,7 +196,8 @@ public static class GameResourcesResolveHelper
                 "[!] 数据包 JSON 异常",
                 e.Message
             };
-            return new GameModResolvedInfo(null, file, errorList.ToImmutableList(), Path.GetFileName(file), null, "Fabric", isEnabled);
+            return new GameModResolvedInfo(null, file, errorList.ToImmutableList(), Path.GetFileName(file), null,
+                "Fabric", isEnabled);
         }
     }
 
@@ -292,7 +289,7 @@ public static class GameResourcesResolveHelper
                 null,
                 "Unknown",
                 isEnabled);
-            
+
             ReturnResult:
             result = result! with { LoaderType = GetModLoaderType(archive) };
             yield return result;
@@ -332,7 +329,6 @@ public static class GameResourcesResolveHelper
         }
 
         if (packInfoEntry != null)
-        {
             try
             {
                 await using var stream = packInfoEntry.OpenEntryStream();
@@ -347,7 +343,6 @@ public static class GameResourcesResolveHelper
                 description = $"[!] 数据包 JSON 异常: {e.Message}";
                 version = -1;
             }
-        }
 
         return new GameResourcePackResolvedInfo(fileName, description, version, imageBytes);
     }
@@ -367,7 +362,6 @@ public static class GameResourcesResolveHelper
         var version = -1;
 
         if (File.Exists(infoPath))
-        {
             try
             {
                 await using var contentStream = File.OpenRead(infoPath);
@@ -382,7 +376,6 @@ public static class GameResourcesResolveHelper
                 description = $"[!] 数据包 JSON 异常: {e.Message}";
                 version = -1;
             }
-        }
 
         return new GameResourcePackResolvedInfo(fileName, description, version, imageBytes);
     }
@@ -420,7 +413,7 @@ public static class GameResourcesResolveHelper
         if (!archive.Entries.Any(e =>
                 Path.GetFileName(e.Key?.TrimEnd('/'))
                     ?.Equals("shaders", StringComparison.OrdinalIgnoreCase) ?? false))
-          return null;
+            return null;
 
         var model = new GameShaderPackResolvedInfo(Path.GetFileName(file), false);
 

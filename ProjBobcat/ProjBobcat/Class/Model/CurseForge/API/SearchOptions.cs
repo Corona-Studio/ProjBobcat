@@ -17,22 +17,22 @@ public class SearchOptions
     {
         var result =
             "?" +
-            $"gameId={GameId ?? 432}";
+            $"gameId={this.GameId ?? 432}";
 
-        if (Index != null)
-            result += $"&index={Index ?? 0}";
-        if (Sort != null)
-            result += $"&sortOrder={Sort ?? 1}";
-        if (PageSize != null)
-            result += $"&pageSize={PageSize}";
-        if (!string.IsNullOrEmpty(GameVersion))
-            result += $"&gameVersion={GameVersion}";
-        if (!string.IsNullOrEmpty(SearchFilter))
-            result += $"&searchFilter={SearchFilter}";
-        if (ClassId != null && ParentCategoryId is null)
-            result += $"&classId={ClassId}";
-        if (CategoryId != null)
-            result += $"&categoryId={CategoryId}";
+        if (this.Index != null)
+            result += $"&index={this.Index ?? 0}";
+        if (this.Sort != null)
+            result += $"&sortOrder={this.Sort ?? 1}";
+        if (this.PageSize != null)
+            result += $"&pageSize={this.PageSize}";
+        if (!string.IsNullOrEmpty(this.GameVersion))
+            result += $"&gameVersion={this.GameVersion}";
+        if (!string.IsNullOrEmpty(this.SearchFilter))
+            result += $"&searchFilter={this.SearchFilter}";
+        if (this.ClassId != null && this.ParentCategoryId is null)
+            result += $"&classId={this.ClassId}";
+        if (this.CategoryId != null)
+            result += $"&categoryId={this.CategoryId}";
 
         return result;
     }

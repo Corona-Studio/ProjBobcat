@@ -8,7 +8,9 @@ public static class Constants
     public const string FallBackVersion = "0.0.0";
 
     public static string WhereCommand => OperatingSystem.IsWindows() ? Windows.WhereCommand : UnixKind.WhereCommand;
-    public static string JavaExecutable => OperatingSystem.IsWindows() ? Windows.JavaExecutable : UnixKind.JavaExecutable;
+
+    public static string JavaExecutable =>
+        OperatingSystem.IsWindows() ? Windows.JavaExecutable : UnixKind.JavaExecutable;
 
     public static string JavaExecutableExtension => OperatingSystem.IsWindows()
         ? Windows.JavaExecutableExtension

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using ProjBobcat.Class.Helper;
-using ProjBobcat.Class.Model;
+using ProjBobcat.Class.Model.Downloading;
 using ProjBobcat.Class.Model.Modrinth;
 using ProjBobcat.Interface;
 using SharpCompress.Archives;
@@ -20,7 +20,7 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
 
     public async Task<ModrinthModPackIndexModel?> ReadIndexTask()
     {
-        using var archive = ArchiveFactory.Open(Path.GetFullPath(ModPackPath));
+        using var archive = ArchiveFactory.Open(Path.GetFullPath(this.ModPackPath));
         var manifestEntry =
             archive.Entries.FirstOrDefault(x =>
                 x.Key?.Equals("modrinth.index.json", StringComparison.OrdinalIgnoreCase) ?? false);
@@ -38,24 +38,24 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
 
     public void Install()
     {
-        InstallTaskAsync().GetAwaiter().GetResult();
+        this.InstallTaskAsync().GetAwaiter().GetResult();
     }
 
     public async Task InstallTaskAsync()
     {
-        if (string.IsNullOrEmpty(GameId))
-            throw new ArgumentNullException(nameof(GameId));
-        if (string.IsNullOrEmpty(RootPath))
-            throw new ArgumentNullException(nameof(RootPath));
-        
-        InvokeStatusChangedEvent("开始安装", 0);
+        if (string.IsNullOrEmpty(this.GameId))
+            throw new ArgumentNullException(nameof(this.GameId));
+        if (string.IsNullOrEmpty(this.RootPath))
+            throw new ArgumentNullException(nameof(this.RootPath));
 
-        var index = await ReadIndexTask();
+        this.InvokeStatusChangedEvent("开始安装", 0);
+
+        var index = await this.ReadIndexTask();
 
         if (index == default)
             throw new Exception("无法读取到 Modrinth 的 manifest 文件");
 
-        var idPath = Path.Combine(RootPath, GamePathHelper.GetGamePath(GameId));
+        var idPath = Path.Combine(this.RootPath, GamePathHelper.GetGamePath(this.GameId));
         var downloadPath = Path.Combine(Path.GetFullPath(idPath), "mods");
 
         var di = new DirectoryInfo(downloadPath);
@@ -83,13 +83,13 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
                 FileName = fileName,
                 FileSize = file.Size
             };
-            df.Completed += WhenCompleted;
+            df.Completed += this.WhenCompleted;
 
             downloadFiles.Add(df);
         }
 
-        TotalDownloaded = 0;
-        NeedToDownload = downloadFiles.Count;
+        this.TotalDownloaded = 0;
+        this.NeedToDownload = downloadFiles.Count;
         await DownloadHelper.AdvancedDownloadListFile(downloadFiles, new DownloadSettings
         {
             DownloadParts = 8,
@@ -99,13 +99,13 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
             HashType = HashType.SHA1
         });
 
-        if (!FailedFiles.IsEmpty)
+        if (!this.FailedFiles.IsEmpty)
             throw new NullReferenceException("未能下载全部的 Mods");
 
-        using var archive = ArchiveFactory.Open(Path.GetFullPath(ModPackPath));
+        using var archive = ArchiveFactory.Open(Path.GetFullPath(this.ModPackPath));
 
-        TotalDownloaded = 0;
-        NeedToDownload = archive.Entries.Count();
+        this.TotalDownloaded = 0;
+        this.NeedToDownload = archive.Entries.Count();
 
         const string decompressPrefix = "overrides";
 
@@ -134,14 +134,15 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
                 ? $"...{subPath[(subPathLength - 15)..]}"
                 : subPath;
 
-            InvokeStatusChangedEvent($"解压缩安装文件：{subPathName}", (double)TotalDownloaded / NeedToDownload * 100);
+            this.InvokeStatusChangedEvent($"解压缩安装文件：{subPathName}",
+                (double)this.TotalDownloaded / this.NeedToDownload * 100);
 
             await using var fs = File.OpenWrite(path);
             entry.WriteTo(fs);
 
-            TotalDownloaded++;
+            this.TotalDownloaded++;
         }
 
-        InvokeStatusChangedEvent("安装完成", 100);
+        this.InvokeStatusChangedEvent("安装完成", 100);
     }
 }

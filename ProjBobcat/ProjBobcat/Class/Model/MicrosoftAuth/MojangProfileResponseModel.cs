@@ -29,16 +29,14 @@ public class MojangProfileResponseModel
 
     public MojangSkinProfile? GetActiveSkin()
     {
-        return Skins?.FirstOrDefault(x => x.State?.Equals("ACTIVE", StringComparison.OrdinalIgnoreCase) ?? false);
+        return this.Skins?.FirstOrDefault(x => x.State?.Equals("ACTIVE", StringComparison.OrdinalIgnoreCase) ?? false);
     }
 
     public MojangSkinProfile? GetActiveCape()
     {
-        return Capes?.FirstOrDefault(x => x.State?.Equals("ACTIVE", StringComparison.OrdinalIgnoreCase) ?? false);
+        return this.Capes?.FirstOrDefault(x => x.State?.Equals("ACTIVE", StringComparison.OrdinalIgnoreCase) ?? false);
     }
 }
 
 [JsonSerializable(typeof(MojangProfileResponseModel))]
-partial class MojangProfileResponseModelContext : JsonSerializerContext
-{
-}
+partial class MojangProfileResponseModelContext : JsonSerializerContext;

@@ -34,7 +34,6 @@ public static class FileHelper
     public static async Task<FileStream?> OpenReadAsync(string path, CancellationToken token)
     {
         while (!token.IsCancellationRequested)
-        {
             try
             {
                 return File.OpenRead(path);
@@ -43,8 +42,7 @@ public static class FileHelper
             {
                 await Task.Delay(1000, token);
             }
-        }
-        
+
         return null;
     }
 }

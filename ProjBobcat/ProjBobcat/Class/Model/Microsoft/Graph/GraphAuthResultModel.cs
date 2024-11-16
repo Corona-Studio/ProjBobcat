@@ -18,6 +18,4 @@ public class GraphAuthResultModel
 }
 
 [JsonSerializable(typeof(GraphAuthResultModel))]
-public partial class GraphAuthResultModelContext : JsonSerializerContext
-{
-}
+public partial class GraphAuthResultModelContext : JsonSerializerContext;

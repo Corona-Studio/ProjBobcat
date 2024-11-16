@@ -18,21 +18,22 @@ public class QuiltInstaller : InstallerBase, IQuiltInstaller
     const string DefaultMetaUrl = "https://meta.quiltmc.org";
 
     static HttpClient Client => HttpClientHelper.DefaultClient;
+    public required string MineCraftVersion { get; init; }
 
     public override required string RootPath { get; init; }
     public required QuiltLoaderModel LoaderArtifact { get; init; }
-    public required string MineCraftVersion { get; init; }
 
     public string Install()
     {
-        return InstallTaskAsync().GetAwaiter().GetResult();
+        return this.InstallTaskAsync().GetAwaiter().GetResult();
     }
 
     public async Task<string> InstallTaskAsync()
     {
-        InvokeStatusChangedEvent("开始安装", 0);
+        this.InvokeStatusChangedEvent("开始安装", 0);
 
-        var url = $"{DefaultMetaUrl}/v3/versions/loader/{MineCraftVersion}/{LoaderArtifact.Version}/profile/json";
+        var url =
+            $"{DefaultMetaUrl}/v3/versions/loader/{this.MineCraftVersion}/{this.LoaderArtifact.Version}/profile/json";
 
         using var req = new HttpRequestMessage(HttpMethod.Get, url);
         using var res = await Client.SendAsync(req);
@@ -45,7 +46,7 @@ public class QuiltInstaller : InstallerBase, IQuiltInstaller
         };
         var versionModel = await res.Content.ReadFromJsonAsync(new RawVersionModelContext(jsonOption).RawVersionModel);
 
-        InvokeStatusChangedEvent("生成版本总成", 70);
+        this.InvokeStatusChangedEvent("生成版本总成", 70);
 
         if (versionModel == null)
             throw new NullReferenceException(nameof(versionModel));
@@ -64,13 +65,13 @@ public class QuiltInstaller : InstallerBase, IQuiltInstaller
             versionModel.Libraries[index] = hashed;
         }
 
-        if (!string.IsNullOrEmpty(CustomId))
-            versionModel.Id = CustomId;
-        if(!string.IsNullOrEmpty(InheritsFrom))
-            versionModel.InheritsFrom = InheritsFrom;
+        if (!string.IsNullOrEmpty(this.CustomId))
+            versionModel.Id = this.CustomId;
+        if (!string.IsNullOrEmpty(this.InheritsFrom))
+            versionModel.InheritsFrom = this.InheritsFrom;
 
         var id = versionModel.Id!;
-        var installPath = Path.Combine(RootPath, GamePathHelper.GetGamePath(id));
+        var installPath = Path.Combine(this.RootPath, GamePathHelper.GetGamePath(id));
         var di = new DirectoryInfo(installPath);
 
         if (!di.Exists)
@@ -78,15 +79,15 @@ public class QuiltInstaller : InstallerBase, IQuiltInstaller
         else
             DirectoryHelper.CleanDirectory(di.FullName);
 
-        var jsonPath = GamePathHelper.GetGameJsonPath(RootPath, id);
+        var jsonPath = GamePathHelper.GetGameJsonPath(this.RootPath, id);
         var jsonContent = JsonSerializer.Serialize(versionModel, typeof(RawVersionModel),
             new RawVersionModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
-        InvokeStatusChangedEvent("将版本 Json 写入文件", 90);
+        this.InvokeStatusChangedEvent("将版本 Json 写入文件", 90);
 
         await File.WriteAllTextAsync(jsonPath, jsonContent);
 
-        InvokeStatusChangedEvent("安装完成", 100);
+        this.InvokeStatusChangedEvent("安装完成", 100);
 
         return id;
     }

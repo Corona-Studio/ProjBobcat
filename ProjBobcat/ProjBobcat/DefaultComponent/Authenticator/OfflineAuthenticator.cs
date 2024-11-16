@@ -40,7 +40,7 @@ public class OfflineAuthenticator : IAuthenticator
             Value = "zh-cn"
         };
 
-        var uuid = PlayerUUID.FromOfflinePlayerName(Username);
+        var uuid = PlayerUUID.FromOfflinePlayerName(this.Username);
 
         var localUuid = GuidHelper.NewGuidString();
         var accountModel = new AccountModel
@@ -55,16 +55,16 @@ public class OfflineAuthenticator : IAuthenticator
             MinecraftProfile = new AccountProfileModel
             {
                 Id = uuid.ToString(),
-                Name = Username
+                Name = this.Username
             },
             Persistent = true,
             RemoteId = GuidHelper.NewGuidString(),
             Type = "Mojang",
             UserProperites = [authProperty],
-            Username = Username
+            Username = this.Username
         };
 
-        if (!LauncherAccountParser.AddNewAccount(localUuid, accountModel, out var id))
+        if (!this.LauncherAccountParser.AddNewAccount(localUuid, accountModel, out var id))
             return new AuthResultBase
             {
                 AuthStatus = AuthStatus.Failed,
@@ -83,7 +83,7 @@ public class OfflineAuthenticator : IAuthenticator
             AuthStatus = AuthStatus.Succeeded,
             SelectedProfile = new ProfileInfoModel
             {
-                Name = Username,
+                Name = this.Username,
                 UUID = uuid
             },
             User = new UserInfoModel
@@ -110,7 +110,7 @@ public class OfflineAuthenticator : IAuthenticator
     /// <returns></returns>
     public Task<AuthResultBase> AuthTaskAsync(bool userField)
     {
-        return Task.FromResult(Auth());
+        return Task.FromResult(this.Auth());
     }
 
     /// <summary>
@@ -120,6 +120,6 @@ public class OfflineAuthenticator : IAuthenticator
     [Obsolete("此方法已过时，请使用 Auth(bool) 代替。")]
     public AuthResultBase GetLastAuthResult()
     {
-        return Auth();
+        return this.Auth();
     }
 }

@@ -10,4 +10,4 @@ public class NeoForgeVersionModel
 }
 
 [JsonSerializable(typeof(NeoForgeVersionModel))]
-public partial class NeoForgeVersionsModelContext : JsonSerializerContext { }
+public partial class NeoForgeVersionsModelContext : JsonSerializerContext;

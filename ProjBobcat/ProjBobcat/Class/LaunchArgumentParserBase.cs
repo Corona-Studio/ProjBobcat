@@ -47,12 +47,12 @@ public abstract class LaunchArgumentParserBase(
     ///     Native 根目录
     /// </summary>
     public virtual string NativeRoot =>
-        Path.Combine(RootPath, GamePathHelper.GetNativeRoot(LaunchSettings.Version));
+        Path.Combine(this.RootPath, GamePathHelper.GetNativeRoot(this.LaunchSettings.Version));
 
     /// <summary>
     ///     Asset 根目录
     /// </summary>
-    public virtual string AssetRoot => Path.Combine(RootPath, GamePathHelper.GetAssetsRoot());
+    public virtual string AssetRoot => Path.Combine(this.RootPath, GamePathHelper.GetAssetsRoot());
 
     /// <summary>
     ///     Class 路径

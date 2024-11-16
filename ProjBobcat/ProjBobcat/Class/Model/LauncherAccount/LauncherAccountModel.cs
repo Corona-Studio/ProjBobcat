@@ -5,8 +5,7 @@ namespace ProjBobcat.Class.Model.LauncherAccount;
 
 public class LauncherAccountModel
 {
-    [JsonPropertyName("accounts")]
-    public Dictionary<string, AccountModel>? Accounts { get; set; }
+    [JsonPropertyName("accounts")] public Dictionary<string, AccountModel>? Accounts { get; set; }
 
     [JsonPropertyName("activeAccountLocalId")]
     public string? ActiveAccountLocalId { get; set; }

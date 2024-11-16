@@ -26,7 +26,7 @@ public class LaunchWrapper(AuthResultBase authResult, LaunchSettings launchSetti
     public AuthResultBase AuthResult { get; } = authResult;
 
     /// <summary>
-    /// 启动设置
+    ///     启动设置
     /// </summary>
     public LaunchSettings LaunchSettings { get; } = launchSettings;
 
@@ -48,7 +48,7 @@ public class LaunchWrapper(AuthResultBase authResult, LaunchSettings launchSetti
     public void Dispose()
     {
         // 不要更改此代码。请将清理代码放入“Dispose(bool disposing)”方法中
-        Dispose(true);
+        this.Dispose(true);
         GC.SuppressFinalize(this);
     }
 
@@ -57,38 +57,39 @@ public class LaunchWrapper(AuthResultBase authResult, LaunchSettings launchSetti
     /// </summary>
     public void Do()
     {
-        if (Process == null) return;
-        if (Process.ProcessName != "Minecraft.Windows")
+        if (this.Process == null) return;
+        if (this.Process.ProcessName != "Minecraft.Windows")
         {
-            Process.BeginOutputReadLine();
-            Process.OutputDataReceived += ProcessOnOutputDataReceived;
-            Process.BeginErrorReadLine();
-            Process.ErrorDataReceived += ProcessOnErrorDataReceived;
+            this.Process.BeginOutputReadLine();
+            this.Process.OutputDataReceived += this.ProcessOnOutputDataReceived;
+            this.Process.BeginErrorReadLine();
+            this.Process.ErrorDataReceived += this.ProcessOnErrorDataReceived;
         }
-        Process.Exited += ProcessOnExited;
+
+        this.Process.Exited += this.ProcessOnExited;
     }
 
     void DisposeManaged()
     {
-        if (Process == null) return;
+        if (this.Process == null) return;
 
-        Process.OutputDataReceived -= ProcessOnOutputDataReceived;
-        Process.ErrorDataReceived -= ProcessOnErrorDataReceived;
-        Process.Exited -= ProcessOnExited;
+        this.Process.OutputDataReceived -= this.ProcessOnOutputDataReceived;
+        this.Process.ErrorDataReceived -= this.ProcessOnErrorDataReceived;
+        this.Process.Exited -= this.ProcessOnExited;
     }
 
     void ProcessOnExited(object? sender, EventArgs e)
     {
-        if (Process == null) return;
+        if (this.Process == null) return;
 
-        ExitCode = ProcessorHelper.TryGetProcessExitCode(Process, out var code) ? code : 0;
+        this.ExitCode = ProcessorHelper.TryGetProcessExitCode(this.Process, out var code) ? code : 0;
     }
 
     void ProcessOnErrorDataReceived(object sender, DataReceivedEventArgs e)
     {
         if (string.IsNullOrEmpty(e.Data)) return;
 
-        if (GameCore is GameCoreBase coreBase)
+        if (this.GameCore is GameCoreBase coreBase)
             coreBase.OnLogGameData(sender, new GameLogEventArgs
             {
                 LogType = GameLogType.Unknown,
@@ -99,19 +100,19 @@ public class LaunchWrapper(AuthResultBase authResult, LaunchSettings launchSetti
     void ProcessOnOutputDataReceived(object sender, DataReceivedEventArgs e)
     {
         if (string.IsNullOrEmpty(e.Data)) return;
-        if (GameCore.GameLogResolver == null) return;
+        if (this.GameCore.GameLogResolver == null) return;
 
-        var totalPrefix = GameCore.GameLogResolver.ResolveTotalPrefix(e.Data);
-        var type = GameCore.GameLogResolver.ResolveLogType(string.IsNullOrEmpty(totalPrefix)
+        var totalPrefix = this.GameCore.GameLogResolver.ResolveTotalPrefix(e.Data);
+        var type = this.GameCore.GameLogResolver.ResolveLogType(string.IsNullOrEmpty(totalPrefix)
             ? e.Data
             : totalPrefix);
 
         if (type is GameLogType.ExceptionMessage or GameLogType.StackTrace)
         {
-            var exceptionMsg = GameCore.GameLogResolver.ResolveExceptionMsg(e.Data);
-            var stackTrace = GameCore.GameLogResolver.ResolveStackTrace(e.Data);
+            var exceptionMsg = this.GameCore.GameLogResolver.ResolveExceptionMsg(e.Data);
+            var stackTrace = this.GameCore.GameLogResolver.ResolveStackTrace(e.Data);
 
-            if (GameCore is GameCoreBase gameCoreBase)
+            if (this.GameCore is GameCoreBase gameCoreBase)
                 gameCoreBase.OnLogGameData(sender, new GameLogEventArgs
                 {
                     LogType = type,
@@ -123,14 +124,14 @@ public class LaunchWrapper(AuthResultBase authResult, LaunchSettings launchSetti
             return;
         }
 
-        var time = GameCore.GameLogResolver.ResolveTime(totalPrefix);
-        var source = GameCore.GameLogResolver.ResolveSource(totalPrefix);
+        var time = this.GameCore.GameLogResolver.ResolveTime(totalPrefix);
+        var source = this.GameCore.GameLogResolver.ResolveSource(totalPrefix);
 
 
-        if (GameCore is GameCoreBase coreBase)
+        if (this.GameCore is GameCoreBase coreBase)
             coreBase.OnLogGameData(sender, new GameLogEventArgs
             {
-                GameId = LaunchSettings.Version,
+                GameId = this.LaunchSettings.Version,
                 LogType = type,
                 RawContent = e.Data,
                 Content = e.Data[(totalPrefix?.Length ?? 0)..],
@@ -141,17 +142,17 @@ public class LaunchWrapper(AuthResultBase authResult, LaunchSettings launchSetti
 
     void Dispose(bool disposing)
     {
-        if (!_disposedValue)
+        if (!this._disposedValue)
         {
             if (disposing)
             {
-                DisposeManaged();
-                Process?.Dispose();
+                this.DisposeManaged();
+                this.Process?.Dispose();
             }
 
             // TODO: 释放未托管的资源(未托管的对象)并重写终结器
             // TODO: 将大型字段设置为 null
-            _disposedValue = true;
+            this._disposedValue = true;
         }
     }
 }

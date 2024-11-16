@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using ProjBobcat.Class.Model;
+using ProjBobcat.Class.Model.Downloading;
 using ProjBobcat.Event;
 
 namespace ProjBobcat.DefaultComponent.Installer.ModPackInstaller;
@@ -13,17 +14,18 @@ public abstract class ModPackInstallerBase : InstallerBase
     {
         if (sender is not DownloadFile file) return;
 
-        TotalDownloaded++;
+        this.TotalDownloaded++;
 
-        var progress = (double)TotalDownloaded / NeedToDownload * 100;
+        var progress = (double)this.TotalDownloaded / this.NeedToDownload * 100;
         var retryStr = file.RetryCount > 0 ? $"[重试 - {file.RetryCount}] " : string.Empty;
         var fileName = file.FileName.Length > 20
             ? $"{file.FileName[..20]}..."
             : file.FileName;
 
-        InvokeStatusChangedEvent($"{retryStr}下载整合包中的 Mods - {fileName} ({TotalDownloaded} / {NeedToDownload})",
+        this.InvokeStatusChangedEvent(
+            $"{retryStr}下载整合包中的 Mods - {fileName} ({this.TotalDownloaded} / {this.NeedToDownload})",
             progress);
 
-        if (!(e.Success ?? false)) FailedFiles.Add(file);
+        if (!(e.Success ?? false)) this.FailedFiles.Add(file);
     }
 }

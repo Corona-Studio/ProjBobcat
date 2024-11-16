@@ -13,7 +13,7 @@ namespace ProjBobcat.Class.Model;
 public class FileInfo
 {
     [JsonIgnore] public string? Name { get; set; }
-    
+
     [JsonPropertyName("path")] public string? Path { get; init; }
 
     [JsonPropertyName("sha1")] public string? Sha1 { get; set; }
@@ -165,7 +165,7 @@ public class RawVersionModel
     public required string Id { get; set; }
 
     /// <summary>
-    /// ClientVersion（Reserved field for other third-party launchers）
+    ///     ClientVersion（Reserved field for other third-party launchers）
     /// </summary>
     [JsonPropertyName("clientVersion")]
     public string? ClientVersion { get; set; }

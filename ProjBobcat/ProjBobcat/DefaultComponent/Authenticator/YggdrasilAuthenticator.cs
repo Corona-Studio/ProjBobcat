@@ -46,31 +46,31 @@ public class YggdrasilAuthenticator : IAuthenticator
     ///     获取登录Api地址。
     /// </summary>
     string LoginAddress =>
-        $"{AuthServer}{(string.IsNullOrEmpty(AuthServer) ? OfficialAuthServer : "/authserver")}/authenticate";
+        $"{this.AuthServer}{(string.IsNullOrEmpty(this.AuthServer) ? OfficialAuthServer : "/authserver")}/authenticate";
 
     /// <summary>
     ///     获取令牌刷新Api地址。
     /// </summary>
     string RefreshAddress =>
-        $"{AuthServer}{(string.IsNullOrEmpty(AuthServer) ? OfficialAuthServer : "/authserver")}/refresh";
+        $"{this.AuthServer}{(string.IsNullOrEmpty(this.AuthServer) ? OfficialAuthServer : "/authserver")}/refresh";
 
     /// <summary>
     ///     获取令牌验证Api地址。
     /// </summary>
     string ValidateAddress =>
-        $"{AuthServer}{(string.IsNullOrEmpty(AuthServer) ? OfficialAuthServer : "/authserver")}/validate";
+        $"{this.AuthServer}{(string.IsNullOrEmpty(this.AuthServer) ? OfficialAuthServer : "/authserver")}/validate";
 
     /// <summary>
     ///     获取令牌吊销Api地址。
     /// </summary>
     string RevokeAddress =>
-        $"{AuthServer}{(string.IsNullOrEmpty(AuthServer) ? OfficialAuthServer : "/authserver")}/invalidate";
+        $"{this.AuthServer}{(string.IsNullOrEmpty(this.AuthServer) ? OfficialAuthServer : "/authserver")}/invalidate";
 
     /// <summary>
     ///     获取登出Api地址。
     /// </summary>
     string SignOutAddress =>
-        $"{AuthServer}{(string.IsNullOrEmpty(AuthServer) ? OfficialAuthServer : "/authserver")}/signout";
+        $"{this.AuthServer}{(string.IsNullOrEmpty(this.AuthServer) ? OfficialAuthServer : "/authserver")}/signout";
 
     public required ILauncherAccountParser LauncherAccountParser { get; init; }
 
@@ -81,7 +81,7 @@ public class YggdrasilAuthenticator : IAuthenticator
     /// <returns></returns>
     public AuthResultBase Auth(bool userField = false)
     {
-        return AuthTaskAsync().GetAwaiter().GetResult();
+        return this.AuthTaskAsync().GetAwaiter().GetResult();
     }
 
     /// <summary>
@@ -93,15 +93,15 @@ public class YggdrasilAuthenticator : IAuthenticator
     {
         var requestModel = new AuthRequestModel
         {
-            ClientToken = LauncherAccountParser.LauncherAccount.MojangClientToken,
+            ClientToken = this.LauncherAccountParser.LauncherAccount.MojangClientToken,
             RequestUser = userField,
-            Username = Email,
-            Password = Password
+            Username = this.Email,
+            Password = this.Password
         };
         var requestJson = JsonSerializer.Serialize(requestModel, typeof(AuthRequestModel),
             new AuthRequestModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
-        using var resultJson = await HttpHelper.Post(LoginAddress, requestJson);
+        using var resultJson = await HttpHelper.Post(this.LoginAddress, requestJson);
 
         if (!resultJson.IsSuccessStatusCode)
             return new YggdrasilAuthResult
@@ -133,7 +133,8 @@ public class YggdrasilAuthenticator : IAuthenticator
             };
         }
 
-        if (result.SelectedProfile == null && (result.AvailableProfiles == null || result.AvailableProfiles.Length == 0))
+        if (result.SelectedProfile == null &&
+            (result.AvailableProfiles == null || result.AvailableProfiles.Length == 0))
             return new YggdrasilAuthResult
             {
                 AuthStatus = AuthStatus.Failed,
@@ -145,7 +146,7 @@ public class YggdrasilAuthenticator : IAuthenticator
                 }
             };
 
-        if (string.IsNullOrEmpty(AuthServer) && result.SelectedProfile == null)
+        if (string.IsNullOrEmpty(this.AuthServer) && result.SelectedProfile == null)
             return new YggdrasilAuthResult
             {
                 AuthStatus = AuthStatus.Failed,
@@ -156,7 +157,7 @@ public class YggdrasilAuthenticator : IAuthenticator
                     Cause = "可能是因为您还没有购买正版游戏或是账户服务器出现了问题！"
                 }
             };
-        
+
         if (result.AvailableProfiles == null || result.AvailableProfiles.Length == 0)
             return new YggdrasilAuthResult
             {
@@ -172,19 +173,19 @@ public class YggdrasilAuthenticator : IAuthenticator
         var profiles =
             result.AvailableProfiles
                 .ToDictionary(profile => profile.UUID,
-                              profile => new AuthProfileModel { DisplayName = profile.Name })
+                    profile => new AuthProfileModel { DisplayName = profile.Name })
                 .AsReadOnly();
 
         foreach (var (playerUuid, authProfileModel) in profiles)
         {
-            var ids = LauncherAccountParser.LauncherAccount.Accounts!.Where(a =>
+            var ids = this.LauncherAccountParser.LauncherAccount.Accounts!.Where(a =>
                     (a.Value.MinecraftProfile?.Name?.Equals(authProfileModel.DisplayName,
                         StringComparison.OrdinalIgnoreCase) ?? false) &&
                     (a.Value.MinecraftProfile?.Id?.Equals(playerUuid.ToString(), StringComparison.OrdinalIgnoreCase) ??
                      false))
                 .Select(p => p.Value.Id);
 
-            foreach (var id in ids) LauncherAccountParser.RemoveAccount(id);
+            foreach (var id in ids) this.LauncherAccountParser.RemoveAccount(id);
         }
 
         var rUuid = GuidHelper.NewGuidString();
@@ -201,7 +202,7 @@ public class YggdrasilAuthenticator : IAuthenticator
             RemoteId = result.User?.UUID.ToString() ?? new Guid().ToString(),
             Type = "Mojang",
             UserProperites = result.User?.Properties?.ToAuthProperties(profiles).ToArray() ?? [],
-            Username = Email
+            Username = this.Email
         };
 
         if (result.SelectedProfile != null)
@@ -233,7 +234,7 @@ public class YggdrasilAuthenticator : IAuthenticator
         }
         */
 
-        if (!LauncherAccountParser.AddNewAccount(rUuid, profile, out var accountId))
+        if (!this.LauncherAccountParser.AddNewAccount(rUuid, profile, out var accountId))
             return new YggdrasilAuthResult
             {
                 AuthStatus = AuthStatus.Failed,
@@ -264,9 +265,8 @@ public class YggdrasilAuthenticator : IAuthenticator
     /// <returns>验证状态。</returns>
     public AuthResultBase GetLastAuthResult()
     {
-        var profile =
-            LauncherAccountParser.LauncherAccount.Accounts!.Values.FirstOrDefault(a =>
-                a.Username.Equals(Email, StringComparison.OrdinalIgnoreCase));
+        var profile = this.LauncherAccountParser.LauncherAccount.Accounts!.Values.FirstOrDefault(a =>
+            a.Username.Equals(this.Email, StringComparison.OrdinalIgnoreCase));
 
         if (profile is null)
             return new AuthResultBase
@@ -300,7 +300,7 @@ public class YggdrasilAuthenticator : IAuthenticator
                 ],
                 SelectedProfile = new ProfileInfoModel
                 {
-                    Name = profile.MinecraftProfile?.Name ?? Email,
+                    Name = profile.MinecraftProfile?.Name ?? this.Email,
                     UUID = new PlayerUUID()
                 }
             };
@@ -321,7 +321,7 @@ public class YggdrasilAuthenticator : IAuthenticator
             string.IsNullOrEmpty(response.ClientToken) ||
             response.SelectedProfile == null)
             throw new ArgumentException(nameof(response));
-        
+
         var requestModel = new AuthRefreshRequestModel
         {
             AccessToken = response.AccessToken,
@@ -332,7 +332,7 @@ public class YggdrasilAuthenticator : IAuthenticator
         var requestJson = JsonSerializer.Serialize(requestModel, typeof(AuthRefreshRequestModel),
             new AuthRefreshRequestModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
-        using var resultJson = await HttpHelper.Post(RefreshAddress, requestJson);
+        using var resultJson = await HttpHelper.Post(this.RefreshAddress, requestJson);
         var resultJsonElement = await resultJson.Content.ReadFromJsonAsync(JsonElementContext.Default.JsonElement);
         object? result = resultJsonElement.TryGetProperty("cause", out _)
             ? resultJsonElement.Deserialize(ErrorModelContext.Default.ErrorModel)
@@ -358,9 +358,9 @@ public class YggdrasilAuthenticator : IAuthenticator
                             ErrorMessage = "用户字段缺少了部分重要数据，请联系开发者"
                         }
                     };
-                
+
                 if (authResponse.SelectedProfile == null ||
-                    (authResponse.AvailableProfiles == null || authResponse.AvailableProfiles.Length == 0))
+                    authResponse.AvailableProfiles == null || authResponse.AvailableProfiles.Length == 0)
                     return new AuthResultBase
                     {
                         AuthStatus = AuthStatus.Failed,
@@ -380,12 +380,12 @@ public class YggdrasilAuthenticator : IAuthenticator
                         .AsReadOnly();
 
                 var uuid = authResponse.User.UUID.ToString();
-                var (_, value) = LauncherAccountParser.LauncherAccount.Accounts!.FirstOrDefault(a =>
+                var (_, value) = this.LauncherAccountParser.LauncherAccount.Accounts!.FirstOrDefault(a =>
                     (a.Value.MinecraftProfile?.Name?.Equals(authResponse.User.UserName,
                         StringComparison.OrdinalIgnoreCase) ?? false) &&
                     (a.Value.MinecraftProfile?.Id?.Equals(uuid, StringComparison.OrdinalIgnoreCase) ?? false));
 
-                if (value != default) LauncherAccountParser.RemoveAccount(value.Id);
+                if (value != default) this.LauncherAccountParser.RemoveAccount(value.Id);
 
                 var rUuid = GuidHelper.NewGuidString();
 
@@ -401,7 +401,7 @@ public class YggdrasilAuthenticator : IAuthenticator
                     RemoteId = authResponse.User?.UUID.ToString() ?? new Guid().ToString(),
                     Type = "Mojang",
                     UserProperites = authResponse.User?.Properties?.ToAuthProperties(profiles).ToArray() ?? [],
-                    Username = Email
+                    Username = this.Email
                 };
 
                 if (authResponse.SelectedProfile != null)
@@ -414,7 +414,7 @@ public class YggdrasilAuthenticator : IAuthenticator
                     };
                 }
 
-                if (!LauncherAccountParser.AddNewAccount(rUuid, profile, out var id))
+                if (!this.LauncherAccountParser.AddNewAccount(rUuid, profile, out var id))
                     return new YggdrasilAuthResult
                     {
                         AuthStatus = AuthStatus.Failed,
@@ -448,12 +448,12 @@ public class YggdrasilAuthenticator : IAuthenticator
         var requestModel = new AuthTokenRequestModel
         {
             AccessToken = accessToken,
-            ClientToken = LauncherAccountParser.LauncherAccount.MojangClientToken
+            ClientToken = this.LauncherAccountParser.LauncherAccount.MojangClientToken
         };
         var requestJson = JsonSerializer.Serialize(requestModel, typeof(AuthTokenRequestModel),
             new AuthTokenRequestModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
-        using var result = await HttpHelper.Post(ValidateAddress, requestJson);
+        using var result = await HttpHelper.Post(this.ValidateAddress, requestJson);
         return result.StatusCode.Equals(HttpStatusCode.NoContent);
     }
 
@@ -462,12 +462,12 @@ public class YggdrasilAuthenticator : IAuthenticator
         var requestModel = new AuthTokenRequestModel
         {
             AccessToken = accessToken,
-            ClientToken = LauncherAccountParser.LauncherAccount.MojangClientToken
+            ClientToken = this.LauncherAccountParser.LauncherAccount.MojangClientToken
         };
         var requestJson = JsonSerializer.Serialize(requestModel, typeof(AuthTokenRequestModel),
             new AuthTokenRequestModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
-        using var x = await HttpHelper.Post(RevokeAddress, requestJson);
+        using var x = await HttpHelper.Post(this.RevokeAddress, requestJson);
     }
 
     /// <summary>
@@ -479,13 +479,13 @@ public class YggdrasilAuthenticator : IAuthenticator
     {
         var requestModel = new SignOutRequestModel
         {
-            Username = Email,
-            Password = Password
+            Username = this.Email,
+            Password = this.Password
         };
         var requestJson = JsonSerializer.Serialize(requestModel, typeof(SignOutRequestModel),
             new SignOutRequestModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
-        using var result = await HttpHelper.Post(SignOutAddress, requestJson);
+        using var result = await HttpHelper.Post(this.SignOutAddress, requestJson);
         return result.StatusCode.Equals(HttpStatusCode.NoContent);
     }
 }

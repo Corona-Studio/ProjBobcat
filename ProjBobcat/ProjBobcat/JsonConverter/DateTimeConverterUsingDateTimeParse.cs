@@ -11,7 +11,7 @@ public class DateTimeConverterUsingDateTimeParse : JsonConverter<DateTime>
         if (typeToConvert != typeof(DateTime))
             throw new ArgumentException(
                 $"{nameof(DateTimeConverterUsingDateTimeParse)} cannot deserialize " +
-                $"an object of {typeToConvert.Name}", 
+                $"an object of {typeToConvert.Name}",
                 nameof(typeToConvert));
 
         return DateTime.Parse(reader.GetString() ?? string.Empty);

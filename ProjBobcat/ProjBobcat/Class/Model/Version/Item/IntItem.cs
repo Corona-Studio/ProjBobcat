@@ -9,28 +9,28 @@ public class IntItem : IItem
 
     public IntItem()
     {
-        _value = 0;
+        this._value = 0;
     }
 
     public IntItem(string intStr)
     {
-        _value = int.TryParse(intStr, out var outInt) ? outInt : 0;
+        this._value = int.TryParse(intStr, out var outInt) ? outInt : 0;
     }
 
     public bool IsNull()
     {
-        return _value == 0;
+        return this._value == 0;
     }
 
     public int CompareTo(object? obj)
     {
-        if (obj is not IItem item) return _value == 0 ? 0 : 1; // 1.0 == 1, 1.1 > 1
+        if (obj is not IItem item) return this._value == 0 ? 0 : 1; // 1.0 == 1, 1.1 > 1
 
         switch (item)
         {
             case IntItem intItem:
                 var itemValue = intItem._value;
-                return _value.CompareTo(itemValue);
+                return this._value.CompareTo(itemValue);
             case LongItem:
             case BigIntegerItem:
                 return -1;
@@ -48,16 +48,16 @@ public class IntItem : IItem
         if (this == obj) return true;
         if (obj is not IntItem that) return false;
 
-        return _value == that._value;
+        return this._value == that._value;
     }
 
     public override int GetHashCode()
     {
-        return _value.GetHashCode();
+        return this._value.GetHashCode();
     }
 
     public override string ToString()
     {
-        return _value.ToString();
+        return this._value.ToString();
     }
 }

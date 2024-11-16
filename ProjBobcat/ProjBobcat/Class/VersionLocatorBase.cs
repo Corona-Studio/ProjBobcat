@@ -9,7 +9,7 @@ public abstract class VersionLocatorBase(string rootPath) : LauncherParserBase(r
 {
     public ILauncherProfileParser? LauncherProfileParser { get; init; }
     public ILauncherAccountParser? LauncherAccountParser { get; init; }
-    
+
     public abstract VersionInfo? GetGame(string id);
 
     public abstract IEnumerable<VersionInfo> GetAllGames();

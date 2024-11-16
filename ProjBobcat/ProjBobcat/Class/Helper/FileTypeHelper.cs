@@ -24,9 +24,11 @@ public static class FileTypeHelper
                 await using var fs = File.OpenRead(filePath);
                 using var archive = ArchiveFactory.Open(fs);
 
-                if (archive.Entries.Any(e => e.Key?.Equals("manifest.json", StringComparison.OrdinalIgnoreCase) ?? false))
+                if (archive.Entries.Any(
+                        e => e.Key?.Equals("manifest.json", StringComparison.OrdinalIgnoreCase) ?? false))
                     return AssetFileType.CurseForgeModPack;
-                if (archive.Entries.Any(e => e.Key?.Equals("modrinth.index.json", StringComparison.OrdinalIgnoreCase) ?? false))
+                if (archive.Entries.Any(e =>
+                        e.Key?.Equals("modrinth.index.json", StringComparison.OrdinalIgnoreCase) ?? false))
                     return AssetFileType.ModrinthModPack;
                 break;
             }

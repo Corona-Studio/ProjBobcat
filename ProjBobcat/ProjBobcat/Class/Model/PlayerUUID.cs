@@ -43,44 +43,44 @@ public readonly struct PlayerUUID : IFormattable, IComparable<PlayerUUID>, IEqua
 
     public PlayerUUID(byte[] guidBytes)
     {
-        _guid = new Guid(guidBytes);
+        this._guid = new Guid(guidBytes);
     }
 
     public PlayerUUID(Guid guid)
     {
-        _guid = guid;
+        this._guid = guid;
     }
 
     public PlayerUUID(string guidString)
     {
-        _guid = new Guid(guidString);
+        this._guid = new Guid(guidString);
     }
 
     public int CompareTo(PlayerUUID other)
     {
-        return _guid.CompareTo(other._guid);
+        return this._guid.CompareTo(other._guid);
     }
 
     public override bool Equals(object? obj)
     {
         if (obj is PlayerUUID playerUuid)
-            return _guid.Equals(playerUuid._guid);
+            return this._guid.Equals(playerUuid._guid);
         return false;
     }
 
     public bool Equals(PlayerUUID other)
     {
-        return _guid.Equals(other._guid);
+        return this._guid.Equals(other._guid);
     }
 
     public override int GetHashCode()
     {
-        return _guid.GetHashCode();
+        return this._guid.GetHashCode();
     }
 
     public string ToString(string? format, IFormatProvider? formatProvider)
     {
-        return _guid.ToString(format, formatProvider);
+        return this._guid.ToString(format, formatProvider);
     }
 
     public static bool operator ==(PlayerUUID left, PlayerUUID right)
@@ -95,7 +95,7 @@ public readonly struct PlayerUUID : IFormattable, IComparable<PlayerUUID>, IEqua
 
     public Guid ToGuid()
     {
-        return _guid;
+        return this._guid;
     }
 
     public static PlayerUUID FromOfflinePlayerName(string playerName, string prefix = "OfflinePlayer:")
@@ -106,12 +106,12 @@ public readonly struct PlayerUUID : IFormattable, IComparable<PlayerUUID>, IEqua
 
     public string ToString(string format = "N")
     {
-        return _guid.ToString(format);
+        return this._guid.ToString(format);
     }
 
     public override string ToString()
     {
-        return _guid.ToString("N");
+        return this._guid.ToString("N");
     }
 
     public static PlayerUUID Random()

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using ProjBobcat.Class.Model.Downloading;
 
 namespace ProjBobcat.Class.Model;
 

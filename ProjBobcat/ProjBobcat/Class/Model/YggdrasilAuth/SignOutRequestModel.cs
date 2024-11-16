@@ -10,6 +10,4 @@ public class SignOutRequestModel
 }
 
 [JsonSerializable(typeof(SignOutRequestModel))]
-partial class SignOutRequestModelContext : JsonSerializerContext
-{
-}
+partial class SignOutRequestModelContext : JsonSerializerContext;

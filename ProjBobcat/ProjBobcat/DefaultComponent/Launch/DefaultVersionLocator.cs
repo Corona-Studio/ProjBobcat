@@ -21,8 +21,6 @@ namespace ProjBobcat.DefaultComponent.Launch;
 /// </summary>
 public sealed class DefaultVersionLocator : VersionLocatorBase
 {
-    public NativeReplacementPolicy NativeReplacementPolicy { get; init; } = NativeReplacementPolicy.LegacyOnly;
-
     readonly object _lock = new();
 
     /// <summary>
@@ -33,7 +31,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
     /// <param name="clientToken"></param>
     public DefaultVersionLocator(string rootPath, Guid clientToken) : base(rootPath)
     {
-        LauncherProfileParser ??= new DefaultLauncherProfileParser(rootPath, clientToken);
+        this.LauncherProfileParser ??= new DefaultLauncherProfileParser(rootPath, clientToken);
 
         //防止给定路径不存在的时候Parser遍历文件夹爆炸。
         //Prevents errors in the parser's folder traversal when the given path does not exist.
@@ -41,15 +39,17 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             Directory.CreateDirectory(GamePathHelper.GetVersionPath(rootPath));
     }
 
+    public NativeReplacementPolicy NativeReplacementPolicy { get; init; } = NativeReplacementPolicy.LegacyOnly;
+
     public override IEnumerable<VersionInfo> GetAllGames()
     {
         // 把每个DirectoryInfo类映射到VersionInfo类。
         // Map each DirectoryInfo dir to VersionInfo class.
-        var di = new DirectoryInfo(GamePathHelper.GetVersionPath(RootPath));
+        var di = new DirectoryInfo(GamePathHelper.GetVersionPath(this.RootPath));
 
         foreach (var dir in di.EnumerateDirectories())
         {
-            var version = ToVersion(dir.Name);
+            var version = this.ToVersion(dir.Name);
             if (version == null) continue;
             yield return version;
         }
@@ -57,7 +57,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
 
     public override VersionInfo? GetGame(string id)
     {
-        var version = ToVersion(id);
+        var version = this.ToVersion(id);
         return version;
     }
 
@@ -283,7 +283,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             {
                 if (string.IsNullOrEmpty(lib.Downloads.Artifact.Name))
                     lib.Downloads.Artifact.Name = lib.Name;
-                
+
                 if (!result.Item2.Any(l => l.Name!.Equals(lib.Name, StringComparison.OrdinalIgnoreCase)))
                     result.Item2.Add(lib.Downloads.Artifact);
             }
@@ -309,31 +309,31 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
     /// <returns></returns>
     public override RawVersionModel? ParseRawVersion(string id)
     {
-        var gamePath = Path.Combine(RootPath, GamePathHelper.GetGamePath(id));
+        var gamePath = Path.Combine(this.RootPath, GamePathHelper.GetGamePath(id));
         var possibleFiles = new List<string>
         {
-            GamePathHelper.GetGameJsonPath(RootPath, id)
+            GamePathHelper.GetGameJsonPath(this.RootPath, id)
         };
-        
+
         // 预防 I/O 的错误。
         // Prevents errors related to I/O.
         if (!Directory.Exists(gamePath))
             return null;
-        if (!File.Exists(GamePathHelper.GetGameJsonPath(RootPath, id)))
+        if (!File.Exists(GamePathHelper.GetGameJsonPath(this.RootPath, id)))
         {
             var files = Directory
                 .EnumerateFiles(gamePath, "*.json", SearchOption.TopDirectoryOnly)
                 .ToArray();
 
             if (files.Length == 0) return null;
-            
+
             possibleFiles.AddRange(files);
         }
 
         foreach (var possibleFile in possibleFiles)
         {
             if (!File.Exists(possibleFile)) continue;
-            
+
             try
             {
                 using var fs = File.OpenRead(possibleFile);
@@ -358,7 +358,6 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             }
             catch (JsonException)
             {
-                continue;
             }
         }
 
@@ -375,7 +374,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
     {
         // 反序列化。
         // Deserialize.
-        var rawVersion = ParseRawVersion(id);
+        var rawVersion = this.ParseRawVersion(id);
         if (rawVersion == null)
             return null;
 
@@ -399,7 +398,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                 {
                     inherits.Add(current);
                     first = false;
-                    current = ParseRawVersion(current.InheritsFrom);
+                    current = this.ParseRawVersion(current.InheritsFrom);
 
                     if (current == null) return null;
 
@@ -407,12 +406,12 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                     continue;
                 }
 
-                var inheritVersion = ParseRawVersion(current.InheritsFrom);
+                var inheritVersion = this.ParseRawVersion(current.InheritsFrom);
 
                 if (inheritVersion == null) return null;
 
                 inherits.Add(inheritVersion);
-                current = ParseRawVersion(current.InheritsFrom);
+                current = this.ParseRawVersion(current.InheritsFrom);
             }
         }
 
@@ -458,17 +457,17 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                 if (flag)
                 {
                     var inheritsLibs = inherits[i]!.Libraries.ToList();
-                    inheritsLibs = NativeReplaceHelper.Replace([rawVersion, ..inherits!], inheritsLibs, NativeReplacementPolicy);
-                    
-                    var rootLibs = GetNatives([.. inheritsLibs]);
+                    inheritsLibs = NativeReplaceHelper.Replace([rawVersion, ..inherits!], inheritsLibs,
+                        this.NativeReplacementPolicy);
+
+                    var rootLibs = this.GetNatives([.. inheritsLibs]);
                     result.Libraries = rootLibs.Item2;
                     result.Natives = rootLibs.Item1;
 
-                    jvmArgList.AddRange(ParseJvmArguments(inherits[i]!.Arguments?.Jvm));
+                    jvmArgList.AddRange(this.ParseJvmArguments(inherits[i]!.Arguments?.Jvm));
 
-                    var rootArgs =
-                        ParseGameArguments(
-                            (inherits[i]!.MinecraftArguments, inherits[i]!.Arguments?.Game));
+                    var rootArgs = this.ParseGameArguments(
+                        (inherits[i]!.MinecraftArguments, inherits[i]!.Arguments?.Game));
 
                     gameArgList.AddRange(rootArgs.Item1);
                     result.AvailableGameArguments = rootArgs.Item2;
@@ -477,7 +476,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                     continue;
                 }
 
-                var middleLibs = GetNatives(inherits[i]!.Libraries);
+                var middleLibs = this.GetNatives(inherits[i]!.Libraries);
 
                 // result.Libraries.AddRange(middleLibs.Item2);
 
@@ -495,7 +494,8 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
 
                         var lMaven = result.Libraries[j].Name!.ResolveMavenString()!;
 
-                        if (!lMaven.GetMavenFullName().Equals(mLMaven.GetMavenFullName(), StringComparison.OrdinalIgnoreCase))
+                        if (!lMaven.GetMavenFullName()
+                                .Equals(mLMaven.GetMavenFullName(), StringComparison.OrdinalIgnoreCase))
                             continue;
 
                         var v1 = new ComparableVersion(lMaven.Version);
@@ -523,8 +523,8 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                         .ToList();
                 result.Natives.AddRange(moreMiddleNatives);
 
-                var jvmArgs = ParseJvmArguments(inherits[i]!.Arguments?.Jvm);
-                var middleGameArgs = ParseGameArguments(
+                var jvmArgs = this.ParseJvmArguments(inherits[i]!.Arguments?.Jvm);
+                var middleGameArgs = this.ParseGameArguments(
                     (inherits[i]!.MinecraftArguments, inherits[i]!.Arguments?.Game));
 
                 if (string.IsNullOrEmpty(inherits[i]!.MinecraftArguments))
@@ -559,7 +559,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                 .SelectMany(a => a)
                 .ToFrozenSet();
 
-            ProcessProfile(result, id);
+            this.ProcessProfile(result, id);
 
             return result;
         }
@@ -579,7 +579,8 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
 
         var filteredLibs = duplicateLibs
             .Select(p => p.Value
-                .Where(lib => !lib.IsNewNativeLib() && (lib.Natives?.Count ?? 0) == 0 && lib.Downloads?.Classifiers == null)
+                .Where(lib =>
+                    !lib.IsNewNativeLib() && (lib.Natives?.Count ?? 0) == 0 && lib.Downloads?.Classifiers == null)
                 .Where(lib => lib.Rules?.CheckAllow() ?? true)
                 .ToList())
             .Where(libs => libs.Count > 1);
@@ -590,47 +591,43 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                 .OrderByDescending(l => new ComparableVersion(l.Name.ResolveMavenString()?.Version ?? "0"))
                 .ToList();
 
-            for (var i = 1; i < sortedDuplicates.Count; i++)
-            {
-                rawLibs.Remove(sortedDuplicates[i]);
-            }
+            for (var i = 1; i < sortedDuplicates.Count; i++) rawLibs.Remove(sortedDuplicates[i]);
         }
 
-        rawLibs = NativeReplaceHelper.Replace([rawVersion, .. inherits ?? []], rawLibs, NativeReplacementPolicy);
+        rawLibs = NativeReplaceHelper.Replace([rawVersion, .. inherits ?? []], rawLibs, this.NativeReplacementPolicy);
 
-        var libs = GetNatives([.. rawLibs]);
+        var libs = this.GetNatives([.. rawLibs]);
 
         result.Libraries = libs.Item2;
         result.Natives = libs.Item1;
-        result.JvmArguments = ParseJvmArguments(rawVersion.Arguments?.Jvm).ToList();
+        result.JvmArguments = this.ParseJvmArguments(rawVersion.Arguments?.Jvm).ToList();
 
-        var gameArgs =
-            ParseGameArguments((rawVersion.MinecraftArguments,
-                rawVersion.Arguments?.Game));
+        var gameArgs = this.ParseGameArguments((rawVersion.MinecraftArguments,
+            rawVersion.Arguments?.Game));
         result.GameArguments = gameArgs.Item1;
         result.AvailableGameArguments = gameArgs.Item2;
 
-        ProcessProfile(result, id);
+        this.ProcessProfile(result, id);
 
         return result;
     }
 
     void ProcessProfile(VersionInfo result, string id)
     {
-        if (LauncherProfileParser == null) return;
+        if (this.LauncherProfileParser == null) return;
 
         var gameId = id.ToGuidHash().ToString("N");
-        var gamePath = Path.Combine(RootPath, GamePathHelper.GetGamePath(id));
+        var gamePath = Path.Combine(this.RootPath, GamePathHelper.GetGamePath(id));
 
-        lock (_lock)
+        lock (this._lock)
         {
-            if (LauncherProfileParser.LauncherProfile.Profiles!.TryGetValue(gameId, out var oldProfileModel))
+            if (this.LauncherProfileParser.LauncherProfile.Profiles!.TryGetValue(gameId, out var oldProfileModel))
             {
                 result.Name = oldProfileModel.Name!;
                 oldProfileModel.GameDir = gamePath;
                 oldProfileModel.LastVersionId = id;
-                LauncherProfileParser.LauncherProfile.Profiles![gameId] = oldProfileModel;
-                LauncherProfileParser.SaveProfile();
+                this.LauncherProfileParser.LauncherProfile.Profiles![gameId] = oldProfileModel;
+                this.LauncherProfileParser.SaveProfile();
 
                 return;
             }
@@ -643,8 +640,8 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                 Created = DateTime.Now
             };
 
-            LauncherProfileParser.LauncherProfile.Profiles!.Add(gameId, gameProfile);
-            LauncherProfileParser.SaveProfile();
+            this.LauncherProfileParser.LauncherProfile.Profiles!.Add(gameId, gameProfile);
+            this.LauncherProfileParser.SaveProfile();
         }
     }
 }

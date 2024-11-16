@@ -21,7 +21,7 @@ public class RedirectHandler : DelegatingHandler
 
     public RedirectHandler(HttpMessageHandler innerHandler, int maxRetries) : base(innerHandler)
     {
-        _maxRetries = maxRetries;
+        this._maxRetries = maxRetries;
     }
 
     static async Task<HttpRequestMessage> CloneHttpRequestMessageAsync(
@@ -38,7 +38,7 @@ public class RedirectHandler : DelegatingHandler
 
             ms.Seek(0, SeekOrigin.Begin);
             clone.Content = new StreamContent(ms);
-            
+
             foreach (var h in req.Content.Headers)
                 clone.Content.Headers.Add(h.Key, h.Value);
         }
@@ -80,7 +80,7 @@ public class RedirectHandler : DelegatingHandler
         var response = await base.SendAsync(request, cancellationToken);
         var statusCode = response.StatusCode;
 
-        while (currentRedirect < _maxRetries &&
+        while (currentRedirect < this._maxRetries &&
                statusCode is
                    HttpStatusCode.MovedPermanently or
                    HttpStatusCode.Found or
@@ -88,7 +88,7 @@ public class RedirectHandler : DelegatingHandler
         {
             Debug.WriteLine($"第{currentRedirect}次重定向");
 
-            var redirectedRes = await CreateRedirectResponse(request, response, cancellationToken);
+            var redirectedRes = await this.CreateRedirectResponse(request, response, cancellationToken);
 
             try
             {

@@ -18,8 +18,8 @@ namespace ProjBobcat.DefaultComponent.Launch;
 /// </summary>
 public sealed class DefaultLauncherProfileParser : LauncherParserBase, ILauncherProfileParser
 {
-    readonly object _lock = new();
     readonly string _fullLauncherProfilePath;
+    readonly object _lock = new();
 
     /// <summary>
     ///     构造函数
@@ -28,27 +28,115 @@ public sealed class DefaultLauncherProfileParser : LauncherParserBase, ILauncher
     /// <param name="clientToken"></param>
     public DefaultLauncherProfileParser(string rootPath, Guid clientToken) : base(rootPath)
     {
-        _fullLauncherProfilePath = Path.Combine(rootPath, GamePathHelper.GetLauncherProfilePath());
-        
-        if (!File.Exists(_fullLauncherProfilePath))
+        this._fullLauncherProfilePath = Path.Combine(rootPath, GamePathHelper.GetLauncherProfilePath());
+
+        if (!File.Exists(this._fullLauncherProfilePath))
         {
-            LauncherProfile = GenerateLauncherProfile(clientToken, rootPath);
+            this.LauncherProfile = this.GenerateLauncherProfile(clientToken, rootPath);
         }
         else
         {
             var launcherProfileJson =
-                File.ReadAllText(_fullLauncherProfilePath, Encoding.UTF8);
+                File.ReadAllText(this._fullLauncherProfilePath, Encoding.UTF8);
             var result = JsonSerializer.Deserialize(launcherProfileJson,
                 LauncherProfileModelContext.Default.LauncherProfileModel);
 
             if (result == null)
             {
-                LauncherProfile = GenerateLauncherProfile(clientToken, rootPath);
+                this.LauncherProfile = this.GenerateLauncherProfile(clientToken, rootPath);
                 return;
             }
-            
-            LauncherProfile = result;
+
+            this.LauncherProfile = result;
         }
+    }
+
+    public LauncherProfileModel LauncherProfile { get; set; }
+
+    public void AddNewGameProfile(GameProfileModel gameProfile)
+    {
+        if (string.IsNullOrEmpty(gameProfile.Name)) return;
+        if (this.IsGameProfileExist(gameProfile.Name)) return;
+
+        lock (this._lock)
+        {
+            this.LauncherProfile.Profiles!.Add(gameProfile.Name, gameProfile);
+            this.SaveProfile();
+        }
+    }
+
+    public void EmptyGameProfiles()
+    {
+        lock (this._lock)
+        {
+            this.LauncherProfile.Profiles?.Clear();
+            this.SaveProfile();
+        }
+    }
+
+    public GameProfileModel GetGameProfile(string name)
+    {
+        lock (this._lock)
+        {
+            var profile = this.LauncherProfile.Profiles!.FirstOrDefault(
+                              p => p.Value.Name?.Equals(name, StringComparison.Ordinal) ?? false).Value ??
+                          throw new UnknownGameNameException(name);
+
+            profile.Resolution ??= new ResolutionModel();
+
+            return profile;
+        }
+    }
+
+    public bool IsGameProfileExist(string name)
+    {
+        lock (this._lock)
+        {
+            return this.LauncherProfile.Profiles!
+                .Any(p => p.Value.Name?.Equals(name, StringComparison.Ordinal) ?? false);
+        }
+    }
+
+    public void RemoveGameProfile(string name)
+    {
+        lock (this._lock)
+        {
+            this.LauncherProfile.Profiles!.Remove(name);
+        }
+    }
+
+    public void SaveProfile()
+    {
+        var launcherProfileJson =
+            JsonSerializer.Serialize(this.LauncherProfile, typeof(LauncherProfileModel),
+                new LauncherProfileModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
+
+        for (var i = 0; i < 3; i++)
+            try
+            {
+                File.WriteAllText(this._fullLauncherProfilePath, launcherProfileJson);
+                break;
+            }
+            catch (IOException)
+            {
+                if (i == 2) throw;
+            }
+    }
+
+    public void SelectGameProfile(string name)
+    {
+        if (!this.IsGameProfileExist(name)) throw new KeyNotFoundException();
+
+        this.LauncherProfile.SelectedUser ??= new SelectedUserModel();
+        this.LauncherProfile.SelectedUser.Profile = name;
+        this.SaveProfile();
+    }
+
+    public void SelectUser(PlayerUUID uuid)
+    {
+        this.LauncherProfile.SelectedUser ??= new SelectedUserModel();
+        this.LauncherProfile.SelectedUser.Account = uuid.ToString();
+        this.SaveProfile();
     }
 
     LauncherProfileModel GenerateLauncherProfile(
@@ -67,107 +155,17 @@ public sealed class DefaultLauncherProfileParser : LauncherParserBase, ILauncher
             SelectedUser = new SelectedUserModel()
         };
 
-        LauncherProfile = launcherProfile;
+        this.LauncherProfile = launcherProfile;
 
         var launcherProfileJson =
             JsonSerializer.Serialize(launcherProfile, typeof(LauncherProfileModel),
                 new LauncherProfileModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
-        if (!Directory.Exists(RootPath))
+        if (!Directory.Exists(this.RootPath))
             Directory.CreateDirectory(rootPath);
 
-        File.WriteAllText(_fullLauncherProfilePath, launcherProfileJson);
-        
+        File.WriteAllText(this._fullLauncherProfilePath, launcherProfileJson);
+
         return launcherProfile;
-    }
-
-    public LauncherProfileModel LauncherProfile { get; set; }
-
-    public void AddNewGameProfile(GameProfileModel gameProfile)
-    {
-        if (string.IsNullOrEmpty(gameProfile.Name)) return;
-        if (IsGameProfileExist(gameProfile.Name)) return;
-
-        lock (_lock)
-        {
-            LauncherProfile.Profiles!.Add(gameProfile.Name, gameProfile);
-            SaveProfile();
-        }
-    }
-
-    public void EmptyGameProfiles()
-    {
-        lock (_lock)
-        {
-            LauncherProfile.Profiles?.Clear();
-            SaveProfile();
-        }
-    }
-
-    public GameProfileModel GetGameProfile(string name)
-    {
-        lock (_lock)
-        {
-            var profile = LauncherProfile.Profiles!.FirstOrDefault(
-                              p => p.Value.Name?.Equals(name, StringComparison.Ordinal) ?? false).Value ??
-                          throw new UnknownGameNameException(name);
-
-            profile.Resolution ??= new ResolutionModel();
-
-            return profile;
-        }
-    }
-
-    public bool IsGameProfileExist(string name)
-    {
-        lock (_lock)
-        {
-            return LauncherProfile.Profiles!
-                .Any(p => p.Value.Name?.Equals(name, StringComparison.Ordinal) ?? false);
-        }
-    }
-
-    public void RemoveGameProfile(string name)
-    {
-        lock (_lock)
-        {
-            LauncherProfile.Profiles!.Remove(name);
-        }
-    }
-
-    public void SaveProfile()
-    {
-        var launcherProfileJson =
-            JsonSerializer.Serialize(LauncherProfile, typeof(LauncherProfileModel),
-                new LauncherProfileModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
-
-        for (var i = 0; i < 3; i++)
-        {
-            try
-            {
-                File.WriteAllText(_fullLauncherProfilePath, launcherProfileJson);
-                break;
-            }
-            catch (IOException)
-            {
-                if (i == 2) throw;
-            }
-        }
-    }
-
-    public void SelectGameProfile(string name)
-    {
-        if (!IsGameProfileExist(name)) throw new KeyNotFoundException();
-
-        LauncherProfile.SelectedUser ??= new SelectedUserModel();
-        LauncherProfile.SelectedUser.Profile = name;
-        SaveProfile();
-    }
-
-    public void SelectUser(PlayerUUID uuid)
-    {
-        LauncherProfile.SelectedUser ??= new SelectedUserModel();
-        LauncherProfile.SelectedUser.Account = uuid.ToString();
-        SaveProfile();
     }
 }

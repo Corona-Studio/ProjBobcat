@@ -16,6 +16,4 @@ public class MojangErrorResponseModel
 }
 
 [JsonSerializable(typeof(MojangErrorResponseModel))]
-partial class MojangErrorResponseModelContext : JsonSerializerContext
-{
-}
+partial class MojangErrorResponseModelContext : JsonSerializerContext;

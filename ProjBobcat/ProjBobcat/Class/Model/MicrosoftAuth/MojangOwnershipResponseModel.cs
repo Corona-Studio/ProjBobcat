@@ -19,6 +19,4 @@ public class MojangOwnershipResponseModel
 }
 
 [JsonSerializable(typeof(MojangOwnershipResponseModel))]
-partial class MojangOwnershipResponseModelContext : JsonSerializerContext
-{
-}
+partial class MojangOwnershipResponseModelContext : JsonSerializerContext;

@@ -17,6 +17,4 @@ public class AuthMojangResponseModel
 }
 
 [JsonSerializable(typeof(AuthMojangResponseModel))]
-partial class AuthMojangResponseModelContext : JsonSerializerContext
-{
-}
+partial class AuthMojangResponseModelContext : JsonSerializerContext;

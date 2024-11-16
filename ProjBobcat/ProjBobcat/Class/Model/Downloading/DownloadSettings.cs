@@ -1,11 +1,8 @@
 ﻿using System;
-using System.IO;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
-using System.Threading;
-using System.Threading.Tasks;
 
-namespace ProjBobcat.Class.Model;
+namespace ProjBobcat.Class.Model.Downloading;
 
 public enum HashType
 {
@@ -31,28 +28,27 @@ public class DownloadSettings
     public TimeSpan Timeout { get; init; }
     public int DownloadParts { get; set; }
     public HashType HashType { get; init; }
+    public bool ShowDownloadProgressForPartialDownload { get; init; }
 
     /// <summary>
-    /// 认证
+    ///     认证
     /// </summary>
     public AuthenticationHeaderValue? Authentication { get; init; }
 
     /// <summary>
-    /// 请求源
+    ///     请求源
     /// </summary>
     public string? Host { get; init; }
 
-    public async Task<byte[]> HashDataAsync(Stream stream, CancellationToken? token)
+    internal HashAlgorithm GetCryptoTransform()
     {
-        token ??= CancellationToken.None;
-        
-        return HashType switch
+        return this.HashType switch
         {
-            HashType.MD5 => await MD5.HashDataAsync(stream, token.Value),
-            HashType.SHA1 => await SHA1.HashDataAsync(stream, token.Value),
-            HashType.SHA256 => await SHA256.HashDataAsync(stream, token.Value),
-            HashType.SHA384 => await SHA384.HashDataAsync(stream, token.Value),
-            HashType.SHA512 => await SHA512.HashDataAsync(stream, token.Value),
+            HashType.MD5 => MD5.Create(),
+            HashType.SHA1 => SHA1.Create(),
+            HashType.SHA256 => SHA256.Create(),
+            HashType.SHA384 => SHA384.Create(),
+            HashType.SHA512 => SHA512.Create(),
             _ => throw new NotSupportedException()
         };
     }

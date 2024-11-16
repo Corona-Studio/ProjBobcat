@@ -21,7 +21,7 @@ public interface IResourceCompleter : IDisposable
     int DownloadParts { get; set; }
 
     /// <summary>
-    ///    最大并行下载数量
+    ///     最大并行下载数量
     /// </summary>
     int DownloadThread { get; set; }
 

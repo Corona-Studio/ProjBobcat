@@ -12,41 +12,41 @@ public class GameConfigurationManager : IEnumerable<KeyValuePair<string, string>
 
     public GameConfigurationManager()
     {
-        _configuration = [];
+        this._configuration = [];
     }
 
     public GameConfigurationManager(string path)
     {
         var content = File.ReadAllLines(path);
-        _configuration = GetConfigurationDictionary(content);
+        this._configuration = GetConfigurationDictionary(content);
     }
 
     public GameConfigurationManager(IReadOnlyCollection<string> list)
     {
-        _configuration = GetConfigurationDictionary(list);
+        this._configuration = GetConfigurationDictionary(list);
     }
 
     public string this[string key]
     {
-        get => _configuration[key];
-        set => _configuration[key] = value;
+        get => this._configuration[key];
+        set => this._configuration[key] = value;
     }
 
     public IEnumerator<KeyValuePair<string, string>> GetEnumerator()
     {
-        return _configuration.GetEnumerator();
+        return this._configuration.GetEnumerator();
     }
 
     IEnumerator IEnumerable.GetEnumerator()
     {
-        return _configuration.GetEnumerator();
+        return this._configuration.GetEnumerator();
     }
 
     public async Task SaveAsync(string path)
     {
         var sb = new StringBuilder();
 
-        foreach (var (key, value) in _configuration) sb.AppendLine($"{key}:{value}");
+        foreach (var (key, value) in this._configuration) sb.AppendLine($"{key}:{value}");
 
         await File.WriteAllTextAsync(path, sb.ToString());
     }

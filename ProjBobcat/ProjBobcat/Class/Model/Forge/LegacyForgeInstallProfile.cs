@@ -100,11 +100,7 @@ public class LegacyForgeInstallProfile
 }
 
 [JsonSerializable(typeof(VersionInfo))]
-partial class LegacyForgeInstallVersionInfoContext : JsonSerializerContext
-{
-}
+partial class LegacyForgeInstallVersionInfoContext : JsonSerializerContext;
 
 [JsonSerializable(typeof(LegacyForgeInstallProfile))]
-partial class LegacyForgeInstallProfileContext : JsonSerializerContext
-{
-}
+partial class LegacyForgeInstallProfileContext : JsonSerializerContext;

@@ -63,11 +63,11 @@ public class LaunchSettings
 
         sb
             .AppendLine()
-            .Append($"Game Name: {GameName}").AppendLine()
-            .Append($"Game Resource Path: {GameResourcePath}").AppendLine()
-            .Append($"Version: {Version}").AppendLine()
-            .Append($"Authenticator: {Authenticator?.GetType().Name ?? "-"}").AppendLine()
-            .Append($"Version Insulation: {VersionInsulation}").AppendLine()
+            .Append($"Game Name: {this.GameName}").AppendLine()
+            .Append($"Game Resource Path: {this.GameResourcePath}").AppendLine()
+            .Append($"Version: {this.Version}").AppendLine()
+            .Append($"Authenticator: {this.Authenticator?.GetType().Name ?? "-"}").AppendLine()
+            .Append($"Version Insulation: {this.VersionInsulation}").AppendLine()
             .AppendLine();
 
         return sb.ToString();

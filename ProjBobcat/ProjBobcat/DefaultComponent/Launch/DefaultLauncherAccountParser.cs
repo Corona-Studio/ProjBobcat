@@ -13,8 +13,8 @@ namespace ProjBobcat.DefaultComponent.Launch;
 
 public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccountParser
 {
-    readonly object _lock = new();
     readonly string _fullLauncherAccountPath;
+    readonly object _lock = new();
 
     /// <summary>
     ///     构造函数
@@ -23,27 +23,143 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
     /// <param name="clientToken"></param>
     public DefaultLauncherAccountParser(string rootPath, Guid clientToken) : base(rootPath)
     {
-        _fullLauncherAccountPath = Path.Combine(rootPath, GamePathHelper.GetLauncherAccountPath());
+        this._fullLauncherAccountPath = Path.Combine(rootPath, GamePathHelper.GetLauncherAccountPath());
 
-        if (!File.Exists(_fullLauncherAccountPath))
+        if (!File.Exists(this._fullLauncherAccountPath))
         {
-            LauncherAccount = GenerateLauncherAccountModel(clientToken);
+            this.LauncherAccount = this.GenerateLauncherAccountModel(clientToken);
         }
         else
         {
             var launcherProfileJson =
-                File.ReadAllText(_fullLauncherAccountPath, Encoding.UTF8);
+                File.ReadAllText(this._fullLauncherAccountPath, Encoding.UTF8);
             var val = JsonSerializer.Deserialize(launcherProfileJson,
                 LauncherAccountModelContext.Default.LauncherAccountModel);
 
             if (val == null)
             {
-                LauncherAccount = GenerateLauncherAccountModel(clientToken);
+                this.LauncherAccount = this.GenerateLauncherAccountModel(clientToken);
                 return;
             }
 
-            LauncherAccount = val;
+            this.LauncherAccount = val;
         }
+    }
+
+    public LauncherAccountModel LauncherAccount { get; set; }
+
+    public bool ActivateAccount(string uuid)
+    {
+        lock (this._lock)
+        {
+            if (!(this.LauncherAccount?.Accounts?.ContainsKey(uuid) ?? false))
+                return false;
+
+            this.LauncherAccount.ActiveAccountLocalId = uuid;
+            this.Save();
+        }
+
+        return true;
+    }
+
+    public bool AddNewAccount(string uuid, AccountModel account, out Guid? id)
+    {
+        if (this.LauncherAccount == null)
+        {
+            id = null;
+            return false;
+        }
+
+        this.LauncherAccount.Accounts ??= [];
+
+        lock (this._lock)
+        {
+            if (this.LauncherAccount.Accounts.ContainsKey(uuid))
+            {
+                id = null;
+                return false;
+            }
+        }
+
+        lock (this._lock)
+        {
+            var oldRecord = this.LauncherAccount.Accounts
+                .FirstOrDefault(a => a.Value.MinecraftProfile?.Id == account.MinecraftProfile?.Id).Value;
+            if (oldRecord != null)
+            {
+                id = oldRecord.Id;
+                return true;
+            }
+        }
+
+
+        lock (this._lock)
+        {
+            var newId = Guid.NewGuid();
+            var findResult = this.Find(account.Id);
+
+            if (findResult is { Key: not null, Value: not null })
+            {
+                newId = account.Id;
+                this.LauncherAccount.Accounts[findResult.Value.Key] = account;
+            }
+            else
+            {
+                if (account.Id == default) account.Id = newId;
+
+                this.LauncherAccount.Accounts.Add(uuid, account);
+            }
+
+            this.Save();
+            id = newId;
+        }
+
+        return true;
+    }
+
+    public KeyValuePair<string, AccountModel>? Find(Guid id)
+    {
+        lock (this._lock)
+        {
+            return this.LauncherAccount?.Accounts?.FirstOrDefault(a => a.Value.Id == id);
+        }
+    }
+
+    public bool RemoveAccount(Guid id)
+    {
+        var result = this.Find(id);
+
+        if (!result.HasValue) return false;
+
+        var (key, _) = result.Value;
+
+        if (string.IsNullOrEmpty(key)) return false;
+
+        lock (this._lock)
+        {
+            this.LauncherAccount?.Accounts?.Remove(key);
+            this.Save();
+        }
+
+        return true;
+    }
+
+    public void Save()
+    {
+        var launcherProfileJson =
+            JsonSerializer.Serialize(this.LauncherAccount, typeof(LauncherAccountModel),
+                new LauncherAccountModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
+
+        for (var i = 0; i < 3; i++)
+            try
+            {
+                File.WriteAllText(this._fullLauncherAccountPath, launcherProfileJson);
+                break;
+            }
+            catch (IOException)
+            {
+                if (i == 2) throw;
+            }
     }
 
     LauncherAccountModel GenerateLauncherAccountModel(Guid clientToken)
@@ -58,129 +174,11 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
             JsonSerializer.Serialize(launcherAccount, typeof(LauncherAccountModel),
                 new LauncherAccountModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
-        if (!Directory.Exists(RootPath))
-            Directory.CreateDirectory(RootPath);
+        if (!Directory.Exists(this.RootPath))
+            Directory.CreateDirectory(this.RootPath);
 
-        File.WriteAllText(_fullLauncherAccountPath, launcherProfileJson);
+        File.WriteAllText(this._fullLauncherAccountPath, launcherProfileJson);
 
         return launcherAccount;
-    }
-
-    public LauncherAccountModel LauncherAccount { get; set; }
-
-    public bool ActivateAccount(string uuid)
-    {
-        lock (_lock)
-        {
-            if (!(LauncherAccount?.Accounts?.ContainsKey(uuid) ?? false))
-                return false;
-
-            LauncherAccount.ActiveAccountLocalId = uuid;
-            Save();
-        }
-        
-        return true;
-    }
-
-    public bool AddNewAccount(string uuid, AccountModel account, out Guid? id)
-    {
-        if (LauncherAccount == null)
-        {
-            id = null;
-            return false;
-        }
-        
-        LauncherAccount.Accounts ??= [];
-
-        lock (_lock)
-        {
-            if (LauncherAccount.Accounts.ContainsKey(uuid))
-            {
-                id = null;
-                return false;
-            }
-        }
-
-        lock (_lock)
-        {
-            var oldRecord = LauncherAccount.Accounts
-                .FirstOrDefault(a => a.Value.MinecraftProfile?.Id == account.MinecraftProfile?.Id).Value;
-            if (oldRecord != null)
-            {
-                id = oldRecord.Id;
-                return true;
-            }
-        }
-        
-
-        lock (_lock)
-        {
-            var newId = Guid.NewGuid();
-            var findResult = Find(account.Id);
-
-            if (findResult is { Key: not null, Value: not null })
-            {
-                newId = account.Id;
-                LauncherAccount.Accounts[findResult.Value.Key] = account;
-            }
-            else
-            {
-                if (account.Id == default) account.Id = newId;
-
-                LauncherAccount.Accounts.Add(uuid, account);
-            }
-
-            Save();
-            id = newId;
-        }
-        
-        return true;
-    }
-
-    public KeyValuePair<string, AccountModel>? Find(Guid id)
-    {
-        lock (_lock)
-        {
-            return LauncherAccount?.Accounts?.FirstOrDefault(a => a.Value.Id == id);
-        }
-    }
-
-    public bool RemoveAccount(Guid id)
-    {
-        var result = Find(id);
-
-        if (!result.HasValue) return false;
-
-        var (key, _) = result.Value;
-
-        if (string.IsNullOrEmpty(key)) return false;
-
-        lock (_lock)
-        {
-            LauncherAccount?.Accounts?.Remove(key);
-            Save();
-        }
-        
-        return true;
-    }
-
-    public void Save()
-    {
-        var launcherProfileJson =
-            JsonSerializer.Serialize(LauncherAccount, typeof(LauncherAccountModel),
-                new LauncherAccountModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
-
-        for (var i = 0; i < 3; i++)
-        {
-            try
-            {
-                File.WriteAllText(_fullLauncherAccountPath, launcherProfileJson);
-                break;
-            }
-            catch (IOException)
-            {
-                if (i == 2) throw;
-            }
-        }
     }
 }

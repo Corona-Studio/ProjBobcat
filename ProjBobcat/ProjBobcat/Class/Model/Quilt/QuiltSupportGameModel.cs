@@ -10,4 +10,4 @@ public class QuiltSupportGameModel
 }
 
 [JsonSerializable(typeof(QuiltSupportGameModel[]))]
-public partial class QuiltSupportGameModelContext : JsonSerializerContext {}
+public partial class QuiltSupportGameModelContext : JsonSerializerContext;

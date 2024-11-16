@@ -2,16 +2,16 @@ using System;
 using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
+using System.Security;
 using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.System.SystemInformation;
 using Microsoft.Win32;
 using ProjBobcat.Class.Model;
-using System.IO;
-using System.Security;
 
 namespace ProjBobcat.Platforms.Windows;
 
@@ -21,6 +21,20 @@ public static class SystemInfoHelper
     static readonly PerformanceCounter? FreeMemCounter;
     static readonly PerformanceCounter? MemUsagePercentageCounter;
     static readonly PerformanceCounter? CpuCounter;
+
+    static readonly string[] LineChArr = ["\r\n", "\r", "\n"];
+    static readonly char[] SepArr = [':'];
+
+    static readonly FrozenSet<string> PossibleJavaDirs = new[]
+    {
+        "java", "jdk", "env", "环境", "run", "软件", "jre", "mc", "soft", "cache", "temp", "corretto", "roaming",
+        "users", "craft", "program", "世界", "net", "游戏", "oracle", "game", "file", "data", "jvm", "服务", "server", "客户",
+        "client", "整合", "应用", "运行", "前置", "mojang", "官启", "新建文件夹", "eclipse", "microsoft", "hotspot", "runtime", "x86",
+        "x64", "forge", "原版", "optifine", "官方", "启动", "hmcl", "mod", "高清", "download", "launch", "程序", "path",
+        "version", "baka", "pcl", "zulu", "local", "packages", "4297127d64ec6", "国服", "网易", "ext", "netease", "1.",
+        "启动",
+        "jdks"
+    }.ToFrozenSet();
 
     static SystemInfoHelper()
     {
@@ -35,7 +49,9 @@ public static class SystemInfoHelper
             MemUsagePercentageCounter.NextValue();
             CpuCounter.NextValue();
         }
-        catch (Exception) { }
+        catch (Exception)
+        {
+        }
     }
 
     /// <summary>
@@ -73,9 +89,6 @@ public static class SystemInfoHelper
 
         return SetAppxPackageInfoProperty(appxPackageInfo, values);
     }
-
-    static readonly string[] LineChArr = ["\r\n", "\r", "\n"];
-    static readonly char[] SepArr = [':'];
 
     /// <summary>
     ///     分析 PowerShell Get-AppxPackage 的输出。
@@ -155,18 +168,8 @@ public static class SystemInfoHelper
         return appxPackageInfo;
     }
 
-    static readonly FrozenSet<string> PossibleJavaDirs = new []
-    {
-        "java", "jdk", "env", "环境", "run", "软件", "jre", "mc", "soft", "cache", "temp", "corretto", "roaming",
-        "users", "craft", "program", "世界", "net", "游戏", "oracle", "game", "file", "data", "jvm", "服务", "server", "客户",
-        "client", "整合", "应用", "运行", "前置", "mojang", "官启", "新建文件夹", "eclipse", "microsoft", "hotspot", "runtime", "x86",
-        "x64", "forge", "原版", "optifine", "官方", "启动", "hmcl", "mod", "高清", "download", "launch", "程序", "path",
-        "version", "baka", "pcl", "zulu", "local", "packages", "4297127d64ec6", "国服", "网易", "ext", "netease", "1.", "启动",
-        "jdks"
-    }.ToFrozenSet();
-
     /// <summary>
-    /// 查找可能的 javaw.exe 的路径。
+    ///     查找可能的 javaw.exe 的路径。
     /// </summary>
     /// <returns>可能的 Java 路径构成的列表。</returns>
     public static IEnumerable<string> FindJavaWindows()
@@ -188,8 +191,10 @@ public static class SystemInfoHelper
             foreach (var drive in drives)
                 FindJavaBlur(drive.RootDirectory, javas);
 
-            FindJavaBlur(new DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)), javas);
-            FindJavaBlur(new DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)), javas);
+            FindJavaBlur(new DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)),
+                javas);
+            FindJavaBlur(new DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)),
+                javas);
             FindJavaBlur(new DirectoryInfo(Environment.CurrentDirectory), javas);
 
             return javas;
@@ -236,15 +241,20 @@ public static class SystemInfoHelper
                         continue;
                     }
 
-                    if (PossibleJavaDirs.Any(possibleName => dirName.Contains(possibleName, StringComparison.OrdinalIgnoreCase)))
-                    {
+                    if (PossibleJavaDirs.Any(possibleName =>
+                            dirName.Contains(possibleName, StringComparison.OrdinalIgnoreCase)))
                         stack.Push((subDi, currentDepth + 1));
-                    }
                 }
             }
-            catch(SecurityException) { }
-            catch (UnauthorizedAccessException) { }
-            catch (AccessViolationException) { }
+            catch (SecurityException)
+            {
+            }
+            catch (UnauthorizedAccessException)
+            {
+            }
+            catch (AccessViolationException)
+            {
+            }
         }
     }
 
@@ -336,7 +346,7 @@ public static class SystemInfoHelper
     }
 
     /// <summary>
-    /// 获取 Windows 系统版本，7，8.1，10，11
+    ///     获取 Windows 系统版本，7，8.1，10，11
     /// </summary>
     /// <returns></returns>
     public static string GetWindowsMajorVersion()
@@ -353,7 +363,7 @@ public static class SystemInfoHelper
     }
 
     /// <summary>
-    /// 检查某个进程是否运行在 X86 模拟下
+    ///     检查某个进程是否运行在 X86 模拟下
     /// </summary>
     /// <param name="proc"></param>
     /// <returns>待检查的进程，如果不传则检测当前进程</returns>

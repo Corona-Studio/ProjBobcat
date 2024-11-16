@@ -16,8 +16,8 @@ public abstract class ResolverBase : IResourceInfoResolver
 
     public event EventHandler<GameResourceInfoResolveEventArgs> GameResourceInfoResolveEvent
     {
-        add => listEventDelegates.AddHandler(ResolveEventKey, value);
-        remove => listEventDelegates.RemoveHandler(ResolveEventKey, value);
+        add => this.listEventDelegates.AddHandler(ResolveEventKey, value);
+        remove => this.listEventDelegates.RemoveHandler(ResolveEventKey, value);
     }
 
     public required string BasePath { get; init; }
@@ -28,19 +28,19 @@ public abstract class ResolverBase : IResourceInfoResolver
 
     public virtual IEnumerable<IGameResource> ResolveResource()
     {
-        return ResolveResourceAsync().ToListAsync().GetAwaiter().GetResult();
+        return this.ResolveResourceAsync().ToListAsync().GetAwaiter().GetResult();
     }
 
     public void Dispose()
     {
         // 不要更改此代码。请将清理代码放入“Dispose(bool disposing)”方法中
-        Dispose(true);
+        this.Dispose(true);
         GC.SuppressFinalize(this);
     }
 
     public virtual void OnResolve(string currentStatus, double progress = 0)
     {
-        var eventList = listEventDelegates;
+        var eventList = this.listEventDelegates;
         var @event = (EventHandler<GameResourceInfoResolveEventArgs>)eventList[ResolveEventKey]!;
 
         if (string.IsNullOrEmpty(currentStatus))
@@ -58,13 +58,13 @@ public abstract class ResolverBase : IResourceInfoResolver
 
     protected virtual void Dispose(bool disposing)
     {
-        if (!disposedValue)
+        if (!this.disposedValue)
         {
-            if (disposing) listEventDelegates.Dispose();
+            if (disposing) this.listEventDelegates.Dispose();
 
             // TODO: 释放未托管的资源(未托管的对象)并重写终结器
             // TODO: 将大型字段设置为 null
-            disposedValue = true;
+            this.disposedValue = true;
         }
     }
 }

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.CurseForge.API;
 
@@ -26,6 +25,4 @@ public class FeaturedQueryOptions
 }
 
 [JsonSerializable(typeof(FeaturedQueryOptions))]
-partial class FeaturedQueryOptionsContext : JsonSerializerContext
-{
-}
+partial class FeaturedQueryOptionsContext : JsonSerializerContext;

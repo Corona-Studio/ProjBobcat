@@ -4,7 +4,6 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Threading;
 using ProjBobcat.Class.Helper;
-using ProjBobcat.Class.Helper.NativeReplace;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.GameResource;
 using ProjBobcat.Interface;
@@ -23,57 +22,53 @@ public sealed class LibraryInfoResolver : ResolverBase
 
     public override async IAsyncEnumerable<IGameResource> ResolveResourceAsync()
     {
-        if (!CheckLocalFiles) yield break;
+        if (!this.CheckLocalFiles) yield break;
 
-        OnResolve("开始进行游戏资源(Library)检查");
-        if (VersionInfo.Natives.Count == 0 &&
-            VersionInfo.Libraries.Count == 0)
+        this.OnResolve("开始进行游戏资源(Library)检查");
+        if (this.VersionInfo.Natives.Count == 0 && this.VersionInfo.Libraries.Count == 0)
             yield break;
 
-        var libDi = new DirectoryInfo(Path.Combine(BasePath, GamePathHelper.GetLibraryRootPath()));
+        var libDi = new DirectoryInfo(Path.Combine(this.BasePath, GamePathHelper.GetLibraryRootPath()));
 
         if (!libDi.Exists) libDi.Create();
 
         var checkedLib = 0;
-        var libCount = VersionInfo.Libraries?.Count ?? 0;
+        var libCount = this.VersionInfo.Libraries?.Count ?? 0;
 
         if (libCount > 0)
-        {
-            foreach (var lib in VersionInfo.Libraries!)
+            foreach (var lib in this.VersionInfo.Libraries!)
             {
                 var libPath = GamePathHelper.GetLibraryPath(lib.Path!);
-                var filePath = Path.Combine(BasePath, libPath);
+                var filePath = Path.Combine(this.BasePath, libPath);
 
                 Interlocked.Increment(ref checkedLib);
                 var progress = (double)checkedLib / libCount * 100;
 
-                OnResolve(string.Empty, progress);
+                this.OnResolve(string.Empty, progress);
 
                 if (File.Exists(filePath))
                 {
                     if (string.IsNullOrEmpty(lib.Sha1)) continue;
 
                     await using var fs = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-                    var computedHash = (await SHA1.HashDataAsync(fs)).BytesToString();
+                    var computedHash = Convert.ToHexString(await SHA1.HashDataAsync(fs));
 
                     if (computedHash.Equals(lib.Sha1, StringComparison.OrdinalIgnoreCase)) continue;
                 }
 
-                yield return GetDownloadFile(lib);
+                yield return this.GetDownloadFile(lib);
             }
-        }
 
-        OnResolve("检索并验证 Library");
+        this.OnResolve("检索并验证 Library");
 
         checkedLib = 0;
-        libCount = VersionInfo.Natives?.Count ?? 0;
+        libCount = this.VersionInfo.Natives?.Count ?? 0;
 
         if (libCount > 0)
-        {
-            foreach (var native in VersionInfo.Natives!)
+            foreach (var native in this.VersionInfo.Natives!)
             {
                 var nativePath = GamePathHelper.GetLibraryPath(native.FileInfo.Path!);
-                var filePath = Path.Combine(BasePath, nativePath);
+                var filePath = Path.Combine(this.BasePath, nativePath);
 
                 if (File.Exists(filePath))
                 {
@@ -81,19 +76,18 @@ public sealed class LibraryInfoResolver : ResolverBase
 
                     Interlocked.Increment(ref checkedLib);
                     var progress = (double)checkedLib / libCount * 100;
-                    OnResolve(string.Empty, progress);
+                    this.OnResolve(string.Empty, progress);
 
                     await using var fs = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-                    var computedHash = (await SHA1.HashDataAsync(fs)).BytesToString();
+                    var computedHash = Convert.ToHexString(await SHA1.HashDataAsync(fs));
 
                     if (computedHash.Equals(native.FileInfo.Sha1, StringComparison.OrdinalIgnoreCase)) continue;
                 }
 
-                yield return GetDownloadFile(native.FileInfo);
+                yield return this.GetDownloadFile(native.FileInfo);
             }
-        }
 
-        OnResolve("检查Library完成", 100);
+        this.OnResolve("检查Library完成", 100);
     }
 
     LibraryDownloadInfo GetDownloadFile(FileInfo lL)
@@ -102,21 +96,21 @@ public sealed class LibraryInfoResolver : ResolverBase
         var uri = libType switch
         {
             LibraryType.Forge when lL.Url?.StartsWith("https://maven.minecraftforge.net",
-                StringComparison.OrdinalIgnoreCase) ?? false => $"{ForgeMavenUriRoot}{lL.Path}",
+                    StringComparison.OrdinalIgnoreCase) ?? false => $"{this.ForgeMavenUriRoot}{lL.Path}",
             LibraryType.Forge when lL.Url?.StartsWith("https://files.minecraftforge.net/maven/",
                                        StringComparison.OrdinalIgnoreCase) ??
-                                   false => $"{ForgeMavenOldUriRoot}{lL.Path}",
-            LibraryType.Forge => $"{ForgeUriRoot}{lL.Path}",
-            LibraryType.Fabric => $"{FabricMavenUriRoot}{lL.Path}",
+                                   false => $"{this.ForgeMavenOldUriRoot}{lL.Path}",
+            LibraryType.Forge => $"{this.ForgeUriRoot}{lL.Path}",
+            LibraryType.Fabric => $"{this.FabricMavenUriRoot}{lL.Path}",
             LibraryType.Quilt when !string.IsNullOrEmpty(lL.Url) =>
-                $"{QuiltMavenUriRoot}{lL.Path}",
-            LibraryType.Other => $"{LibraryUriRoot}{lL.Path}",
+                $"{this.QuiltMavenUriRoot}{lL.Path}",
+            LibraryType.Other => $"{this.LibraryUriRoot}{lL.Path}",
             _ => string.Empty
         };
 
         var symbolIndex = lL.Path!.LastIndexOf('/');
         var fileName = lL.Path[(symbolIndex + 1)..];
-        var path = Path.Combine(BasePath,
+        var path = Path.Combine(this.BasePath,
             GamePathHelper.GetLibraryPath(lL.Path[..symbolIndex]));
 
         return new LibraryDownloadInfo

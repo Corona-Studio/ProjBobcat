@@ -14,4 +14,4 @@ public class QuiltLoaderModel
 }
 
 [JsonSerializable(typeof(QuiltLoaderModel))]
-public partial class QuiltLoaderModelContext : JsonSerializerContext {}
+public partial class QuiltLoaderModelContext : JsonSerializerContext;

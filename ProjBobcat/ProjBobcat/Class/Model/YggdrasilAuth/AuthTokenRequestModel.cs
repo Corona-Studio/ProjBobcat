@@ -10,6 +10,4 @@ public class AuthTokenRequestModel
 }
 
 [JsonSerializable(typeof(AuthTokenRequestModel))]
-partial class AuthTokenRequestModelContext : JsonSerializerContext
-{
-}
+partial class AuthTokenRequestModelContext : JsonSerializerContext;

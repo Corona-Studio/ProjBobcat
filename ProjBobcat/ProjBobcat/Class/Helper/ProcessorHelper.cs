@@ -25,7 +25,7 @@ public static class ProcessorHelper
     }
 
     /// <summary>
-    /// 尝试获取进程的退出码
+    ///     尝试获取进程的退出码
     /// </summary>
     /// <param name="proc"></param>
     /// <param name="code"></param>

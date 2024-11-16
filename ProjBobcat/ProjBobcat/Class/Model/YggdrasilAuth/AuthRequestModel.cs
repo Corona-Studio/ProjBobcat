@@ -11,17 +11,13 @@ public class Agent
 
 public class AuthRequestModel
 {
-    [JsonPropertyName("username")]
-    public required string Username { get; init; }
+    [JsonPropertyName("username")] public required string Username { get; init; }
 
-    [JsonPropertyName("password")]
-    public required string Password { get; init; }
+    [JsonPropertyName("password")] public required string Password { get; init; }
 
-    [JsonPropertyName("clientToken")]
-    public required string ClientToken { get; init; }
+    [JsonPropertyName("clientToken")] public required string ClientToken { get; init; }
 
-    [JsonPropertyName("requestUser")]
-    public bool RequestUser { get; init; }
+    [JsonPropertyName("requestUser")] public bool RequestUser { get; init; }
 
     [JsonPropertyName("agent")]
     public Agent Agent { get; set; } = new()
@@ -32,6 +28,4 @@ public class AuthRequestModel
 }
 
 [JsonSerializable(typeof(AuthRequestModel))]
-partial class AuthRequestModelContext : JsonSerializerContext
-{
-}
+partial class AuthRequestModelContext : JsonSerializerContext;

@@ -19,4 +19,4 @@ public class UserProfile
 }
 
 [JsonSerializable(typeof(UserProfile))]
-public partial class UserProfileContext : JsonSerializerContext{}
+public partial class UserProfileContext : JsonSerializerContext;

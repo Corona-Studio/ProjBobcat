@@ -10,4 +10,4 @@ public class FabricLoaderArtifactModel
 }
 
 [JsonSerializable(typeof(FabricLoaderArtifactModel))]
-public partial class FabricLoaderArtifactModelContext : JsonSerializerContext {}
+public partial class FabricLoaderArtifactModelContext : JsonSerializerContext;

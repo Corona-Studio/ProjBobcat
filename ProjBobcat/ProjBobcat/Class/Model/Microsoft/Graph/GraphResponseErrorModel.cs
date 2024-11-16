@@ -22,6 +22,4 @@ public class GraphResponseErrorModel
 }
 
 [JsonSerializable(typeof(GraphResponseErrorModel))]
-partial class GraphResponseErrorModelContext : JsonSerializerContext
-{
-}
+partial class GraphResponseErrorModelContext : JsonSerializerContext;

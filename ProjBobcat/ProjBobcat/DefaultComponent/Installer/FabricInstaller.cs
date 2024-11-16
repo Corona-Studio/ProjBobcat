@@ -19,40 +19,40 @@ public class FabricInstaller : InstallerBase, IFabricInstaller
 
     public string Install()
     {
-        return InstallTaskAsync().GetAwaiter().GetResult();
+        return this.InstallTaskAsync().GetAwaiter().GetResult();
     }
 
     public async Task<string> InstallTaskAsync()
     {
-        InvokeStatusChangedEvent("开始安装", 0);
+        this.InvokeStatusChangedEvent("开始安装", 0);
 
-        if (string.IsNullOrEmpty(RootPath))
+        if (string.IsNullOrEmpty(this.RootPath))
             throw new NullReferenceException("RootPath 字段为空");
 
-        var mcVersion = LoaderArtifact.Intermediary.Version;
-        var fabricVersion = LoaderArtifact.Loader.Separator == "."
-            ? LoaderArtifact.Loader.Version
-            : LoaderArtifact.Loader.Version.Replace(LoaderArtifact.Loader.Separator ?? "+build.", ".build.");
-        var id = CustomId ?? $"{mcVersion}-fabric-{fabricVersion}";
+        var mcVersion = this.LoaderArtifact.Intermediary.Version;
+        var fabricVersion = this.LoaderArtifact.Loader.Separator == "."
+            ? this.LoaderArtifact.Loader.Version
+            : this.LoaderArtifact.Loader.Version.Replace(this.LoaderArtifact.Loader.Separator ?? "+build.", ".build.");
+        var id = this.CustomId ?? $"{mcVersion}-fabric-{fabricVersion}";
 
         var libraries = new List<Library>
         {
             new()
             {
-                Name = LoaderArtifact.Loader.Maven,
+                Name = this.LoaderArtifact.Loader.Maven,
                 Url = "https://maven.fabricmc.net/"
             },
             new()
             {
-                Name = LoaderArtifact.Intermediary.Maven,
+                Name = this.LoaderArtifact.Intermediary.Maven,
                 Url = "https://maven.fabricmc.net/"
             }
         };
 
-        libraries.AddRange(LoaderArtifact.LauncherMeta.Libraries.Common);
-        libraries.AddRange(LoaderArtifact.LauncherMeta.Libraries.Client);
+        libraries.AddRange(this.LoaderArtifact.LauncherMeta.Libraries.Common);
+        libraries.AddRange(this.LoaderArtifact.LauncherMeta.Libraries.Client);
 
-        var mainClassJObject = LoaderArtifact.LauncherMeta.MainClass;
+        var mainClassJObject = this.LoaderArtifact.LauncherMeta.MainClass;
         var mainClass = mainClassJObject.ValueKind switch
         {
             JsonValueKind.String => mainClassJObject.Deserialize(StringContext.Default.String),
@@ -66,9 +66,9 @@ public class FabricInstaller : InstallerBase, IFabricInstaller
         if (string.IsNullOrEmpty(mainClass))
             throw new NullReferenceException("MainClass 字段为空");
 
-        var inheritsFrom = string.IsNullOrEmpty(InheritsFrom) ? mcVersion : InheritsFrom;
+        var inheritsFrom = string.IsNullOrEmpty(this.InheritsFrom) ? mcVersion : this.InheritsFrom;
 
-        var installPath = Path.Combine(RootPath, GamePathHelper.GetGamePath(id));
+        var installPath = Path.Combine(this.RootPath, GamePathHelper.GetGamePath(id));
         var di = new DirectoryInfo(installPath);
 
         if (!di.Exists)
@@ -76,7 +76,7 @@ public class FabricInstaller : InstallerBase, IFabricInstaller
         else
             DirectoryHelper.CleanDirectory(di.FullName);
 
-        InvokeStatusChangedEvent("生成版本总成", 70);
+        this.InvokeStatusChangedEvent("生成版本总成", 70);
 
         var resultModel = new RawVersionModel
         {
@@ -89,15 +89,15 @@ public class FabricInstaller : InstallerBase, IFabricInstaller
             Time = DateTime.Now
         };
 
-        var jsonPath = GamePathHelper.GetGameJsonPath(RootPath, id);
+        var jsonPath = GamePathHelper.GetGameJsonPath(this.RootPath, id);
         var jsonContent = JsonSerializer.Serialize(resultModel, typeof(RawVersionModel),
             new RawVersionModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
-        InvokeStatusChangedEvent("将版本 Json 写入文件", 90);
+        this.InvokeStatusChangedEvent("将版本 Json 写入文件", 90);
 
         await File.WriteAllTextAsync(jsonPath, jsonContent);
 
-        InvokeStatusChangedEvent("安装完成", 100);
+        this.InvokeStatusChangedEvent("安装完成", 100);
 
         return id;
     }

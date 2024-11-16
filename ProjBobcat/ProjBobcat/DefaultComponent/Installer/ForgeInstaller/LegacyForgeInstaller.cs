@@ -34,22 +34,23 @@ public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
 
     public ForgeInstallResult InstallForge()
     {
-        return InstallForgeTaskAsync().GetAwaiter().GetResult();
+        return this.InstallForgeTaskAsync().GetAwaiter().GetResult();
     }
 
     public async Task<ForgeInstallResult> InstallForgeTaskAsync()
     {
         try
         {
-            InvokeStatusChangedEvent("解压安装文件", 0.05);
+            this.InvokeStatusChangedEvent("解压安装文件", 0.05);
 
-            using var reader = ArchiveFactory.Open(ForgeExecutablePath);
+            using var reader = ArchiveFactory.Open(this.ForgeExecutablePath);
             var profileEntry =
                 reader.Entries.FirstOrDefault(e =>
                     e.Key?.Equals("install_profile.json", StringComparison.Ordinal) ?? false);
             var legacyJarEntry =
                 reader.Entries.FirstOrDefault(e =>
-                    e.Key?.Equals($"forge-{ForgeVersion}-universal.jar", StringComparison.OrdinalIgnoreCase) ?? false);
+                    e.Key?.Equals($"forge-{this.ForgeVersion}-universal.jar", StringComparison.OrdinalIgnoreCase) ??
+                    false);
 
             if (profileEntry == default)
                 return new ForgeInstallResult
@@ -75,38 +76,38 @@ public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
                     Succeeded = false
                 };
 
-            InvokeStatusChangedEvent("解压完成", 0.1);
+            this.InvokeStatusChangedEvent("解压完成", 0.1);
 
             await using var stream = profileEntry.OpenEntryStream();
 
-            InvokeStatusChangedEvent("解析安装文档", 0.35);
+            this.InvokeStatusChangedEvent("解析安装文档", 0.35);
 
             var profileModel = await JsonSerializer.DeserializeAsync(stream,
                 LegacyForgeInstallProfileContext.Default.LegacyForgeInstallProfile);
             if (profileModel == null)
                 throw new ArgumentNullException(nameof(profileModel));
 
-            InvokeStatusChangedEvent("解析完成", 0.75);
+            this.InvokeStatusChangedEvent("解析完成", 0.75);
 
-            var id = string.IsNullOrEmpty(CustomId) ? profileModel.VersionInfo.Id : CustomId;
+            var id = string.IsNullOrEmpty(this.CustomId) ? profileModel.VersionInfo.Id : this.CustomId;
 
-            var installDir = Path.Combine(RootPath, GamePathHelper.GetGamePath(id));
-            var jsonPath = GamePathHelper.GetGameJsonPath(RootPath, id);
+            var installDir = Path.Combine(this.RootPath, GamePathHelper.GetGamePath(id));
+            var jsonPath = GamePathHelper.GetGameJsonPath(this.RootPath, id);
 
             var forgeDi = new DirectoryInfo(installDir);
             if (!forgeDi.Exists)
                 forgeDi.Create();
 
             profileModel.VersionInfo.Id = id;
-            if (!string.IsNullOrEmpty(InheritsFrom))
-                profileModel.VersionInfo.InheritsFrom = InheritsFrom;
+            if (!string.IsNullOrEmpty(this.InheritsFrom))
+                profileModel.VersionInfo.InheritsFrom = this.InheritsFrom;
 
             var forgeLibrary = profileModel.VersionInfo.Libraries.First(l =>
                 l.Name.StartsWith("net.minecraftforge:forge", StringComparison.OrdinalIgnoreCase));
             var mavenInfo = forgeLibrary.Name.ResolveMavenString()!;
 
             var libSubPath = GamePathHelper.GetLibraryPath(mavenInfo.Path);
-            var forgeLibPath = Path.Combine(RootPath, libSubPath);
+            var forgeLibPath = Path.Combine(this.RootPath, libSubPath);
 
             var libDi = new DirectoryInfo(Path.GetDirectoryName(forgeLibPath)!);
 
@@ -120,7 +121,7 @@ public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
                 new LegacyForgeInstallVersionInfoContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
             await File.WriteAllTextAsync(jsonPath, versionJsonString);
-            InvokeStatusChangedEvent("文件写入完成", 1);
+            this.InvokeStatusChangedEvent("文件写入完成", 1);
 
             return new ForgeInstallResult
             {

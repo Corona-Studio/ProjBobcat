@@ -14,4 +14,4 @@ public class LiteLoaderDownloadVersionModel
 }
 
 [JsonSerializable(typeof(LiteLoaderDownloadVersionModel))]
-public partial class LiteLoaderDownloadVersionModelContext : JsonSerializerContext {}
+public partial class LiteLoaderDownloadVersionModelContext : JsonSerializerContext;

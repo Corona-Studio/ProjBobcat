@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using ProjBobcat.Class.Model.Version.Item;
 
 namespace ProjBobcat.Class.Model.Version;
@@ -58,26 +57,26 @@ public class ComparableVersion : IComparable<ComparableVersion>
 
     public ComparableVersion(string version)
     {
-        ParseVersion(version);
+        this.ParseVersion(version);
     }
 
     public string Canonical
     {
-        get { return _canonical ??= _items.ToString(); }
+        get { return this._canonical ??= this._items.ToString(); }
     }
 
     public int CompareTo(ComparableVersion? other)
     {
-        return other == null ? 1 : _items.CompareTo(other._items);
+        return other == null ? 1 : this._items.CompareTo(other._items);
     }
 
     void ParseVersion(string version)
     {
-        _value = version;
-        _items.Clear();
+        this._value = version;
+        this._items.Clear();
         version = version.ToLower(CultureInfo.GetCultureInfo("en-US"));
 
-        var list = _items;
+        var list = this._items;
 
         var stack = new Stack<IItem>();
 
@@ -164,22 +163,21 @@ public class ComparableVersion : IComparable<ComparableVersion>
             <= MaxLongItemLength => new LongItem(buf),
             _ => new BigIntegerItem(buf)
         };
-
     }
 
     public override string ToString()
     {
-        return _value;
+        return this._value;
     }
 
     public override bool Equals(object? obj)
     {
-        return obj is ComparableVersion version && _items.Equals(version._items);
+        return obj is ComparableVersion version && this._items.Equals(version._items);
     }
 
     public override int GetHashCode()
     {
-        return _items.GetHashCode();
+        return this._items.GetHashCode();
     }
 
     public static bool operator >(ComparableVersion a, ComparableVersion b)

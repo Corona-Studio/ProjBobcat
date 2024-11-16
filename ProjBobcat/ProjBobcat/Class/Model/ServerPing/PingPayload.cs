@@ -17,6 +17,4 @@ public class PingPayload
 }
 
 [JsonSerializable(typeof(PingPayload))]
-partial class PingPayloadContext : JsonSerializerContext
-{
-}
+partial class PingPayloadContext : JsonSerializerContext;

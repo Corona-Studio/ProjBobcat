@@ -10,7 +10,7 @@ public class MicrosoftAuthResult : AuthResultBase
     public string? Skin { get; init; }
 
     /// <summary>
-    /// 披风
+    ///     披风
     /// </summary>
     public string? Cape { get; init; }
 

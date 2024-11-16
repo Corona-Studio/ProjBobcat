@@ -52,10 +52,10 @@ public class MicrosoftAuthenticator : IAuthenticator
     public static string MSDeviceTokenRequestUrl =>
         $"https://login.microsoftonline.com/{ApiSettings!.TenentId}/oauth2/v2.0/devicecode";
 
-    public static  string MSDeviceTokenStatusUrl =>
+    public static string MSDeviceTokenStatusUrl =>
         $"https://login.microsoftonline.com/{ApiSettings!.TenentId}/oauth2/v2.0/token";
 
-    public static  string MSRefreshTokenRequestUrl =>
+    public static string MSRefreshTokenRequestUrl =>
         $"https://login.microsoftonline.com/{ApiSettings!.TenentId}/oauth2/v2.0/token";
 
     static HttpClient DefaultClient => HttpClientHelper.DefaultClient;
@@ -66,12 +66,12 @@ public class MicrosoftAuthenticator : IAuthenticator
 
     public AuthResultBase Auth(bool userField = false)
     {
-        return AuthTaskAsync(userField).GetAwaiter().GetResult();
+        return this.AuthTaskAsync(userField).GetAwaiter().GetResult();
     }
 
     public async Task<AuthResultBase> AuthTaskAsync(bool userField = false)
     {
-        if (CacheTokenProvider == null)
+        if (this.CacheTokenProvider == null)
             return new MicrosoftAuthResult
             {
                 AuthStatus = AuthStatus.Failed,
@@ -83,7 +83,7 @@ public class MicrosoftAuthenticator : IAuthenticator
                 }
             };
 
-        var (isCredentialValid, cacheAuthResult) = await CacheTokenProvider();
+        var (isCredentialValid, cacheAuthResult) = await this.CacheTokenProvider();
 
         if (!isCredentialValid || cacheAuthResult == null)
             return new MicrosoftAuthResult
@@ -143,14 +143,14 @@ public class MicrosoftAuthenticator : IAuthenticator
             var errorMessage = errModel?.Message ?? "未知";
             if (!string.IsNullOrEmpty(errModel?.Redirect))
                 errorMessage += $"，相关链接：{errModel.Redirect}";
-            
+
             var err = new ErrorModel
             {
                 Cause = reason,
                 Error = $"XSTS 认证失败，原因：{reason}",
                 ErrorMessage = errorMessage
             };
-            
+
             return new MicrosoftAuthResult
             {
                 AuthStatus = AuthStatus.Failed,
@@ -297,7 +297,7 @@ public class MicrosoftAuthenticator : IAuthenticator
             Username = profileRes.Name
         };
 
-        if (!LauncherAccountParser.AddNewAccount(uuid, accountModel, out var id))
+        if (!this.LauncherAccountParser.AddNewAccount(uuid, accountModel, out var id))
             return new MicrosoftAuthResult
             {
                 AuthStatus = AuthStatus.Failed,
@@ -322,7 +322,7 @@ public class MicrosoftAuthenticator : IAuthenticator
         {
             var claims = JwtTokenHelper.GetTokenInfo(idToken);
             if (claims.TryGetValue("email", out var email))
-                Email = email;
+                this.Email = email;
             else
                 return new MicrosoftAuthResult
                 {
@@ -352,16 +352,16 @@ public class MicrosoftAuthenticator : IAuthenticator
                 UUID = sPUuid,
                 UserName = profileRes.Name
             },
-            Email = Email,
+            Email = this.Email,
             XBoxUid = xuid
         };
     }
 
     public AuthResultBase? GetLastAuthResult()
     {
-        var (_, value) = LauncherAccountParser.LauncherAccount.Accounts!
+        var (_, value) = this.LauncherAccountParser.LauncherAccount.Accounts!
             .FirstOrDefault(x =>
-                x.Value.Username.Equals(Email, StringComparison.OrdinalIgnoreCase) &&
+                x.Value.Username.Equals(this.Email, StringComparison.OrdinalIgnoreCase) &&
                 x.Value.Type.Equals("XBox", StringComparison.OrdinalIgnoreCase));
 
         if (value == default)
@@ -369,8 +369,8 @@ public class MicrosoftAuthenticator : IAuthenticator
 
         var sP = new ProfileInfoModel
         {
-            Name = value.MinecraftProfile?.Name ?? Email ?? string.Empty,
-            UUID = new PlayerUUID(value.MinecraftProfile?.Id ?? Email ?? string.Empty)
+            Name = value.MinecraftProfile?.Name ?? this.Email ?? string.Empty,
+            UUID = new PlayerUUID(value.MinecraftProfile?.Id ?? this.Email ?? string.Empty)
         };
 
         return new MicrosoftAuthResult

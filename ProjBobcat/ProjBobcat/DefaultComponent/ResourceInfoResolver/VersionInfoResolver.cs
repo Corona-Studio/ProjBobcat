@@ -14,10 +14,10 @@ public sealed class VersionInfoResolver : ResolverBase
 {
     public override async IAsyncEnumerable<IGameResource> ResolveResourceAsync()
     {
-        if (!CheckLocalFiles) yield break;
+        if (!this.CheckLocalFiles) yield break;
 
-        var id = VersionInfo.RootVersion ?? VersionInfo.DirName;
-        var versionJson = GamePathHelper.GetGameJsonPath(BasePath, id);
+        var id = this.VersionInfo.RootVersion ?? this.VersionInfo.DirName;
+        var versionJson = GamePathHelper.GetGameJsonPath(this.BasePath, id);
 
         if (!File.Exists(versionJson)) yield break;
 
@@ -27,20 +27,20 @@ public sealed class VersionInfoResolver : ResolverBase
         if (rawVersionModel?.Downloads?.Client == null) yield break;
 
         var clientDownload = rawVersionModel.Downloads.Client;
-        var jarPath = GamePathHelper.GetVersionJar(BasePath, id);
+        var jarPath = GamePathHelper.GetVersionJar(this.BasePath, id);
 
 
         if (File.Exists(jarPath))
         {
             if (string.IsNullOrEmpty(clientDownload.Sha1)) yield break;
-            
+
             await using var jarFs = File.Open(jarPath, FileMode.Open, FileAccess.Read, FileShare.Read);
-            var computedHash = (await SHA1.HashDataAsync(jarFs)).BytesToString();
+            var computedHash = Convert.ToHexString(await SHA1.HashDataAsync(jarFs));
 
             if (computedHash.Equals(clientDownload.Sha1, StringComparison.OrdinalIgnoreCase))
                 yield break;
         }
-        
+
         if (string.IsNullOrEmpty(clientDownload.Url))
             yield break;
 
@@ -49,7 +49,7 @@ public sealed class VersionInfoResolver : ResolverBase
             CheckSum = clientDownload.Sha1 ?? string.Empty,
             FileName = $"{id}.jar",
             FileSize = clientDownload.Size,
-            Path = Path.Combine(BasePath, GamePathHelper.GetGamePath(id)),
+            Path = Path.Combine(this.BasePath, GamePathHelper.GetGamePath(id)),
             Title = $"{id}.jar",
             Type = ResourceType.GameJar,
             Url = clientDownload.Url

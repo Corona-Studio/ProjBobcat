@@ -15,7 +15,9 @@ namespace ProjBobcat.Class.Helper;
 #region Temp Models
 
 record AddonInfoReqModel(IEnumerable<long> modIds);
+
 record FileInfoReqModel(IEnumerable<long> fileIds);
+
 record FuzzyFingerPrintReqModel(IEnumerable<long> fingerprints);
 
 [JsonSerializable(typeof(AddonInfoReqModel))]
@@ -44,7 +46,7 @@ public static class CurseForgeAPIHelper
     {
         if (string.IsNullOrEmpty(ApiKey))
             throw new NullReferenceException("未设置 API KEY，请调用 SetApiKey(string apiKey) 来进行设置。");
-        
+
         var req = new HttpRequestMessage(method, url);
 
         req.Headers.Add("x-api-key", ApiKey);
@@ -117,7 +119,7 @@ public static class CurseForgeAPIHelper
 
         using var req = Req(HttpMethod.Post, reqUrl);
         req.Content = new StringContent(data, Encoding.UTF8, "application/json");
-        
+
         using var res = await Client.SendAsync(req);
 
         res.EnsureSuccessStatusCode();
@@ -176,7 +178,8 @@ public static class CurseForgeAPIHelper
         return (await res.Content.ReadFromJsonAsync(CurseForgeModelContext.Default.DataModelString))?.Data;
     }
 
-    public static async Task<CurseForgeFuzzySearchResponseModel?> TryFuzzySearchFile(long[] fingerprint, int gameId = 432)
+    public static async Task<CurseForgeFuzzySearchResponseModel?> TryFuzzySearchFile(long[] fingerprint,
+        int gameId = 432)
     {
         var reqUrl = $"{BaseUrl}/fingerprints/{gameId}";
 

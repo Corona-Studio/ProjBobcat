@@ -14,22 +14,22 @@ public class ModrinthSearchOptions
 
     public override string ToString()
     {
-        var sb = new StringBuilder($"?query={Name ?? "any"}&index={Index}");
+        var sb = new StringBuilder($"?query={this.Name ?? "any"}&index={this.Index}");
 
         var facets = new List<string>();
 
-        if (!string.IsNullOrEmpty(Category))
-            facets.Add($"[\"categories:{Category}\"]");
-        if (!string.IsNullOrEmpty(ProjectType))
-            facets.Add($"[\"project_type:{ProjectType}\"]");
+        if (!string.IsNullOrEmpty(this.Category))
+            facets.Add($"[\"categories:{this.Category}\"]");
+        if (!string.IsNullOrEmpty(this.ProjectType))
+            facets.Add($"[\"project_type:{this.ProjectType}\"]");
 
         if (facets.Count > 0)
             sb.Append("&facets=[")
                 .AppendJoin(',', facets)
                 .Append(']');
 
-        if (Offset != null) sb.Append($"&offset={Offset}");
-        if (Limit != null) sb.Append($"&limit={Limit}");
+        if (this.Offset != null) sb.Append($"&offset={this.Offset}");
+        if (this.Limit != null) sb.Append($"&limit={this.Limit}");
 
         return sb.ToString();
     }

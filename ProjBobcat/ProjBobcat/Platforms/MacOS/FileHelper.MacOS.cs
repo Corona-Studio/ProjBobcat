@@ -23,7 +23,7 @@ public static class FileHelper
         using var process = Process.Start(info);
 
         if (process == null) return false;
-        
+
         var output = process.StandardError.ReadToEnd();
         process.WaitForExit();
 

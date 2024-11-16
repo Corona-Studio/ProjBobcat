@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ProjBobcat.Class.Model;
+namespace ProjBobcat.Class.Model.Downloading;
 
 public class DownloadCheckResult
 {

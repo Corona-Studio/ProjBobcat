@@ -1,11 +1,11 @@
-﻿using ProjBobcat.Class.Model;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
+using ProjBobcat.Class.Model;
 
 namespace ProjBobcat.Platforms.Linux;
 
@@ -13,10 +13,12 @@ namespace ProjBobcat.Platforms.Linux;
 class SystemInfoHelper
 {
     /// <summary>
-    /// Get the system overall CPU usage percentage.
+    ///     Get the system overall CPU usage percentage.
     /// </summary>
-    /// <returns>The percentange value with the '%' sign. e.g. if the usage is 30.1234 %,
-    /// then it will return 30.12.</returns>
+    /// <returns>
+    ///     The percentange value with the '%' sign. e.g. if the usage is 30.1234 %,
+    ///     then it will return 30.12.
+    /// </returns>
     public static CPUInfo GetLinuxCpuUsage()
     {
         var info = new ProcessStartInfo

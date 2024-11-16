@@ -39,54 +39,56 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
         ArgumentNullException.ThrowIfNull(launchSettings);
         ArgumentNullException.ThrowIfNull(launcherProfileParser);
 
-        _launchSettings = launchSettings;
-        _rootVersion = rootVersion;
+        this._launchSettings = launchSettings;
+        this._rootVersion = rootVersion;
 
-        AuthResult = authResult;
-        VersionLocator = versionLocator;
-        RootPath = rootPath;
-        LaunchSettings = launchSettings;
-        LauncherProfileParser = launcherProfileParser;
-        VersionInfo = LaunchSettings.VersionLocator.GetGame(LaunchSettings.Version)
-                      ?? throw new UnknownGameNameException(LaunchSettings.Version);
-        GameProfile = LauncherProfileParser.GetGameProfile(LaunchSettings.GameName);
+        this.AuthResult = authResult;
+        this.VersionLocator = versionLocator;
+        this.RootPath = rootPath;
+        this.LaunchSettings = launchSettings;
+        this.LauncherProfileParser = launcherProfileParser;
+        this.VersionInfo = this.LaunchSettings.VersionLocator.GetGame(this.LaunchSettings.Version)
+                           ?? throw new UnknownGameNameException(this.LaunchSettings.Version);
+        this.GameProfile = this.LauncherProfileParser.GetGameProfile(this.LaunchSettings.GameName);
 
         var sb = new StringBuilder();
-        foreach (var lib in VersionInfo.Libraries)
-            sb.Append($"{Path.Combine(RootPath, GamePathHelper.GetLibraryPath(lib.Path!))}{Path.PathSeparator}");
+        foreach (var lib in this.VersionInfo.Libraries)
+            sb.Append($"{Path.Combine(this.RootPath, GamePathHelper.GetLibraryPath(lib.Path!))}{Path.PathSeparator}");
 
         if (true)
         {
             var rootJarPath = string.IsNullOrEmpty(rootVersion)
                 ? GamePathHelper.GetGameExecutablePath(launchSettings.Version)
                 : GamePathHelper.GetGameExecutablePath(rootVersion);
-            var rootJarFullPath = Path.Combine(RootPath, rootJarPath);
+            var rootJarFullPath = Path.Combine(this.RootPath, rootJarPath);
 
             if (File.Exists(rootJarFullPath))
                 sb.Append(rootJarFullPath);
         }
 
-        ClassPath = sb.ToString();
-        LastAuthResult = LaunchSettings.Authenticator.GetLastAuthResult();
+        this.ClassPath = sb.ToString();
+        this.LastAuthResult = this.LaunchSettings.Authenticator.GetLastAuthResult();
     }
 
     public bool EnableXmlLoggingOutput { get; init; }
 
+    protected override string ClassPath { get; init; }
+    protected override VersionInfo VersionInfo { get; init; }
+
     public IEnumerable<string> ParseJvmHeadArguments()
     {
-        ArgumentNullException.ThrowIfNull(LaunchSettings);
+        ArgumentNullException.ThrowIfNull(this.LaunchSettings);
 
-        if (LaunchSettings.GameArguments == null &&
-            LaunchSettings.FallBackGameArguments == null)
+        if (this.LaunchSettings.GameArguments == null && this.LaunchSettings.FallBackGameArguments == null)
             throw new ArgumentNullException("重要参数为 Null!");
 
-        var gameArgs = LaunchSettings.GameArguments ?? LaunchSettings.FallBackGameArguments;
+        var gameArgs = this.LaunchSettings.GameArguments ?? this.LaunchSettings.FallBackGameArguments;
 
         if ((gameArgs!.AdditionalJvmArguments?.Count ?? 0) > 0)
             foreach (var jvmArg in gameArgs.AdditionalJvmArguments!)
                 yield return jvmArg;
 
-        if (string.IsNullOrEmpty(GameProfile?.JavaArgs))
+        if (string.IsNullOrEmpty(this.GameProfile?.JavaArgs))
         {
             if (gameArgs.MaxMemory > 0)
             {
@@ -123,7 +125,7 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
         }
         else
         {
-            yield return GameProfile.JavaArgs;
+            yield return this.GameProfile.JavaArgs;
         }
 
         /*
@@ -135,18 +137,18 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
 
     public IEnumerable<string> ParseJvmArguments()
     {
-        var versionNameFollowing = string.IsNullOrEmpty(_rootVersion) ? string.Empty : $",{_rootVersion}";
-        var versionName = $"{LaunchSettings.Version}{versionNameFollowing}".Replace(' ', '_');
+        var versionNameFollowing = string.IsNullOrEmpty(this._rootVersion) ? string.Empty : $",{this._rootVersion}";
+        var versionName = $"{this.LaunchSettings.Version}{versionNameFollowing}".Replace(' ', '_');
 
         var jvmArgumentsDic = new Dictionary<string, string>
         {
-            { "${natives_directory}", $"\"{NativeRoot}\"" },
-            { "${launcher_name}", $"\"{LaunchSettings.LauncherName}\"" },
+            { "${natives_directory}", $"\"{this.NativeRoot}\"" },
+            { "${launcher_name}", $"\"{this.LaunchSettings.LauncherName}\"" },
             { "${launcher_version}", "32" },
-            { "${classpath}", $"\"{ClassPath}\"" },
+            { "${classpath}", $"\"{this.ClassPath}\"" },
             { "${classpath_separator}", Path.PathSeparator.ToString() },
-            { "${library_directory}", $"\"{Path.Combine(RootPath, GamePathHelper.GetLibraryRootPath())}\"" },
-            { "${version_name}", versionName}
+            { "${library_directory}", $"\"{Path.Combine(this.RootPath, GamePathHelper.GetLibraryRootPath())}\"" },
+            { "${version_name}", versionName }
         };
 
         #region log4j 缓解措施
@@ -158,74 +160,74 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
         yield return "-Dfml.ignoreInvalidMinecraftCertificates=true";
         yield return "-Dfml.ignorePatchDiscrepancies=true";
 
-        if (VersionInfo.JvmArguments?.Any() ?? false)
+        if (this.VersionInfo.JvmArguments?.Any() ?? false)
         {
-            foreach (var jvmArg in VersionInfo.JvmArguments)
+            foreach (var jvmArg in this.VersionInfo.JvmArguments)
             {
                 var arg = jvmArg;
 
                 // Patch for PCL2
-                if (jvmArg?.Equals("-DFabricMcEmu= net.minecraft.client.main.Main ", StringComparison.OrdinalIgnoreCase) ?? false)
+                if (jvmArg?.Equals("-DFabricMcEmu= net.minecraft.client.main.Main ",
+                        StringComparison.OrdinalIgnoreCase) ?? false)
                     arg = "-DFabricMcEmu=net.minecraft.client.main.Main";
 
                 yield return StringHelper.ReplaceByDic(arg, jvmArgumentsDic);
             }
-                
+
             yield break;
         }
 
         const string preset = """
-            [
-                {
-                    "rules": [
-                        {
-                            "action": "allow",
-                            "os": {
-                                "name": "osx"
-                            }
-                        }
-                    ],
-                    "value": [
-                        "-XstartOnFirstThread"
-                    ]
-                },
-                {
-                    "rules": [
-                        {
-                            "action": "allow",
-                            "os": {
-                                "name": "windows"
-                            }
-                        }
-                    ],
-                    "value": "-XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump"
-                },
-                {
-                    "rules": [
-                        {
-                            "action": "allow",
-                            "os": {
-                                "name": "windows",
-                                "version": "^10\\\\."
-                            }
-                        }
-                    ],
-                    "value": [
-                        "-Dos.name=Windows 10",
-                        "-Dos.version=10.0"
-                    ]
-                },
-                "-Djava.library.path=${natives_directory}",
-                "-Dminecraft.launcher.brand=${launcher_name}",
-                "-Dminecraft.launcher.version=${launcher_version}",
-                "-cp",
-                "${classpath}"
-            ]
-            """;
+                              [
+                                  {
+                                      "rules": [
+                                          {
+                                              "action": "allow",
+                                              "os": {
+                                                  "name": "osx"
+                                              }
+                                          }
+                                      ],
+                                      "value": [
+                                          "-XstartOnFirstThread"
+                                      ]
+                                  },
+                                  {
+                                      "rules": [
+                                          {
+                                              "action": "allow",
+                                              "os": {
+                                                  "name": "windows"
+                                              }
+                                          }
+                                      ],
+                                      "value": "-XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump"
+                                  },
+                                  {
+                                      "rules": [
+                                          {
+                                              "action": "allow",
+                                              "os": {
+                                                  "name": "windows",
+                                                  "version": "^10\\\\."
+                                              }
+                                          }
+                                      ],
+                                      "value": [
+                                          "-Dos.name=Windows 10",
+                                          "-Dos.version=10.0"
+                                      ]
+                                  },
+                                  "-Djava.library.path=${natives_directory}",
+                                  "-Dminecraft.launcher.brand=${launcher_name}",
+                                  "-Dminecraft.launcher.version=${launcher_version}",
+                                  "-cp",
+                                  "${classpath}"
+                              ]
+                              """;
 
-        var preJvmArguments =
-            VersionLocator.ParseJvmArguments(JsonSerializer.Deserialize(preset,
-                JsonElementContext.Default.JsonElementArray)!);
+        var preJvmArguments = this.VersionLocator.ParseJvmArguments(JsonSerializer.Deserialize(preset,
+            JsonElementContext.Default.JsonElementArray)!);
 
         foreach (var preJvmArg in preJvmArguments)
             yield return StringHelper.ReplaceByDic(preJvmArg, jvmArgumentsDic);
@@ -238,11 +240,11 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
             authResult.SelectedProfile == null ||
             string.IsNullOrEmpty(authResult.AccessToken))
             throw new ArgumentNullException("无效的用户凭据，请检查登陆状态");
-        
-        var gameDir = _launchSettings.VersionInsulation
-            ? Path.Combine(RootPath, GamePathHelper.GetGamePath(LaunchSettings.Version))
-            : RootPath;
-        var clientIdUpper = (VersionLocator?.LauncherProfileParser?.LauncherProfile?.ClientToken ??
+
+        var gameDir = this._launchSettings.VersionInsulation
+            ? Path.Combine(this.RootPath, GamePathHelper.GetGamePath(this.LaunchSettings.Version))
+            : this.RootPath;
+        var clientIdUpper = (this.VersionLocator?.LauncherProfileParser?.LauncherProfile?.ClientToken ??
                              Guid.Empty.ToString("D"))
             .Replace("-", string.Empty).ToUpper();
         var clientIdBytes = Encoding.ASCII.GetBytes(clientIdUpper);
@@ -259,10 +261,12 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
 
         var mcArgumentsDic = new Dictionary<string, string>
         {
-            { "${version_name}", $"\"{LaunchSettings.Version}\"" },
-            { "${version_type}", $"\"{GameProfile?.Type ?? LaunchSettings.LauncherName}\"" },
-            { "${assets_root}", $"\"{AssetRoot}\"" },
-            { "${assets_index_name}", VersionInfo.AssetInfo?.Id ?? VersionInfo.Assets ?? VersionInfo.Id },
+            { "${version_name}", $"\"{this.LaunchSettings.Version}\"" },
+            { "${version_type}", $"\"{this.GameProfile?.Type ?? this.LaunchSettings.LauncherName}\"" },
+            { "${assets_root}", $"\"{this.AssetRoot}\"" },
+            {
+                "${assets_index_name}", this.VersionInfo.AssetInfo?.Id ?? this.VersionInfo.Assets ?? this.VersionInfo.Id
+            },
             { "${game_directory}", $"\"{gameDir}\"" },
             { "${auth_player_name}", authResult.SelectedProfile.Name },
             { "${auth_uuid}", authResult.SelectedProfile.UUID.ToString() },
@@ -273,32 +277,32 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
             { "${auth_xuid}", xuid }
         };
 
-        foreach (var gameArg in VersionInfo.GameArguments)
+        foreach (var gameArg in this.VersionInfo.GameArguments)
             yield return StringHelper.ReplaceByDic(gameArg, mcArgumentsDic);
     }
 
     public List<string> GenerateLaunchArguments()
     {
-        var javaPath = GameProfile?.JavaDir;
+        var javaPath = this.GameProfile?.JavaDir;
         if (string.IsNullOrEmpty(javaPath))
-            javaPath = LaunchSettings.FallBackGameArguments?.JavaExecutable ??
-                       LaunchSettings.GameArguments.JavaExecutable;
+            javaPath = this.LaunchSettings.FallBackGameArguments?.JavaExecutable ??
+                       this.LaunchSettings.GameArguments.JavaExecutable;
 
         var arguments = new List<string>
         {
             javaPath
         };
 
-        arguments.AddRange(ParseJvmHeadArguments());
-        arguments.AddRange(ParseJvmArguments());
+        arguments.AddRange(this.ParseJvmHeadArguments());
+        arguments.AddRange(this.ParseJvmArguments());
 
-        if (EnableXmlLoggingOutput)
-            arguments.AddRange(ParseGameLoggingArguments());
+        if (this.EnableXmlLoggingOutput)
+            arguments.AddRange(this.ParseGameLoggingArguments());
 
-        arguments.Add(VersionInfo.MainClass);
+        arguments.Add(this.VersionInfo.MainClass);
 
-        arguments.AddRange(ParseGameArguments(AuthResult));
-        arguments.AddRange(ParseAdditionalArguments());
+        arguments.AddRange(this.ParseGameArguments(this.AuthResult));
+        arguments.AddRange(this.ParseAdditionalArguments());
 
         for (var i = 0; i < arguments.Count; i++)
             arguments[i] = arguments[i].Trim();
@@ -312,15 +316,15 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
     /// <returns></returns>
     public IEnumerable<string> ParseGameLoggingArguments()
     {
-        if (VersionInfo.Logging?.Client == null) yield break;
-        if (string.IsNullOrEmpty(VersionInfo.Logging.Client.File?.Url)) yield break;
-        if (string.IsNullOrEmpty(VersionInfo.Logging?.Client?.Argument)) yield break;
+        if (this.VersionInfo.Logging?.Client == null) yield break;
+        if (string.IsNullOrEmpty(this.VersionInfo.Logging.Client.File?.Url)) yield break;
+        if (string.IsNullOrEmpty(this.VersionInfo.Logging?.Client?.Argument)) yield break;
 
-        var fileName = Path.GetFileName(VersionInfo.Logging.Client.File?.Url);
+        var fileName = Path.GetFileName(this.VersionInfo.Logging.Client.File?.Url);
 
         if (string.IsNullOrEmpty(fileName)) yield break;
 
-        var filePath = Path.Combine(GamePathHelper.GetLoggingPath(RootPath), fileName);
+        var filePath = Path.Combine(GamePathHelper.GetLoggingPath(this.RootPath), fileName);
 
         if (!File.Exists(filePath)) yield break;
 
@@ -329,7 +333,7 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
             { "${path}", $"\"{filePath}\"" }
         };
 
-        yield return StringHelper.ReplaceByDic(VersionInfo.Logging.Client.Argument, argumentsDic);
+        yield return StringHelper.ReplaceByDic(this.VersionInfo.Logging.Client.Argument, argumentsDic);
     }
 
     /// <summary>
@@ -338,39 +342,39 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
     /// <returns></returns>
     public IEnumerable<string> ParseAdditionalArguments()
     {
-        if ((VersionInfo.AvailableGameArguments?.Count ?? 0) == 0) yield break;
-        if (!VersionInfo.AvailableGameArguments!.ContainsKey("has_custom_resolution")) yield break;
+        if ((this.VersionInfo.AvailableGameArguments?.Count ?? 0) == 0) yield break;
+        if (!this.VersionInfo.AvailableGameArguments!.ContainsKey("has_custom_resolution")) yield break;
 
-        if (!(LaunchSettings.GameArguments.Resolution?.IsDefault() ?? true))
+        if (!(this.LaunchSettings.GameArguments.Resolution?.IsDefault() ?? true))
         {
             yield return "--width";
-            yield return LaunchSettings.GameArguments.Resolution.Width.ToString();
+            yield return this.LaunchSettings.GameArguments.Resolution.Width.ToString();
 
             yield return "--height";
-            yield return LaunchSettings.GameArguments.Resolution.Height.ToString();
+            yield return this.LaunchSettings.GameArguments.Resolution.Height.ToString();
         }
-        else if (!(LaunchSettings.FallBackGameArguments?.Resolution?.IsDefault() ?? true))
+        else if (!(this.LaunchSettings.FallBackGameArguments?.Resolution?.IsDefault() ?? true))
         {
             yield return "--width";
-            yield return LaunchSettings.FallBackGameArguments.Resolution.Width.ToString();
+            yield return this.LaunchSettings.FallBackGameArguments.Resolution.Width.ToString();
 
             yield return "--height";
-            yield return LaunchSettings.FallBackGameArguments.Resolution.Height.ToString();
+            yield return this.LaunchSettings.FallBackGameArguments.Resolution.Height.ToString();
         }
-        else if (!GameProfile!.Resolution!.IsDefault())
+        else if (!this.GameProfile!.Resolution!.IsDefault())
         {
             yield return "--width";
-            yield return GameProfile.Resolution.Width.ToString();
+            yield return this.GameProfile.Resolution.Width.ToString();
 
             yield return "--height";
-            yield return GameProfile.Resolution.Height.ToString();
+            yield return this.GameProfile.Resolution.Height.ToString();
         }
 
-        if (LaunchSettings.GameArguments.ServerSettings == null &&
-            LaunchSettings.FallBackGameArguments?.ServerSettings == null) yield break;
+        if (this.LaunchSettings.GameArguments.ServerSettings == null &&
+            this.LaunchSettings.FallBackGameArguments?.ServerSettings == null) yield break;
 
-        var serverSettings = LaunchSettings.GameArguments.ServerSettings ??
-                             LaunchSettings.FallBackGameArguments?.ServerSettings;
+        var serverSettings = this.LaunchSettings.GameArguments.ServerSettings ??
+                             this.LaunchSettings.FallBackGameArguments?.ServerSettings;
 
         if (serverSettings != null && !serverSettings.IsDefault())
         {
@@ -383,16 +387,9 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
             yield return serverSettings.Port.ToString();
         }
 
-        if (!string.IsNullOrEmpty(LaunchSettings.GameArguments.AdvanceArguments))
-        {
-            yield return LaunchSettings.GameArguments.AdvanceArguments;
-        }
-        else if (!string.IsNullOrEmpty(LaunchSettings.FallBackGameArguments?.AdvanceArguments))
-        {
-            yield return LaunchSettings.FallBackGameArguments.AdvanceArguments;
-        }
+        if (!string.IsNullOrEmpty(this.LaunchSettings.GameArguments.AdvanceArguments))
+            yield return this.LaunchSettings.GameArguments.AdvanceArguments;
+        else if (!string.IsNullOrEmpty(this.LaunchSettings.FallBackGameArguments?.AdvanceArguments))
+            yield return this.LaunchSettings.FallBackGameArguments.AdvanceArguments;
     }
-
-    protected override string ClassPath { get; init; }
-    protected override VersionInfo VersionInfo { get; init; }
 }

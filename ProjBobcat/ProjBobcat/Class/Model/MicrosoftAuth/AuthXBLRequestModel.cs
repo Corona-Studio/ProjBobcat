@@ -32,6 +32,4 @@ public class AuthXBLRequestModel
 }
 
 [JsonSerializable(typeof(AuthXBLRequestModel))]
-partial class AuthXBLRequestModelContext : JsonSerializerContext
-{
-}
+partial class AuthXBLRequestModelContext : JsonSerializerContext;

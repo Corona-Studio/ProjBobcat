@@ -2,12 +2,11 @@
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using ProjBobcat.Class.Model;
+using ProjBobcat.Class.Model.Downloading;
 using ProjBobcat.Class.Model.Modrinth;
 
 namespace ProjBobcat.Class.Helper;
@@ -146,7 +145,7 @@ public static class ModrinthAPIHelper
             ModrinthModelContext.Default.FileMatchRequestModel);
 
         using var res = await HttpHelper.Post(reqUrl, data);
-        
+
 
         if (!res.IsSuccessStatusCode) return null;
 

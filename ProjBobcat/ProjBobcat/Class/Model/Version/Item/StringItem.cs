@@ -41,19 +41,20 @@ public class StringItem : IItem
                 _ => Empty
             };
 
-        _value = Aliases.TryGetValue(str, out var outVal) ? outVal : str;
+        this._value = Aliases.TryGetValue(str, out var outVal) ? outVal : str;
     }
 
     public int CompareTo(object? obj)
     {
         if (obj is not IItem item)
             // 1-rc < 1, 1-ga > 1
-            return Compare(ComparableQualifier(_value), ReleaseVersionIndex, StringComparison.Ordinal);
+            return Compare(ComparableQualifier(this._value), ReleaseVersionIndex, StringComparison.Ordinal);
 
         return item switch
         {
             IntItem or LongItem or BigIntegerItem => -1, // 1.any < 1.1 ?
-            StringItem strItem => Compare(ComparableQualifier(_value), ComparableQualifier(strItem._value), StringComparison.Ordinal),
+            StringItem strItem => Compare(ComparableQualifier(this._value), ComparableQualifier(strItem._value),
+                StringComparison.Ordinal),
             ListItem => -1, // 1.any < 1-1
             _ => throw new ArgumentOutOfRangeException($"invalid item: {item.GetType()}")
         };
@@ -61,7 +62,7 @@ public class StringItem : IItem
 
     public bool IsNull()
     {
-        return Compare(ComparableQualifier(_value), ReleaseVersionIndex, StringComparison.Ordinal) == 0;
+        return Compare(ComparableQualifier(this._value), ReleaseVersionIndex, StringComparison.Ordinal) == 0;
     }
 
     /**
@@ -89,16 +90,16 @@ public class StringItem : IItem
         if (this == obj) return true;
         if (obj is not StringItem that) return false;
 
-        return _value == that._value;
+        return this._value == that._value;
     }
 
     public override int GetHashCode()
     {
-        return _value.GetHashCode();
+        return this._value.GetHashCode();
     }
 
     public override string ToString()
     {
-        return _value;
+        return this._value;
     }
 }

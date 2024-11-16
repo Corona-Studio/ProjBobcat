@@ -32,6 +32,4 @@ public class GameModInfoModel
 
 [JsonSerializable(typeof(GameModInfoModel))]
 [JsonSerializable(typeof(List<GameModInfoModel>))]
-partial class GameModInfoModelContext : JsonSerializerContext
-{
-}
+partial class GameModInfoModelContext : JsonSerializerContext;

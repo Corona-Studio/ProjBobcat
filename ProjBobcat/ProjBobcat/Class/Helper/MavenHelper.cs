@@ -65,7 +65,10 @@ public static partial class MavenHelper
     /// </summary>
     /// <param name="artifactId">Maven Id</param>
     /// <returns>处理好的Group Path</returns>
-    public static string GetGroupPath(this string artifactId) => GroupPathRegex().Replace(artifactId, "/");
+    public static string GetGroupPath(this string artifactId)
+    {
+        return GroupPathRegex().Replace(artifactId, "/");
+    }
 
     /// <summary>
     ///     获取Maven全名

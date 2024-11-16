@@ -17,7 +17,7 @@ public class RetryHandler : DelegatingHandler
 
     public RetryHandler(HttpMessageHandler innerHandler, int maxRetries) : base(innerHandler)
     {
-        _maxRetries = maxRetries;
+        this._maxRetries = maxRetries;
     }
 
     protected override async Task<HttpResponseMessage> SendAsync(
@@ -26,7 +26,7 @@ public class RetryHandler : DelegatingHandler
     {
         HttpResponseMessage? response = null;
 
-        for (var i = 0; i < _maxRetries; i++)
+        for (var i = 0; i < this._maxRetries; i++)
         {
             try
             {

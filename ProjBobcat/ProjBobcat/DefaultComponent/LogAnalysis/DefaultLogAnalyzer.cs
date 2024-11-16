@@ -11,27 +11,6 @@ namespace ProjBobcat.DefaultComponent.LogAnalysis;
 
 public partial class DefaultLogAnalyzer : ILogAnalyzer
 {
-    [GeneratedRegex(@"(?<=\]: Warnings were found! ?[\n]+)[\w\W]+?(?=[\n]+\[)")]
-    private static partial Regex WarningsMatch();
-    
-    [GeneratedRegex("(?<=Failed to create mod instance. ModID: )[^,]+")]
-    private static partial Regex ModInstanceMatch1();
-    
-    [GeneratedRegex(@"(?<=Failed to create mod instance. ModId )[^\n]+(?= for )")]
-    private static partial Regex ModInstanceMatch2();
-    
-    [GeneratedRegex(@"(?<=\tBlock: Block\{)[^\}]+")]
-    private static partial Regex BlockMatch();
-    
-    [GeneratedRegex(@"(?<=\tBlock location: World: )\([^\)]+\)")]
-    private static partial Regex BlockLocationMatch();
-    
-    [GeneratedRegex(@"(?<=\tEntity Type: )[^\n]+(?= \()")]
-    private static partial Regex EntityMatch();
-    
-    [GeneratedRegex(@"(?<=\tEntity's Exact location: )[^\n]+")]
-    private static partial Regex EntityLocationMatch();
-
     /// <summary>
     ///     日志文件最后写入时间限制（分钟）
     /// </summary>
@@ -44,14 +23,14 @@ public partial class DefaultLogAnalyzer : ILogAnalyzer
 
     public IEnumerable<IAnalysisReport> GenerateReport()
     {
-        if (string.IsNullOrEmpty(RootPath))
+        if (string.IsNullOrEmpty(this.RootPath))
             throw new NullReferenceException("未提供 RootPath 参数");
-        if (string.IsNullOrEmpty(GameId))
+        if (string.IsNullOrEmpty(this.GameId))
             throw new NullReferenceException("未提供 GameId 参数");
 
         var logs = new Dictionary<LogFileType, List<(string, string)>>();
 
-        foreach (var (logFileType, lines) in GetAllLogs())
+        foreach (var (logFileType, lines) in this.GetAllLogs())
         {
             if (!logs.ContainsKey(logFileType))
                 logs[logFileType] = [];
@@ -77,6 +56,27 @@ public partial class DefaultLogAnalyzer : ILogAnalyzer
         foreach (var report in AnalysisLogs2(logs))
             yield return report;
     }
+
+    [GeneratedRegex(@"(?<=\]: Warnings were found! ?[\n]+)[\w\W]+?(?=[\n]+\[)")]
+    private static partial Regex WarningsMatch();
+
+    [GeneratedRegex("(?<=Failed to create mod instance. ModID: )[^,]+")]
+    private static partial Regex ModInstanceMatch1();
+
+    [GeneratedRegex(@"(?<=Failed to create mod instance. ModId )[^\n]+(?= for )")]
+    private static partial Regex ModInstanceMatch2();
+
+    [GeneratedRegex(@"(?<=\tBlock: Block\{)[^\}]+")]
+    private static partial Regex BlockMatch();
+
+    [GeneratedRegex(@"(?<=\tBlock location: World: )\([^\)]+\)")]
+    private static partial Regex BlockLocationMatch();
+
+    [GeneratedRegex(@"(?<=\tEntity Type: )[^\n]+(?= \()")]
+    private static partial Regex EntityMatch();
+
+    [GeneratedRegex(@"(?<=\tEntity's Exact location: )[^\n]+")]
+    private static partial Regex EntityLocationMatch();
 
     static LogFileType GetLogFileType(FileSystemInfo fi)
     {
@@ -104,32 +104,35 @@ public partial class DefaultLogAnalyzer : ILogAnalyzer
 
     IEnumerable<(LogFileType, (string, string))> GetAllLogs()
     {
-        if (string.IsNullOrEmpty(RootPath))
+        if (string.IsNullOrEmpty(this.RootPath))
             throw new NullReferenceException("未提供 RootPath 参数");
-        if (string.IsNullOrEmpty(GameId))
+        if (string.IsNullOrEmpty(this.GameId))
             throw new NullReferenceException("未提供 GameId 参数");
 
         var logFiles = new List<FileInfo>();
-        var fullRootPath = Path.GetFullPath(RootPath);
-        var versionPath = Path.Combine(fullRootPath, GamePathHelper.GetGamePath(GameId));
+        var fullRootPath = Path.GetFullPath(this.RootPath);
+        var versionPath = Path.Combine(fullRootPath, GamePathHelper.GetGamePath(this.GameId));
 
-        var crashReportDi = new DirectoryInfo(Path.Combine(VersionIsolation ? versionPath : RootPath, "crash-reports"));
+        var crashReportDi =
+            new DirectoryInfo(Path.Combine(this.VersionIsolation ? versionPath : this.RootPath, "crash-reports"));
         if (crashReportDi.Exists)
             logFiles.AddRange(crashReportDi.GetFiles().Where(fi => fi.Extension is ".log" or ".txt"));
 
-        var versionDi = new DirectoryInfo(VersionIsolation ? RootPath : versionPath);
+        var versionDi = new DirectoryInfo(this.VersionIsolation ? this.RootPath : versionPath);
         if (versionDi.Exists)
             logFiles.AddRange(versionDi.GetFiles().Where(fi => fi.Extension == ".log"));
 
-        logFiles.Add(new FileInfo(Path.Combine(VersionIsolation ? versionPath : RootPath, "logs", "latest.log")));
-        logFiles.Add(new FileInfo(Path.Combine(VersionIsolation ? versionPath : RootPath, "logs", "debug.log")));
+        logFiles.Add(new FileInfo(Path.Combine(this.VersionIsolation ? versionPath : this.RootPath, "logs",
+            "latest.log")));
+        logFiles.Add(
+            new FileInfo(Path.Combine(this.VersionIsolation ? versionPath : this.RootPath, "logs", "debug.log")));
 
-        if (CustomLogFiles is { Count: > 0 })
-            logFiles.AddRange(CustomLogFiles.Select(custom => new FileInfo(custom)));
+        if (this.CustomLogFiles is { Count: > 0 })
+            logFiles.AddRange(this.CustomLogFiles.Select(custom => new FileInfo(custom)));
 
         foreach (var log in logFiles)
         {
-            if (!IsValidLogFile(log, LogFileLastWriteTimeLimit)) continue;
+            if (!IsValidLogFile(log, this.LogFileLastWriteTimeLimit)) continue;
 
             var logType = GetLogFileType(log);
 
@@ -284,40 +287,40 @@ public partial class DefaultLogAnalyzer : ILogAnalyzer
             CrashCauses.IncompatibleForgeAndOptifine
         }
     };
-    
+
     [GeneratedRegex("(?<=class \")[^']+(?=\"'s signer information)")]
     private static partial Regex PackSignerMatch();
-    
+
     [GeneratedRegex(@"(?<=the game will display an error screen and halt[\s\S]+?Exception: )[\s\S]+?(?=\n\tat)")]
     private static partial Regex ForgeErrorMatch();
-    
+
     [GeneratedRegex(@"(?<=A potential solution has been determined:\n)((\t)+ - [^\n]+\n)+")]
     private static partial Regex FabricSolutionMatch();
-    
+
     [GeneratedRegex(@"(?<=\n\t[\w]+ : [A-Z]{1}:[^\n]+(/|\\))[^/\\\n]+?.jar", RegexOptions.IgnoreCase)]
     private static partial Regex GameModMatch1();
-    
+
     [GeneratedRegex(@"Found a duplicate mod[^\n]+", RegexOptions.IgnoreCase)]
     private static partial Regex GameModMatch2();
-    
+
     [GeneratedRegex(@"ModResolutionException: Duplicate[^\n]+", RegexOptions.IgnoreCase)]
     private static partial Regex GameModMatch3();
-    
+
     [GeneratedRegex("(?<=in )[^./ ]+(?=.mixins.json.+failed injection check)")]
     private static partial Regex ModIdMatch1();
-    
+
     [GeneratedRegex("(?<= failed .+ in )[^./ ]+(?=.mixins.json)")]
     private static partial Regex ModIdMatch2();
-    
+
     [GeneratedRegex(@"(?<= in config \[)[^./ ]+(?=.mixins.json\] FAILED during )")]
     private static partial Regex ModIdMatch3();
-    
+
     [GeneratedRegex("(?<= in callback )[^./ ]+(?=.mixins.json:)")]
     private static partial Regex ModIdMatch4();
-    
+
     [GeneratedRegex(@"^[^\n.]+.\w+.[^\n]+\n\[$")]
     private static partial Regex MainClassMatch1();
-    
+
     [GeneratedRegex(@"^\[[^\]]+\] [^\n.]+.\w+.[^\n]+\n\[")]
     private static partial Regex MainClassMatch2();
 
@@ -446,25 +449,25 @@ public partial class DefaultLogAnalyzer : ILogAnalyzer
         { "Pixel format not accelerated", CrashCauses.UnableToSetPixelFormat },
         { "Manually triggered debug crash", CrashCauses.ManuallyTriggeredDebugCrash }
     };
-    
+
     [GeneratedRegex("(?<=Mod File: ).+")]
     private static partial Regex ModFileMatch();
-    
+
     [GeneratedRegex(@"(?<=Failure message: )[\w\W]+?(?=\tMod)")]
     private static partial Regex ModLoaderMatch();
-    
+
     [GeneratedRegex("(?<=Multiple entries with same key: )[^=]+")]
     private static partial Regex MultipleEntriesMatch();
-    
+
     [GeneratedRegex("(?<=due to errors, provided by ')[^']+")]
     private static partial Regex ProvidedByMatch();
-    
+
     [GeneratedRegex(@"(?<=LoaderExceptionModCrash: Caught exception from )[^\n]+")]
     private static partial Regex ModCausedCrashMatch();
-    
+
     [GeneratedRegex(@"(?<=Failed loading config file .+ for modid )[^\n]+")]
     private static partial Regex ConfigFileMatch1();
-    
+
     [GeneratedRegex("(?<=Failed loading config file ).+(?= of type)")]
     private static partial Regex ConfigFileMatch2();
 

@@ -14,14 +14,14 @@ public class OperatingSystemRules
 
     public bool IsAllow()
     {
-        if (!string.IsNullOrEmpty(Name) &&
-            !Name.Equals(Constants.OsSymbol, StringComparison.OrdinalIgnoreCase)) return false;
-        
-        if (!string.IsNullOrEmpty(Arch) && Arch != SystemInfoHelper.GetSystemArch()) return false;
-        
+        if (!string.IsNullOrEmpty(this.Name) &&
+            !this.Name.Equals(Constants.OsSymbol, StringComparison.OrdinalIgnoreCase)) return false;
+
+        if (!string.IsNullOrEmpty(this.Arch) && this.Arch != SystemInfoHelper.GetSystemArch()) return false;
+
         if (OperatingSystem.IsWindows())
-            if (!string.IsNullOrEmpty(Version) &&
-                Version != $"^{Platforms.Windows.SystemInfoHelper.GetWindowsMajorVersion()}\\.")
+            if (!string.IsNullOrEmpty(this.Version) &&
+                this.Version != $"^{Platforms.Windows.SystemInfoHelper.GetWindowsMajorVersion()}\\.")
                 return false;
 
         return true;
