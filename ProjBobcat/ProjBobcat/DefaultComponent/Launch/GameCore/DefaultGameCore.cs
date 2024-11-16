@@ -109,6 +109,7 @@ public sealed class DefaultGameCore : GameCoreBase
                 return new LaunchResult
                 {
                     LaunchSettings = settings,
+                    ErrorType = LaunchErrorType.AuthFailed,
                     Error = new ErrorModel
                     {
                         Error = "验证失败",
@@ -128,6 +129,7 @@ public sealed class DefaultGameCore : GameCoreBase
                 return new LaunchResult
                 {
                     LaunchSettings = settings,
+                    ErrorType = LaunchErrorType.OperationFailed,
                     Error = new ErrorModel
                     {
                         Error = "验证失败",
