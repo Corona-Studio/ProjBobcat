@@ -188,8 +188,7 @@ public class YggdrasilAuthenticator : IAuthenticator
             foreach (var id in ids) this.LauncherAccountParser.RemoveAccount(id);
         }
 
-        var rUuid = GuidHelper.NewGuidString();
-
+        var rUuid = Guid.NewGuid().ToString("N");
         var profile = new AccountModel
         {
             AccessToken = result.AccessToken,
@@ -387,8 +386,7 @@ public class YggdrasilAuthenticator : IAuthenticator
 
                 if (value != default) this.LauncherAccountParser.RemoveAccount(value.Id);
 
-                var rUuid = GuidHelper.NewGuidString();
-
+                var rUuid = Guid.NewGuid().ToString("N");
                 var profile = new AccountModel
                 {
                     AccessToken = authResponse.AccessToken,

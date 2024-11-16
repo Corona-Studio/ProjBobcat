@@ -42,11 +42,11 @@ public class OfflineAuthenticator : IAuthenticator
 
         var uuid = PlayerUUID.FromOfflinePlayerName(this.Username);
 
-        var localUuid = GuidHelper.NewGuidString();
+        var localUuid = Guid.NewGuid().ToString("N");
         var accountModel = new AccountModel
         {
             Id = uuid.ToGuid(),
-            AccessToken = GuidHelper.NewGuidString(),
+            AccessToken = Guid.NewGuid().ToString("N"),
             AccessTokenExpiresAt = DateTime.Now,
             EligibleForMigration = false,
             HasMultipleProfiles = false,
@@ -58,7 +58,7 @@ public class OfflineAuthenticator : IAuthenticator
                 Name = this.Username
             },
             Persistent = true,
-            RemoteId = GuidHelper.NewGuidString(),
+            RemoteId = Guid.NewGuid().ToString("N"),
             Type = "Mojang",
             UserProperites = [authProperty],
             Username = this.Username
@@ -79,7 +79,7 @@ public class OfflineAuthenticator : IAuthenticator
         var result = new AuthResultBase
         {
             Id = id ?? Guid.Empty,
-            AccessToken = GuidHelper.NewGuidString(),
+            AccessToken = Guid.NewGuid().ToString("N"),
             AuthStatus = AuthStatus.Succeeded,
             SelectedProfile = new ProfileInfoModel
             {
