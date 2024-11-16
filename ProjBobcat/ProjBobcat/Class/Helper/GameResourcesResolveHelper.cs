@@ -30,20 +30,20 @@ public static class GameResourcesResolveHelper
 
         for (var i = 0; i < jsonSplit.Length; i++)
         {
-            if (jsonSplit[i].Trim().EndsWith("{") || jsonSplit[i].Trim() == "\n" ||
+            if (jsonSplit[i].Trim().EndsWith('{') || jsonSplit[i].Trim() == "\n" ||
                 string.IsNullOrWhiteSpace(jsonSplit[i].Trim()))
                 continue;
 
             if (startIndex == 0)
-                if ((!jsonSplit[i].Trim().EndsWith("\"") && !jsonSplit[i].Trim().EndsWith(",")) ||
-                    jsonSplit[i].Replace(" ", "").EndsWith(":\""))
+                if ((!jsonSplit[i].Trim().EndsWith('\"') && !jsonSplit[i].Trim().EndsWith(',')) ||
+                    jsonSplit[i].Replace(" ", string.Empty).EndsWith(":\""))
                 {
                     startIndex = i;
                     continue;
                 }
 
             if (startIndex == 0) continue;
-            if ((!jsonSplit[i].Trim().StartsWith("\"") || !jsonSplit[i + 1].Trim().StartsWith("}")) &&
+            if ((!jsonSplit[i].Trim().StartsWith('\"') || !jsonSplit[i + 1].Trim().StartsWith('}')) &&
                 !jsonSplit[i].Trim().StartsWith("\",") && !jsonSplit[i].Trim().EndsWith("\",")) continue;
 
             endIndex = i;
