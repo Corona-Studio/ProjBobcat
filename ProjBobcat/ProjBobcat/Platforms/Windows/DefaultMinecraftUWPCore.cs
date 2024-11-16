@@ -20,9 +20,7 @@ public class DefaultMineCraftUWPCore : GameCoreBase
 {
     public override LaunchResult Launch(LaunchSettings launchSettings)
     {
-        var prevSpan = new TimeSpan();
-        var stopwatch = new Stopwatch();
-        stopwatch.Start();
+        var timestamp = Stopwatch.GetTimestamp();
 
         if (!SystemInfoHelper.IsMinecraftUWPInstalled())
             return new LaunchResult
@@ -54,7 +52,7 @@ public class DefaultMineCraftUWPCore : GameCoreBase
         };
         launchWrapper.Do();
 
-        this.InvokeLaunchLogThenStart("启动游戏", ref prevSpan, ref stopwatch);
+        this.InvokeLaunchLogThenStart("启动游戏", ref timestamp);
 
         Task.Run(launchWrapper.Process.WaitForExit)
             .ContinueWith(task =>
@@ -68,39 +66,11 @@ public class DefaultMineCraftUWPCore : GameCoreBase
 
         return new LaunchResult
         {
-            RunTime = stopwatch.Elapsed,
+            RunTime = Stopwatch.GetElapsedTime(timestamp),
             GameProcess = uwpProcess,
             LaunchSettings = launchSettings
         };
     }
 
-    [Obsolete("UWP启动核心并不支持异步启动")]
-#pragma warning disable CS0809 // 过时成员重写未过时成员
-    public override Task<LaunchResult> LaunchTaskAsync(LaunchSettings? settings)
-#pragma warning restore CS0809 // 过时成员重写未过时成员
-    {
-        throw new NotImplementedException();
-    }
-
-    #region 内部方法 Internal Methods
-
-    /// <summary>
-    ///     （内部方法）写入日志，记录时间。
-    ///     Write the log and record the time.
-    /// </summary>
-    /// <param name="item"></param>
-    /// <param name="time"></param>
-    /// <param name="sw"></param>
-    void InvokeLaunchLogThenStart(string item, ref TimeSpan time, ref Stopwatch sw)
-    {
-        this.OnLogLaunchData(this, new LaunchLogEventArgs
-        {
-            Item = item,
-            ItemRunTime = sw.Elapsed - time
-        });
-        time = sw.Elapsed;
-        sw.Start();
-    }
-
-    #endregion
+    public override Task<LaunchResult> LaunchTaskAsync(LaunchSettings? settings) => throw new InvalidOperationException();
 }

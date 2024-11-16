@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using ProjBobcat.Class;
 using ProjBobcat.Class.Model;
@@ -101,5 +102,22 @@ public abstract class GameCoreBase : IGameCore
             // TODO: 将大型字段设置为 null
             this._disposedValue = true;
         }
+    }
+
+    /// <summary>
+    ///     （内部方法）写入日志，记录时间。
+    ///     Write the log and record the time.
+    /// </summary>
+    /// <param name="item"></param>
+    /// <param name="timestamp"></param>
+    protected void InvokeLaunchLogThenStart(string item, ref long timestamp)
+    {
+        this.OnLogLaunchData(this, new LaunchLogEventArgs
+        {
+            Item = item,
+            ItemRunTime = Stopwatch.GetElapsedTime(timestamp)
+        });
+
+        timestamp = Stopwatch.GetTimestamp();
     }
 }

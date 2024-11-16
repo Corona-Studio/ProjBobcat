@@ -39,11 +39,11 @@ public class ServerPingService : ProgressReportBase
             SendTimeout = 5000,
             ReceiveTimeout = 5000
         };
-        var sw = new Stopwatch();
+
+        var timestamp = Stopwatch.GetTimestamp();
         var timeOut = TimeSpan.FromSeconds(3);
         using var cts = new CancellationTokenSource(timeOut);
 
-        sw.Start();
         cts.CancelAfter(timeOut);
 
         try
@@ -54,8 +54,6 @@ public class ServerPingService : ProgressReportBase
         {
             throw new OperationCanceledException($"服务器 {this} 连接失败，连接超时 ({timeOut.Seconds}s)。", cts.Token);
         }
-
-        sw.Stop();
 
         this.InvokeStatusChangedEvent("正在连接到服务器...", 10);
 
@@ -96,11 +94,11 @@ public class ServerPingService : ProgressReportBase
         var remaining = 0;
         var flag = false;
 
-        var latency = sw.ElapsedMilliseconds;
+        var latency = (long)Stopwatch.GetElapsedTime(timestamp).TotalMilliseconds;
 
         do
         {
-            var readLength = await this._stream.ReadAsync(batch.AsMemory());
+            var readLength = await this._stream.ReadAsync(batch.AsMemory(), cts.Token);
             await ms.WriteAsync(batch.AsMemory(0, readLength), cts.Token);
             if (!flag)
             {
