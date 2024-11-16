@@ -125,12 +125,13 @@ public class DefaultResourceCompleter : IResourceCompleter
 
         async ValueTask ReceiveGameResourceTask(IGameResource element, CancellationToken ct)
         {
+            /*
             this.OnResolveComplete(this, new GameResourceInfoResolveEventArgs
             {
                 Progress = -1,
                 Status = $"发现未下载的 {element.FileName.CropStr()}({element.Type})，已加入下载队列"
             });
-
+            */
             var dF = new DownloadFile
             {
                 DownloadPath = element.Path,

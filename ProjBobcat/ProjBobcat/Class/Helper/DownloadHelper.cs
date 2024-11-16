@@ -217,8 +217,6 @@ public static class DownloadHelper
         IEnumerable<DownloadFile> fileEnumerable,
         DownloadSettings downloadSettings)
     {
-        ProcessorHelper.SetMaxThreads();
-
         var actionBlock = new ActionBlock<DownloadFile>(
             d => AdvancedDownloadFile(d, downloadSettings),
             new ExecutionDataflowBlockOptions
@@ -236,13 +234,11 @@ public static class DownloadHelper
 
     public static ActionBlock<DownloadFile> AdvancedDownloadListFileActionBlock(DownloadSettings downloadSettings)
     {
-        ProcessorHelper.SetMaxThreads();
-
         var actionBlock = new ActionBlock<DownloadFile>(
             d => AdvancedDownloadFile(d, downloadSettings),
             new ExecutionDataflowBlockOptions
             {
-                BoundedCapacity = DownloadThread * 5,
+                BoundedCapacity = DownloadThread * 10,
                 MaxDegreeOfParallelism = DownloadThread,
                 EnsureOrdered = false
             });
@@ -259,16 +255,16 @@ public static class DownloadHelper
         DownloadSettings downloadSettings,
         CancellationToken ct)
     {
-        using var headReq = new HttpRequestMessage(HttpMethod.Head, url);
-
-        if (downloadSettings.Authentication != null)
-            headReq.Headers.Authorization = downloadSettings.Authentication;
-        if (!string.IsNullOrEmpty(downloadSettings.Host))
-            headReq.Headers.Host = downloadSettings.Host;
-
         try
         {
-            using var headRes = await Head.SendAsync(headReq, ct);
+            using var headReq = new HttpRequestMessage(HttpMethod.Head, url);
+
+            if (downloadSettings.Authentication != null)
+                headReq.Headers.Authorization = downloadSettings.Authentication;
+            if (!string.IsNullOrEmpty(downloadSettings.Host))
+                headReq.Headers.Host = downloadSettings.Host;
+
+            using var headRes = await Head.SendAsync(headReq, HttpCompletionOption.ResponseHeadersRead, ct);
 
             headRes.EnsureSuccessStatusCode();
 
@@ -283,7 +279,7 @@ public static class DownloadHelper
             if (!string.IsNullOrEmpty(downloadSettings.Host))
                 rangeGetMessage.Headers.Host = downloadSettings.Host;
 
-            using var rangeGetRes = await Head.SendAsync(rangeGetMessage, ct);
+            using var rangeGetRes = await Head.SendAsync(rangeGetMessage, HttpCompletionOption.ResponseHeadersRead, ct);
 
             var parallelDownloadSupported =
                 responseLength != 0 &&
@@ -374,7 +370,11 @@ public static class DownloadHelper
             {
                 #region Get file size
 
-                var urlInfo = await CanUsePartialDownload(downloadFile.DownloadUri, downloadSettings, cts.Token);
+                using var partialDownloadCheckCts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+                var urlInfo = await CanUsePartialDownload(
+                    downloadFile.DownloadUri,
+                    downloadSettings,
+                    partialDownloadCheckCts.Token);
 
                 if (!urlInfo.CanPartialDownload)
                 {

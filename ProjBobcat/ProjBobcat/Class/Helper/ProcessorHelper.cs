@@ -10,21 +10,6 @@ namespace ProjBobcat.Class.Helper;
 public static class ProcessorHelper
 {
     /// <summary>
-    ///     自动设置最大线程数
-    /// </summary>
-    /// <returns></returns>
-    public static bool SetMaxThreads()
-    {
-        ThreadPool.GetMaxThreads(out var maxWorkerThreads,
-            out var maxConcurrentActiveRequests);
-
-        var changeSucceeded = ThreadPool.SetMaxThreads(
-            maxWorkerThreads, maxConcurrentActiveRequests);
-
-        return changeSucceeded;
-    }
-
-    /// <summary>
     ///     尝试获取进程的退出码
     /// </summary>
     /// <param name="proc"></param>
