@@ -32,13 +32,11 @@ public static class DownloadHelper
     ///     Receive data from remote stream
     /// </summary>
     /// <returns>Average download speed</returns>
-    private static async Task<double> ReceiveFromRemoteStreamAsync(
+    private static async Task<(long ResLength, double ElapsedTime)> ReceiveFromRemoteStreamAsync(
         Stream remoteStream,
         Stream destStream,
-        DownloadFile downloadFile,
         long responseLength,
-        CancellationToken ct,
-        bool reportDownloadSpeed = false)
+        CancellationToken ct)
     {
         var startTime = Stopwatch.GetTimestamp();
 
@@ -47,16 +45,8 @@ public static class DownloadHelper
 
         var duration = Stopwatch.GetElapsedTime(startTime);
         var elapsedTime = duration.TotalSeconds == 0 ? 1 : duration.TotalSeconds;
-        var speed = responseLength / elapsedTime;
-
-        if (reportDownloadSpeed)
-            downloadFile.OnChanged(
-                speed,
-                1,
-                responseLength,
-                responseLength);
-
-        return speed;
+        
+        return (responseLength, elapsedTime);
     }
 
     #region Download data
@@ -106,13 +96,19 @@ public static class DownloadHelper
                 await using (var stream = await res.Content.ReadAsStreamAsync(cts.Token))
                 await using (Stream destStream = hashCheckFile ? cryptoStream : outputStream)
                 {
-                    averageSpeed = await ReceiveFromRemoteStreamAsync(
+                    var stats = await ReceiveFromRemoteStreamAsync(
                         stream,
                         destStream,
-                        downloadFile,
                         responseLength,
-                        cts.Token,
-                        true);
+                        cts.Token);
+
+                    averageSpeed = stats.ResLength / stats.ElapsedTime;
+
+                    downloadFile.OnChanged(
+                        averageSpeed,
+                        1,
+                        responseLength,
+                        responseLength);
 
                     if (hashCheckFile && destStream is CryptoStream cStream)
                         await cStream.FlushFinalBlockAsync(cts.Token);
@@ -457,6 +453,7 @@ public static class DownloadHelper
 
                 var aggregatedSpeed = 0U;
                 var aggregatedSpeedCount = 0;
+                var bytesReceived = 0L;
 
                 var downloadActionBlock = new ActionBlock<(HttpResponseMessage, DownloadRange, CancellationTokenSource)?>(async pair =>
                 {
@@ -468,16 +465,23 @@ public static class DownloadHelper
                     await using (var stream = await res.Content.ReadAsStreamAsync(pCts.Token))
                     await using (var fileToWriteTo = File.Create(range.TempFileName))
                     {
-                        var averageSpeed = await ReceiveFromRemoteStreamAsync(
+                        var stats = await ReceiveFromRemoteStreamAsync(
                             stream,
                             fileToWriteTo,
-                            downloadFile,
                             urlInfo.FileLength,
-                            pCts.Token,
-                            downloadSettings.ShowDownloadProgressForPartialDownload);
+                            pCts.Token);
 
-                        Interlocked.Add(ref aggregatedSpeed, (uint)averageSpeed);
-                        Interlocked.Increment(ref aggregatedSpeedCount);
+                        var speed = stats.ResLength / stats.ElapsedTime;
+                        var addedAggregatedSpeed = Interlocked.Add(ref aggregatedSpeed, (uint)speed);
+                        var addedAggregatedSpeedCount = Interlocked.Increment(ref aggregatedSpeedCount);
+                        var addedBytesReceived = Interlocked.Add(ref bytesReceived, stats.ResLength);
+
+                        if (downloadSettings.ShowDownloadProgressForPartialDownload)
+                            downloadFile.OnChanged(
+                                (double)addedAggregatedSpeed / addedAggregatedSpeedCount,
+                                (double)addedBytesReceived / urlInfo.FileLength,
+                                addedBytesReceived,
+                                urlInfo.FileLength);
                     }
 
                     Interlocked.Add(ref tasksDone, 1);
