@@ -211,7 +211,7 @@ public static class DownloadHelper
             : DownloadData(df, downloadSettings);
     }
 
-    private static BufferBlock<DownloadFile> BuildAdvancedDownloadTplBlock(DownloadSettings downloadSettings)
+    private static (BufferBlock<DownloadFile> Input, ActionBlock<DownloadFile> Execution) BuildAdvancedDownloadTplBlock(DownloadSettings downloadSettings)
     {
         var bufferBlock = new BufferBlock<DownloadFile>(new DataflowBlockOptions { EnsureOrdered = false });
         var actionBlock = new ActionBlock<DownloadFile>(
@@ -224,8 +224,8 @@ public static class DownloadHelper
             });
 
         bufferBlock.LinkTo(actionBlock, new DataflowLinkOptions { PropagateCompletion = true });
-
-        return bufferBlock;
+        
+        return (bufferBlock, actionBlock);
     }
 
     /// <summary>
@@ -237,16 +237,17 @@ public static class DownloadHelper
         IEnumerable<DownloadFile> fileEnumerable,
         DownloadSettings downloadSettings)
     {
-        var executionBlock = BuildAdvancedDownloadTplBlock(downloadSettings);
+        var blocks = BuildAdvancedDownloadTplBlock(downloadSettings);
 
         foreach (var downloadFile in fileEnumerable)
-            await executionBlock.SendAsync(downloadFile);
+            await blocks.Input.SendAsync(downloadFile);
 
-        executionBlock.Complete();
-        await executionBlock.Completion;
+        blocks.Input.Complete();
+        await blocks.Execution.Completion;
     }
 
-    public static ITargetBlock<DownloadFile> AdvancedDownloadListFileActionBlock(DownloadSettings downloadSettings) =>
+    public static (BufferBlock<DownloadFile> Input, ActionBlock<DownloadFile> Execution)
+        AdvancedDownloadListFileActionBlock(DownloadSettings downloadSettings) =>
         BuildAdvancedDownloadTplBlock(downloadSettings);
 
     #endregion
@@ -455,7 +456,7 @@ public static class DownloadHelper
                 var aggregatedSpeed = 0U;
                 var aggregatedSpeedCount = 0;
 
-                var writeActionBlock = new ActionBlock<(HttpResponseMessage, DownloadRange, CancellationTokenSource)?>(async pair =>
+                var downloadActionBlock = new ActionBlock<(HttpResponseMessage, DownloadRange, CancellationTokenSource)?>(async pair =>
                 {
                     if (!pair.HasValue) return;
 
@@ -491,22 +492,20 @@ public static class DownloadHelper
                 var bufferBlock = new BufferBlock<(DownloadRange, CancellationTokenSource)>(new DataflowBlockOptions { EnsureOrdered = false });
 
                 bufferBlock.LinkTo(requestCreationBlock, linkOptions);
-                requestCreationBlock.LinkTo(writeActionBlock, linkOptions);
+                requestCreationBlock.LinkTo(downloadActionBlock, linkOptions);
 
                 foreach (var range in readRanges)
                     await bufferBlock.SendAsync((range, cts), cts.Token);
 
                 bufferBlock.Complete();
 
-                await writeActionBlock.Completion;
+                await downloadActionBlock.Completion;
 
                 var aSpeed = (double)aggregatedSpeed / aggregatedSpeedCount;
 
                 if (tasksDone != readRanges.Count)
                 {
                     downloadFile.RetryCount++;
-                    requestCreationBlock.Complete();
-                    writeActionBlock.Complete();
                     continue;
                 }
 
@@ -557,9 +556,6 @@ public static class DownloadHelper
                         continue;
                     }
                 }
-
-                requestCreationBlock.Complete();
-                writeActionBlock.Complete();
 
                 #endregion
 

@@ -65,7 +65,7 @@ public class DefaultResourceCompleter : IResourceCompleter
         });
 
         var numBatches = Math.Min(MaxDegreeOfParallelism, Environment.ProcessorCount);
-        var downloadActionBlock = DownloadHelper.AdvancedDownloadListFileActionBlock(downloadSettings);
+        var blocks = DownloadHelper.AdvancedDownloadListFileActionBlock(downloadSettings);
         var checkAction = new ActionBlock<IResourceInfoResolver>(async resolver =>
         {
             resolver.GameResourceInfoResolveEvent += FireResolveEvent;
@@ -99,8 +99,8 @@ public class DefaultResourceCompleter : IResourceCompleter
         checkAction.Complete();
         await checkAction.Completion;
 
-        downloadActionBlock.Complete();
-        await downloadActionBlock.Completion;
+        blocks.Input.Complete();
+        await blocks.Execution.Completion;
 
         this.OnResolveComplete(this, new GameResourceInfoResolveEventArgs
         {
@@ -144,7 +144,7 @@ public class DefaultResourceCompleter : IResourceCompleter
             };
             dF.Completed += this.WhenCompleted;
 
-            await downloadActionBlock.SendAsync(dF, ct);
+            await blocks.Input.SendAsync(dF, ct);
 
             Interlocked.Add(ref this._needToDownload, 1);
         }
