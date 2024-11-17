@@ -64,6 +64,7 @@ public class DefaultResourceCompleter : IResourceCompleter
             Status = "正在进行资源检查"
         });
 
+        var numBatches = Math.Min(MaxDegreeOfParallelism, Environment.ProcessorCount);
         var downloadActionBlock = DownloadHelper.AdvancedDownloadListFileActionBlock(downloadSettings);
         var checkAction = new ActionBlock<IResourceInfoResolver>(async resolver =>
         {
@@ -71,7 +72,7 @@ public class DefaultResourceCompleter : IResourceCompleter
 
             await Parallel.ForEachAsync(
                 resolver.ResolveResourceAsync(),
-                new ParallelOptions { MaxDegreeOfParallelism = this.MaxDegreeOfParallelism },
+                new ParallelOptions { MaxDegreeOfParallelism = numBatches },
                 ReceiveGameResourceTask);
 
             return;
@@ -88,8 +89,8 @@ public class DefaultResourceCompleter : IResourceCompleter
             }
         }, new ExecutionDataflowBlockOptions
         {
-            BoundedCapacity = this.MaxDegreeOfParallelism,
-            MaxDegreeOfParallelism = this.MaxDegreeOfParallelism
+            BoundedCapacity = numBatches,
+            MaxDegreeOfParallelism = numBatches
         });
 
         foreach (var r in this.ResourceInfoResolvers!)

@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -22,5 +23,23 @@ public static class FileHelper
             }
 
         return null;
+    }
+
+    public static bool DeleteFileWithRetry(string filePath, int retryCount = 3)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(retryCount, 0);
+
+        for (var i = 0; i < retryCount; i++)
+            try
+            {
+                File.Delete(filePath);
+                return true;
+            }
+            catch
+            {
+                // ignored
+            }
+
+        return false;
     }
 }

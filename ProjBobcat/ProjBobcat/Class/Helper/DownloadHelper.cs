@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Downloading;
+using ProjBobcat.Exceptions;
 
 namespace ProjBobcat.Class.Helper;
 
@@ -73,7 +74,7 @@ public static class DownloadHelper
         var filePath = Path.Combine(downloadFile.DownloadPath, downloadFile.FileName);
         var exceptions = new List<Exception>();
 
-        for (var i = 0; i <= downloadSettings.RetryCount; i++)
+        for (var i = 0; i < downloadSettings.RetryCount; i++)
         {
             using var cts = new CancellationTokenSource(downloadSettings.Timeout * Math.Max(1, i + 1));
 
@@ -123,7 +124,7 @@ public static class DownloadHelper
                     if (!(checkSum?.Equals(downloadFile.CheckSum, StringComparison.OrdinalIgnoreCase) ?? false))
                     {
                         downloadFile.RetryCount++;
-                        DeleteFileWithRetry(filePath);
+                        FileHelper.DeleteFileWithRetry(filePath);
                         continue;
                     }
                 }
@@ -141,7 +142,9 @@ public static class DownloadHelper
             }
         }
 
-        downloadFile.OnCompleted(false, new AggregateException(exceptions), 0);
+        // We need to deduct 1 from the retry count because the last retry will not be counted
+        downloadFile.RetryCount--;
+        downloadFile.OnCompleted(false, new AggregateException(exceptions), -1);
     }
 
     #endregion
@@ -208,32 +211,9 @@ public static class DownloadHelper
             : DownloadData(df, downloadSettings);
     }
 
-    /// <summary>
-    ///     File download method (Auto detect download method)
-    /// </summary>
-    /// <param name="fileEnumerable">文件列表</param>
-    /// <param name="downloadSettings"></param>
-    public static async Task AdvancedDownloadListFile(
-        IEnumerable<DownloadFile> fileEnumerable,
-        DownloadSettings downloadSettings)
+    private static BufferBlock<DownloadFile> BuildAdvancedDownloadTplBlock(DownloadSettings downloadSettings)
     {
-        var actionBlock = new ActionBlock<DownloadFile>(
-            d => AdvancedDownloadFile(d, downloadSettings),
-            new ExecutionDataflowBlockOptions
-            {
-                BoundedCapacity = DownloadThread,
-                MaxDegreeOfParallelism = DownloadThread,
-                EnsureOrdered = false
-            });
-
-        foreach (var downloadFile in fileEnumerable) await actionBlock.SendAsync(downloadFile);
-
-        actionBlock.Complete();
-        await actionBlock.Completion;
-    }
-
-    public static ActionBlock<DownloadFile> AdvancedDownloadListFileActionBlock(DownloadSettings downloadSettings)
-    {
+        var bufferBlock = new BufferBlock<DownloadFile>(new DataflowBlockOptions { EnsureOrdered = false });
         var actionBlock = new ActionBlock<DownloadFile>(
             d => AdvancedDownloadFile(d, downloadSettings),
             new ExecutionDataflowBlockOptions
@@ -243,8 +223,31 @@ public static class DownloadHelper
                 EnsureOrdered = false
             });
 
-        return actionBlock;
+        bufferBlock.LinkTo(actionBlock, new DataflowLinkOptions { PropagateCompletion = true });
+
+        return bufferBlock;
     }
+
+    /// <summary>
+    ///     File download method (Auto detect download method)
+    /// </summary>
+    /// <param name="fileEnumerable">文件列表</param>
+    /// <param name="downloadSettings"></param>
+    public static async Task AdvancedDownloadListFile(
+        IEnumerable<DownloadFile> fileEnumerable,
+        DownloadSettings downloadSettings)
+    {
+        var executionBlock = BuildAdvancedDownloadTplBlock(downloadSettings);
+
+        foreach (var downloadFile in fileEnumerable)
+            await executionBlock.SendAsync(downloadFile);
+
+        executionBlock.Complete();
+        await executionBlock.Completion;
+    }
+
+    public static ITargetBlock<DownloadFile> AdvancedDownloadListFileActionBlock(DownloadSettings downloadSettings) =>
+        BuildAdvancedDownloadTplBlock(downloadSettings);
 
     #endregion
 
@@ -322,22 +325,6 @@ public static class DownloadHelper
         }
     }
 
-    private static void DeleteFileWithRetry(string filePath, int retryCount = 3)
-    {
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(retryCount, 0);
-
-        for (var i = 0; i < retryCount; i++)
-            try
-            {
-                File.Delete(filePath);
-                return;
-            }
-            catch
-            {
-                // ignored
-            }
-    }
-
     /// <summary>
     ///     分片下载方法（异步）
     /// </summary>
@@ -359,10 +346,9 @@ public static class DownloadHelper
         var filePath = Path.Combine(downloadFile.DownloadPath, downloadFile.FileName);
         var timeout = downloadSettings.Timeout;
 
-        var isLatestFileCheckSucceeded = true;
         ImmutableList<DownloadRange>? readRanges = null;
 
-        for (var r = 0; r <= downloadSettings.RetryCount; r++)
+        for (var r = 0; r < downloadSettings.RetryCount; r++)
         {
             using var cts = new CancellationTokenSource(timeout * Math.Max(1, (r + 1) * 0.5));
 
@@ -433,8 +419,7 @@ public static class DownloadHelper
                             CancellationToken = cts.Token
                         });
 
-                var locker = new object();
-                var aggregatedSpeed = 0D;
+                var aggregatedSpeed = 0U;
                 var aggregatedSpeedCount = 0;
 
                 var writeActionBlock = new ActionBlock<(HttpResponseMessage, DownloadRange)?>(async t =>
@@ -455,11 +440,8 @@ public static class DownloadHelper
                             cts.Token,
                             downloadSettings.ShowDownloadProgressForPartialDownload);
 
-                        lock (locker)
-                        {
-                            aggregatedSpeed += averageSpeed;
-                            aggregatedSpeedCount++;
-                        }
+                        Interlocked.Add(ref aggregatedSpeed, (uint)averageSpeed);
+                        Interlocked.Increment(ref aggregatedSpeedCount);
                     }
 
                     Interlocked.Add(ref tasksDone, 1);
@@ -473,19 +455,19 @@ public static class DownloadHelper
 
                 var linkOptions = new DataflowLinkOptions { PropagateCompletion = true };
 
-                var filesBlock =
-                    new TransformManyBlock<IEnumerable<DownloadRange>, DownloadRange>(chunk => chunk,
-                        new ExecutionDataflowBlockOptions { EnsureOrdered = false });
+                var bufferBlock = new BufferBlock<DownloadRange>(new DataflowBlockOptions { EnsureOrdered = false });
 
-                filesBlock.LinkTo(streamBlock, linkOptions);
+                bufferBlock.LinkTo(streamBlock, linkOptions);
                 streamBlock.LinkTo(writeActionBlock, linkOptions);
-                filesBlock.Post(readRanges);
 
-                filesBlock.Complete();
+                foreach (var range in readRanges)
+                    await bufferBlock.SendAsync(range, cts.Token);
+
+                bufferBlock.Complete();
 
                 await writeActionBlock.Completion;
 
-                var aSpeed = aggregatedSpeed / aggregatedSpeedCount;
+                var aSpeed = (double)aggregatedSpeed / aggregatedSpeedCount;
 
                 if (tasksDone != readRanges.Count)
                 {
@@ -532,17 +514,15 @@ public static class DownloadHelper
                 {
                     var checkSum = Convert.ToHexString(hashProvider.Hash.AsSpan());
 
-                    if (!checkSum.Equals(downloadFile.CheckSum, StringComparison.OrdinalIgnoreCase))
+                    if (!checkSum.Equals(downloadFile.CheckSum!, StringComparison.OrdinalIgnoreCase))
                     {
                         downloadFile.RetryCount++;
-                        isLatestFileCheckSucceeded = false;
+                        exceptions.Add(new HashMismatchException(filePath, checkSum, downloadFile.CheckSum!));
 
-                        DeleteFileWithRetry(filePath);
+                        FileHelper.DeleteFileWithRetry(filePath);
 
                         continue;
                     }
-
-                    isLatestFileCheckSucceeded = true;
                 }
 
                 streamBlock.Complete();
@@ -557,26 +537,16 @@ public static class DownloadHelper
             {
                 if (readRanges != null)
                     foreach (var piece in readRanges.Where(piece => File.Exists(piece.TempFileName)))
-                        DeleteFileWithRetry(piece.TempFileName);
+                        FileHelper.DeleteFileWithRetry(piece.TempFileName);
 
                 downloadFile.RetryCount++;
                 exceptions.Add(ex);
             }
         }
 
-        if (exceptions.Count > 0)
-        {
-            downloadFile.OnCompleted(false, new AggregateException(exceptions), 0);
-            return;
-        }
-
-        if (!isLatestFileCheckSucceeded)
-        {
-            downloadFile.OnCompleted(false, null, 0);
-            return;
-        }
-
-        downloadFile.OnCompleted(true, null, 0);
+        // We need to deduct 1 from the retry count because the last retry will not be counted
+        downloadFile.RetryCount--;
+        downloadFile.OnCompleted(false, new AggregateException(exceptions), -1);
     }
 
     #endregion

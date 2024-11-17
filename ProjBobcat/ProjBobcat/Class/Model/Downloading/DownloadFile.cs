@@ -8,6 +8,8 @@ namespace ProjBobcat.Class.Model.Downloading;
 /// </summary>
 public class DownloadFile
 {
+    internal int PartialDownloadRetryCount;
+
     /// <summary>
     ///     下载Uri
     /// </summary>
@@ -31,7 +33,7 @@ public class DownloadFile
     /// <summary>
     ///     文件类型（仅在Lib/Asset补全时可用）
     /// </summary>
-    public ResourceType FileType { get; init; }
+    public ResourceType FileType { get; internal init; } = ResourceType.Invalid;
 
     /// <summary>
     ///     文件大小

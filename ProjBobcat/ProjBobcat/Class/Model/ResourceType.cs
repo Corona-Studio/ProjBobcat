@@ -2,9 +2,9 @@
 
 public enum ResourceType
 {
+    Invalid,
     Asset,
     LibraryOrNative,
     GameJar,
-    Logging,
-    Other
+    Logging
 }
