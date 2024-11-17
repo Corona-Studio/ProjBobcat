@@ -71,10 +71,11 @@ public static class DownloadHelper
     {
         downloadSettings ??= DownloadSettings.Default;
 
+        var trials = downloadSettings.RetryCount == 0 ? 1 : downloadSettings.RetryCount;
         var filePath = Path.Combine(downloadFile.DownloadPath, downloadFile.FileName);
         var exceptions = new List<Exception>();
 
-        for (var i = 0; i < downloadSettings.RetryCount; i++)
+        for (var i = 0; i < trials; i++)
         {
             using var cts = new CancellationTokenSource(downloadSettings.Timeout * Math.Max(1, i + 1));
 
@@ -350,10 +351,11 @@ public static class DownloadHelper
         var exceptions = new List<Exception>();
         var filePath = Path.Combine(downloadFile.DownloadPath, downloadFile.FileName);
         var timeout = downloadSettings.Timeout;
+        var trials = downloadSettings.RetryCount == 0 ? 1 : downloadSettings.RetryCount;
 
         ImmutableList<DownloadRange>? readRanges = null;
 
-        for (var r = 0; r < downloadSettings.RetryCount; r++)
+        for (var r = 0; r < trials; r++)
         {
             using var cts = new CancellationTokenSource(timeout * Math.Max(1, (r + 1) * 0.5));
 
@@ -374,7 +376,7 @@ public static class DownloadHelper
                     downloadFile.PartialDownloadRetryCount++;
 
                     // If the retry count is 1 or condition met, we will fall back to normal download
-                    if (downloadSettings.RetryCount == 1 ||
+                    if (downloadSettings.RetryCount == 0 ||
                         downloadFile.PartialDownloadRetryCount > downloadSettings.RetryCount / 2)
                     {
                         // Reset the retry count
