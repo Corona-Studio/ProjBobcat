@@ -121,7 +121,7 @@ public static class DownloadHelper
                 {
                     var checkSum = Convert.ToHexString(hashProvider.Hash!.AsSpan());
 
-                    if (!(checkSum?.Equals(downloadFile.CheckSum, StringComparison.OrdinalIgnoreCase) ?? false))
+                    if (!checkSum.Equals(downloadFile.CheckSum, StringComparison.OrdinalIgnoreCase))
                     {
                         downloadFile.RetryCount++;
                         FileHelper.DeleteFileWithRetry(filePath);
@@ -253,7 +253,7 @@ public static class DownloadHelper
 
     #region Partial download
 
-    private static async Task<(long FileLength, bool CanPartialDownload)> CanUsePartialDownload(
+    private static async Task<(long FileLength, bool CanPartialDownload)?> CanUsePartialDownload(
         string url,
         DownloadSettings downloadSettings,
         CancellationToken ct)
@@ -296,6 +296,10 @@ public static class DownloadHelper
         catch (HttpRequestException)
         {
             return (0, false);
+        }
+        catch (TaskCanceledException)
+        {
+            return null;
         }
     }
 
@@ -357,13 +361,40 @@ public static class DownloadHelper
                 #region Get file size
 
                 using var partialDownloadCheckCts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
-                var urlInfo = await CanUsePartialDownload(
+                var rawUrlInfo = await CanUsePartialDownload(
                     downloadFile.DownloadUri,
                     downloadSettings,
                     partialDownloadCheckCts.Token);
 
+                // If rawUrlInfo == null, means the request is timeout and canceled
+                // If PartialDownloadRetryCount is greater than half of the total reties, fallback to slow download
+                if (!rawUrlInfo.HasValue)
+                {
+                    downloadFile.PartialDownloadRetryCount++;
+
+                    // If the retry count is 1 or condition met, we will fall back to normal download
+                    if (downloadSettings.RetryCount == 1 ||
+                        downloadFile.PartialDownloadRetryCount > downloadSettings.RetryCount / 2)
+                    {
+                        // Reset the retry count
+                        downloadFile.RetryCount = 0;
+
+                        await DownloadData(downloadFile, downloadSettings);
+                        return;
+                    }
+
+                    // Otherwise, we will retry the partial download
+                    downloadFile.RetryCount++;
+                    continue;
+                }
+
+                var urlInfo = rawUrlInfo.Value;
+
                 if (!urlInfo.CanPartialDownload)
                 {
+                    // Reset the retry count
+                    downloadFile.RetryCount = 0;
+
                     await DownloadData(downloadFile, downloadSettings);
                     return;
                 }
@@ -382,10 +413,12 @@ public static class DownloadHelper
                 #region Parallel download
 
                 var tasksDone = 0;
-                var streamBlock =
-                    new TransformBlock<DownloadRange, (HttpResponseMessage, DownloadRange)?>(
-                        async p =>
+                var requestCreationBlock =
+                    new TransformBlock<(DownloadRange, CancellationTokenSource), (HttpResponseMessage, DownloadRange, CancellationTokenSource)?>(
+                        async pair =>
                         {
+                            var (range, pCts) = pair;
+
                             using var request = new HttpRequestMessage(HttpMethod.Get, downloadFile.DownloadUri);
 
                             if (downloadSettings.Authentication != null)
@@ -393,21 +426,21 @@ public static class DownloadHelper
                             if (!string.IsNullOrEmpty(downloadSettings.Host))
                                 request.Headers.Host = downloadSettings.Host;
 
-                            request.Headers.Range = new RangeHeaderValue(p.Start, p.End);
+                            request.Headers.Range = new RangeHeaderValue(range.Start, range.End);
 
                             try
                             {
                                 var downloadTask = await MultiPart.SendAsync(
                                     request,
                                     HttpCompletionOption.ResponseHeadersRead,
-                                    cts.Token);
+                                    pCts.Token);
 
-                                return (downloadTask, p);
+                                return (downloadTask, range, pCts);
                             }
                             catch (HttpRequestException e)
                             {
                                 Console.WriteLine(e);
-                                await cts.CancelAsync();
+                                await pCts.CancelAsync();
                             }
 
                             return null;
@@ -422,22 +455,22 @@ public static class DownloadHelper
                 var aggregatedSpeed = 0U;
                 var aggregatedSpeedCount = 0;
 
-                var writeActionBlock = new ActionBlock<(HttpResponseMessage, DownloadRange)?>(async t =>
+                var writeActionBlock = new ActionBlock<(HttpResponseMessage, DownloadRange, CancellationTokenSource)?>(async pair =>
                 {
-                    if (!t.HasValue) return;
+                    if (!pair.HasValue) return;
 
-                    var pair = t.Value;
-                    using var res = pair.Item1;
+                    var (response, range, pCts) = pair.Value;
+                    using var res = response;
 
-                    await using (var stream = await res.Content.ReadAsStreamAsync(cts.Token))
-                    await using (var fileToWriteTo = File.Create(pair.Item2.TempFileName))
+                    await using (var stream = await res.Content.ReadAsStreamAsync(pCts.Token))
+                    await using (var fileToWriteTo = File.Create(range.TempFileName))
                     {
                         var averageSpeed = await ReceiveFromRemoteStreamAsync(
                             stream,
                             fileToWriteTo,
                             downloadFile,
                             urlInfo.FileLength,
-                            cts.Token,
+                            pCts.Token,
                             downloadSettings.ShowDownloadProgressForPartialDownload);
 
                         Interlocked.Add(ref aggregatedSpeed, (uint)averageSpeed);
@@ -455,13 +488,13 @@ public static class DownloadHelper
 
                 var linkOptions = new DataflowLinkOptions { PropagateCompletion = true };
 
-                var bufferBlock = new BufferBlock<DownloadRange>(new DataflowBlockOptions { EnsureOrdered = false });
+                var bufferBlock = new BufferBlock<(DownloadRange, CancellationTokenSource)>(new DataflowBlockOptions { EnsureOrdered = false });
 
-                bufferBlock.LinkTo(streamBlock, linkOptions);
-                streamBlock.LinkTo(writeActionBlock, linkOptions);
+                bufferBlock.LinkTo(requestCreationBlock, linkOptions);
+                requestCreationBlock.LinkTo(writeActionBlock, linkOptions);
 
                 foreach (var range in readRanges)
-                    await bufferBlock.SendAsync(range, cts.Token);
+                    await bufferBlock.SendAsync((range, cts), cts.Token);
 
                 bufferBlock.Complete();
 
@@ -472,7 +505,7 @@ public static class DownloadHelper
                 if (tasksDone != readRanges.Count)
                 {
                     downloadFile.RetryCount++;
-                    streamBlock.Complete();
+                    requestCreationBlock.Complete();
                     writeActionBlock.Complete();
                     continue;
                 }
@@ -525,7 +558,7 @@ public static class DownloadHelper
                     }
                 }
 
-                streamBlock.Complete();
+                requestCreationBlock.Complete();
                 writeActionBlock.Complete();
 
                 #endregion
