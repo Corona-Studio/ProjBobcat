@@ -19,6 +19,12 @@ public class GameArguments
     public required GcType GcType { get; init; }
     public IReadOnlyList<string>? AdditionalJvmArguments { get; set; }
     public ServerSettings? ServerSettings { get; set; }
+
+    /// <summary>
+    /// Join world name (Starting from 1.20, single player only)
+    /// </summary>
+    public string? JoinWorldName { get; set; }
+
     public string? AdvanceArguments { get; set; }
 }
 

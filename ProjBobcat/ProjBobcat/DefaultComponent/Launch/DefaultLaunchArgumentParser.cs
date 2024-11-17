@@ -9,6 +9,7 @@ using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Auth;
 using ProjBobcat.Class.Model.JsonContexts;
+using ProjBobcat.Class.Model.Version;
 using ProjBobcat.Exceptions;
 using ProjBobcat.Interface;
 
@@ -375,16 +376,34 @@ public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentPa
 
         var serverSettings = this.LaunchSettings.GameArguments.ServerSettings ??
                              this.LaunchSettings.FallBackGameArguments?.ServerSettings;
+        var joinWorldName = LaunchSettings.GameArguments.JoinWorldName ??
+                                LaunchSettings.FallBackGameArguments?.JoinWorldName;
+
+        // Starting from 1.20, we need to use the new command line arguments
+        var newFormatVersionLimit = new ComparableVersion("1.20");
+        var gameVersion = new ComparableVersion(VersionInfo.GameBaseVersion);
+        var shouldUseNewCommand = gameVersion >= newFormatVersionLimit;
 
         if (serverSettings != null && !serverSettings.IsDefault())
         {
             if (string.IsNullOrEmpty(serverSettings.Address)) yield break;
 
-            yield return "--server";
-            yield return serverSettings.Address;
+            if (shouldUseNewCommand)
+            {
+                yield return $"--quickPlayMultiplayer \"{serverSettings.Address}:{serverSettings.Port}\"";
+            }
+            else
+            {
+                yield return "--server";
+                yield return serverSettings.Address;
 
-            yield return "--port";
-            yield return serverSettings.Port.ToString();
+                yield return "--port";
+                yield return serverSettings.Port.ToString();
+            }
+        }
+        else if (!string.IsNullOrEmpty(joinWorldName) && shouldUseNewCommand)
+        {
+            yield return $"--quickPlaySingleplayer \"{joinWorldName}\"";
         }
 
         if (!string.IsNullOrEmpty(this.LaunchSettings.GameArguments.AdvanceArguments))
