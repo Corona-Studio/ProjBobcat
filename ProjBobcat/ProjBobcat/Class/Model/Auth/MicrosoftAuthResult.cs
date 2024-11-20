@@ -32,7 +32,7 @@ public class MicrosoftAuthResult : AuthResultBase
     /// <summary>
     ///     Token 失效时间
     /// </summary>
-    public int ExpiresIn { get; init; }
+    public long ExpiresIn { get; init; }
 
     public string? Email { get; init; }
 }

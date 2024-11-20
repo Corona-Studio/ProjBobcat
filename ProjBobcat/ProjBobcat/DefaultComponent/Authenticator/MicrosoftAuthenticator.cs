@@ -61,6 +61,12 @@ public class MicrosoftAuthenticator : IAuthenticator
     static HttpClient DefaultClient => HttpClientHelper.DefaultClient;
 
     public string? Email { get; set; }
+
+    /// <summary>
+    /// MineCraft profile id, used to match the account history
+    /// </summary>
+    public Guid? ProfileId { get; set; }
+
     public Func<Task<(bool, GraphAuthResultModel?)>>? CacheTokenProvider { get; init; }
     public required ILauncherAccountParser LauncherAccountParser { get; init; }
 
@@ -343,7 +349,7 @@ public class MicrosoftAuthenticator : IAuthenticator
             AuthStatus = AuthStatus.Succeeded,
             Skin = profileRes.GetActiveSkin()?.Url,
             Cape = profileRes.GetActiveCape()?.Url,
-            ExpiresIn = expiresIn,
+            ExpiresIn = mcRes.ExpiresIn,
             RefreshToken = refreshToken,
             CurrentAuthTime = DateTime.Now,
             SelectedProfile = sP,
@@ -361,7 +367,7 @@ public class MicrosoftAuthenticator : IAuthenticator
     {
         var (_, value) = this.LauncherAccountParser.LauncherAccount.Accounts!
             .FirstOrDefault(x =>
-                x.Value.Username.Equals(this.Email, StringComparison.OrdinalIgnoreCase) &&
+                (x.Value.MinecraftProfile?.Id?.Equals(ProfileId?.ToString("N"), StringComparison.OrdinalIgnoreCase) ?? false) &&
                 x.Value.Type.Equals("XBox", StringComparison.OrdinalIgnoreCase));
 
         if (value == default)
@@ -421,10 +427,9 @@ public class MicrosoftAuthenticator : IAuthenticator
             new KeyValuePair<string, string>("scope", string.Join(' ', ApiSettings.Scopes))
         };
 
-        using var deviceTokenReq = new HttpRequestMessage(HttpMethod.Post, MSDeviceTokenRequestUrl)
-        {
-            Content = new FormUrlEncodedContent(deviceTokenRequestDic)
-        };
+        using var deviceTokenReq = new HttpRequestMessage(HttpMethod.Post, MSDeviceTokenRequestUrl);
+
+        deviceTokenReq.Content = new FormUrlEncodedContent(deviceTokenRequestDic);
 
         using var deviceTokenRes = await DefaultClient.SendAsync(deviceTokenReq);
         var deviceTokenContent = await deviceTokenRes.Content.ReadAsStringAsync();
@@ -451,10 +456,9 @@ public class MicrosoftAuthenticator : IAuthenticator
         {
             await Task.Delay(TimeSpan.FromSeconds(deviceTokenResModel.Interval + 2));
 
-            using var userAuthResultReq = new HttpRequestMessage(HttpMethod.Post, MSDeviceTokenStatusUrl)
-            {
-                Content = new FormUrlEncodedContent(userAuthResultDic)
-            };
+            using var userAuthResultReq = new HttpRequestMessage(HttpMethod.Post, MSDeviceTokenStatusUrl);
+
+            userAuthResultReq.Content = new FormUrlEncodedContent(userAuthResultDic);
 
             using var userAuthResultRes = await DefaultClient.SendAsync(userAuthResultReq);
             var userAuthResultContent = await userAuthResultRes.Content.ReadAsStringAsync();
