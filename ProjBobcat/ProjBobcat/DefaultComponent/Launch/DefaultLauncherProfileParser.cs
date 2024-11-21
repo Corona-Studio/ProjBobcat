@@ -11,6 +11,10 @@ using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Exceptions;
 using ProjBobcat.Interface;
 
+#if NET9_0_OR_GREATER
+using System.Threading;
+#endif
+
 namespace ProjBobcat.DefaultComponent.Launch;
 
 /// <summary>
@@ -19,7 +23,12 @@ namespace ProjBobcat.DefaultComponent.Launch;
 public sealed class DefaultLauncherProfileParser : LauncherParserBase, ILauncherProfileParser
 {
     readonly string _fullLauncherProfilePath;
+
+#if NET9_0_OR_GREATER
+    readonly Lock _lock = new();
+#else
     readonly object _lock = new();
+#endif
 
     /// <summary>
     ///     构造函数
@@ -58,7 +67,11 @@ public sealed class DefaultLauncherProfileParser : LauncherParserBase, ILauncher
         if (string.IsNullOrEmpty(gameProfile.Name)) return;
         if (this.IsGameProfileExist(gameProfile.Name)) return;
 
+#if NET9_0_OR_GREATER
+        using (this._lock.EnterScope())
+#else
         lock (this._lock)
+#endif
         {
             this.LauncherProfile.Profiles!.Add(gameProfile.Name, gameProfile);
             this.SaveProfile();
@@ -67,7 +80,11 @@ public sealed class DefaultLauncherProfileParser : LauncherParserBase, ILauncher
 
     public void EmptyGameProfiles()
     {
+#if NET9_0_OR_GREATER
+        using (this._lock.EnterScope())
+#else
         lock (this._lock)
+#endif
         {
             this.LauncherProfile.Profiles?.Clear();
             this.SaveProfile();
@@ -76,7 +93,11 @@ public sealed class DefaultLauncherProfileParser : LauncherParserBase, ILauncher
 
     public GameProfileModel GetGameProfile(string name)
     {
+#if NET9_0_OR_GREATER
+        using (this._lock.EnterScope())
+#else
         lock (this._lock)
+#endif
         {
             var profile = this.LauncherProfile.Profiles!.FirstOrDefault(
                               p => p.Value.Name?.Equals(name, StringComparison.Ordinal) ?? false).Value ??
@@ -90,7 +111,11 @@ public sealed class DefaultLauncherProfileParser : LauncherParserBase, ILauncher
 
     public bool IsGameProfileExist(string name)
     {
+#if NET9_0_OR_GREATER
+        using (this._lock.EnterScope())
+#else
         lock (this._lock)
+#endif
         {
             return this.LauncherProfile.Profiles!
                 .Any(p => p.Value.Name?.Equals(name, StringComparison.Ordinal) ?? false);
@@ -99,7 +124,11 @@ public sealed class DefaultLauncherProfileParser : LauncherParserBase, ILauncher
 
     public void RemoveGameProfile(string name)
     {
+#if NET9_0_OR_GREATER
+        using (this._lock.EnterScope())
+#else
         lock (this._lock)
+#endif
         {
             this.LauncherProfile.Profiles!.Remove(name);
         }

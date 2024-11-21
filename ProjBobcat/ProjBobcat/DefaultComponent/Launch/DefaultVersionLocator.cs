@@ -14,6 +14,10 @@ using ProjBobcat.Class.Model.Version;
 using ProjBobcat.JsonConverter;
 using FileInfo = ProjBobcat.Class.Model.FileInfo;
 
+#if NET9_0_OR_GREATER
+using System.Threading;
+#endif
+
 namespace ProjBobcat.DefaultComponent.Launch;
 
 /// <summary>
@@ -21,7 +25,11 @@ namespace ProjBobcat.DefaultComponent.Launch;
 /// </summary>
 public sealed class DefaultVersionLocator : VersionLocatorBase
 {
+#if NET9_0_OR_GREATER
+    readonly Lock _lock = new();
+#else
     readonly object _lock = new();
+#endif
 
     /// <summary>
     ///     构造函数。
@@ -619,7 +627,11 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
         var gameId = id.ToGuidHash().ToString("N");
         var gamePath = Path.Combine(this.RootPath, GamePathHelper.GetGamePath(id));
 
+#if NET9_0_OR_GREATER
+        using (this._lock.EnterScope())
+#else
         lock (this._lock)
+#endif
         {
             if (this.LauncherProfileParser.LauncherProfile.Profiles!.TryGetValue(gameId, out var oldProfileModel))
             {

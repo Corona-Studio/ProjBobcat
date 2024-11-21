@@ -9,12 +9,21 @@ using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model.LauncherAccount;
 using ProjBobcat.Interface;
 
+#if NET9_0_OR_GREATER
+using System.Threading;
+#endif
+
 namespace ProjBobcat.DefaultComponent.Launch;
 
 public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccountParser
 {
     readonly string _fullLauncherAccountPath;
+
+#if NET9_0_OR_GREATER
+    readonly Lock _lock = new();
+#else
     readonly object _lock = new();
+#endif
 
     /// <summary>
     ///     构造函数
@@ -50,7 +59,11 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
 
     public bool ActivateAccount(string uuid)
     {
+#if NET9_0_OR_GREATER
+        using (this._lock.EnterScope())
+#else
         lock (this._lock)
+#endif
         {
             if (!(this.LauncherAccount?.Accounts?.ContainsKey(uuid) ?? false))
                 return false;
@@ -72,7 +85,11 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
 
         this.LauncherAccount.Accounts ??= [];
 
+#if NET9_0_OR_GREATER
+        using (this._lock.EnterScope())
+#else
         lock (this._lock)
+#endif
         {
             if (this.LauncherAccount.Accounts.ContainsKey(uuid))
             {
@@ -81,7 +98,11 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
             }
         }
 
+#if NET9_0_OR_GREATER
+        using (this._lock.EnterScope())
+#else
         lock (this._lock)
+#endif
         {
             var oldRecord = this.LauncherAccount.Accounts
                 .FirstOrDefault(a => a.Value.MinecraftProfile?.Id == account.MinecraftProfile?.Id).Value;
@@ -92,8 +113,11 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
             }
         }
 
-
+#if NET9_0_OR_GREATER
+        using (this._lock.EnterScope())
+#else
         lock (this._lock)
+#endif
         {
             var newId = Guid.NewGuid();
             var findResult = this.Find(account.Id);
@@ -119,7 +143,11 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
 
     public KeyValuePair<string, AccountModel>? Find(Guid id)
     {
+#if NET9_0_OR_GREATER
+        using (this._lock.EnterScope())
+#else
         lock (this._lock)
+#endif
         {
             return this.LauncherAccount?.Accounts?.FirstOrDefault(a => a.Value.Id == id);
         }
@@ -135,7 +163,11 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
 
         if (string.IsNullOrEmpty(key)) return false;
 
+#if NET9_0_OR_GREATER
+        using (this._lock.EnterScope())
+#else
         lock (this._lock)
+#endif
         {
             this.LauncherAccount?.Accounts?.Remove(key);
             this.Save();
