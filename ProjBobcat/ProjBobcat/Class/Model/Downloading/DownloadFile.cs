@@ -55,7 +55,7 @@ public class DownloadFile
     /// </summary>
     public event EventHandler<DownloadFileChangedEventArgs>? Changed;
 
-    internal void OnChanged(double speed, double progress, long bytesReceived, long totalBytes)
+    internal void OnChanged(double speed, ProgressValue progress, long bytesReceived, long totalBytes)
     {
         this.Changed?.Invoke(this, new DownloadFileChangedEventArgs
         {

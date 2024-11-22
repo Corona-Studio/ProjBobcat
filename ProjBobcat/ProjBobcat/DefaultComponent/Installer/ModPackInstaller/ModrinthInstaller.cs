@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using ProjBobcat.Class.Helper;
+using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Downloading;
 using ProjBobcat.Class.Model.Modrinth;
 using ProjBobcat.Interface;
@@ -48,7 +49,7 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
         if (string.IsNullOrEmpty(this.RootPath))
             throw new ArgumentNullException(nameof(this.RootPath));
 
-        this.InvokeStatusChangedEvent("开始安装", 0);
+        this.InvokeStatusChangedEvent("开始安装", ProgressValue.Start);
 
         var index = await this.ReadIndexTask();
 
@@ -134,8 +135,9 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
                 ? $"...{subPath[(subPathLength - 15)..]}"
                 : subPath;
 
-            this.InvokeStatusChangedEvent($"解压缩安装文件：{subPathName}",
-                (double)this.TotalDownloaded / this.NeedToDownload * 100);
+            var progress = ProgressValue.Create(this.TotalDownloaded, this.NeedToDownload);
+
+            this.InvokeStatusChangedEvent($"解压缩安装文件：{subPathName}", progress);
 
             await using var fs = File.OpenWrite(path);
             entry.WriteTo(fs);
@@ -143,6 +145,6 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
             this.TotalDownloaded++;
         }
 
-        this.InvokeStatusChangedEvent("安装完成", 100);
+        this.InvokeStatusChangedEvent("安装完成", ProgressValue.Finished);
     }
 }

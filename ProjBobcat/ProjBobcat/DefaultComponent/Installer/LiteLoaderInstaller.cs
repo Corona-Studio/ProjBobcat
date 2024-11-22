@@ -37,12 +37,12 @@ public class LiteLoaderInstaller : InstallerBase, ILiteLoaderInstaller
         if (this.VersionModel == null)
             throw new NullReferenceException("VersionModel 不能为 null");
 
-        this.InvokeStatusChangedEvent("开始安装 LiteLoader", 0);
+        this.InvokeStatusChangedEvent("开始安装 LiteLoader", ProgressValue.Start);
 
         var vl = new DefaultVersionLocator(this.RootPath, Guid.Empty);
         var rawVersion = vl.ParseRawVersion(this.VersionModel.McVersion);
 
-        this.InvokeStatusChangedEvent("解析版本", 10);
+        this.InvokeStatusChangedEvent("解析版本", ProgressValue.FromDisplay(10));
 
         if (rawVersion == null)
             throw new UnknownGameNameException(this.VersionModel.McVersion);
@@ -57,7 +57,7 @@ public class LiteLoaderInstaller : InstallerBase, ILiteLoaderInstaller
         var timeStamp = long.TryParse(this.VersionModel.Build.Timestamp, out var timeResult) ? timeResult : 0;
         var time = TimeHelper.Unix11ToDateTime(timeStamp);
 
-        this.InvokeStatusChangedEvent("解析 Libraries", 30);
+        this.InvokeStatusChangedEvent("解析 Libraries", ProgressValue.FromDisplay(30));
 
         var libraries = new List<Library>
         {
@@ -77,7 +77,7 @@ public class LiteLoaderInstaller : InstallerBase, ILiteLoaderInstaller
 
         libraries.AddRange(this.VersionModel.Build.Libraries);
 
-        this.InvokeStatusChangedEvent("Libraries 解析完成", 60);
+        this.InvokeStatusChangedEvent("Libraries 解析完成", ProgressValue.FromDisplay(60));
 
         const string mainClass = "net.minecraft.launchwrapper.Launch";
         var resultModel = new RawVersionModel
@@ -119,7 +119,7 @@ public class LiteLoaderInstaller : InstallerBase, ILiteLoaderInstaller
 
         await File.WriteAllTextAsync(jsonPath, jsonContent);
 
-        this.InvokeStatusChangedEvent("LiteLoader 安装完成", 100);
+        this.InvokeStatusChangedEvent("LiteLoader 安装完成", ProgressValue.Finished);
 
         return id;
     }

@@ -16,7 +16,7 @@ public abstract class ModPackInstallerBase : InstallerBase
 
         this.TotalDownloaded++;
 
-        var progress = (double)this.TotalDownloaded / this.NeedToDownload * 100;
+        var progress = ProgressValue.Create(this.TotalDownloaded, this.NeedToDownload);
         var retryStr = file.RetryCount > 0 ? $"[重试 - {file.RetryCount}] " : string.Empty;
         var fileName = file.FileName.Length > 20
             ? $"{file.FileName[..20]}..."

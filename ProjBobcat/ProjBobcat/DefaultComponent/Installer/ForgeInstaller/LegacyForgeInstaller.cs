@@ -41,7 +41,7 @@ public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
     {
         try
         {
-            this.InvokeStatusChangedEvent("解压安装文件", 0.05);
+            this.InvokeStatusChangedEvent("解压安装文件", ProgressValue.Start);
 
             using var reader = ArchiveFactory.Open(this.ForgeExecutablePath);
             var profileEntry =
@@ -76,18 +76,18 @@ public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
                     Succeeded = false
                 };
 
-            this.InvokeStatusChangedEvent("解压完成", 0.1);
+            this.InvokeStatusChangedEvent("解压完成", ProgressValue.FromDisplay(5));
 
             await using var stream = profileEntry.OpenEntryStream();
 
-            this.InvokeStatusChangedEvent("解析安装文档", 0.35);
+            this.InvokeStatusChangedEvent("解析安装文档", ProgressValue.FromDisplay(35));
 
             var profileModel = await JsonSerializer.DeserializeAsync(stream,
                 LegacyForgeInstallProfileContext.Default.LegacyForgeInstallProfile);
             if (profileModel == null)
                 throw new ArgumentNullException(nameof(profileModel));
 
-            this.InvokeStatusChangedEvent("解析完成", 0.75);
+            this.InvokeStatusChangedEvent("解析完成", ProgressValue.FromDisplay(75));
 
             var id = string.IsNullOrEmpty(this.CustomId) ? profileModel.VersionInfo.Id : this.CustomId;
 
@@ -121,7 +121,7 @@ public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
                 new LegacyForgeInstallVersionInfoContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
             await File.WriteAllTextAsync(jsonPath, versionJsonString);
-            this.InvokeStatusChangedEvent("文件写入完成", 1);
+            this.InvokeStatusChangedEvent("文件写入完成", ProgressValue.Finished);
 
             return new ForgeInstallResult
             {

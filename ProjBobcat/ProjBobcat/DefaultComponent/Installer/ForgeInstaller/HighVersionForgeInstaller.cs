@@ -72,7 +72,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
         #region 解析 Version.json
 
-        this.InvokeStatusChangedEvent("解析 Version.json", 0.1);
+        this.InvokeStatusChangedEvent("解析 Version.json", ProgressValue.FromDisplay(10));
 
         var versionJsonEntry =
             archive.Entries.FirstOrDefault(e =>
@@ -105,7 +105,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
         #region 解析 Install_profile.json
 
-        this.InvokeStatusChangedEvent("解析 Install_profile.json", 0.2);
+        this.InvokeStatusChangedEvent("解析 Install_profile.json", ProgressValue.FromDisplay(20));
 
         var installProfileEntry =
             archive.Entries.FirstOrDefault(e =>
@@ -124,7 +124,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
         #region 解析 Lzma
 
-        this.InvokeStatusChangedEvent("解析 Lzma", 0.4);
+        this.InvokeStatusChangedEvent("解析 Lzma", ProgressValue.FromDisplay(40));
 
         var serverLzma = archive.Entries.FirstOrDefault(e =>
             e.Key?.Equals("data/server.lzma", StringComparison.OrdinalIgnoreCase) ?? false);
@@ -174,7 +174,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
         #region 解压 Forge Jar
 
-        this.InvokeStatusChangedEvent("解压 Forge Jar", 0.5);
+        this.InvokeStatusChangedEvent("解压 Forge Jar", ProgressValue.FromDisplay(50));
 
         var forgeJar = archive.Entries.FirstOrDefault(e =>
             e.Key?.Equals($"maven/net/minecraftforge/forge/{forgeVersion}/forge-{forgeVersion}.jar",
@@ -272,7 +272,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
         #region 解析 Processor
 
-        this.InvokeStatusChangedEvent("解析 Processor", 1);
+        this.InvokeStatusChangedEvent("解析 Processor", ProgressValue.Finished);
 
         string? ResolvePathRegex(string? val)
         {
@@ -535,7 +535,8 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
                 logSb.AppendLine(args.Data);
 
                 var data = args.Data;
-                var progress = (double)this._totalProcessed / this._needToProcess;
+                
+                var progress = ProgressValue.Create(this._totalProcessed, this._needToProcess);
                 var dataStr = data.CropStr(40);
 
                 this.InvokeStatusChangedEvent($"{dataStr} <安装信息> ( {this._totalProcessed} / {this._needToProcess} )",
@@ -549,7 +550,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
                 errSb.AppendLine(args.Data);
 
                 var data = args.Data ?? string.Empty;
-                var progress = (double)this._totalProcessed / this._needToProcess;
+                var progress = ProgressValue.Create(this._totalProcessed, this._needToProcess);
                 var dataStr = data.CropStr(40);
 
                 this.InvokeStatusChangedEvent($"{dataStr} <错误> ( {this._totalProcessed} / {this._needToProcess} )",
@@ -619,7 +620,8 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
         this._totalDownloaded++;
 
-        var progress = (double)this._totalDownloaded / this._needToDownload;
+        
+        var progress = ProgressValue.Create(this._totalDownloaded, this._needToDownload);
         var retryStr = file.RetryCount > 0 ? $"[重试 - {file.RetryCount}] " : string.Empty;
 
         this.InvokeStatusChangedEvent(

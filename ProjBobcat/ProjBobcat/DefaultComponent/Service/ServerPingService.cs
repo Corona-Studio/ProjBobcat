@@ -54,18 +54,18 @@ public class ServerPingService : ProgressReportBase
             throw new OperationCanceledException($"服务器 {this} 连接失败，连接超时 ({timeOut.Seconds}s)。", cts.Token);
         }
 
-        this.InvokeStatusChangedEvent("正在连接到服务器...", 10);
+        this.InvokeStatusChangedEvent("正在连接到服务器...", ProgressValue.FromDisplay(10));
 
         if (!client.Connected)
         {
-            this.InvokeStatusChangedEvent("无法连接到服务器", 10);
+            this.InvokeStatusChangedEvent("无法连接到服务器", ProgressValue.Finished);
             return null;
         }
 
         this._buffer = [];
         this._stream = client.GetStream();
 
-        this.InvokeStatusChangedEvent("发送请求...", 30);
+        this.InvokeStatusChangedEvent("发送请求...", ProgressValue.FromDisplay(30));
 
         /*
          * Send a "Handshake" packet
@@ -118,13 +118,15 @@ public class ServerPingService : ProgressReportBase
         var packet = this.ReadVarInt(buffer);
         var jsonLength = this.ReadVarInt(buffer);
 
-        this.InvokeStatusChangedEvent($"收到包 0x{packet:X2} ， 长度为 {length}", 80);
+        this.InvokeStatusChangedEvent($"收到包 0x{packet:X2} ， 长度为 {length}", ProgressValue.FromDisplay(80));
 
         var json = this.ReadString(buffer, jsonLength);
         var ping = JsonSerializer.Deserialize(json, PingPayloadContext.Default.PingPayload);
 
         if (ping == null)
             return null;
+
+        this.InvokeStatusChangedEvent("查询完成", ProgressValue.Finished);
 
         return new ServerPingResult
         {

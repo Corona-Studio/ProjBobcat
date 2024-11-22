@@ -60,7 +60,7 @@ public class DefaultResourceCompleter : IResourceCompleter
 
         this.OnResolveComplete(this, new GameResourceInfoResolveEventArgs
         {
-            Progress = 0,
+            Progress = ProgressValue.Start,
             Status = "正在进行资源检查"
         });
 
@@ -104,7 +104,7 @@ public class DefaultResourceCompleter : IResourceCompleter
 
         this.OnResolveComplete(this, new GameResourceInfoResolveEventArgs
         {
-            Progress = 100,
+            Progress = ProgressValue.Finished,
             Status = "资源检查完成"
         });
 
@@ -164,7 +164,7 @@ public class DefaultResourceCompleter : IResourceCompleter
         this.DownloadFileCompletedEvent?.Invoke(sender, e);
     }
 
-    void OnChanged(double progress, double speed)
+    void OnChanged(ProgressValue progress, double speed)
     {
         this.DownloadFileChangedEvent?.Invoke(this, new DownloadFileChangedEventArgs
         {
@@ -183,7 +183,7 @@ public class DefaultResourceCompleter : IResourceCompleter
         var downloaded = Interlocked.Increment(ref this._totalDownloaded);
         var needToDownload = Interlocked.Read(ref this._needToDownload);
 
-        this.OnChanged((double)downloaded / needToDownload, e.AverageSpeed);
+        this.OnChanged(ProgressValue.Create(downloaded, needToDownload), e.AverageSpeed);
         this.OnCompleted(sender, e);
     }
 }

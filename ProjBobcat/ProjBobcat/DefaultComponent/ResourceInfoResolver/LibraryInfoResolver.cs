@@ -24,7 +24,7 @@ public sealed class LibraryInfoResolver : ResolverBase
     {
         if (!this.CheckLocalFiles) yield break;
 
-        this.OnResolve("开始进行游戏资源(Library)检查");
+        this.OnResolve("开始进行游戏资源(Library)检查", ProgressValue.Start);
         if (this.VersionInfo.Natives.Count == 0 && this.VersionInfo.Libraries.Count == 0)
             yield break;
 
@@ -41,8 +41,8 @@ public sealed class LibraryInfoResolver : ResolverBase
                 var libPath = GamePathHelper.GetLibraryPath(lib.Path!);
                 var filePath = Path.Combine(this.BasePath, libPath);
 
-                Interlocked.Increment(ref checkedLib);
-                var progress = (double)checkedLib / libCount * 100;
+                var addedCheckedLib = Interlocked.Increment(ref checkedLib);
+                var progress = ProgressValue.Create(addedCheckedLib, libCount);
 
                 this.OnResolve(string.Empty, progress);
 
@@ -59,7 +59,7 @@ public sealed class LibraryInfoResolver : ResolverBase
                 yield return this.GetDownloadFile(lib);
             }
 
-        this.OnResolve("检索并验证 Library");
+        this.OnResolve("检索并验证 Library", ProgressValue.Start);
 
         checkedLib = 0;
         libCount = this.VersionInfo.Natives.Count;
@@ -74,8 +74,9 @@ public sealed class LibraryInfoResolver : ResolverBase
                 {
                     if (string.IsNullOrEmpty(native.FileInfo.Sha1)) continue;
 
-                    Interlocked.Increment(ref checkedLib);
-                    var progress = (double)checkedLib / libCount * 100;
+                    var addedCheckedLib = Interlocked.Increment(ref checkedLib);
+                    var progress = ProgressValue.Create(addedCheckedLib, libCount);
+
                     this.OnResolve(string.Empty, progress);
 
                     await using var fs = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
@@ -87,7 +88,7 @@ public sealed class LibraryInfoResolver : ResolverBase
                 yield return this.GetDownloadFile(native.FileInfo);
             }
 
-        this.OnResolve("检查Library完成", 100);
+        this.OnResolve("检查Library完成", ProgressValue.Finished);
     }
 
     LibraryDownloadInfo GetDownloadFile(FileInfo lL)

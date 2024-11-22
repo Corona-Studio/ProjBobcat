@@ -6,9 +6,11 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using ProjBobcat.Class.Helper;
+using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.CurseForge;
 using ProjBobcat.Class.Model.Downloading;
 using ProjBobcat.Exceptions;
@@ -33,7 +35,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         ArgumentException.ThrowIfNullOrEmpty(this.GameId);
         ArgumentException.ThrowIfNullOrEmpty(this.RootPath);
 
-        this.InvokeStatusChangedEvent("开始安装", 0);
+        this.InvokeStatusChangedEvent("开始安装", ProgressValue.Start);
 
         var manifest = await this.ReadManifestTask();
 
@@ -78,18 +80,18 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
                 urlBags.Add(downloadFile);
 
-                this.TotalDownloaded++;
-                this.NeedToDownload++;
-
-                var progress = (double)this.TotalDownloaded / this.NeedToDownload * 100;
+                var addedTotalDownloaded = Interlocked.Increment(ref this.TotalDownloaded);
+                var addedNeedToDownload = Interlocked.Increment(ref this.NeedToDownload);
+                var progress = ProgressValue.Create(addedTotalDownloaded, addedNeedToDownload);
 
                 this.InvokeStatusChangedEvent($"成功解析 MOD [{t.Item1}] 的下载地址",
                     progress);
             }
             catch (CurseForgeModResolveException e)
             {
-                this.InvokeStatusChangedEvent($"MOD [{t.Item1}] 的下载地址解析失败，尝试手动拼接",
-                    114514);
+                this.InvokeStatusChangedEvent(
+                    $"MOD [{t.Item1}] 的下载地址解析失败，尝试手动拼接",
+                    ProgressValue.FromDisplay(50));
 
                 var (guessed, df) = await this.TryGuessModDownloadLink(t.Item2, di.FullName);
 
@@ -119,10 +121,9 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
                 urlBags.Add(df);
 
-                this.TotalDownloaded++;
-                this.NeedToDownload++;
-
-                var progress = (double)this.TotalDownloaded / this.NeedToDownload * 100;
+                var addedTotalDownloaded = Interlocked.Increment(ref this.TotalDownloaded);
+                var addedNeedToDownload = Interlocked.Increment(ref this.NeedToDownload);
+                var progress = ProgressValue.Create(addedTotalDownloaded, addedNeedToDownload);
 
                 this.InvokeStatusChangedEvent($"成功解析 MOD [{t.Item1}] 的下载地址",
                     progress);
@@ -185,8 +186,9 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
                 ? $"...{subPath[(subPathLength - 15)..]}"
                 : subPath;
 
-            this.InvokeStatusChangedEvent($"解压缩安装文件：{subPathName}",
-                (double)this.TotalDownloaded / this.NeedToDownload * 100);
+            var progress = ProgressValue.Create(this.TotalDownloaded, this.NeedToDownload);
+
+            this.InvokeStatusChangedEvent($"解压缩安装文件：{subPathName}", progress);
 
             await using var fs = File.OpenWrite(path);
             entry.WriteTo(fs);
@@ -194,7 +196,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
             this.TotalDownloaded++;
         }
 
-        this.InvokeStatusChangedEvent("安装完成", 100);
+        this.InvokeStatusChangedEvent("安装完成", ProgressValue.Finished);
     }
 
     public async Task<CurseForgeManifestModel?> ReadManifestTask()

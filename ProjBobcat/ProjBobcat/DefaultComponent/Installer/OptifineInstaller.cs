@@ -36,7 +36,7 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
         if (this.OptifineDownloadVersion == null)
             throw new NullReferenceException("未指定 Optifine 下载信息");
 
-        this.InvokeStatusChangedEvent("开始安装 Optifine", 0);
+        this.InvokeStatusChangedEvent("开始安装 Optifine", ProgressValue.Start);
         var mcVersion = this.OptifineDownloadVersion.McVersion;
         var edition = this.OptifineDownloadVersion.Type;
         var release = this.OptifineDownloadVersion.Patch;
@@ -51,7 +51,7 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
         if (!di.Exists)
             di.Create();
 
-        this.InvokeStatusChangedEvent("读取 Optifine 数据", 20);
+        this.InvokeStatusChangedEvent("读取 Optifine 数据", ProgressValue.FromDisplay(20));
         using var archive = ArchiveFactory.Open(this.OptifineJarPath);
         var entries = archive.Entries;
 
@@ -70,7 +70,7 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
         var launchWrapperEntry =
             entries.FirstOrDefault(x => x.Key?.Equals($"launchwrapper-of-{launchWrapperVersion}.jar") ?? false);
 
-        this.InvokeStatusChangedEvent("生成版本总成", 40);
+        this.InvokeStatusChangedEvent("生成版本总成", ProgressValue.FromDisplay(40));
 
         var versionModel = new RawVersionModel
         {
@@ -115,7 +115,7 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
             launchWrapperVersion);
         var libDi = new DirectoryInfo(librariesPath);
 
-        this.InvokeStatusChangedEvent("写入 Optifine 数据", 60);
+        this.InvokeStatusChangedEvent("写入 Optifine 数据", ProgressValue.FromDisplay(60));
 
         if (!libDi.Exists)
             libDi.Create();
@@ -124,7 +124,7 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
             $"launchwrapper-of-{launchWrapperVersion}.jar");
         if (!File.Exists(launchWrapperPath) && launchWrapperEntry != null)
         {
-            this.InvokeStatusChangedEvent($"解压 launcherwrapper-{launchWrapperVersion} 数据", 65);
+            this.InvokeStatusChangedEvent($"解压 launcherwrapper-{launchWrapperVersion} 数据", ProgressValue.FromDisplay(65));
 
             await using var launchWrapperFs = File.OpenWrite(launchWrapperPath);
             launchWrapperEntry.WriteTo(launchWrapperFs);
@@ -140,7 +140,7 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
         if (!optifineLibPathDi.Exists)
             optifineLibPathDi.Create();
 
-        this.InvokeStatusChangedEvent("执行安装脚本", 80);
+        this.InvokeStatusChangedEvent("执行安装脚本", ProgressValue.FromDisplay(80));
 
         var ps = new ProcessStartInfo(this.JavaExecutablePath)
         {
@@ -165,7 +165,7 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
 
         void LogReceivedEvent(object sender, DataReceivedEventArgs args)
         {
-            this.InvokeStatusChangedEvent(args.Data ?? "loading...", 85);
+            this.InvokeStatusChangedEvent(args.Data ?? "loading...", ProgressValue.FromDisplay(85));
         }
 
         p.OutputDataReceived += LogReceivedEvent;
@@ -180,12 +180,12 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
         };
 
         await p.WaitForExitAsync();
-        this.InvokeStatusChangedEvent("安装即将完成", 90);
+        this.InvokeStatusChangedEvent("安装即将完成", ProgressValue.FromDisplay(95));
 
         if (errList.Count > 0)
             throw new NullReferenceException(string.Join(Environment.NewLine, errList));
 
-        this.InvokeStatusChangedEvent("Optifine 安装完成", 100);
+        this.InvokeStatusChangedEvent("Optifine 安装完成", ProgressValue.Finished);
 
         return id;
     }

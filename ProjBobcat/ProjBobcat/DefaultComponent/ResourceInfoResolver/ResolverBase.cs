@@ -35,7 +35,7 @@ public abstract class ResolverBase : IResourceInfoResolver
         GC.SuppressFinalize(this);
     }
 
-    public virtual void OnResolve(string currentStatus, double progress = 0)
+    public virtual void OnResolve(string currentStatus, ProgressValue progress)
     {
         var eventList = this._listEventDelegates;
         var @event = (EventHandler<GameResourceInfoResolveEventArgs>)eventList[ResolveEventKey]!;

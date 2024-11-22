@@ -8,7 +8,7 @@ public class ProgressReportBase : IProgressReport
 {
     public event EventHandler<StageChangedEventArgs>? StageChangedEventDelegate;
 
-    protected void InvokeStatusChangedEvent(string currentStage, double progress)
+    protected void InvokeStatusChangedEvent(string currentStage, ProgressValue progress)
     {
         this.StageChangedEventDelegate?.Invoke(this, new StageChangedEventArgs
         {

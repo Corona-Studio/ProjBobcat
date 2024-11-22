@@ -104,7 +104,7 @@ public static class DownloadHelper
 
                     downloadFile.OnChanged(
                         averageSpeed,
-                        1,
+                        ProgressValue.FromDisplay(100), 
                         responseLength,
                         responseLength);
 
@@ -483,7 +483,7 @@ public static class DownloadHelper
                         if (downloadSettings.ShowDownloadProgressForPartialDownload)
                             downloadFile.OnChanged(
                                 (double)addedAggregatedSpeed / addedAggregatedSpeedCount,
-                                (double)addedBytesReceived / urlInfo.FileLength,
+                                ProgressValue.Create(addedBytesReceived, urlInfo.FileLength),
                                 addedBytesReceived,
                                 urlInfo.FileLength);
                     }

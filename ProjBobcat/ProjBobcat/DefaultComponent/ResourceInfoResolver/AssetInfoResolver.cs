@@ -34,14 +34,14 @@ public sealed class AssetInfoResolver : ResolverBase
     {
         if (!this.CheckLocalFiles) yield break;
 
-        this.OnResolve("开始进行游戏资源(Asset)检查");
+        this.OnResolve("开始进行游戏资源(Asset)检查", ProgressValue.Start);
 
         if (this.VersionInfo.AssetInfo == null) yield break;
 
         var versions = this.Versions;
         if ((this.Versions?.Count ?? 0) == 0)
         {
-            this.OnResolve("没有提供 Version Manifest， 开始下载");
+            this.OnResolve("没有提供 Version Manifest， 开始下载", ProgressValue.Start);
 
             using var vmJsonRes = await HttpHelper.Get(DefaultVersionManifestUrl);
             var vm = await vmJsonRes.Content.ReadFromJsonAsync(VersionManifestContext.Default.VersionManifest);
@@ -70,7 +70,7 @@ public sealed class AssetInfoResolver : ResolverBase
         var assetIndexesPath = Path.Combine(assetIndexesDi.FullName, $"{id}.json");
         if (!File.Exists(assetIndexesPath))
         {
-            this.OnResolve("没有发现 Asset Indexes 文件， 开始下载");
+            this.OnResolve("没有发现 Asset Indexes 文件， 开始下载", ProgressValue.Start);
 
             var assetIndexDownloadUri = this.VersionInfo.AssetInfo?.Url;
 
@@ -112,14 +112,14 @@ public sealed class AssetInfoResolver : ResolverBase
             }
             catch (Exception e)
             {
-                this.OnResolve($"解析Asset Indexes 文件失败！原因：{e.Message}");
+                this.OnResolve($"解析Asset Indexes 文件失败！原因：{e.Message}", ProgressValue.Start);
                 yield break;
             }
 
-            this.OnResolve("Asset Indexes 文件下载完成", 100);
+            this.OnResolve("Asset Indexes 文件下载完成", ProgressValue.Finished);
         }
 
-        this.OnResolve("开始解析Asset Indexes 文件...");
+        this.OnResolve("开始解析Asset Indexes 文件...", ProgressValue.Start);
 
         AssetObjectModel? assetObject;
         try
@@ -130,7 +130,7 @@ public sealed class AssetInfoResolver : ResolverBase
         }
         catch (Exception ex)
         {
-            this.OnResolve($"解析Asset Indexes 文件失败！原因：{ex.Message}");
+            this.OnResolve($"解析Asset Indexes 文件失败！原因：{ex.Message}", ProgressValue.Start);
 
             try
             {
@@ -145,7 +145,7 @@ public sealed class AssetInfoResolver : ResolverBase
 
         if (assetObject == null)
         {
-            this.OnResolve("解析Asset Indexes 文件失败！原因：文件可能损坏或为空");
+            this.OnResolve("解析Asset Indexes 文件失败！原因：文件可能损坏或为空", ProgressValue.Start);
 
             try
             {
@@ -161,7 +161,7 @@ public sealed class AssetInfoResolver : ResolverBase
         var checkedObject = 0;
         var objectCount = assetObject.Objects.Count;
 
-        this.OnResolve("检索并验证 Asset 资源");
+        this.OnResolve("检索并验证 Asset 资源", ProgressValue.Start);
 
         foreach (var (key, fi) in assetObject.Objects)
         {
@@ -170,8 +170,9 @@ public sealed class AssetInfoResolver : ResolverBase
             var path = Path.Combine(assetObjectsDi.FullName, twoDigitsHash);
             var filePath = Path.Combine(path, fi.Hash);
 
-            Interlocked.Increment(ref checkedObject);
-            var progress = (double)checkedObject / objectCount * 100;
+            var addedCheckedObject = Interlocked.Increment(ref checkedObject);
+            var progress = ProgressValue.Create(addedCheckedObject, objectCount);
+
             this.OnResolve(key.CropStr(20), progress);
 
             if (File.Exists(filePath))
@@ -194,6 +195,6 @@ public sealed class AssetInfoResolver : ResolverBase
             };
         }
 
-        this.OnResolve("Assets 解析完成", 100);
+        this.OnResolve("Assets 解析完成", ProgressValue.Finished);
     }
 }
