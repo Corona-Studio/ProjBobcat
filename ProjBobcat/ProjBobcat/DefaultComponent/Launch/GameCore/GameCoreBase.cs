@@ -71,21 +71,21 @@ public abstract class GameCoreBase : IGameCore
         GC.SuppressFinalize(this);
     }
 
-    public virtual void OnGameExit(object sender, GameExitEventArgs e)
+    protected virtual void OnGameExit(object sender, GameExitEventArgs e)
     {
         var eventList = this.ListEventDelegates;
         var @event = (EventHandler<GameExitEventArgs>)eventList[GameExitEventKey]!;
         @event?.Invoke(sender, e);
     }
 
-    public virtual void OnLogGameData(object sender, GameLogEventArgs e)
+    internal virtual void OnLogGameData(object sender, GameLogEventArgs e)
     {
         var eventList = this.ListEventDelegates;
         var @event = (EventHandler<GameLogEventArgs>)eventList[GameLogEventKey]!;
         @event?.Invoke(sender, e);
     }
 
-    public virtual void OnLogLaunchData(object sender, LaunchLogEventArgs e)
+    protected virtual void OnLogLaunchData(object sender, LaunchLogEventArgs e)
     {
         var eventList = this.ListEventDelegates;
         var @event = (EventHandler<LaunchLogEventArgs>)eventList[LaunchLogEventKey]!;

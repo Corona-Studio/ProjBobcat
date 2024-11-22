@@ -5,14 +5,14 @@ namespace ProjBobcat.Event;
 
 public class GameLogEventArgs : EventArgs
 {
-    public string? GameId { get; set; }
+    public string? GameId { get; init; }
 
-    public GameLogType LogType { get; set; }
-    public string? Time { get; set; }
-    public string? Source { get; set; }
-    public string? RawContent { get; set; }
-    public string? Content { get; set; }
+    public GameLogType LogType { get; init; }
+    public string? Time { get; init; }
+    public string? Source { get; init; }
+    public string? RawContent { get; init; }
+    public string? Content { get; init; }
 
-    public string? ExceptionMsg { get; set; }
-    public string? StackTrace { get; set; }
+    public string? ExceptionMsg { get; init; }
+    public string? StackTrace { get; init; }
 }

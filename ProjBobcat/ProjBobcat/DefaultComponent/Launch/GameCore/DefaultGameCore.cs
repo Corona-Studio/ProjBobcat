@@ -26,9 +26,6 @@ public sealed class DefaultGameCore : GameCoreBase
 {
     readonly string _rootPath = null!;
 
-    /// <summary>
-    ///     启动参数解析器
-    /// </summary>
     public IArgumentParser LaunchArgumentParser
     {
         get => throw new InvalidOperationException();
@@ -54,8 +51,7 @@ public sealed class DefaultGameCore : GameCoreBase
 
     public override async Task<LaunchResult> LaunchTaskAsync(LaunchSettings settings)
     {
-        if (this.VersionLocator.LauncherProfileParser == null)
-            throw new ArgumentNullException(nameof(this.VersionLocator.LauncherProfileParser));
+        ArgumentNullException.ThrowIfNull(this.VersionLocator.LauncherProfileParser);
 
         try
         {
@@ -148,7 +144,7 @@ public sealed class DefaultGameCore : GameCoreBase
 
             var javasArr = new[]
             {
-                settings.GameArguments?.JavaExecutable,
+                settings.GameArguments.JavaExecutable,
                 settings.FallBackGameArguments?.JavaExecutable
             };
             var isJavaExists = false;

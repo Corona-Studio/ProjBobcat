@@ -134,7 +134,7 @@ public class LaunchWrapper(AuthResultBase authResult, LaunchSettings launchSetti
                 GameId = this.LaunchSettings.Version,
                 LogType = type,
                 RawContent = e.Data,
-                Content = e.Data[(totalPrefix?.Length ?? 0)..],
+                Content = e.Data[totalPrefix.Length..],
                 Source = source,
                 Time = time
             });

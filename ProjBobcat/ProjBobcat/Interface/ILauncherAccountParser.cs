@@ -6,7 +6,7 @@ namespace ProjBobcat.Interface;
 
 public interface ILauncherAccountParser
 {
-    LauncherAccountModel LauncherAccount { get; set; }
+    LauncherAccountModel LauncherAccount { get; }
     bool AddNewAccount(string uuid, AccountModel account, out Guid? id);
     bool RemoveAccount(Guid id);
     KeyValuePair<string, AccountModel>? Find(Guid id);

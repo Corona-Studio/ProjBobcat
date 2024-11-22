@@ -34,11 +34,10 @@ public class ServerPingService : ProgressReportBase
 
     public async Task<ServerPingResult?> RunAsync()
     {
-        using var client = new TcpClient
-        {
-            SendTimeout = 5000,
-            ReceiveTimeout = 5000
-        };
+        using var client = new TcpClient();
+
+        client.SendTimeout = 5000;
+        client.ReceiveTimeout = 5000;
 
         var timestamp = Stopwatch.GetTimestamp();
         var timeOut = TimeSpan.FromSeconds(3);

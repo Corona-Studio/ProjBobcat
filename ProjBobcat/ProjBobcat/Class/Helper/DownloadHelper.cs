@@ -31,11 +31,10 @@ public static class DownloadHelper
     /// <summary>
     ///     Receive data from remote stream
     /// </summary>
-    /// <returns>Average download speed</returns>
-    private static async Task<(long ResLength, double ElapsedTime)> ReceiveFromRemoteStreamAsync(
+    /// <returns>Elapsed time in seconds</returns>
+    private static async Task<double> ReceiveFromRemoteStreamAsync(
         Stream remoteStream,
         Stream destStream,
-        long responseLength,
         CancellationToken ct)
     {
         var startTime = Stopwatch.GetTimestamp();
@@ -46,7 +45,7 @@ public static class DownloadHelper
         var duration = Stopwatch.GetElapsedTime(startTime);
         var elapsedTime = duration.TotalSeconds == 0 ? 1 : duration.TotalSeconds;
         
-        return (responseLength, elapsedTime);
+        return elapsedTime;
     }
 
     #region Download data
@@ -96,13 +95,12 @@ public static class DownloadHelper
                 await using (var stream = await res.Content.ReadAsStreamAsync(cts.Token))
                 await using (Stream destStream = hashCheckFile ? cryptoStream : outputStream)
                 {
-                    var stats = await ReceiveFromRemoteStreamAsync(
+                    var elapsedTime = await ReceiveFromRemoteStreamAsync(
                         stream,
                         destStream,
-                        responseLength,
                         cts.Token);
 
-                    averageSpeed = stats.ResLength / stats.ElapsedTime;
+                    averageSpeed = responseLength / elapsedTime;
 
                     downloadFile.OnChanged(
                         averageSpeed,
@@ -465,16 +463,22 @@ public static class DownloadHelper
                     await using (var stream = await res.Content.ReadAsStreamAsync(pCts.Token))
                     await using (var fileToWriteTo = File.Create(range.TempFileName))
                     {
-                        var stats = await ReceiveFromRemoteStreamAsync(
+                        var elapsedTime = await ReceiveFromRemoteStreamAsync(
                             stream,
                             fileToWriteTo,
-                            urlInfo.FileLength,
                             pCts.Token);
 
-                        var speed = stats.ResLength / stats.ElapsedTime;
-                        var addedAggregatedSpeed = Interlocked.Add(ref aggregatedSpeed, (uint)speed);
                         var addedAggregatedSpeedCount = Interlocked.Increment(ref aggregatedSpeedCount);
-                        var addedBytesReceived = Interlocked.Add(ref bytesReceived, stats.ResLength);
+
+                        // Because the feature of HTTP range response,
+                        // the first byte of the first range is the last byte of the file.
+                        // So we need to skip the first byte of the first range.
+                        // (Expect the first part)
+                        var correctedSpeed = addedAggregatedSpeedCount > 1 ? fileToWriteTo.Length - 1 : fileToWriteTo.Length;
+
+                        var speed = correctedSpeed / elapsedTime;
+                        var addedAggregatedSpeed = Interlocked.Add(ref aggregatedSpeed, (uint)speed);
+                        var addedBytesReceived = Interlocked.Add(ref bytesReceived, correctedSpeed);
 
                         if (downloadSettings.ShowDownloadProgressForPartialDownload)
                             downloadFile.OnChanged(

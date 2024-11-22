@@ -15,7 +15,7 @@ using ProjBobcat.Interface;
 
 namespace ProjBobcat.DefaultComponent.Launch;
 
-public class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentParser
+public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArgumentParser
 {
     readonly LaunchSettings _launchSettings;
     readonly string? _rootVersion;

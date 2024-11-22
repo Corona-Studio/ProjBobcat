@@ -33,10 +33,10 @@ public sealed class LibraryInfoResolver : ResolverBase
         if (!libDi.Exists) libDi.Create();
 
         var checkedLib = 0;
-        var libCount = this.VersionInfo.Libraries?.Count ?? 0;
+        var libCount = this.VersionInfo.Libraries.Count;
 
         if (libCount > 0)
-            foreach (var lib in this.VersionInfo.Libraries!)
+            foreach (var lib in this.VersionInfo.Libraries)
             {
                 var libPath = GamePathHelper.GetLibraryPath(lib.Path!);
                 var filePath = Path.Combine(this.BasePath, libPath);
@@ -62,10 +62,10 @@ public sealed class LibraryInfoResolver : ResolverBase
         this.OnResolve("检索并验证 Library");
 
         checkedLib = 0;
-        libCount = this.VersionInfo.Natives?.Count ?? 0;
+        libCount = this.VersionInfo.Natives.Count;
 
         if (libCount > 0)
-            foreach (var native in this.VersionInfo.Natives!)
+            foreach (var native in this.VersionInfo.Natives)
             {
                 var nativePath = GamePathHelper.GetLibraryPath(native.FileInfo.Path!);
                 var filePath = Path.Combine(this.BasePath, nativePath);

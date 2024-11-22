@@ -24,9 +24,7 @@ namespace ProjBobcat.DefaultComponent.Authenticator;
 record McReqModel(string identityToken);
 
 [JsonSerializable(typeof(McReqModel))]
-partial class McReqModelContext : JsonSerializerContext
-{
-}
+partial class McReqModelContext : JsonSerializerContext;
 
 #endregion
 
@@ -42,9 +40,9 @@ public class MicrosoftAuthenticator : IAuthenticator
 
     public MicrosoftAuthenticator()
     {
-        if (ApiSettings == null)
-            throw new ArgumentNullException(
-                "请使用 Configure(MicrosoftAuthenticatorAPISettings apiSettings) 方法来配置验证器基础设置！");
+        ArgumentNullException.ThrowIfNull(
+            ApiSettings,
+            "请使用 Configure(MicrosoftAuthenticatorAPISettings apiSettings) 方法来配置验证器基础设置！");
     }
 
     public static MicrosoftAuthenticatorAPISettings? ApiSettings { get; private set; }
@@ -367,7 +365,7 @@ public class MicrosoftAuthenticator : IAuthenticator
     {
         var (_, value) = this.LauncherAccountParser.LauncherAccount.Accounts!
             .FirstOrDefault(x =>
-                (x.Value.MinecraftProfile?.Id?.Equals(ProfileId?.ToString("N"), StringComparison.OrdinalIgnoreCase) ?? false) &&
+                (x.Value.MinecraftProfile?.Id.Equals(ProfileId?.ToString("N"), StringComparison.OrdinalIgnoreCase) ?? false) &&
                 x.Value.Type.Equals("XBox", StringComparison.OrdinalIgnoreCase));
 
         if (value == default)

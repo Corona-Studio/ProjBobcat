@@ -23,7 +23,7 @@ public class CurseForgeAddonInfo
     [JsonPropertyName("summary")] public string? Summary { get; set; }
 
     [JsonPropertyName("links")]
-    public IReadOnlyDictionary<string, string> Links { get; set; } = ImmutableDictionary<string, string>.Empty;
+    public IReadOnlyDictionary<string, string>? Links { get; set; }
 
     [JsonPropertyName("defaultFileId")] public int DefaultFileId { get; set; }
     [JsonPropertyName("releaseType")] public int ReleaseType { get; set; }

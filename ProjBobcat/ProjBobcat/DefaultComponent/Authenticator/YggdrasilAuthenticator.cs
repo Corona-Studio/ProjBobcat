@@ -179,9 +179,9 @@ public class YggdrasilAuthenticator : IAuthenticator
         foreach (var (playerUuid, authProfileModel) in profiles)
         {
             var ids = this.LauncherAccountParser.LauncherAccount.Accounts!.Where(a =>
-                    (a.Value.MinecraftProfile?.Name?.Equals(authProfileModel.DisplayName,
+                    (a.Value.MinecraftProfile?.Name.Equals(authProfileModel.DisplayName,
                         StringComparison.OrdinalIgnoreCase) ?? false) &&
-                    (a.Value.MinecraftProfile?.Id?.Equals(playerUuid.ToString(), StringComparison.OrdinalIgnoreCase) ??
+                    (a.Value.MinecraftProfile?.Id.Equals(playerUuid.ToString(), StringComparison.OrdinalIgnoreCase) ??
                      false))
                 .Select(p => p.Value.Id);
 
@@ -380,9 +380,9 @@ public class YggdrasilAuthenticator : IAuthenticator
 
                 var uuid = authResponse.User.UUID.ToString();
                 var (_, value) = this.LauncherAccountParser.LauncherAccount.Accounts!.FirstOrDefault(a =>
-                    (a.Value.MinecraftProfile?.Name?.Equals(authResponse.User.UserName,
+                    (a.Value.MinecraftProfile?.Name.Equals(authResponse.User.UserName,
                         StringComparison.OrdinalIgnoreCase) ?? false) &&
-                    (a.Value.MinecraftProfile?.Id?.Equals(uuid, StringComparison.OrdinalIgnoreCase) ?? false));
+                    (a.Value.MinecraftProfile?.Id.Equals(uuid, StringComparison.OrdinalIgnoreCase) ?? false));
 
                 if (value != default) this.LauncherAccountParser.RemoveAccount(value.Id);
 

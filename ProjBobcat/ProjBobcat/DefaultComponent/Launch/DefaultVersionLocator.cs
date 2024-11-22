@@ -451,31 +451,31 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             var jvmArgList = new List<string>();
             var gameArgList = new List<string>();
 
-            result.RootVersion = inherits.Last()!.Id;
+            result.RootVersion = inherits.Last().Id;
 
             // 遍历所有的继承
             // Go through all inherits
             for (var i = inherits.Count - 1; i >= 0; i--)
             {
-                if (result.JavaVersion == null && inherits[i]!.JavaVersion != null)
-                    result.JavaVersion = inherits[i]!.JavaVersion;
-                if (result.AssetInfo == null && inherits[i]!.AssetIndex != null)
-                    result.AssetInfo = inherits[i]!.AssetIndex;
+                if (result.JavaVersion == null && inherits[i].JavaVersion != null)
+                    result.JavaVersion = inherits[i].JavaVersion;
+                if (result.AssetInfo == null && inherits[i].AssetIndex != null)
+                    result.AssetInfo = inherits[i].AssetIndex;
 
                 if (flag)
                 {
-                    var inheritsLibs = inherits[i]!.Libraries.ToList();
-                    inheritsLibs = NativeReplaceHelper.Replace([rawVersion, ..inherits!], inheritsLibs,
+                    var inheritsLibs = inherits[i].Libraries.ToList();
+                    inheritsLibs = NativeReplaceHelper.Replace([rawVersion, ..inherits], inheritsLibs,
                         this.NativeReplacementPolicy);
 
                     var rootLibs = this.GetNatives([.. inheritsLibs]);
                     result.Libraries = rootLibs.Item2;
                     result.Natives = rootLibs.Item1;
 
-                    jvmArgList.AddRange(this.ParseJvmArguments(inherits[i]!.Arguments?.Jvm));
+                    jvmArgList.AddRange(this.ParseJvmArguments(inherits[i].Arguments?.Jvm));
 
                     var rootArgs = this.ParseGameArguments(
-                        (inherits[i]!.MinecraftArguments, inherits[i]!.Arguments?.Game));
+                        (inherits[i].MinecraftArguments, inherits[i].Arguments?.Game));
 
                     gameArgList.AddRange(rootArgs.Item1);
                     result.AvailableGameArguments = rootArgs.Item2;
@@ -484,7 +484,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                     continue;
                 }
 
-                var middleLibs = this.GetNatives(inherits[i]!.Libraries);
+                var middleLibs = this.GetNatives(inherits[i].Libraries);
 
                 // result.Libraries.AddRange(middleLibs.Item2);
 
@@ -531,16 +531,16 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                         .ToList();
                 result.Natives.AddRange(moreMiddleNatives);
 
-                var jvmArgs = this.ParseJvmArguments(inherits[i]!.Arguments?.Jvm);
+                var jvmArgs = this.ParseJvmArguments(inherits[i].Arguments?.Jvm);
                 var middleGameArgs = this.ParseGameArguments(
-                    (inherits[i]!.MinecraftArguments, inherits[i]!.Arguments?.Game));
+                    (inherits[i].MinecraftArguments, inherits[i].Arguments?.Game));
 
-                if (string.IsNullOrEmpty(inherits[i]!.MinecraftArguments))
+                if (string.IsNullOrEmpty(inherits[i].MinecraftArguments))
                 {
                     jvmArgList.AddRange(jvmArgs);
                     gameArgList.AddRange(middleGameArgs.Item1);
                     result.AvailableGameArguments = result.AvailableGameArguments?
-                        .Union(middleGameArgs.Item2)
+                        .Union(middleGameArgs.Item2, KeyValuePairStringStringComparer.Default)
                         .ToDictionary(x => x.Key, y => y.Value);
                 }
                 else
@@ -550,8 +550,8 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                     result.AvailableGameArguments = middleGameArgs.Item2;
                 }
 
-                result.Id = inherits[i]?.Id ?? result.Id;
-                result.MainClass = inherits[i]?.MainClass ?? result.MainClass;
+                result.Id = inherits[i].Id;
+                result.MainClass = inherits[i].MainClass;
             }
 
             if (result.JvmArguments != null)
@@ -602,7 +602,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             for (var i = 1; i < sortedDuplicates.Count; i++) rawLibs.Remove(sortedDuplicates[i]);
         }
 
-        rawLibs = NativeReplaceHelper.Replace([rawVersion, .. inherits ?? []], rawLibs, this.NativeReplacementPolicy);
+        rawLibs = NativeReplaceHelper.Replace([rawVersion, .. inherits], rawLibs, this.NativeReplacementPolicy);
 
         var libs = this.GetNatives([.. rawLibs]);
 
@@ -655,5 +655,20 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             this.LauncherProfileParser.LauncherProfile.Profiles!.Add(gameId, gameProfile);
             this.LauncherProfileParser.SaveProfile();
         }
+    }
+}
+
+file class KeyValuePairStringStringComparer : IEqualityComparer<KeyValuePair<string, string>>
+{
+    public static KeyValuePairStringStringComparer Default => new ();
+
+    public bool Equals(KeyValuePair<string, string> x, KeyValuePair<string, string> y)
+    {
+        return x.Key == y.Key && x.Value == y.Value;
+    }
+
+    public int GetHashCode(KeyValuePair<string, string> obj)
+    {
+        return HashCode.Combine(obj.Key, obj.Value);
     }
 }

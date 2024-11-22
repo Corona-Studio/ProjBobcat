@@ -36,7 +36,7 @@ public sealed class AssetInfoResolver : ResolverBase
 
         this.OnResolve("开始进行游戏资源(Asset)检查");
 
-        if (this.VersionInfo?.AssetInfo == null) yield break;
+        if (this.VersionInfo.AssetInfo == null) yield break;
 
         var versions = this.Versions;
         if ((this.Versions?.Count ?? 0) == 0)
@@ -72,7 +72,7 @@ public sealed class AssetInfoResolver : ResolverBase
         {
             this.OnResolve("没有发现 Asset Indexes 文件， 开始下载");
 
-            var assetIndexDownloadUri = this.VersionInfo?.AssetInfo?.Url;
+            var assetIndexDownloadUri = this.VersionInfo.AssetInfo?.Url;
 
             if (isAssetInfoNotExists)
             {

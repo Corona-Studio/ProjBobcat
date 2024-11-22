@@ -4,7 +4,7 @@ public class TaskResult<T>(TaskResultStatus taskStatus, string message = "", T? 
 {
     public T? Value { get; } = value;
 
-    public string Message { get; set; } = message;
+    public string Message { get; } = message;
 
-    public TaskResultStatus TaskStatus { get; set; } = taskStatus;
+    public TaskResultStatus TaskStatus { get; } = taskStatus;
 }

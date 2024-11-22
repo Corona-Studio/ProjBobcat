@@ -15,7 +15,7 @@ using System.Threading;
 
 namespace ProjBobcat.DefaultComponent.Launch;
 
-public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccountParser
+public sealed class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccountParser
 {
     readonly string _fullLauncherAccountPath;
 
@@ -55,7 +55,7 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
         }
     }
 
-    public LauncherAccountModel LauncherAccount { get; set; }
+    public required LauncherAccountModel LauncherAccount { get; init; }
 
     public bool ActivateAccount(string uuid)
     {
@@ -65,7 +65,7 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
         lock (this._lock)
 #endif
         {
-            if (!(this.LauncherAccount?.Accounts?.ContainsKey(uuid) ?? false))
+            if (!(this.LauncherAccount.Accounts?.ContainsKey(uuid) ?? false))
                 return false;
 
             this.LauncherAccount.ActiveAccountLocalId = uuid;
@@ -77,12 +77,6 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
 
     public bool AddNewAccount(string uuid, AccountModel account, out Guid? id)
     {
-        if (this.LauncherAccount == null)
-        {
-            id = null;
-            return false;
-        }
-
         this.LauncherAccount.Accounts ??= [];
 
 #if NET9_0_OR_GREATER
@@ -149,7 +143,7 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
         lock (this._lock)
 #endif
         {
-            return this.LauncherAccount?.Accounts?.FirstOrDefault(a => a.Value.Id == id);
+            return this.LauncherAccount.Accounts?.FirstOrDefault(a => a.Value.Id == id);
         }
     }
 
@@ -169,7 +163,7 @@ public class DefaultLauncherAccountParser : LauncherParserBase, ILauncherAccount
         lock (this._lock)
 #endif
         {
-            this.LauncherAccount?.Accounts?.Remove(key);
+            this.LauncherAccount.Accounts?.Remove(key);
             this.Save();
         }
 

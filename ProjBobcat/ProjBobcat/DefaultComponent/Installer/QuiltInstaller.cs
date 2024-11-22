@@ -70,7 +70,7 @@ public class QuiltInstaller : InstallerBase, IQuiltInstaller
         if (!string.IsNullOrEmpty(this.InheritsFrom))
             versionModel.InheritsFrom = this.InheritsFrom;
 
-        var id = versionModel.Id!;
+        var id = versionModel.Id;
         var installPath = Path.Combine(this.RootPath, GamePathHelper.GetGamePath(id));
         var di = new DirectoryInfo(installPath);
 
