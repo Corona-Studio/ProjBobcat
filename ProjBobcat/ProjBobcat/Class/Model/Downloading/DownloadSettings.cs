@@ -28,7 +28,7 @@ public class DownloadSettings
     public TimeSpan Timeout { get; init; }
     public int DownloadParts { get; set; }
     public HashType HashType { get; init; }
-    public bool ShowDownloadProgressForPartialDownload { get; init; }
+    public bool ShowDownloadProgress { get; init; }
 
     /// <summary>
     ///     认证

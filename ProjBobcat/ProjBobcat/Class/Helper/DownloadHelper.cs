@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
@@ -29,7 +30,7 @@ public static class DownloadHelper
     private static HttpClient MultiPart => HttpClientHelper.MultiPartClient;
 
     /// <summary>
-    ///     Receive data from remote stream
+    ///     Receive data from remote stream (only for partial download)
     /// </summary>
     /// <returns>Elapsed time in seconds</returns>
     private static async Task<double> ReceiveFromRemoteStreamAsync(
@@ -87,26 +88,49 @@ public static class DownloadHelper
 
                 using var hashProvider = downloadSettings.GetCryptoTransform();
 
-                double averageSpeed;
-
+                var averageSpeed = 0d;
                 var outputStream = File.Create(filePath);
                 var cryptoStream = new CryptoStream(outputStream, hashProvider, CryptoStreamMode.Write, true);
 
                 await using (var stream = await res.Content.ReadAsStreamAsync(cts.Token))
                 await using (Stream destStream = hashCheckFile ? cryptoStream : outputStream)
                 {
+                    const int defaultCopyBufferSize = 81920;
+
+                    using var buffer = MemoryPool<byte>.Shared.Rent(defaultCopyBufferSize);
+                    
+                    var bytesReadInTotal = 0L;
+
+                    while (true)
+                    {
+                        var startTime = Stopwatch.GetTimestamp();
+                        var bytesRead = await stream.ReadAsync(buffer.Memory, cts.Token);
+
+                        if (bytesRead == 0) break;
+                        
+                        bytesReadInTotal += bytesRead;
+                        
+                        await destStream.WriteAsync(buffer.Memory[..bytesRead], cts.Token);
+                        
+                        var duration = Stopwatch.GetElapsedTime(startTime);
+                        var elapsedTime = duration.TotalSeconds == 0 ? 1 : duration.TotalSeconds;
+                        
+                        averageSpeed = responseLength / elapsedTime;
+
+                        if (downloadSettings.ShowDownloadProgress)
+                            downloadFile.OnChanged(
+                                averageSpeed,
+                                ProgressValue.Create(bytesReadInTotal, responseLength), 
+                                responseLength,
+                                responseLength);
+                    }
+                    
+                    /*
                     var elapsedTime = await ReceiveFromRemoteStreamAsync(
                         stream,
                         destStream,
                         cts.Token);
-
-                    averageSpeed = responseLength / elapsedTime;
-
-                    downloadFile.OnChanged(
-                        averageSpeed,
-                        ProgressValue.FromDisplay(100), 
-                        responseLength,
-                        responseLength);
+                    */
 
                     if (hashCheckFile && destStream is CryptoStream cStream)
                         await cStream.FlushFinalBlockAsync(cts.Token);
@@ -480,7 +504,7 @@ public static class DownloadHelper
                         var addedAggregatedSpeed = Interlocked.Add(ref aggregatedSpeed, (uint)speed);
                         var addedBytesReceived = Interlocked.Add(ref bytesReceived, correctedSpeed);
 
-                        if (downloadSettings.ShowDownloadProgressForPartialDownload)
+                        if (downloadSettings.ShowDownloadProgress)
                             downloadFile.OnChanged(
                                 (double)addedAggregatedSpeed / addedAggregatedSpeedCount,
                                 ProgressValue.Create(addedBytesReceived, urlInfo.FileLength),
