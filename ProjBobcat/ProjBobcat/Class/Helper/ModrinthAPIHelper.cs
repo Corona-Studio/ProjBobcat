@@ -137,11 +137,11 @@ public static class ModrinthAPIHelper
         string[] hashes,
         string algorithm,
         string[] loaders,
-        string[] game_versions)
+        string[] gameVersions)
     {
         const string reqUrl = $"{BaseUrl}/version_files/update";
-
-        var data = JsonSerializer.Serialize(new FileMatchRequestModel(hashes, algorithm, loaders, game_versions),
+         
+        var data = JsonSerializer.Serialize(new FileMatchRequestModel(hashes, algorithm, loaders, gameVersions),
             ModrinthModelContext.Default.FileMatchRequestModel);
 
         using var res = await HttpHelper.Post(reqUrl, data);
