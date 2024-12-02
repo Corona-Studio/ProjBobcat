@@ -18,6 +18,7 @@ using ProjBobcat.Class.Model.YggdrasilAuth;
 using ProjBobcat.Event;
 using ProjBobcat.Interface;
 using SharpCompress.Archives;
+using SharpCompress.Readers;
 using FileInfo = ProjBobcat.Class.Model.FileInfo;
 
 namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller;
@@ -68,7 +69,8 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
                 }
             };
 
-        using var archive = ArchiveFactory.Open(Path.GetFullPath(this.ForgeExecutablePath));
+        await using var archiveFs = File.OpenRead(Path.GetFullPath(this.ForgeExecutablePath));
+        using var archive = ArchiveFactory.Open(archiveFs);
 
         #region 解析 Version.json
 
@@ -469,7 +471,9 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             var maven = processor.Processor.Jar.ResolveMavenString()!;
             var libPath = Path.Combine(this.RootPath, GamePathHelper.GetLibraryPath(maven.Path));
 
-            using var libArchive = ArchiveFactory.Open(Path.GetFullPath(libPath));
+            await using var libFs = File.OpenRead(Path.GetFullPath(libPath));
+            using var libArchive = ArchiveFactory.Open(libFs);
+
             var libEntry =
                 libArchive.Entries.FirstOrDefault(e =>
                     e.Key?.Equals("META-INF/MANIFEST.MF", StringComparison.OrdinalIgnoreCase) ?? false);
@@ -623,7 +627,6 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
         this._totalDownloaded++;
 
-        
         var progress = ProgressValue.Create(this._totalDownloaded, this._needToDownload);
         var retryStr = file.RetryCount > 0 ? $"[重试 - {file.RetryCount}] " : string.Empty;
 
