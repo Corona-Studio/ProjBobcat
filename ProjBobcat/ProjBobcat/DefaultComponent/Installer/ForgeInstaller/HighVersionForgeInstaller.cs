@@ -617,6 +617,9 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
     void WhenCompleted(object? sender, DownloadFileCompletedEventArgs e)
     {
         if (sender is not DownloadFile file) return;
+        if (!e.Success) this._failedFiles.Add(file);
+
+        file.Completed -= this.WhenCompleted;
 
         this._totalDownloaded++;
 
@@ -627,7 +630,5 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
         this.InvokeStatusChangedEvent(
             $"{retryStr}下载 - {file.FileName} ( {this._totalDownloaded} / {this._needToDownload} )",
             progress);
-
-        if (!e.Success) this._failedFiles.Add(file);
     }
 }

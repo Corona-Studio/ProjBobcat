@@ -13,6 +13,9 @@ public abstract class ModPackInstallerBase : InstallerBase
     protected void WhenCompleted(object? sender, DownloadFileCompletedEventArgs e)
     {
         if (sender is not DownloadFile file) return;
+        if (!e.Success) this.FailedFiles.Add(file);
+
+        file.Completed -= this.WhenCompleted;
 
         this.TotalDownloaded++;
 
@@ -25,7 +28,5 @@ public abstract class ModPackInstallerBase : InstallerBase
         this.InvokeStatusChangedEvent(
             $"{retryStr}下载整合包中的 Mods - {fileName} ({this.TotalDownloaded} / {this.NeedToDownload})",
             progress);
-
-        if (!e.Success) this.FailedFiles.Add(file);
     }
 }
