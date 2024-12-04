@@ -42,4 +42,22 @@ public static class FileHelper
 
         return false;
     }
+
+    public static bool MoveFileWithRetry(string oldPath, string newPath, int retryCount = 3)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(retryCount, 0);
+
+        for (var i = 0; i < retryCount; i++)
+            try
+            {
+                File.Move(oldPath, newPath);
+                return true;
+            }
+            catch
+            {
+                // ignored
+            }
+
+        return false;
+    }
 }
