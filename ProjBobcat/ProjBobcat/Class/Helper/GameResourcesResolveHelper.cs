@@ -237,7 +237,9 @@ public static class GameResourcesResolveHelper
                   ext.Equals(".disabled", StringComparison.OrdinalIgnoreCase)))
                 continue;
 
-            if (!ArchiveHelper.TryOpen(file, out var archive)) continue;
+            await using var fs = File.OpenRead(file);
+
+            if (!ArchiveHelper.TryOpen(fs, out var archive)) continue;
 
             var modInfoEntry =
                 archive.Entries.FirstOrDefault(e =>
@@ -303,7 +305,10 @@ public static class GameResourcesResolveHelper
         var ext = Path.GetExtension(file);
 
         if (!ext.Equals(".zip", StringComparison.OrdinalIgnoreCase)) return null;
-        if (!ArchiveHelper.TryOpen(file, out var archive)) return null;
+
+        await using var fs = File.OpenRead(file);
+
+        if (!ArchiveHelper.TryOpen(fs, out var archive)) return null;
 
         var packIconEntry =
             archive.Entries.FirstOrDefault(e => e.Key?.Equals("pack.png", StringComparison.OrdinalIgnoreCase) ?? false);
@@ -407,9 +412,11 @@ public static class GameResourcesResolveHelper
         }
     }
 
-    static GameShaderPackResolvedInfo? ResolveShaderPackFile(string file)
+    static async Task<GameShaderPackResolvedInfo?> ResolveShaderPackFile(string file)
     {
-        if (!ArchiveHelper.TryOpen(file, out var archive)) return null;
+        await using var fs = File.OpenRead(file);
+
+        if (!ArchiveHelper.TryOpen(fs, out var archive)) return null;
         if (!archive.Entries.Any(e =>
                 Path.GetFileName(e.Key?.TrimEnd('/'))
                     ?.Equals("shaders", StringComparison.OrdinalIgnoreCase) ?? false))
@@ -429,9 +436,9 @@ public static class GameResourcesResolveHelper
         return new GameShaderPackResolvedInfo(Path.GetFileName(dir), true);
     }
 
-    public static IEnumerable<GameShaderPackResolvedInfo> ResolveShaderPack(
+    public static async IAsyncEnumerable<GameShaderPackResolvedInfo> ResolveShaderPack(
         IEnumerable<(string, bool)> paths,
-        CancellationToken ct)
+        [EnumeratorCancellation] CancellationToken ct)
     {
         foreach (var (path, isDir) in paths)
         {
@@ -439,7 +446,7 @@ public static class GameResourcesResolveHelper
 
             if (!isDir)
             {
-                var result = ResolveShaderPackFile(path);
+                var result = await ResolveShaderPackFile(path);
 
                 if (result == null) continue;
 
