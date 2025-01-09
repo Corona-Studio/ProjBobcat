@@ -8,6 +8,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using JsonRepairSharp.Class;
 using ProjBobcat.Class.Helper.TOMLParser;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Fabric;
@@ -19,54 +20,6 @@ namespace ProjBobcat.Class.Helper;
 
 public static class GameResourcesResolveHelper
 {
-    static string ProcessJsonString(string json)
-    {
-        json = json.Replace("\"dependencies\": [mod_minecraftForge]", "\"dependencies\": \"\"");
-        var jsonSplit = json.Split('\n');
-        if (jsonSplit.Length < 2) return json;
-
-        var startIndex = 0;
-        var endIndex = 0;
-
-        for (var i = 0; i < jsonSplit.Length; i++)
-        {
-            if (jsonSplit[i].Trim().EndsWith('{') || jsonSplit[i].Trim() == "\n" ||
-                string.IsNullOrWhiteSpace(jsonSplit[i].Trim()))
-                continue;
-
-            if (startIndex == 0)
-                if ((!jsonSplit[i].Trim().EndsWith('\"') && !jsonSplit[i].Trim().EndsWith(',')) ||
-                    jsonSplit[i].Replace(" ", string.Empty).EndsWith(":\""))
-                {
-                    startIndex = i;
-                    continue;
-                }
-
-            if (startIndex == 0) continue;
-            if ((!jsonSplit[i].Trim().StartsWith('\"') || !jsonSplit[i + 1].Trim().StartsWith('}')) &&
-                !jsonSplit[i].Trim().StartsWith("\",") && !jsonSplit[i].Trim().EndsWith("\",")) continue;
-
-            endIndex = i;
-            break;
-        }
-
-        if (startIndex == 0 || endIndex == 0) return json;
-        {
-            var tempInt = endIndex - 1;
-            for (var i = endIndex; i > startIndex; i--)
-            {
-                jsonSplit[tempInt] = $"{jsonSplit[tempInt]}\\n{jsonSplit[tempInt + 1]}";
-                tempInt -= 1;
-            }
-
-            var newJsonArray = jsonSplit.Where((s, index) => index < startIndex + 1 || index > endIndex).ToArray();
-
-            var newJson = string.Join("\n", newJsonArray);
-            return newJson;
-        }
-    }
-
-
     static async Task<GameModResolvedInfo?> GetLegacyModInfo(
         IArchiveEntry entry,
         string file,
@@ -108,59 +61,63 @@ public static class GameResourcesResolveHelper
     {
         try
         {
-            List<GameModInfoModel>? model = null;
+            GameModInfoModel[]? model = null;
 
             await using var stream = entry.OpenEntryStream();
-            using var sr = new StreamReader(stream, leaveOpen: true);
+            using var sr = new StreamReader(stream, Encoding.UTF8, leaveOpen: true);
 
             var json = await sr.ReadToEndAsync(ct);
-            var fixedJson = ProcessJsonString(json);
+            var fixedJson = JsonRepairCore.JsonRepair(json);
 
             await using var fixedStream = new MemoryStream(Encoding.UTF8.GetBytes(fixedJson));
 
-            var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
+            var element = (await JsonDocument.ParseAsync(fixedStream, cancellationToken: ct)).RootElement;
 
-            switch (doc.RootElement.ValueKind)
+            switch (element.ValueKind)
             {
                 case JsonValueKind.Object:
-                    var val = doc.RootElement.Deserialize(GameModInfoModelContext.Default.GameModInfoModel);
+                    if (element.TryGetProperty("modList", out var innerModList))
+                    {
+                        element = innerModList;
+                        goto case JsonValueKind.Array;
+                    }
+
+                    var val = element.Deserialize(GameModInfoModelContext.Default.GameModInfoModel);
 
                     if (val != null) model = [val];
 
                     break;
                 case JsonValueKind.Array:
-                    model = doc.RootElement.Deserialize(GameModInfoModelContext.Default.ListGameModInfoModel) ?? [];
+                    model = element.Deserialize(GameModInfoModelContext.Default.GameModInfoModelArray) ?? [];
                     break;
             }
 
-            if (model == null || model.Count == 0)
+            if (model == null || model.Length == 0)
                 return null;
 
             var authors = new HashSet<string>();
             foreach (var author in model.Where(m => m.AuthorList != null).SelectMany(m => m.AuthorList!))
                 authors.Add(author);
 
-            var baseMod = model.FirstOrDefault(m => string.IsNullOrEmpty(m.Parent));
-
-            if (baseMod == null)
-            {
-                baseMod = model.First();
-                model.RemoveAt(0);
-            }
-            else
-            {
-                model.Remove(baseMod);
-            }
+            var baseMod = model.FirstOrDefault(m => string.IsNullOrEmpty(m.Parent)) ?? model.First();
 
             var authorStr = string.Join(',', authors);
             var authorResult = string.IsNullOrEmpty(authorStr) ? null : authorStr;
-            var modList = model.Where(m => !string.IsNullOrEmpty(m.Name)).Select(m => m.Name!).ToImmutableList();
+            var modList = model
+                .Where(m => !string.IsNullOrEmpty(m.Parent) && m != baseMod)
+                .Where(m => !string.IsNullOrEmpty(m.Name))
+                .Select(m => m.Name!)
+                .ToImmutableList();
             var titleResult = string.IsNullOrEmpty(baseMod.Name) ? Path.GetFileName(file) : baseMod.Name;
 
             var displayModel = new GameModResolvedInfo(authorResult, file, modList, titleResult, baseMod.Version,
                 "Forge *", isEnabled);
 
             return displayModel;
+        }
+        catch (JsonRepairError)
+        {
+            return null;
         }
         catch (Exception)
         {

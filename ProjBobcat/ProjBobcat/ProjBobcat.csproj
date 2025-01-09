@@ -77,6 +77,9 @@ resolved the issue that LaunchWrapper may not return the correct exit code
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\JsonRepairSharp\JsonRepairSharp\JsonRepairSharp.csproj" />
+  </ItemGroup>
   <!-- Dependencies -->
   
 </Project>
