@@ -15,8 +15,14 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 9.0
+
       - uses: actions/checkout@v4
+        with: 
+          fetch-depth: 0
+          submodules: recursive
+
       - name: Restore packages
         run: dotnet restore ProjBobcat/ProjBobcat.sln
+        
       - name: Build Test
         run: dotnet build ProjBobcat/ProjBobcat.sln -c Release --no-restore

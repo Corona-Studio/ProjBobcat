@@ -14,11 +14,18 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 9.0
+
       - uses: actions/checkout@v4
+        with: 
+            fetch-depth: 0
+            submodules: recursive
+
       - name: Restore packages
         run: dotnet restore ProjBobcat/ProjBobcat.sln
+
       - name: Build Test
         run: dotnet build ProjBobcat/ProjBobcat.sln -c Release --no-restore
+
   publish-package:
     name: Publish Release package
     runs-on: windows-latest
@@ -28,12 +35,20 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 9.0
+
       - uses: actions/checkout@v4
+        with: 
+          fetch-depth: 0
+          submodules: recursive
+
       - name: Restore packages
         run: dotnet restore ProjBobcat/ProjBobcat/ProjBobcat.csproj
+
       - name: Build the project
         run: dotnet build ProjBobcat/ProjBobcat/ProjBobcat.csproj -c Release --no-restore
+        
       - name: Create the package
         run: $tag=${{ github.ref }}.replace("v",""); dotnet pack ProjBobcat/ProjBobcat/ProjBobcat.csproj -c Release -p:PackageVersion=$tag --no-build --no-restore -o .
+      
       - name: Publish the package to NuGet.org
         run: dotnet nuget push *.nupkg -k ${{secrets.NUGET_KEY}} -s https://api.nuget.org/v3/index.json
