@@ -12,4 +12,5 @@ public record GameModResolvedInfo(
     bool IsEnabled)
 {
     public ModLoaderType LoaderType { get; init; }
+    public byte[]? IconBytes { get; init; }
 }

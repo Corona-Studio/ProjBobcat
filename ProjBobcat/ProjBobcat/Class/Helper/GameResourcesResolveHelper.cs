@@ -211,6 +211,44 @@ public static class GameResourcesResolveHelper
         return ModLoaderType.Unknown;
     }
 
+    private static async Task<byte[]?> TryResolveModIcon(IArchive archive)
+    {
+        static bool IsInRootPath(IArchiveEntry entry)
+        {
+            var path = entry.Key?.Split('/', StringSplitOptions.RemoveEmptyEntries);
+
+            if (path == null || path.Length == 0) return false;
+
+            return path.Length == 1;
+        }
+        
+        static bool IsImageFile(IArchiveEntry entry)
+        {
+            var ext = Path.GetExtension(entry.Key ?? string.Empty);
+
+            return !string.IsNullOrEmpty(ext) &&
+                   (ext.Equals(".png", StringComparison.OrdinalIgnoreCase) ||
+                    ext.Equals(".jpg", StringComparison.OrdinalIgnoreCase) ||
+                    ext.Equals(".jpeg", StringComparison.OrdinalIgnoreCase) ||
+                    ext.Equals(".gif", StringComparison.OrdinalIgnoreCase) ||
+                    ext.Equals(".bmp", StringComparison.OrdinalIgnoreCase) ||
+                    ext.Equals(".webp", StringComparison.OrdinalIgnoreCase));
+        }
+        
+        var iconEntry = archive.Entries
+            .FirstOrDefault(e => IsImageFile(e) && IsInRootPath(e));
+        
+        if (iconEntry == null)
+            return null;
+
+        await using var entryStream = iconEntry.OpenEntryStream();
+        await using var ms = new MemoryStream();
+        
+        await entryStream.CopyToAsync(ms);
+        
+        return ms.ToArray();
+    }
+
     public static async IAsyncEnumerable<GameModResolvedInfo> ResolveModListAsync(
         IEnumerable<string> files,
         [EnumeratorCancellation] CancellationToken ct)
@@ -286,7 +324,11 @@ public static class GameResourcesResolveHelper
                 isEnabled);
 
             ReturnResult:
-            result = result! with { LoaderType = GetModLoaderType(archive) };
+            result = result! with
+            {
+                LoaderType = GetModLoaderType(archive),
+                IconBytes = await TryResolveModIcon(archive)
+            };
             yield return result;
         }
     }
