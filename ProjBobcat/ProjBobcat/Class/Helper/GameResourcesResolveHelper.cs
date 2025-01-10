@@ -20,10 +20,11 @@ namespace ProjBobcat.Class.Helper;
 
 public static class GameResourcesResolveHelper
 {
-    static async Task<GameModResolvedInfo?> GetLegacyModInfo(
+    static async Task<GameModResolvedInfo?> GetTomlModInfo(
         IArchiveEntry entry,
         string file,
-        bool isEnabled)
+        bool isEnabled,
+        bool isNeoForge)
     {
         await using var stream = entry.OpenEntryStream();
         using var sR = new StreamReader(stream);
@@ -50,7 +51,37 @@ public static class GameResourcesResolveHelper
             ? infoTable["version"]?.AsString
             : null;
 
-        return new GameModResolvedInfo(author?.Value, file, null, title, version?.Value, "Forge", isEnabled);
+        var depsKey = $"dependencies.{title}";
+        var dependencies = table.HasKey(depsKey)
+            ? table[depsKey] as TomlArray
+            : null;
+
+        var modList = new List<string>();
+
+        if (dependencies != null)
+        {
+            foreach (var dep in dependencies.Children)
+            {
+                if (!dep.HasKey("modId")) continue;
+                if (!dep.HasKey("versionRange"))
+                {
+                    modList.Add(dep["modId"]?.AsString ?? string.Empty);
+                    continue;
+                }
+
+                modList.Add(
+                    $"{dep["modId"]?.AsString ?? string.Empty} ({dep["versionRange"]?.AsString ?? string.Empty})");
+            }
+        }
+
+        return new GameModResolvedInfo(
+            author?.Value,
+            file,
+            modList.Select(m => m.Trim()).Where(m => !string.IsNullOrWhiteSpace(m)).ToImmutableList(),
+            title,
+            version?.Value,
+            isNeoForge ? "NeoForge" : "Forge",
+            isEnabled);
     }
 
     static async Task<GameModResolvedInfo?> GetNewModInfo(
@@ -207,6 +238,9 @@ public static class GameResourcesResolveHelper
             var tomlInfoEntry =
                 archive.Entries.FirstOrDefault(e =>
                     e.Key?.Equals("META-INF/mods.toml", StringComparison.OrdinalIgnoreCase) ?? false);
+            var neoforgeTomlInfoEntry =
+                archive.Entries.FirstOrDefault(e =>
+                    e.Key?.Equals("META-INF/neoforge.mods.toml", StringComparison.OrdinalIgnoreCase) ?? false);
 
             var isEnabled = ext.Equals(".jar", StringComparison.OrdinalIgnoreCase);
 
@@ -221,9 +255,11 @@ public static class GameResourcesResolveHelper
                     if (result != null) goto ReturnResult;
                 }
 
-                if (tomlInfoEntry != null)
+                if (tomlInfoEntry != null || neoforgeTomlInfoEntry != null)
                 {
-                    result = await GetLegacyModInfo(tomlInfoEntry, file, isEnabled);
+                    var toml = tomlInfoEntry ?? neoforgeTomlInfoEntry;
+
+                    result = await GetTomlModInfo(toml!, file, isEnabled, toml == neoforgeTomlInfoEntry);
 
                     if (result != null) goto ReturnResult;
                 }
