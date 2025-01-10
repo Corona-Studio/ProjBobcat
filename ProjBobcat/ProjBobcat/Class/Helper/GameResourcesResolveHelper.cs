@@ -235,8 +235,14 @@ public static class GameResourcesResolveHelper
                     ext.Equals(".webp", StringComparison.OrdinalIgnoreCase));
         }
         
-        var iconEntry = archive.Entries
-            .FirstOrDefault(e => IsImageFile(e) && IsInRootPath(e));
+        var iconEntries = archive.Entries
+            .Where(e => IsImageFile(e) && IsInRootPath(e));
+        var iconEntry = iconEntries
+            .FirstOrDefault(e => e.Key!.Contains("icon", StringComparison.OrdinalIgnoreCase) ||
+                                 e.Key.Contains("logo", StringComparison.OrdinalIgnoreCase) ||
+                                 e.Key.Contains("cover", StringComparison.OrdinalIgnoreCase) ||
+                                 e.Key.Contains("banner", StringComparison.OrdinalIgnoreCase))
+            ?? iconEntries.FirstOrDefault();
         
         if (iconEntry == null)
             return null;
