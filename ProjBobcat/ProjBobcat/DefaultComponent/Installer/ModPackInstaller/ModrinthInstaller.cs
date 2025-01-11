@@ -64,7 +64,7 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
         if (!di.Exists)
             di.Create();
 
-        var downloadFiles = new List<DownloadFile>();
+        var downloadFiles = new List<SimpleDownloadFile>();
 
         foreach (var file in index.Files)
         {
@@ -76,7 +76,7 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
             var fileName = Path.GetFileName(fullPath);
             var checkSum = file.Hashes.TryGetValue("sha1", out var sha1) ? sha1 : string.Empty;
 
-            var df = new DownloadFile
+            var df = new SimpleDownloadFile
             {
                 CheckSum = checkSum,
                 DownloadPath = downloadDir,

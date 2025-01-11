@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Net.Http.Json;
@@ -18,15 +19,10 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver;
 public sealed class AssetInfoResolver : ResolverBase
 {
     const string DefaultVersionManifestUrl = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
-    readonly string? _assetIndexUrlRoot;
 
-    public string? AssetIndexUriRoot
-    {
-        get => this._assetIndexUrlRoot;
-        init => this._assetIndexUrlRoot = value?.TrimEnd('/');
-    }
+    public string? AssetIndexUriRoot { get; init; }
 
-    public string AssetUriRoot { get; init; } = "https://resources.download.minecraft.net/";
+    public IReadOnlyList<string> AssetUriRoots { get; init; } = ["https://resources.download.minecraft.net/"];
 
     public IReadOnlyList<VersionManifestVersionsModel>? Versions { get; init; }
 
@@ -79,27 +75,27 @@ public sealed class AssetInfoResolver : ResolverBase
                 var versionObject =
                     versions?.FirstOrDefault(v => v.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
 
-                if (versionObject == default) yield break;
+                if (versionObject == null) yield break;
 
                 using var jsonRes = await HttpHelper.Get(versionObject.Url);
                 var versionModel =
                     await jsonRes.Content.ReadFromJsonAsync(RawVersionModelContext.Default.RawVersionModel);
 
-                if (versionModel == default) yield break;
+                if (versionModel == null) yield break;
 
                 assetIndexDownloadUri = versionModel.AssetIndex?.Url;
             }
 
             if (string.IsNullOrEmpty(assetIndexDownloadUri)) yield break;
 
-            if (!string.IsNullOrEmpty(this.AssetIndexUriRoot))
+            if (!string.IsNullOrEmpty(AssetIndexUriRoot))
             {
                 var assetIndexUriRoot = HttpHelper.RegexMatchUri(assetIndexDownloadUri);
                 assetIndexDownloadUri =
-                    $"{this.AssetIndexUriRoot}{assetIndexDownloadUri[assetIndexUriRoot.Length..]}";
+                    $"{this.AssetIndexUriRoot.TrimEnd('/')}{assetIndexDownloadUri[assetIndexUriRoot.Length..]}";
             }
 
-            var dp = new DownloadFile
+            var dp = new SimpleDownloadFile
             {
                 DownloadPath = assetIndexesDi.FullName,
                 FileName = $"{id}.json",
@@ -188,7 +184,7 @@ public sealed class AssetInfoResolver : ResolverBase
                 Title = hash,
                 Path = path,
                 Type = ResourceType.Asset,
-                Url = $"{this.AssetUriRoot}{twoDigitsHash}/{fi.Hash}",
+                Urls = AssetUriRoots.Select(r => $"{r}{twoDigitsHash}/{fi.Hash}").ToImmutableList(),
                 FileSize = fi.Size,
                 CheckSum = hash,
                 FileName = hash

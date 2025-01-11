@@ -56,7 +56,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
             return urls.Select(file => (file.ProjectId, file.FileId));
         });
 
-        var urlBags = new ConcurrentBag<DownloadFile>();
+        var urlBags = new ConcurrentBag<SimpleDownloadFile>();
         var urlReqExceptions = new ConcurrentBag<CurseForgeModResolveException>();
         var actionBlock = new ActionBlock<(long, long)>(async t =>
         {
@@ -70,7 +70,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
                 var d = downloadUrlRes.Trim('"');
                 var fn = Path.GetFileName(d);
 
-                var downloadFile = new DownloadFile
+                var downloadFile = new SimpleDownloadFile
                 {
                     DownloadPath = di.FullName,
                     DownloadUri = d,
@@ -259,13 +259,13 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         }
     }
 
-    async Task<(bool, DownloadFile?)> TryGuessModDownloadLink(long fileId, string downloadPath)
+    async Task<(bool, SimpleDownloadFile?)> TryGuessModDownloadLink(long fileId, string downloadPath)
     {
         var pair = await TryGuessModDownloadLink(fileId);
 
         if (string.IsNullOrEmpty(pair.FileName) || string.IsNullOrEmpty(pair.Url)) return (false, null);
 
-        var df = new DownloadFile
+        var df = new SimpleDownloadFile
         {
             DownloadPath = downloadPath,
             DownloadUri = pair.Url,

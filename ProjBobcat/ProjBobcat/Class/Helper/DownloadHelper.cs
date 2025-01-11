@@ -57,7 +57,7 @@ public static class DownloadHelper
     /// <param name="downloadFile"></param>
     /// <param name="downloadSettings"></param>
     /// <returns></returns>
-    public static async Task DownloadData(DownloadFile downloadFile, DownloadSettings? downloadSettings = null)
+    public static async Task DownloadData(AbstractDownloadBase downloadFile, DownloadSettings? downloadSettings = null)
     {
         downloadSettings ??= DownloadSettings.Default;
 
@@ -71,7 +71,7 @@ public static class DownloadHelper
 
             try
             {
-                using var request = new HttpRequestMessage(HttpMethod.Get, downloadFile.DownloadUri);
+                using var request = new HttpRequestMessage(HttpMethod.Get, downloadFile.GetDownloadUrl());
 
                 if (downloadSettings.Authentication != null)
                     request.Headers.Authorization = downloadSettings.Authentication;
@@ -220,7 +220,7 @@ public static class DownloadHelper
     /// </summary>
     /// <param name="df"></param>
     /// <param name="downloadSettings"></param>
-    private static Task AdvancedDownloadFile(DownloadFile df, DownloadSettings downloadSettings)
+    private static Task AdvancedDownloadFile(AbstractDownloadBase df, DownloadSettings downloadSettings)
     {
         if (!Directory.Exists(df.DownloadPath))
             Directory.CreateDirectory(df.DownloadPath);
@@ -230,10 +230,10 @@ public static class DownloadHelper
             : DownloadData(df, downloadSettings);
     }
 
-    private static (BufferBlock<DownloadFile> Input, ActionBlock<DownloadFile> Execution) BuildAdvancedDownloadTplBlock(DownloadSettings downloadSettings)
+    private static (BufferBlock<AbstractDownloadBase> Input, ActionBlock<AbstractDownloadBase> Execution) BuildAdvancedDownloadTplBlock(DownloadSettings downloadSettings)
     {
-        var bufferBlock = new BufferBlock<DownloadFile>(new DataflowBlockOptions { EnsureOrdered = false });
-        var actionBlock = new ActionBlock<DownloadFile>(
+        var bufferBlock = new BufferBlock<AbstractDownloadBase>(new DataflowBlockOptions { EnsureOrdered = false });
+        var actionBlock = new ActionBlock<AbstractDownloadBase>(
             d => AdvancedDownloadFile(d, downloadSettings),
             new ExecutionDataflowBlockOptions
             {
@@ -253,7 +253,7 @@ public static class DownloadHelper
     /// <param name="fileEnumerable">文件列表</param>
     /// <param name="downloadSettings"></param>
     public static async Task AdvancedDownloadListFile(
-        IEnumerable<DownloadFile> fileEnumerable,
+        IEnumerable<AbstractDownloadBase> fileEnumerable,
         DownloadSettings downloadSettings)
     {
         var blocks = BuildAdvancedDownloadTplBlock(downloadSettings);
@@ -265,7 +265,7 @@ public static class DownloadHelper
         await blocks.Execution.Completion;
     }
 
-    public static (BufferBlock<DownloadFile> Input, ActionBlock<DownloadFile> Execution)
+    public static (BufferBlock<AbstractDownloadBase> Input, ActionBlock<AbstractDownloadBase> Execution)
         AdvancedDownloadListFileActionBlock(DownloadSettings downloadSettings) =>
         BuildAdvancedDownloadTplBlock(downloadSettings);
 
@@ -356,7 +356,7 @@ public static class DownloadHelper
     /// <param name="downloadSettings"></param>
     /// <returns></returns>
     public static async Task MultiPartDownloadTaskAsync(
-        DownloadFile? downloadFile,
+        AbstractDownloadBase? downloadFile,
         DownloadSettings? downloadSettings = null)
     {
         if (downloadFile == null) return;
@@ -383,7 +383,7 @@ public static class DownloadHelper
 
                 using var partialDownloadCheckCts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
                 var rawUrlInfo = await CanUsePartialDownload(
-                    downloadFile.DownloadUri,
+                    downloadFile.GetDownloadUrl(),
                     downloadSettings,
                     partialDownloadCheckCts.Token);
 
@@ -440,7 +440,7 @@ public static class DownloadHelper
                         {
                             var (range, pCts) = pair;
 
-                            using var request = new HttpRequestMessage(HttpMethod.Get, downloadFile.DownloadUri);
+                            using var request = new HttpRequestMessage(HttpMethod.Get, downloadFile.GetDownloadUrl());
 
                             if (downloadSettings.Authentication != null)
                                 request.Headers.Authorization = downloadSettings.Authentication;

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Threading;
 using ProjBobcat.Class.Helper;
@@ -13,12 +15,12 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver;
 
 public sealed class LibraryInfoResolver : ResolverBase
 {
-    public string LibraryUriRoot { get; init; } = "https://libraries.minecraft.net/";
-    public string ForgeUriRoot { get; init; } = "https://files.minecraftforge.net/";
-    public string FabricMavenUriRoot { get; init; } = "https://maven.fabricmc.net";
-    public string ForgeMavenUriRoot { get; init; } = "https://maven.minecraftforge.net/";
-    public string ForgeMavenOldUriRoot { get; init; } = "https://files.minecraftforge.net/maven/";
-    public string QuiltMavenUriRoot { get; init; } = "https://maven.quiltmc.org/repository/release/";
+    public IReadOnlyList<string> LibraryUriRoots { get; init; } = ["https://libraries.minecraft.net/"];
+    public IReadOnlyList<string> ForgeUriRoots { get; init; } = ["https://files.minecraftforge.net/"];
+    public IReadOnlyList<string> FabricMavenUriRoots { get; init; } = ["https://maven.fabricmc.net"];
+    public IReadOnlyList<string> ForgeMavenUriRoots { get; init; } = ["https://maven.minecraftforge.net/"];
+    public IReadOnlyList<string> ForgeMavenOldUriRoots { get; init; } = ["https://files.minecraftforge.net/maven/"];
+    public IReadOnlyList<string> QuiltMavenUriRoots { get; init; } = ["https://maven.quiltmc.org/repository/release/"];
 
     public override async IAsyncEnumerable<IGameResource> ResolveResourceAsync()
     {
@@ -94,19 +96,19 @@ public sealed class LibraryInfoResolver : ResolverBase
     LibraryDownloadInfo GetDownloadFile(FileInfo lL)
     {
         var libType = GetLibType(lL);
-        var uri = libType switch
+        var uris = libType switch
         {
             LibraryType.Forge when lL.Url?.StartsWith("https://maven.minecraftforge.net",
-                    StringComparison.OrdinalIgnoreCase) ?? false => $"{this.ForgeMavenUriRoot}{lL.Path}",
+                    StringComparison.OrdinalIgnoreCase) ?? false => ForgeMavenUriRoots.Select(r => $"{r}{lL.Path}").ToImmutableList(),
             LibraryType.Forge when lL.Url?.StartsWith("https://files.minecraftforge.net/maven/",
                                        StringComparison.OrdinalIgnoreCase) ??
-                                   false => $"{this.ForgeMavenOldUriRoot}{lL.Path}",
-            LibraryType.Forge => $"{this.ForgeUriRoot}{lL.Path}",
-            LibraryType.Fabric => $"{this.FabricMavenUriRoot}{lL.Path}",
+                                   false => ForgeMavenOldUriRoots.Select(r => $"{r}{lL.Path}").ToImmutableList(),
+            LibraryType.Forge => ForgeUriRoots.Select(r => $"{r}{lL.Path}").ToImmutableList(),
+            LibraryType.Fabric => FabricMavenUriRoots.Select(r => $"{r}{lL.Path}").ToImmutableList(),
             LibraryType.Quilt when !string.IsNullOrEmpty(lL.Url) =>
-                $"{this.QuiltMavenUriRoot}{lL.Path}",
-            LibraryType.Other => $"{this.LibraryUriRoot}{lL.Path}",
-            _ => string.Empty
+                QuiltMavenUriRoots.Select(r => $"{r}{lL.Path}").ToImmutableList(),
+            LibraryType.Other => LibraryUriRoots.Select(r => $"{r}{lL.Path}").ToImmutableList(),
+            _ => [string.Empty]
         };
 
         var symbolIndex = lL.Path!.LastIndexOf('/');
@@ -119,9 +121,7 @@ public sealed class LibraryInfoResolver : ResolverBase
             Path = path,
             Title = lL.Name?.Split(':')[1] ?? fileName,
             Type = ResourceType.LibraryOrNative,
-            Url = lL.Url?.StartsWith("[X]", StringComparison.OrdinalIgnoreCase) ?? false
-                ? lL.Url["[X]".Length..]
-                : uri,
+            Urls = uris,
             FileSize = lL.Size,
             CheckSum = lL.Sha1,
             FileName = fileName

@@ -1,19 +1,12 @@
-﻿using System;
+﻿using ProjBobcat.Interface;
+using System;
 using ProjBobcat.Event;
 
 namespace ProjBobcat.Class.Model.Downloading;
 
-/// <summary>
-///     下载文件信息类
-/// </summary>
-public class DownloadFile
+public abstract class AbstractDownloadBase : IDownloadFile
 {
-    internal int PartialDownloadRetryCount;
-
-    /// <summary>
-    ///     下载Uri
-    /// </summary>
-    public required string DownloadUri { get; init; }
+    public int PartialDownloadRetryCount { get; internal set; }
 
     /// <summary>
     ///     下载路径
@@ -54,6 +47,8 @@ public class DownloadFile
     ///     下载改变事件
     /// </summary>
     public event EventHandler<DownloadFileChangedEventArgs>? Changed;
+
+    public abstract string GetDownloadUrl();
 
     internal void OnChanged(double speed, ProgressValue progress, long bytesReceived, long totalBytes)
     {

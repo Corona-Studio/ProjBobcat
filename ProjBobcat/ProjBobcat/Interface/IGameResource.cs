@@ -1,4 +1,5 @@
-﻿using ProjBobcat.Class.Model;
+﻿using System.Collections.Generic;
+using ProjBobcat.Class.Model;
 
 namespace ProjBobcat.Interface;
 
@@ -20,9 +21,9 @@ public interface IGameResource
     ResourceType Type { get; init; }
 
     /// <summary>
-    ///     Url
+    ///     Urls
     /// </summary>
-    string Url { get; init; }
+    IReadOnlyList<string> Urls { get; init; }
 
     string FileName { get; init; }
 

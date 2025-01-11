@@ -7,12 +7,12 @@ namespace ProjBobcat.DefaultComponent.Installer.ModPackInstaller;
 
 public abstract class ModPackInstallerBase : InstallerBase
 {
-    protected readonly ConcurrentBag<DownloadFile> FailedFiles = [];
+    protected readonly ConcurrentBag<SimpleDownloadFile> FailedFiles = [];
     protected int TotalDownloaded, NeedToDownload;
 
     protected void WhenCompleted(object? sender, DownloadFileCompletedEventArgs e)
     {
-        if (sender is not DownloadFile file) return;
+        if (sender is not SimpleDownloadFile file) return;
         if (!e.Success) this.FailedFiles.Add(file);
 
         file.Completed -= this.WhenCompleted;

@@ -18,7 +18,7 @@ namespace ProjBobcat.DefaultComponent;
 /// </summary>
 public class DefaultResourceCompleter : IResourceCompleter
 {
-    readonly ConcurrentBag<DownloadFile> _failedFiles = [];
+    readonly ConcurrentBag<MultiSourceDownloadFile> _failedFiles = [];
 
     ulong _needToDownload, _totalDownloaded;
 
@@ -126,17 +126,10 @@ public class DefaultResourceCompleter : IResourceCompleter
 
         async ValueTask ReceiveGameResourceTask(IGameResource element, CancellationToken ct)
         {
-            /*
-            this.OnResolveComplete(this, new GameResourceInfoResolveEventArgs
-            {
-                Progress = -1,
-                Status = $"发现未下载的 {element.FileName.CropStr()}({element.Type})，已加入下载队列"
-            });
-            */
-            var dF = new DownloadFile
+            var dF = new MultiSourceDownloadFile
             {
                 DownloadPath = element.Path,
-                DownloadUri = element.Url,
+                DownloadUris = element.Urls,
                 FileName = element.FileName,
                 FileSize = element.FileSize,
                 CheckSum = element.CheckSum,
@@ -175,7 +168,7 @@ public class DefaultResourceCompleter : IResourceCompleter
 
     void WhenCompleted(object? sender, DownloadFileCompletedEventArgs e)
     {
-        if (sender is not DownloadFile df) return;
+        if (sender is not MultiSourceDownloadFile df) return;
         if (!e.Success) this._failedFiles.Add(df);
 
         df.Completed -= this.WhenCompleted;

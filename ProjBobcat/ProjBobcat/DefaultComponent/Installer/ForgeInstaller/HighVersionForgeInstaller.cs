@@ -25,7 +25,7 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller;
 
 public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 {
-    readonly ConcurrentBag<DownloadFile> _failedFiles = [];
+    readonly ConcurrentBag<SimpleDownloadFile> _failedFiles = [];
     int _totalDownloaded, _needToDownload, _totalProcessed, _needToProcess;
 
     public required string JavaExecutablePath { get; init; }
@@ -242,7 +242,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             var resolvedMappingMaven = clientMavenStr.ResolveMavenString()!;
             var mappingPath = Path.GetDirectoryName(resolvedMappingMaven.Path);
             var mappingFileName = Path.GetFileName(resolvedMappingMaven.Path);
-            var mappingDf = new DownloadFile
+            var mappingDf = new SimpleDownloadFile
             {
                 CheckSum = this.CustomMojangClientMappings.Sha1,
                 DownloadPath = mappingPath!,
@@ -379,7 +379,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
         this._failedFiles.Clear();
 
         var resolvedLibs = this.VersionLocator.GetNatives([.. ipModel.Libraries, .. versionJsonModel.Libraries]).Item2;
-        var libDownloadInfo = new List<DownloadFile>();
+        var libDownloadInfo = new List<SimpleDownloadFile>();
 
         foreach (var lib in resolvedLibs)
         {
@@ -425,7 +425,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             if (!libDi.Exists)
                 libDi.Create();
 
-            var df = new DownloadFile
+            var df = new SimpleDownloadFile
             {
                 CheckSum = lib.Sha1,
                 DownloadPath = path,
@@ -620,7 +620,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
     void WhenCompleted(object? sender, DownloadFileCompletedEventArgs e)
     {
-        if (sender is not DownloadFile file) return;
+        if (sender is not SimpleDownloadFile file) return;
         if (!e.Success) this._failedFiles.Add(file);
 
         file.Completed -= this.WhenCompleted;
