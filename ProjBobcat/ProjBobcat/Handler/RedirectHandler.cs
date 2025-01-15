@@ -83,8 +83,10 @@ public class RedirectHandler : DelegatingHandler
         while (currentRedirect < this._maxRetries &&
                statusCode is
                    HttpStatusCode.MovedPermanently or
-                   HttpStatusCode.Found or
-                   HttpStatusCode.PermanentRedirect)
+                   HttpStatusCode.Redirect or
+                   HttpStatusCode.PermanentRedirect or
+                   HttpStatusCode.TemporaryRedirect
+               )
         {
             Debug.WriteLine($"第{currentRedirect}次重定向");
 

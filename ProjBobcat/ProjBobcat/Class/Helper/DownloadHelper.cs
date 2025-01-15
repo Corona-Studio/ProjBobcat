@@ -381,11 +381,19 @@ public static class DownloadHelper
             {
                 #region Get file size
 
-                using var partialDownloadCheckCts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
-                var rawUrlInfo = await CanUsePartialDownload(
-                    downloadFile.GetDownloadUrl(),
-                    downloadSettings,
-                    partialDownloadCheckCts.Token);
+                using var partialDownloadCheckCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                (long FileLength, bool CanPartialDownload)? rawUrlInfo = null;
+
+                try
+                {
+                    rawUrlInfo = await CanUsePartialDownload(
+                        downloadFile.GetDownloadUrl(),
+                        downloadSettings,
+                        partialDownloadCheckCts.Token);
+                }
+                catch (TaskCanceledException)
+                {
+                }
 
                 // If rawUrlInfo == null, means the request is timeout and canceled
                 // If PartialDownloadRetryCount is greater than half of the total reties, fallback to slow download

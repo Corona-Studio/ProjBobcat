@@ -9,7 +9,7 @@ namespace ProjBobcat.Handler;
 
 public class RetryHandler : DelegatingHandler
 {
-    readonly int _maxRetries = 5;
+    readonly int _maxRetries = 20;
 
     public RetryHandler(HttpMessageHandler innerHandler) : base(innerHandler)
     {

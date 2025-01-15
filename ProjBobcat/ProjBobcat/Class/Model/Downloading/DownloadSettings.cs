@@ -25,7 +25,7 @@ public class DownloadSettings
 
     public int RetryCount { get; init; }
     public bool CheckFile { get; init; }
-    public TimeSpan Timeout { get; init; }
+    public TimeSpan Timeout { get; init; } = TimeSpan.FromSeconds(30);
     public int DownloadParts { get; set; }
     public HashType HashType { get; init; }
     public bool ShowDownloadProgress { get; init; }
