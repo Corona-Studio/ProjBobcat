@@ -75,12 +75,12 @@ public static class ModrinthAPIHelper
         return resModel;
     }
 
-    public static async Task<ModrinthSearchResult?> SearchMod(ModrinthSearchOptions searchOptions)
+    public static async Task<ModrinthSearchResult?> SearchMod(ModrinthSearchOptions searchOptions, CancellationToken ct)
     {
         var reqUrl = $"{BaseUrl}/search{searchOptions}";
 
-        using var res = await Get(reqUrl);
-        var resModel = await res.Content.ReadFromJsonAsync(ModrinthSearchResultContext.Default.ModrinthSearchResult);
+        using var res = await Get(reqUrl, ct);
+        var resModel = await res.Content.ReadFromJsonAsync(ModrinthSearchResultContext.Default.ModrinthSearchResult, ct);
 
         return resModel;
     }

@@ -5,6 +5,7 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading;
 using System.Threading.Tasks;
 using ProjBobcat.Class.Model.CurseForge;
 using ProjBobcat.Class.Model.CurseForge.API;
@@ -59,15 +60,15 @@ public static class CurseForgeAPIHelper
         ApiKey = apiKey;
     }
 
-    public static async Task<DataModelWithPagination<CurseForgeAddonInfo[]>?> SearchAddons(SearchOptions options)
+    public static async Task<DataModelWithPagination<CurseForgeAddonInfo[]>?> SearchAddons(SearchOptions options, CancellationToken ct)
     {
         var reqUrl = $"{BaseUrl}/mods/search{options}";
 
         using var req = Req(HttpMethod.Get, reqUrl);
-        using var res = await Client.SendAsync(req);
+        using var res = await Client.SendAsync(req, ct);
 
         return await res.Content.ReadFromJsonAsync(CurseForgeModelContext.Default
-            .DataModelWithPaginationCurseForgeAddonInfoArray);
+            .DataModelWithPaginationCurseForgeAddonInfoArray, ct);
     }
 
     public static async Task<CurseForgeAddonInfo?> GetAddon(long addonId)
