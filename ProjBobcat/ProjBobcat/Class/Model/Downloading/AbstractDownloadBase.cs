@@ -1,12 +1,59 @@
 ﻿using ProjBobcat.Interface;
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.IO;
+using System.Linq;
 using ProjBobcat.Event;
 
 namespace ProjBobcat.Class.Model.Downloading;
 
+internal record UrlInfo(long FileLength, bool CanPartialDownload);
+
 public abstract class AbstractDownloadBase : IDownloadFile
 {
+    internal ImmutableList<DownloadRange>? Ranges { get; set; }
+    internal UrlInfo? UrlInfo { get; set; }
+    internal ConcurrentDictionary<DownloadRange, FileStream> FinishedRangeStreams { get; } = [];
+
     public int PartialDownloadRetryCount { get; internal set; }
+
+    internal IEnumerable<FileStream> GetFinishedStreamsInorder()
+    {
+        if (Ranges == null)
+            throw new InvalidOperationException("Ranges is null.");
+
+        foreach (var downloadRange in Ranges)
+        {
+            if (!FinishedRangeStreams.TryGetValue(downloadRange, out var stream))
+                throw new InvalidOperationException("Stream not found.");
+
+            yield return stream;
+        }
+    }
+
+    internal bool IsDownloadFinished()
+    {
+        if (Ranges == null)
+            throw new InvalidOperationException("Ranges is null.");
+
+        return Ranges.All(range => FinishedRangeStreams.ContainsKey(range));
+    }
+
+    internal IEnumerable<DownloadRange> GetUndoneRanges()
+    {
+        if (Ranges == null)
+            throw new InvalidOperationException("Ranges is null.");
+
+        foreach (var downloadRange in Ranges)
+        {
+            if (FinishedRangeStreams.ContainsKey(downloadRange))
+                continue;
+
+            yield return downloadRange;
+        }
+    }
 
     /// <summary>
     ///     下载路径

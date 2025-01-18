@@ -49,6 +49,25 @@ public static class DownloadHelper
         return elapsedTime;
     }
 
+    private static async Task RecycleDownloadFile(AbstractDownloadBase download)
+    {
+        // Once we finished the download, we need to dispose the kept file stream
+        foreach (var (_, stream) in download.FinishedRangeStreams)
+        {
+            try
+            {
+                await stream.DisposeAsync();
+            }
+            catch (Exception e)
+            {
+                // Do nothing because we don't care about the exception
+                Debug.WriteLine(e);
+            }
+        }
+
+        download.FinishedRangeStreams.Clear();
+    }
+
     #region Download data
 
     /// <summary>
@@ -98,7 +117,7 @@ public static class DownloadHelper
                     const int defaultCopyBufferSize = 81920;
 
                     using var buffer = MemoryPool<byte>.Shared.Rent(defaultCopyBufferSize);
-                    
+
                     var bytesReadInTotal = 0L;
 
                     while (true)
@@ -107,24 +126,24 @@ public static class DownloadHelper
                         var bytesRead = await stream.ReadAsync(buffer.Memory, cts.Token);
 
                         if (bytesRead == 0) break;
-                        
+
                         bytesReadInTotal += bytesRead;
-                        
+
                         await destStream.WriteAsync(buffer.Memory[..bytesRead], cts.Token);
-                        
+
                         var duration = Stopwatch.GetElapsedTime(startTime);
                         var elapsedTime = duration.TotalSeconds == 0 ? 1 : duration.TotalSeconds;
-                        
+
                         averageSpeed = responseLength / elapsedTime;
 
                         if (downloadSettings.ShowDownloadProgress)
                             downloadFile.OnChanged(
                                 averageSpeed,
-                                ProgressValue.Create(bytesReadInTotal, responseLength), 
+                                ProgressValue.Create(bytesReadInTotal, responseLength),
                                 responseLength,
                                 responseLength);
                     }
-                    
+
                     /*
                     var elapsedTime = await ReceiveFromRemoteStreamAsync(
                         stream,
@@ -148,6 +167,7 @@ public static class DownloadHelper
                     }
                 }
 
+                await RecycleDownloadFile(downloadFile);
                 downloadFile.OnCompleted(true, null, averageSpeed);
 
                 return;
@@ -160,6 +180,9 @@ public static class DownloadHelper
                 exceptions.Add(e);
             }
         }
+
+        // We failed to download the file
+        await RecycleDownloadFile(downloadFile);
 
         // We need to deduct 1 from the retry count because the last retry will not be counted
         downloadFile.RetryCount--;
@@ -371,39 +394,60 @@ public static class DownloadHelper
         var timeout = downloadSettings.Timeout;
         var trials = downloadSettings.RetryCount == 0 ? 1 : downloadSettings.RetryCount;
 
-        ImmutableList<DownloadRange>? readRanges = null;
-
         for (var r = 0; r < trials; r++)
         {
             using var cts = new CancellationTokenSource(timeout * Math.Max(1, (r + 1) * 0.5));
 
             try
             {
-                #region Get file size
-
-                using var partialDownloadCheckCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-                (long FileLength, bool CanPartialDownload)? rawUrlInfo = null;
-
-                try
+                if (downloadFile.Ranges == null ||
+                    downloadFile.Ranges.Count == 0 ||
+                    downloadFile.UrlInfo == null ||
+                    downloadFile.UrlInfo.FileLength == 0)
                 {
-                    rawUrlInfo = await CanUsePartialDownload(
-                        downloadFile.GetDownloadUrl(),
-                        downloadSettings,
-                        partialDownloadCheckCts.Token);
-                }
-                catch (TaskCanceledException)
-                {
-                }
+                    downloadFile.FinishedRangeStreams.Clear();
 
-                // If rawUrlInfo == null, means the request is timeout and canceled
-                // If PartialDownloadRetryCount is greater than half of the total reties, fallback to slow download
-                if (!rawUrlInfo.HasValue)
-                {
-                    downloadFile.PartialDownloadRetryCount++;
+                    #region Get file size
 
-                    // If the retry count is 1 or condition met, we will fall back to normal download
-                    if (downloadSettings.RetryCount == 0 ||
-                        downloadFile.PartialDownloadRetryCount > downloadSettings.RetryCount / 2)
+                    using var partialDownloadCheckCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                    (long FileLength, bool CanPartialDownload)? rawUrlInfo = null;
+
+                    try
+                    {
+                        rawUrlInfo = await CanUsePartialDownload(
+                            downloadFile.GetDownloadUrl(),
+                            downloadSettings,
+                            partialDownloadCheckCts.Token);
+                    }
+                    catch (TaskCanceledException)
+                    {
+                    }
+
+                    // If rawUrlInfo == null, means the request is timeout and canceled
+                    // If PartialDownloadRetryCount is greater than half of the total reties, fallback to slow download
+                    if (!rawUrlInfo.HasValue)
+                    {
+                        downloadFile.PartialDownloadRetryCount++;
+
+                        // If the retry count is 1 or condition met, we will fall back to normal download
+                        if (downloadSettings.RetryCount == 0 ||
+                            downloadFile.PartialDownloadRetryCount > downloadSettings.RetryCount / 2)
+                        {
+                            // Reset the retry count
+                            downloadFile.RetryCount = 0;
+
+                            await DownloadData(downloadFile, downloadSettings);
+                            return;
+                        }
+
+                        // Otherwise, we will retry the partial download
+                        downloadFile.RetryCount++;
+                        continue;
+                    }
+
+                    var urlInfo = rawUrlInfo.Value;
+
+                    if (!urlInfo.CanPartialDownload)
                     {
                         // Reset the retry count
                         downloadFile.RetryCount = 0;
@@ -412,36 +456,17 @@ public static class DownloadHelper
                         return;
                     }
 
-                    // Otherwise, we will retry the partial download
-                    downloadFile.RetryCount++;
-                    continue;
+                    #endregion
+
+                    downloadFile.UrlInfo = new UrlInfo(urlInfo.FileLength, urlInfo.CanPartialDownload);
+                    downloadFile.Ranges = CalculateDownloadRanges(urlInfo.FileLength, downloadSettings).Reverse().ToImmutableList();
                 }
-
-                var urlInfo = rawUrlInfo.Value;
-
-                if (!urlInfo.CanPartialDownload)
-                {
-                    // Reset the retry count
-                    downloadFile.RetryCount = 0;
-
-                    await DownloadData(downloadFile, downloadSettings);
-                    return;
-                }
-
-                #endregion
 
                 if (!Directory.Exists(downloadFile.DownloadPath))
                     Directory.CreateDirectory(downloadFile.DownloadPath);
 
-                #region Calculate ranges
-
-                readRanges = CalculateDownloadRanges(urlInfo.FileLength, downloadSettings).Reverse().ToImmutableList();
-
-                #endregion
-
                 #region Parallel download
 
-                var tasksDone = 0;
                 var requestCreationBlock =
                     new TransformBlock<(DownloadRange, CancellationTokenSource), (HttpResponseMessage, DownloadRange, CancellationTokenSource)?>(
                         async pair =>
@@ -492,35 +517,60 @@ public static class DownloadHelper
                     var (response, range, pCts) = pair.Value;
                     using var res = response;
 
-                    await using (var stream = await res.Content.ReadAsStreamAsync(pCts.Token))
-                    await using (var fileToWriteTo = File.Create(range.TempFileName))
+                    // We'll store the written file to a temp file stream, and keep its ref for the future use.
+                    var fileToWriteTo = File.Create(range.TempFileName);
+                    var elapsedTime = 0d;
+
+                    try
                     {
-                        var elapsedTime = await ReceiveFromRemoteStreamAsync(
+                        await using var stream = await res.Content.ReadAsStreamAsync(pCts.Token);
+                        elapsedTime = await ReceiveFromRemoteStreamAsync(
                             stream,
                             fileToWriteTo,
                             pCts.Token);
 
-                        var addedAggregatedSpeedCount = Interlocked.Increment(ref aggregatedSpeedCount);
+                        downloadFile.FinishedRangeStreams.AddOrUpdate(range, fileToWriteTo, (_, oldStream) =>
+                        {
+                            try
+                            {
+                                oldStream.Dispose();
+                            }
+                            catch (Exception e)
+                            {
+                                // Do nothing because we don't care about the exception
+                                Debug.WriteLine(e);
+                            }
 
-                        // Because the feature of HTTP range response,
-                        // the first byte of the first range is the last byte of the file.
-                        // So we need to skip the first byte of the first range.
-                        // (Expect the first part)
-                        var correctedSpeed = addedAggregatedSpeedCount > 1 ? fileToWriteTo.Length - 1 : fileToWriteTo.Length;
+                            return fileToWriteTo;
+                        });
+                    }
+                    catch (Exception e)
+                    {
+                        // We failed here, we need to dispose the file stream
+                        await fileToWriteTo.DisposeAsync();
 
-                        var speed = correctedSpeed / elapsedTime;
-                        var addedAggregatedSpeed = Interlocked.Add(ref aggregatedSpeed, (uint)speed);
-                        var addedBytesReceived = Interlocked.Add(ref bytesReceived, correctedSpeed);
-
-                        if (downloadSettings.ShowDownloadProgress)
-                            downloadFile.OnChanged(
-                                (double)addedAggregatedSpeed / addedAggregatedSpeedCount,
-                                ProgressValue.Create(addedBytesReceived, urlInfo.FileLength),
-                                addedBytesReceived,
-                                urlInfo.FileLength);
+                        Debug.WriteLine(e);
+                        throw;
                     }
 
-                    Interlocked.Add(ref tasksDone, 1);
+                    var addedAggregatedSpeedCount = Interlocked.Increment(ref aggregatedSpeedCount);
+
+                    // Because the feature of HTTP range response,
+                    // the first byte of the first range is the last byte of the file.
+                    // So we need to skip the first byte of the first range.
+                    // (Expect the first part)
+                    var correctedSpeed = addedAggregatedSpeedCount > 1 ? fileToWriteTo.Length - 1 : fileToWriteTo.Length;
+
+                    var speed = correctedSpeed / elapsedTime;
+                    var addedAggregatedSpeed = Interlocked.Add(ref aggregatedSpeed, (uint)speed);
+                    var addedBytesReceived = Interlocked.Add(ref bytesReceived, correctedSpeed);
+
+                    if (downloadSettings.ShowDownloadProgress)
+                        downloadFile.OnChanged(
+                            (double)addedAggregatedSpeed / addedAggregatedSpeedCount,
+                            ProgressValue.Create(addedBytesReceived, downloadFile.UrlInfo.FileLength),
+                            addedBytesReceived,
+                            downloadFile.UrlInfo.FileLength);
                 }, new ExecutionDataflowBlockOptions
                 {
                     BoundedCapacity = downloadSettings.DownloadParts,
@@ -536,7 +586,7 @@ public static class DownloadHelper
                 bufferBlock.LinkTo(requestCreationBlock, linkOptions);
                 requestCreationBlock.LinkTo(downloadActionBlock, linkOptions);
 
-                foreach (var range in readRanges)
+                foreach (var range in downloadFile.GetUndoneRanges())
                     await bufferBlock.SendAsync((range, cts), cts.Token);
 
                 bufferBlock.Complete();
@@ -545,7 +595,7 @@ public static class DownloadHelper
 
                 var aSpeed = (double)aggregatedSpeed / aggregatedSpeedCount;
 
-                if (tasksDone != readRanges.Count)
+                if (!downloadFile.IsDownloadFinished())
                 {
                     downloadFile.RetryCount++;
                     continue;
@@ -562,18 +612,19 @@ public static class DownloadHelper
                 {
                     var index = 0;
 
-                    foreach (var inputFilePath in readRanges)
+                    foreach (var inputFileStream in downloadFile.GetFinishedStreamsInorder())
                     {
-                        await using var inputStream = File.OpenRead(inputFilePath.TempFileName);
+                        // Reset the stream position
+                        inputFileStream.Seek(0, SeekOrigin.Begin);
 
                         // Because the feature of HTTP range response,
                         // the first byte of the first range is the last byte of the file.
                         // So we need to skip the first byte of the first range.
                         // (Expect the first part)
                         if (index != 0)
-                            inputStream.Seek(1, SeekOrigin.Begin);
+                            inputFileStream.Seek(1, SeekOrigin.Begin);
 
-                        await inputStream.CopyToAsync(destStream, cts.Token);
+                        await inputFileStream.CopyToAsync(destStream, cts.Token);
 
                         index++;
                     }
@@ -601,19 +652,19 @@ public static class DownloadHelper
 
                 #endregion
 
+                await RecycleDownloadFile(downloadFile);
                 downloadFile.OnCompleted(true, null, aSpeed);
                 return;
             }
             catch (Exception ex)
             {
-                if (readRanges != null)
-                    foreach (var piece in readRanges.Where(piece => File.Exists(piece.TempFileName)))
-                        FileHelper.DeleteFileWithRetry(piece.TempFileName);
-
                 downloadFile.RetryCount++;
                 exceptions.Add(ex);
             }
         }
+
+        // We failed to download file
+        await RecycleDownloadFile(downloadFile);
 
         // We need to deduct 1 from the retry count because the last retry will not be counted
         downloadFile.RetryCount--;

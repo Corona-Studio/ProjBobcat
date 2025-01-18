@@ -19,7 +19,7 @@
     <Company>Corona Studio</Company>
     <Product>ProjBobcat</Product>
     <Description>The next-generation Minecraft launcher core written in C# providing the freest, fastest and the most complete experience.</Description>
-    <Copyright>Copyright © 2023 Corona Studio</Copyright>
+    <Copyright>Copyright © 2025 Corona Studio</Copyright>
     <PackageIcon>Bobcat.png</PackageIcon>
     <RepositoryUrl>https://github.com/Corona-Studio/ProjBobcat</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
