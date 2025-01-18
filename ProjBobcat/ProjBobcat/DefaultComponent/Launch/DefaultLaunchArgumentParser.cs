@@ -158,6 +158,12 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
 
         #endregion
 
+        #region Set Output Encoding
+
+        yield return "-Dfile.encoding=utf-8";
+
+        #endregion
+
         yield return "-Dfml.ignoreInvalidMinecraftCertificates=true";
         yield return "-Dfml.ignorePatchDiscrepancies=true";
 
