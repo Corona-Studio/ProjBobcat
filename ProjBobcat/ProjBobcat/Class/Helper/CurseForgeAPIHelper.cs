@@ -40,6 +40,8 @@ public static class CurseForgeAPIHelper
 {
     const string BaseUrl = "https://api.curseforge.com/v1";
 
+    public static string? ApiBaseUrl { get; set; }
+
     static string ApiKey { get; set; } = null!;
     static HttpClient Client => HttpClientHelper.DefaultClient;
 
@@ -51,6 +53,7 @@ public static class CurseForgeAPIHelper
         var req = new HttpRequestMessage(method, url);
 
         req.Headers.Add("x-api-key", ApiKey);
+        req.Headers.Add("User-Agent", HttpClientHelper.Ua);
 
         return req;
     }
@@ -62,7 +65,7 @@ public static class CurseForgeAPIHelper
 
     public static async Task<DataModelWithPagination<CurseForgeAddonInfo[]>?> SearchAddons(SearchOptions options, CancellationToken ct)
     {
-        var reqUrl = $"{BaseUrl}/mods/search{options}";
+        var reqUrl = $"{ApiBaseUrl ?? BaseUrl}/mods/search{options}";
 
         using var req = Req(HttpMethod.Get, reqUrl);
         using var res = await Client.SendAsync(req, ct);
@@ -73,7 +76,7 @@ public static class CurseForgeAPIHelper
 
     public static async Task<CurseForgeAddonInfo?> GetAddon(long addonId)
     {
-        var reqUrl = $"{BaseUrl}/mods/{addonId}";
+        var reqUrl = $"{ApiBaseUrl ?? BaseUrl}/mods/{addonId}";
 
         using var req = Req(HttpMethod.Get, reqUrl);
         using var res = await Client.SendAsync(req);
@@ -84,7 +87,7 @@ public static class CurseForgeAPIHelper
 
     public static async Task<CurseForgeAddonInfo[]?> GetAddons(IEnumerable<long> addonIds)
     {
-        const string reqUrl = $"{BaseUrl}/mods";
+        var reqUrl = $"{ApiBaseUrl ?? BaseUrl}/mods";
         var data = JsonSerializer.Serialize(new AddonInfoReqModel(addonIds),
             CurseForgeModelContext.Default.AddonInfoReqModel);
 
@@ -101,7 +104,7 @@ public static class CurseForgeAPIHelper
 
     public static async Task<CurseForgeLatestFileModel[]?> GetAddonFiles(long addonId)
     {
-        var reqUrl = $"{BaseUrl}/mods/{addonId}/files";
+        var reqUrl = $"{ApiBaseUrl ?? BaseUrl}/mods/{addonId}/files";
 
         using var req = Req(HttpMethod.Get, reqUrl);
         using var res = await Client.SendAsync(req);
@@ -114,7 +117,7 @@ public static class CurseForgeAPIHelper
 
     public static async Task<CurseForgeLatestFileModel[]?> GetFiles(IEnumerable<long> fileIds)
     {
-        const string reqUrl = $"{BaseUrl}/mods/files";
+        var reqUrl = $"{ApiBaseUrl ?? BaseUrl}/mods/files";
         var data = JsonSerializer.Serialize(new FileInfoReqModel(fileIds),
             CurseForgeModelContext.Default.FileInfoReqModel);
 
@@ -131,7 +134,7 @@ public static class CurseForgeAPIHelper
 
     public static async Task<CurseForgeSearchCategoryModel[]?> GetCategories(int gameId = 432)
     {
-        var reqUrl = $"{BaseUrl}/categories?gameId={gameId}";
+        var reqUrl = $"{ApiBaseUrl ?? BaseUrl}/categories?gameId={gameId}";
 
         using var req = Req(HttpMethod.Get, reqUrl);
         using var res = await Client.SendAsync(req);
@@ -157,7 +160,7 @@ public static class CurseForgeAPIHelper
 
     public static async Task<string?> GetAddonDownloadUrl(long addonId, long fileId)
     {
-        var reqUrl = $"{BaseUrl}/mods/{addonId}/files/{fileId}/download-url";
+        var reqUrl = $"{ApiBaseUrl ?? BaseUrl}/mods/{addonId}/files/{fileId}/download-url";
 
         using var req = Req(HttpMethod.Get, reqUrl);
         using var res = await Client.SendAsync(req);
@@ -170,7 +173,7 @@ public static class CurseForgeAPIHelper
 
     public static async Task<string?> GetAddonDescriptionHtml(long addonId)
     {
-        var reqUrl = $"{BaseUrl}/mods/{addonId}/description";
+        var reqUrl = $"{ApiBaseUrl ?? BaseUrl}/mods/{addonId}/description";
 
         using var req = Req(HttpMethod.Get, reqUrl);
         using var res = await Client.SendAsync(req);
@@ -182,7 +185,7 @@ public static class CurseForgeAPIHelper
     public static async Task<CurseForgeFuzzySearchResponseModel?> TryFuzzySearchFile(long[] fingerprint,
         int gameId = 432)
     {
-        var reqUrl = $"{BaseUrl}/fingerprints/{gameId}";
+        var reqUrl = $"{ApiBaseUrl ?? BaseUrl}/fingerprints/{gameId}";
 
         var data = JsonSerializer.Serialize(new FuzzyFingerPrintReqModel(fingerprint),
             CurseForgeModelContext.Default.FuzzyFingerPrintReqModel);
