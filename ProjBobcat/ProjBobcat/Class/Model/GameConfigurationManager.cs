@@ -65,15 +65,11 @@ public class GameConfigurationManager : IEnumerable<KeyValuePair<string, string>
 
             if (firstIndex == -1 || firstIndex == line.Length - 1) continue;
 
-            var arr = new[] { line[..firstIndex], line[(firstIndex + 1)..] };
+            var key = line[..firstIndex];
+            var value = line[(firstIndex + 1)..];
 
-            if (result.ContainsKey(arr[0]))
-            {
-                result[arr[0]] = arr[1];
-                continue;
-            }
-
-            result.Add(arr[0], arr[1]);
+            if (result.TryAdd(key, value)) continue;
+            result[key] = value;
         }
 
         return result;
