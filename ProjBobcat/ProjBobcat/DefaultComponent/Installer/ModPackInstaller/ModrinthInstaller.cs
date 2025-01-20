@@ -26,8 +26,8 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
             archive.Entries.FirstOrDefault(x =>
                 x.Key?.Equals("modrinth.index.json", StringComparison.OrdinalIgnoreCase) ?? false);
 
-        if (manifestEntry == default)
-            return default;
+        if (manifestEntry == null)
+            return null;
 
         await using var stream = manifestEntry.OpenEntryStream();
 
@@ -53,7 +53,7 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
 
         var index = await this.ReadIndexTask();
 
-        if (index == default)
+        if (index == null)
             throw new Exception("无法读取到 Modrinth 的 manifest 文件");
 
         var idPath = Path.Combine(this.RootPath, GamePathHelper.GetGamePath(this.GameId));
