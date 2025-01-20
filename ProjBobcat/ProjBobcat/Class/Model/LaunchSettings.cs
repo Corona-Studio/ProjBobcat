@@ -14,7 +14,7 @@ public class GameArguments
     public required string JavaExecutable { get; set; }
 
     public uint MinMemory { get; set; }
-    public required uint MaxMemory { get; init; }
+    public required uint MaxMemory { get; set; }
     public ResolutionModel? Resolution { get; set; }
     public required GcType GcType { get; init; }
     public IReadOnlyList<string>? AdditionalJvmArguments { get; set; }

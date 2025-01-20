@@ -20,6 +20,9 @@ public class GameProfileModel
     [JsonPropertyName("gameDir")]
     public string? GameDir { get; set; }
 
+    [JsonPropertyName("maxMemory")]
+    public uint? MaxMemory { get; set; }
+
     /// <summary>
     ///     创建时间
     /// </summary>

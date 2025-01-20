@@ -89,29 +89,27 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
             foreach (var jvmArg in gameArgs.AdditionalJvmArguments!)
                 yield return jvmArg;
 
-        if (string.IsNullOrEmpty(this.GameProfile?.JavaArgs))
+        var maxMemory = this.GameProfile?.MaxMemory ?? gameArgs.MaxMemory;
+
+        if (maxMemory > 0)
         {
-            if (gameArgs.MaxMemory > 0)
+            if (gameArgs.MinMemory < maxMemory)
             {
-                if (gameArgs.MinMemory < gameArgs.MaxMemory)
-                {
-                    yield return $"-Xms{gameArgs.MinMemory}m";
-                    yield return $"-Xmx{gameArgs.MaxMemory}m";
-                }
-                else
-                {
-                    yield return "-Xmx2G";
-                }
+                yield return $"-Xms{gameArgs.MinMemory}m";
+                yield return $"-Xmx{maxMemory}m";
             }
             else
             {
                 yield return "-Xmx2G";
             }
+        }
+        else
+        {
+            yield return "-Xmx2G";
+        }
 
-
-            if (gameArgs.GcType == GcType.Disable)
-                yield break;
-
+        if (gameArgs.GcType != GcType.Disable)
+        {
             var gcArg = gameArgs.GcType switch
             {
                 GcType.CmsGc => "-XX:+UseConcMarkSweepGC",
@@ -124,16 +122,9 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
 
             yield return gcArg;
         }
-        else
-        {
-            yield return this.GameProfile.JavaArgs;
-        }
 
-        /*
-        sb.Append(
-                "-XX:+UnlockExperimentalVMOptions -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=50 -XX:G1HeapRegionSize=32M")
-            .Append(' ');
-        */
+        if (!string.IsNullOrEmpty(this.GameProfile?.JavaArgs))
+            yield return this.GameProfile.JavaArgs;
     }
 
     public IEnumerable<string> ParseJvmArguments()
@@ -291,6 +282,7 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
     public List<string> GenerateLaunchArguments()
     {
         var javaPath = this.GameProfile?.JavaDir;
+
         if (string.IsNullOrEmpty(javaPath))
             javaPath = this.LaunchSettings.FallBackGameArguments?.JavaExecutable ??
                        this.LaunchSettings.GameArguments.JavaExecutable;
