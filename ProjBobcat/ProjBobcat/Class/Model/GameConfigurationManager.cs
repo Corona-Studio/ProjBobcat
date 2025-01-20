@@ -60,11 +60,13 @@ public class GameConfigurationManager : IEnumerable<KeyValuePair<string, string>
         foreach (var line in lines!)
         {
             if (string.IsNullOrWhiteSpace(line)) continue;
-            if (!line.Contains(':')) continue;
 
-            var arr = line.Split(':');
+            var firstIndex = line.IndexOf(':');
 
-            if (arr.Length != 2) continue;
+            if (firstIndex == -1 || firstIndex == line.Length - 1) continue;
+
+            var arr = new[] { line[..firstIndex], line[(firstIndex + 1)..] };
+
             if (result.ContainsKey(arr[0]))
             {
                 result[arr[0]] = arr[1];
