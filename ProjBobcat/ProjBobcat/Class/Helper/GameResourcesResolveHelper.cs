@@ -350,7 +350,8 @@ public static class GameResourcesResolveHelper
             JsonValueKind.String when !string.IsNullOrEmpty(model?.Pack?.Description.Value.GetString()) =>
                 [new PlainTextResourcePackDescription(model?.Pack?.Description.Value.GetString()!)],
             // ReSharper disable once CoVariantArrayConversion
-            JsonValueKind.Array => model?.Pack?.Description.Value.Deserialize<ObjectResourcePackDescription[]>(),
+            JsonValueKind.Array => model?.Pack?.Description.Value.Deserialize(GameResourcePackDescriptionModelContext
+                .Default.ObjectResourcePackDescriptionArray),
             _ => null
         };
         var version = model?.Pack?.PackFormat ?? -1;
