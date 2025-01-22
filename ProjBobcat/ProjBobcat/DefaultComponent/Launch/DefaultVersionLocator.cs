@@ -31,6 +31,12 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
     readonly object _lock = new();
 #endif
 
+    public NativeReplacementPolicy NativeReplacementPolicy { get; init; } = NativeReplacementPolicy.LegacyOnly;
+
+    public bool UseSystemGlfwOnLinux { get; init; }
+
+    public bool UseSystemOpenAlOnLinux { get; init; }
+
     /// <summary>
     ///     构造函数。
     ///     Constructor.
@@ -46,8 +52,6 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
         if (!Directory.Exists(GamePathHelper.GetVersionPath(rootPath)))
             Directory.CreateDirectory(GamePathHelper.GetVersionPath(rootPath));
     }
-
-    public NativeReplacementPolicy NativeReplacementPolicy { get; init; } = NativeReplacementPolicy.LegacyOnly;
 
     public override IEnumerable<VersionInfo> GetAllGames()
     {
@@ -465,8 +469,12 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                 if (flag)
                 {
                     var inheritsLibs = inherits[i].Libraries.ToList();
-                    inheritsLibs = NativeReplaceHelper.Replace([rawVersion, ..inherits], inheritsLibs,
-                        this.NativeReplacementPolicy);
+                    inheritsLibs = NativeReplaceHelper.Replace(
+                        [rawVersion, ..inherits],
+                        inheritsLibs,
+                        this.NativeReplacementPolicy,
+                        UseSystemGlfwOnLinux,
+                        UseSystemOpenAlOnLinux);
 
                     var rootLibs = this.GetNatives([.. inheritsLibs]);
                     result.Libraries = rootLibs.Item2;
@@ -602,7 +610,12 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             for (var i = 1; i < sortedDuplicates.Count; i++) rawLibs.Remove(sortedDuplicates[i]);
         }
 
-        rawLibs = NativeReplaceHelper.Replace([rawVersion, .. inherits], rawLibs, this.NativeReplacementPolicy);
+        rawLibs = NativeReplaceHelper.Replace(
+            [rawVersion, .. inherits],
+            rawLibs,
+            this.NativeReplacementPolicy,
+            UseSystemGlfwOnLinux,
+            UseSystemOpenAlOnLinux);
 
         var libs = this.GetNatives([.. rawLibs]);
 

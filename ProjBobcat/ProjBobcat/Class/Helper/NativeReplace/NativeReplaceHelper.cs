@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using ProjBobcat.Class.Model;
@@ -45,21 +44,14 @@ public static partial class NativeReplaceHelper
         return $"{platform}-{arch}";
     }
 
-    public static List<Library> Replace(List<RawVersionModel> versions, List<Library> libs,
-        NativeReplacementPolicy policy)
+    public static List<Library> Replace(
+        List<RawVersionModel> versions,
+        List<Library> libs,
+        NativeReplacementPolicy policy,
+        bool useSystemGlfwOnLinux,
+        bool useSystemOpenAlOnLinux)
     {
         if (policy == NativeReplacementPolicy.Disabled) return libs;
-
-        var mcVersion = GameVersionHelper.TryGetMcVersion(versions);
-
-        if (string.IsNullOrEmpty(mcVersion) && policy == NativeReplacementPolicy.LegacyOnly) return libs;
-
-        var versionsArr = mcVersion?.Split('.', StringSplitOptions.RemoveEmptyEntries);
-        var minor = -1;
-
-        if (versionsArr is { Length: >= 2 }) minor = int.TryParse(versionsArr[1], out var outMinor) ? outMinor : -1;
-
-        if (minor is -1 or >= 19 && policy == NativeReplacementPolicy.LegacyOnly) return libs;
 
         var replaceKey = GetNativeKey();
         var replaceDic = replaceKey switch
@@ -76,66 +68,91 @@ public static partial class NativeReplaceHelper
             _ => null
         };
 
-        if (replaceDic == null) return libs;
-
         var replaced = new List<Library>();
-        var filtered = libs.Where(lib => IsNotNative(lib.Name)).ToList();
 
-        foreach (var original in filtered)
+        // Replace special LWJGL and OpenAL libraries on Linux
+        if (OperatingSystem.IsLinux() && (useSystemGlfwOnLinux || useSystemOpenAlOnLinux))
         {
-            var originalMaven = original.Name.ResolveMavenString();
-
-            if (originalMaven == null)
+            foreach (var original in libs)
             {
-                replaced.Add(original);
-                continue;
-            }
+                var originalMaven = original.Name.ResolveMavenString();
 
-            var isNative = original.IsNewNativeLib() ||
-                           (original.Natives?.Count ?? 0) > 0 ||
-                           original.Downloads?.Classifiers != null;
-            var candidateKey = isNative
-                ? $"{originalMaven.OrganizationName}:{originalMaven.ArtifactId}:{originalMaven.Version}:natives"
-                : original.Name;
-
-            if (!replaceDic.TryGetValue(candidateKey, out var candidate))
-            {
-                replaced.Add(original);
-                continue;
-            }
-
-            if (candidate == null)
-            {
-                replaced.Add(original);
-                continue;
-            }
-
-            if (candidate.Downloads?.Artifact != null &&
-                !(candidate.Downloads.Artifact.Url?.StartsWith("[X]", StringComparison.OrdinalIgnoreCase) ?? false))
-                candidate.Downloads.Artifact.Url = $"[X]{candidate.Downloads.Artifact.Url}";
-            if (candidate.Downloads?.Classifiers != null)
-                foreach (var (_, fi) in candidate.Downloads.Classifiers)
+                if (originalMaven == null) continue;
+                if (!string.IsNullOrEmpty(originalMaven.Classifier) &&
+                    originalMaven.Classifier.StartsWith("natives", StringComparison.OrdinalIgnoreCase) &&
+                    originalMaven.OrganizationName.Equals("org.lwjgl", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (fi.Url?.StartsWith("[X]", StringComparison.OrdinalIgnoreCase) ?? false) continue;
-                    fi.Url = $"[X]{fi.Url}";
+                    if (useSystemGlfwOnLinux &&
+                        !originalMaven.ArtifactId.Equals("lwjgl-glfw", StringComparison.OrdinalIgnoreCase))
+                    {
+                        replaced.Add(original);
+                        continue;
+                    }
+
+                    if (useSystemOpenAlOnLinux &&
+                        !originalMaven.ArtifactId.Equals("lwjgl-openal", StringComparison.OrdinalIgnoreCase))
+                    {
+                        replaced.Add(original);
+                    }
+                }
+            }
+        }
+
+        var osCheckFlag = OperatingSystem.IsWindows() || OperatingSystem.IsMacOS() || OperatingSystem.IsLinux();
+
+        if (RuntimeInformation.ProcessArchitecture == Architecture.X86 && osCheckFlag)
+            return replaced;
+
+        var isNotLinux = OperatingSystem.IsWindows() || OperatingSystem.IsMacOS();
+        var mcVersion = GameVersionHelper.TryGetMcVersion(versions);
+
+        if (string.IsNullOrEmpty(mcVersion) && policy == NativeReplacementPolicy.LegacyOnly) return libs;
+
+        var versionsArr = mcVersion?.Split('.', StringSplitOptions.RemoveEmptyEntries);
+        var minor = -1;
+
+        if (versionsArr is { Length: >= 2 }) minor = int.TryParse(versionsArr[1], out var outMinor) ? outMinor : -1;
+
+        if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64 &&
+            isNotLinux &&
+            minor is -1 or >= 19)
+            return replaced;
+
+        if (replaceDic == null) return libs;
+        if (minor is -1 or >= 19 && policy == NativeReplacementPolicy.LegacyOnly) return libs;
+
+        foreach (var original in libs)
+        {
+            if (!original.Rules.CheckAllow()) continue;
+
+            var maven = original.Name.ResolveMavenString();
+
+            if (maven == null) continue;
+
+            var isNative = maven.Classifier.StartsWith("natives", StringComparison.OrdinalIgnoreCase);
+
+            if (isNative)
+            {
+                if (!replaceDic.TryGetValue($"{original.Name}:natives", out var candidateNative) || candidateNative == null)
+                {
+                    replaced.Add(original);
+                    continue;
                 }
 
-            replaced.Add(candidate);
+                replaced.Add(candidateNative);
+                continue;
+            }
+
+            // Libraries
+            if (!replaceDic.TryGetValue(original.Name, out var candidateLib) || candidateLib == null)
+            {
+                replaced.Add(original);
+                continue;
+            }
+
+            replaced.Add(candidateLib);
         }
 
         return replaced;
-
-        static bool IsNotNative(string libName)
-        {
-            var maven = libName.ResolveMavenString();
-
-            if (maven == null) return true;
-
-            var isLwjgl = maven.OrganizationName == "org.lwjgl";
-            var isNative = maven.Classifier.StartsWith("natives", StringComparison.OrdinalIgnoreCase);
-            var isSpecialLwjglLib = maven.ArtifactId is "lwjgl-glfw" or "lwjgl-openal";
-
-            return !(isLwjgl && isNative && isSpecialLwjglLib);
-        }
     }
 }
