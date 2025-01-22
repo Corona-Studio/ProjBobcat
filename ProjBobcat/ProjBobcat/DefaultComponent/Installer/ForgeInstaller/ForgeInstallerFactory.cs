@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
-using SharpCompress.Archives;
 
 namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller;
 
@@ -24,12 +24,15 @@ public static class ForgeInstallerFactory
         if (string.IsNullOrEmpty(forgeExecutable))
             throw new ArgumentNullException(nameof(forgeExecutable));
 
-        using var archive = ArchiveFactory.Open(Path.GetFullPath(forgeExecutable));
+        var forgeExecutableFullPath = Path.GetFullPath(forgeExecutable);
+
+        using var forgeExecutableFs = File.OpenRead(forgeExecutableFullPath);
+        using var archive = new ZipArchive(forgeExecutableFs, ZipArchiveMode.Read);
 
         var legacyUniversalJar =
-            archive.Entries.Any(entry => entry.Key?.Equals($"forge-{forgeVersion}-universal.jar") ?? false);
+            archive.Entries.Any(entry => entry.FullName.Equals($"forge-{forgeVersion}-universal.jar"));
         var installProfileJson = archive.Entries.Any(entry =>
-            entry.Key?.Equals("install_profile.json", StringComparison.OrdinalIgnoreCase) ?? false);
+            entry.FullName.Equals("install_profile.json", StringComparison.OrdinalIgnoreCase));
 
         return legacyUniversalJar && installProfileJson;
     }

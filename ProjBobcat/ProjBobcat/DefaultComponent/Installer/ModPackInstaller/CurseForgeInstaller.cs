@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
@@ -15,7 +16,6 @@ using ProjBobcat.Class.Model.CurseForge;
 using ProjBobcat.Class.Model.Downloading;
 using ProjBobcat.Exceptions;
 using ProjBobcat.Interface;
-using SharpCompress.Archives;
 
 namespace ProjBobcat.DefaultComponent.Installer.ModPackInstaller;
 
@@ -155,18 +155,20 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         if (!this.FailedFiles.IsEmpty)
             throw new Exception("未能下载全部的 Mods");
 
-        using var archive = ArchiveFactory.Open(Path.GetFullPath(this.ModPackPath));
+        var modPackFullPath = Path.GetFullPath(this.ModPackPath);
+
+        await using var modPackFs = File.OpenRead(modPackFullPath);
+        using var archive = new ZipArchive(modPackFs, ZipArchiveMode.Read);
 
         this.TotalDownloaded = 0;
-        this.NeedToDownload = archive.Entries.Count();
+        this.NeedToDownload = archive.Entries.Count;
 
         foreach (var entry in archive.Entries)
         {
-            if (string.IsNullOrEmpty(entry.Key)) continue;
             if (string.IsNullOrEmpty(manifest.Overrides) ||
-                !entry.Key.StartsWith(manifest.Overrides, StringComparison.OrdinalIgnoreCase)) continue;
+                !entry.FullName.StartsWith(manifest.Overrides, StringComparison.OrdinalIgnoreCase)) continue;
 
-            var subPath = entry.Key[(manifest.Overrides.Length + 1)..];
+            var subPath = entry.FullName[(manifest.Overrides.Length + 1)..];
             if (string.IsNullOrEmpty(subPath)) continue;
 
             var path = Path.Combine(Path.GetFullPath(idPath), subPath);
@@ -174,7 +176,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
             if (!Directory.Exists(dirPath))
                 Directory.CreateDirectory(dirPath);
-            if (entry.IsDirectory)
+            if (entry.IsDirectory())
             {
                 if (!Directory.Exists(path))
                     Directory.CreateDirectory(path);
@@ -191,7 +193,9 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
             this.InvokeStatusChangedEvent($"解压缩安装文件：{subPathName}", progress);
 
             await using var fs = File.OpenWrite(path);
-            entry.WriteTo(fs);
+            await using var entryStream = entry.Open();
+
+            await entryStream.CopyToAsync(fs);
 
             this.TotalDownloaded++;
         }
@@ -201,15 +205,19 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
     public async Task<CurseForgeManifestModel?> ReadManifestTask()
     {
-        using var archive = ArchiveFactory.Open(Path.GetFullPath(this.ModPackPath));
+        var modPackFullPath = Path.GetFullPath(this.ModPackPath);
+
+        await using var fullPackFs = File.OpenRead(modPackFullPath);
+        using var archive = new ZipArchive(fullPackFs, ZipArchiveMode.Read);
+
         var manifestEntry =
             archive.Entries.FirstOrDefault(x =>
-                x.Key?.Equals("manifest.json", StringComparison.OrdinalIgnoreCase) ?? false);
+                x.FullName.Equals("manifest.json", StringComparison.OrdinalIgnoreCase));
 
-        if (manifestEntry == default)
-            return default;
+        if (manifestEntry == null)
+            return null;
 
-        await using var stream = manifestEntry.OpenEntryStream();
+        await using var stream = manifestEntry.Open();
 
         var manifestModel =
             await JsonSerializer.DeserializeAsync(stream,

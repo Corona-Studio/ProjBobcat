@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -14,21 +15,19 @@ using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Fabric;
 using ProjBobcat.Class.Model.GameResource;
 using ProjBobcat.Class.Model.GameResource.ResolvedInfo;
-using SharpCompress.Archives;
-using SharpCompress.Compressors.Xz;
 
 namespace ProjBobcat.Class.Helper;
 
 public static class GameResourcesResolveHelper
 {
     static async Task<GameModResolvedInfo?> GetTomlModInfo(
-        IArchiveEntry entry,
+        ZipArchiveEntry entry,
         string file,
         bool isEnabled,
         bool isNeoForge)
     {
-        await using var stream = entry.OpenEntryStream();
-        using var sR = new StreamReader(stream);
+        await using var stream = entry.Open();
+        using var sR = new StreamReader(stream, Encoding.UTF8, leaveOpen: true);
         using var parser = new TOMLParser.TOMLParser(sR);
         var pResult = parser.TryParse(out var table, out _);
 
@@ -86,7 +85,7 @@ public static class GameResourcesResolveHelper
     }
 
     static async Task<GameModResolvedInfo?> GetNewModInfo(
-        IArchiveEntry entry,
+        ZipArchiveEntry entry,
         string file,
         bool isEnabled,
         CancellationToken ct)
@@ -95,7 +94,7 @@ public static class GameResourcesResolveHelper
         {
             GameModInfoModel[]? model = null;
 
-            await using var stream = entry.OpenEntryStream();
+            await using var stream = entry.Open();
             using var sr = new StreamReader(stream, Encoding.UTF8, leaveOpen: true);
 
             var json = await sr.ReadToEndAsync(ct);
@@ -158,14 +157,14 @@ public static class GameResourcesResolveHelper
     }
 
     static async Task<GameModResolvedInfo> GetFabricModInfo(
-        IArchiveEntry entry,
+        ZipArchiveEntry entry,
         string file,
         bool isEnabled,
         CancellationToken ct)
     {
         try
         {
-            await using var stream = entry.OpenEntryStream();
+            await using var stream = entry.Open();
             var tempModel = await JsonSerializer.DeserializeAsync(stream,
                 FabricModInfoModelContext.Default.FabricModInfoModel, ct);
 
@@ -190,42 +189,54 @@ public static class GameResourcesResolveHelper
         }
     }
 
-    public static ModLoaderType GetModLoaderType(IArchive archive)
+    public static ModLoaderType GetModLoaderType(ZipArchive archive)
     {
         var fabricEntry = archive.Entries.Any(e =>
-            e.Key?.EndsWith("fabric.mod.json", StringComparison.OrdinalIgnoreCase) ?? false);
+            e.FullName.EndsWith("fabric.mod.json", StringComparison.OrdinalIgnoreCase));
 
         if (fabricEntry) return ModLoaderType.Fabric;
 
         var neoforgeEntry = archive.Entries.Any(e =>
-            e.Key?.EndsWith("_neoforge.mixins.json", StringComparison.OrdinalIgnoreCase) ?? false);
+            e.FullName.EndsWith("_neoforge.mixins.json", StringComparison.OrdinalIgnoreCase));
 
         if (neoforgeEntry) return ModLoaderType.NeoForge;
 
         var forgeEntry = archive.Entries.Any(e =>
-            e.Key?.EndsWith("META-INF/mods.toml", StringComparison.OrdinalIgnoreCase) ?? false);
+            e.FullName.EndsWith("META-INF/mods.toml", StringComparison.OrdinalIgnoreCase));
         var forgeNewEntry = archive.Entries.Any(e =>
-            e.Key?.EndsWith("mcmod.info", StringComparison.OrdinalIgnoreCase) ?? false);
+            e.FullName.EndsWith("mcmod.info", StringComparison.OrdinalIgnoreCase));
 
         if (forgeEntry || forgeNewEntry) return ModLoaderType.Forge;
 
         return ModLoaderType.Unknown;
     }
 
-    private static async Task<byte[]?> TryResolveModIcon(IArchive archive)
+    private static async Task<byte[]?> TryResolveModIcon(ZipArchive archive)
     {
-        static bool IsInRootPath(IArchiveEntry entry)
-        {
-            var path = entry.Key?.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        var iconEntries = archive.Entries
+            .Where(e => IsImageFile(e) && IsInRootPath(e))
+            .ToList();
 
-            if (path == null || path.Length == 0) return false;
-
-            return path.Length == 1;
-        }
+        var iconEntry = iconEntries
+            .FirstOrDefault(e => e.FullName.Contains("icon", StringComparison.OrdinalIgnoreCase) ||
+                                 e.FullName.Contains("logo", StringComparison.OrdinalIgnoreCase) ||
+                                 e.FullName.Contains("cover", StringComparison.OrdinalIgnoreCase) ||
+                                 e.FullName.Contains("banner", StringComparison.OrdinalIgnoreCase))
+            ?? iconEntries.FirstOrDefault();
         
-        static bool IsImageFile(IArchiveEntry entry)
+        if (iconEntry == null)
+            return null;
+
+        await using var entryStream = iconEntry.Open();
+        await using var ms = new MemoryStream();
+        
+        await entryStream.CopyToAsync(ms);
+        
+        return ms.ToArray();
+
+        static bool IsImageFile(ZipArchiveEntry entry)
         {
-            var ext = Path.GetExtension(entry.Key ?? string.Empty);
+            var ext = Path.GetExtension(entry.FullName);
 
             return !string.IsNullOrEmpty(ext) &&
                    (ext.Equals(".png", StringComparison.OrdinalIgnoreCase) ||
@@ -235,25 +246,15 @@ public static class GameResourcesResolveHelper
                     ext.Equals(".bmp", StringComparison.OrdinalIgnoreCase) ||
                     ext.Equals(".webp", StringComparison.OrdinalIgnoreCase));
         }
-        
-        var iconEntries = archive.Entries
-            .Where(e => IsImageFile(e) && IsInRootPath(e));
-        var iconEntry = iconEntries
-            .FirstOrDefault(e => e.Key!.Contains("icon", StringComparison.OrdinalIgnoreCase) ||
-                                 e.Key.Contains("logo", StringComparison.OrdinalIgnoreCase) ||
-                                 e.Key.Contains("cover", StringComparison.OrdinalIgnoreCase) ||
-                                 e.Key.Contains("banner", StringComparison.OrdinalIgnoreCase))
-            ?? iconEntries.FirstOrDefault();
-        
-        if (iconEntry == null)
-            return null;
 
-        await using var entryStream = iconEntry.OpenEntryStream();
-        await using var ms = new MemoryStream();
-        
-        await entryStream.CopyToAsync(ms);
-        
-        return ms.ToArray();
+        static bool IsInRootPath(ZipArchiveEntry entry)
+        {
+            var path = entry.FullName.Split('/', StringSplitOptions.RemoveEmptyEntries);
+
+            if (path.Length == 0) return false;
+
+            return path.Length == 1;
+        }
     }
 
     public static async IAsyncEnumerable<GameModResolvedInfo> ResolveModListAsync(
@@ -272,20 +273,20 @@ public static class GameResourcesResolveHelper
 
             await using var fs = File.OpenRead(file);
 
-            if (!ArchiveHelper.TryOpen(fs, out var archive)) continue;
+            if (!ArchiveHelper.TryOpenRead(fs, out var archive)) continue;
 
             var modInfoEntry =
                 archive.Entries.FirstOrDefault(e =>
-                    e.Key?.Equals("mcmod.info", StringComparison.OrdinalIgnoreCase) ?? false);
+                    e.FullName.Equals("mcmod.info", StringComparison.OrdinalIgnoreCase));
             var fabricModInfoEntry =
                 archive.Entries.FirstOrDefault(e =>
-                    e.Key?.Equals("fabric.mod.json", StringComparison.OrdinalIgnoreCase) ?? false);
+                    e.FullName.Equals("fabric.mod.json", StringComparison.OrdinalIgnoreCase));
             var tomlInfoEntry =
                 archive.Entries.FirstOrDefault(e =>
-                    e.Key?.Equals("META-INF/mods.toml", StringComparison.OrdinalIgnoreCase) ?? false);
+                    e.FullName.Equals("META-INF/mods.toml", StringComparison.OrdinalIgnoreCase));
             var neoforgeTomlInfoEntry =
                 archive.Entries.FirstOrDefault(e =>
-                    e.Key?.Equals("META-INF/neoforge.mods.toml", StringComparison.OrdinalIgnoreCase) ?? false);
+                    e.FullName.Equals("META-INF/neoforge.mods.toml", StringComparison.OrdinalIgnoreCase));
 
             var isEnabled = ext.Equals(".jar", StringComparison.OrdinalIgnoreCase);
 
@@ -347,10 +348,10 @@ public static class GameResourcesResolveHelper
 
         IResourcePackDescription[]? descriptions = model?.Pack?.Description?.ValueKind switch
         {
-            JsonValueKind.String when !string.IsNullOrEmpty(model?.Pack?.Description.Value.GetString()) =>
-                [new PlainTextResourcePackDescription(model?.Pack?.Description.Value.GetString()!)],
+            JsonValueKind.String when !string.IsNullOrEmpty(model.Pack?.Description.Value.GetString()) =>
+                [new PlainTextResourcePackDescription(model.Pack?.Description.Value.GetString()!)],
             // ReSharper disable once CoVariantArrayConversion
-            JsonValueKind.Array => model?.Pack?.Description.Value.Deserialize(GameResourcePackDescriptionModelContext
+            JsonValueKind.Array => model.Pack?.Description.Value.Deserialize(GameResourcePackDescriptionModelContext
                 .Default.ObjectResourcePackDescriptionArray),
             _ => null
         };
@@ -369,12 +370,12 @@ public static class GameResourcesResolveHelper
 
         await using var fs = File.OpenRead(file);
 
-        if (!ArchiveHelper.TryOpen(fs, out var archive)) return null;
+        if (!ArchiveHelper.TryOpenRead(fs, out var archive)) return null;
 
         var packIconEntry =
-            archive.Entries.FirstOrDefault(e => e.Key?.Equals("pack.png", StringComparison.OrdinalIgnoreCase) ?? false);
-        var packInfoEntry = archive.Entries.FirstOrDefault(e =>
-            e.Key?.Equals("pack.mcmeta", StringComparison.OrdinalIgnoreCase) ?? false);
+            archive.Entries.FirstOrDefault(e => e.FullName.Equals("pack.png", StringComparison.OrdinalIgnoreCase));
+        var packInfoEntry =
+            archive.Entries.FirstOrDefault(e => e.FullName.Equals("pack.mcmeta", StringComparison.OrdinalIgnoreCase));
 
         var fileName = Path.GetFileName(file);
         byte[]? imageBytes;
@@ -383,7 +384,7 @@ public static class GameResourcesResolveHelper
 
         if (packIconEntry != null)
         {
-            await using var stream = packIconEntry.OpenEntryStream();
+            await using var stream = packIconEntry.Open();
             await using var ms = new MemoryStream();
             await stream.CopyToAsync(ms, ct);
 
@@ -398,7 +399,7 @@ public static class GameResourcesResolveHelper
 
         try
         {
-            await using var stream = packInfoEntry.OpenEntryStream();
+            await using var stream = packInfoEntry.Open();
             (descriptions, version) = await ResolveResPackAsync(stream, ct);
         }
         catch (JsonException e)
@@ -472,9 +473,9 @@ public static class GameResourcesResolveHelper
     {
         await using var fs = File.OpenRead(file);
 
-        if (!ArchiveHelper.TryOpen(fs, out var archive)) return null;
+        if (!ArchiveHelper.TryOpenRead(fs, out var archive)) return null;
         if (!archive.Entries.Any(e =>
-                Path.GetFileName(e.Key?.TrimEnd('/'))
+                Path.GetFileName(e.FullName.TrimEnd('/'))
                     ?.Equals("shaders", StringComparison.OrdinalIgnoreCase) ?? false))
             return null;
 

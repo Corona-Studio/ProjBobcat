@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
@@ -11,7 +12,6 @@ using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.JsonContexts;
 using ProjBobcat.Class.Model.Optifine;
 using ProjBobcat.Interface;
-using SharpCompress.Archives;
 
 namespace ProjBobcat.DefaultComponent.Installer;
 
@@ -52,23 +52,25 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
             di.Create();
 
         this.InvokeStatusChangedEvent("读取 Optifine 数据", ProgressValue.FromDisplay(20));
-        using var archive = ArchiveFactory.Open(this.OptifineJarPath);
+
+        await using var fs = File.OpenRead(this.OptifineJarPath);
+        using var archive = new ZipArchive(fs, ZipArchiveMode.Read);
+
         var entries = archive.Entries;
 
         var launchWrapperVersion = "1.12";
         var launchWrapperOfEntry =
-            entries.FirstOrDefault(e =>
-                e.Key?.Equals("launchwrapper-of.txt", StringComparison.OrdinalIgnoreCase) ?? false);
+            entries.FirstOrDefault(e => e.FullName.Equals("launchwrapper-of.txt", StringComparison.OrdinalIgnoreCase));
 
         if (launchWrapperOfEntry != null)
         {
-            await using var stream = launchWrapperOfEntry.OpenEntryStream();
+            await using var stream = launchWrapperOfEntry.Open();
             using var sr = new StreamReader(stream, Encoding.UTF8);
             launchWrapperVersion = await sr.ReadToEndAsync();
         }
 
         var launchWrapperEntry =
-            entries.FirstOrDefault(x => x.Key?.Equals($"launchwrapper-of-{launchWrapperVersion}.jar") ?? false);
+            entries.FirstOrDefault(x => x.FullName.Equals($"launchwrapper-of-{launchWrapperVersion}.jar"));
 
         this.InvokeStatusChangedEvent("生成版本总成", ProgressValue.FromDisplay(40));
 
@@ -127,7 +129,9 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
             this.InvokeStatusChangedEvent($"解压 launcherwrapper-{launchWrapperVersion} 数据", ProgressValue.FromDisplay(65));
 
             await using var launchWrapperFs = File.OpenWrite(launchWrapperPath);
-            launchWrapperEntry.WriteTo(launchWrapperFs);
+            await using var launchWrapperStream = launchWrapperEntry.Open();
+
+            await launchWrapperStream.CopyToAsync(launchWrapperFs);
         }
 
         var gameJarPath = Path.Combine(this.RootPath,

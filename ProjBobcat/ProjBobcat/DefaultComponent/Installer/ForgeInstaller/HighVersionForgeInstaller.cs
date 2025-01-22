@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -17,8 +18,6 @@ using ProjBobcat.Class.Model.Forge;
 using ProjBobcat.Class.Model.YggdrasilAuth;
 using ProjBobcat.Event;
 using ProjBobcat.Interface;
-using SharpCompress.Archives;
-using SharpCompress.Readers;
 using FileInfo = ProjBobcat.Class.Model.FileInfo;
 
 namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller;
@@ -70,24 +69,23 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             };
 
         await using var archiveFs = File.OpenRead(Path.GetFullPath(this.ForgeExecutablePath));
-        using var archive = ArchiveFactory.Open(archiveFs);
+        using var archive = new ZipArchive(archiveFs, ZipArchiveMode.Read);
 
         #region 解析 Version.json
 
         this.InvokeStatusChangedEvent("解析 Version.json", ProgressValue.FromDisplay(10));
 
         var versionJsonEntry =
-            archive.Entries.FirstOrDefault(e =>
-                e.Key?.Equals("version.json", StringComparison.OrdinalIgnoreCase) ?? false);
+            archive.Entries.FirstOrDefault(e => e.FullName.Equals("version.json", StringComparison.OrdinalIgnoreCase));
 
-        if (versionJsonEntry == default)
+        if (versionJsonEntry == null)
             return this.GetCorruptedFileResult();
 
-        await using var stream = versionJsonEntry.OpenEntryStream();
+        await using var stream = versionJsonEntry.Open();
         var versionJsonModel =
             await JsonSerializer.DeserializeAsync(stream, RawVersionModelContext.Default.RawVersionModel);
 
-        if (versionJsonModel == default)
+        if (versionJsonModel == null)
             return this.GetCorruptedFileResult();
 
         var forgeVersion = versionJsonModel.Id.Replace("-forge-", "-");
@@ -110,13 +108,12 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
         this.InvokeStatusChangedEvent("解析 Install_profile.json", ProgressValue.FromDisplay(20));
 
         var installProfileEntry =
-            archive.Entries.FirstOrDefault(e =>
-                e.Key?.Equals("install_profile.json", StringComparison.OrdinalIgnoreCase) ?? false);
+            archive.Entries.FirstOrDefault(e => e.FullName.Equals("install_profile.json", StringComparison.OrdinalIgnoreCase));
 
-        if (installProfileEntry == default)
+        if (installProfileEntry == null)
             return this.GetCorruptedFileResult();
 
-        await using var ipStream = installProfileEntry.OpenEntryStream();
+        await using var ipStream = installProfileEntry.Open();
         var ipModel =
             await JsonSerializer.DeserializeAsync(ipStream, ForgeInstallProfileContext.Default.ForgeInstallProfile);
 
@@ -129,11 +126,11 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
         this.InvokeStatusChangedEvent("解析 Lzma", ProgressValue.FromDisplay(40));
 
         var serverLzma = archive.Entries.FirstOrDefault(e =>
-            e.Key?.Equals("data/server.lzma", StringComparison.OrdinalIgnoreCase) ?? false);
+            e.FullName.Equals("data/server.lzma", StringComparison.OrdinalIgnoreCase));
         var clientLzma = archive.Entries.FirstOrDefault(e =>
-            e.Key?.Equals("data/client.lzma", StringComparison.OrdinalIgnoreCase) ?? false);
+            e.FullName.Equals("data/client.lzma", StringComparison.OrdinalIgnoreCase));
 
-        if (serverLzma != default)
+        if (serverLzma != null)
         {
             var serverMaven = $"net.minecraftforge:forge:{forgeVersion}:serverdata@lzma";
 
@@ -149,11 +146,12 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
                 di.Create();
 
             await using var sFs = File.OpenWrite(serverBinPath);
+            await using var serverLzmaFs = serverLzma.Open();
 
-            serverLzma.WriteTo(sFs);
+            await serverLzmaFs.CopyToAsync(sFs);
         }
 
-        if (clientLzma != default)
+        if (clientLzma != null)
         {
             var clientMaven = $"net.minecraftforge:forge:{forgeVersion}:clientdata@lzma";
 
@@ -169,7 +167,9 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
                 di.Create();
 
             await using var cFs = File.OpenWrite(clientBinPath);
-            clientLzma.WriteTo(cFs);
+            await using var clientLzmaFs = clientLzma.Open();
+
+            await clientLzmaFs.CopyToAsync(cFs);
         }
 
         #endregion
@@ -179,17 +179,17 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
         this.InvokeStatusChangedEvent("解压 Forge Jar", ProgressValue.FromDisplay(50));
 
         var forgeJar = archive.Entries.FirstOrDefault(e =>
-            e.Key?.Equals($"maven/net/minecraftforge/forge/{forgeVersion}/forge-{forgeVersion}.jar",
-                StringComparison.OrdinalIgnoreCase) ?? false);
+            e.FullName.Equals($"maven/net/minecraftforge/forge/{forgeVersion}/forge-{forgeVersion}.jar",
+                StringComparison.OrdinalIgnoreCase));
         var forgeUniversalJar = archive.Entries.FirstOrDefault(e =>
-            e.Key?.Equals($"maven/net/minecraftforge/forge/{forgeVersion}/forge-{forgeVersion}-universal.jar",
-                StringComparison.OrdinalIgnoreCase) ?? false);
+            e.FullName.Equals($"maven/net/minecraftforge/forge/{forgeVersion}/forge-{forgeVersion}-universal.jar",
+                StringComparison.OrdinalIgnoreCase));
 
-        if (forgeJar != default)
+        if (forgeJar != null)
         {
-            if (forgeUniversalJar != default)
+            if (forgeUniversalJar != null)
             {
-                var forgeUniversalSubPath = forgeUniversalJar.Key![(forgeUniversalJar.Key!.IndexOf('/') + 1)..];
+                var forgeUniversalSubPath = forgeUniversalJar.FullName[(forgeUniversalJar.FullName.IndexOf('/') + 1)..];
                 var forgeUniversalLibPath = Path.Combine(this.RootPath,
                     GamePathHelper.GetLibraryPath(forgeUniversalSubPath));
 
@@ -209,10 +209,12 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
                     Directory.CreateDirectory(forgeUniversalLibDir);
 
                 await using var forgeUniversalFs = File.OpenWrite(forgeUniversalLibPath);
-                forgeUniversalJar.WriteTo(forgeUniversalFs);
+                await using var forgeUniversalJarFs = forgeUniversalJar.Open();
+
+                await forgeUniversalJarFs.CopyToAsync(forgeUniversalFs);
             }
 
-            var forgeSubPath = forgeJar.Key![(forgeJar.Key!.IndexOf('/') + 1)..];
+            var forgeSubPath = forgeJar.FullName[(forgeJar.FullName.IndexOf('/') + 1)..];
             var forgeLibPath =
                 Path.Combine(this.RootPath, GamePathHelper.GetLibraryPath(forgeSubPath));
 
@@ -220,14 +222,15 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             if (!Directory.Exists(forgeLibDir))
                 Directory.CreateDirectory(forgeLibDir);
 
-            await using var forgeFs = File.OpenWrite(forgeLibPath);
-
             var fLDi = new DirectoryInfo(Path.GetDirectoryName(forgeLibPath)!);
 
             if (!fLDi.Exists)
                 fLDi.Create();
 
-            forgeJar.WriteTo(forgeFs);
+            await using var forgeFs = File.OpenWrite(forgeLibPath);
+            await using var forgeJarFs = forgeJar.Open();
+
+            await forgeJarFs.CopyToAsync(forgeFs);
         }
 
         #endregion
@@ -472,16 +475,16 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             var libPath = Path.Combine(this.RootPath, GamePathHelper.GetLibraryPath(maven.Path));
 
             await using var libFs = File.OpenRead(Path.GetFullPath(libPath));
-            using var libArchive = ArchiveFactory.Open(libFs);
+            using var libArchive = new ZipArchive(libFs, ZipArchiveMode.Read);
 
             var libEntry =
                 libArchive.Entries.FirstOrDefault(e =>
-                    e.Key?.Equals("META-INF/MANIFEST.MF", StringComparison.OrdinalIgnoreCase) ?? false);
+                    e.FullName.Equals("META-INF/MANIFEST.MF", StringComparison.OrdinalIgnoreCase));
 
             if (libEntry == null)
                 return this.GetCorruptedFileResult();
 
-            await using var libStream = libEntry.OpenEntryStream();
+            await using var libStream = libEntry.Open();
             using var libSr = new StreamReader(libStream, Encoding.UTF8);
             var content = await libSr.ReadToEndAsync();
             var mainClass =

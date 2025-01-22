@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -9,7 +10,6 @@ using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Downloading;
 using ProjBobcat.Class.Model.Modrinth;
 using ProjBobcat.Interface;
-using SharpCompress.Archives;
 
 namespace ProjBobcat.DefaultComponent.Installer.ModPackInstaller;
 
@@ -21,15 +21,19 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
 
     public async Task<ModrinthModPackIndexModel?> ReadIndexTask()
     {
-        using var archive = ArchiveFactory.Open(Path.GetFullPath(this.ModPackPath));
+        var path = Path.GetFullPath(this.ModPackPath);
+
+        await using var fs = File.OpenRead(path);
+        using var archive = new ZipArchive(fs, ZipArchiveMode.Read);
+
         var manifestEntry =
             archive.Entries.FirstOrDefault(x =>
-                x.Key?.Equals("modrinth.index.json", StringComparison.OrdinalIgnoreCase) ?? false);
+                x.FullName.Equals("modrinth.index.json", StringComparison.OrdinalIgnoreCase));
 
         if (manifestEntry == null)
             return null;
 
-        await using var stream = manifestEntry.OpenEntryStream();
+        await using var stream = manifestEntry.Open();
 
         var manifestModel = await JsonSerializer.DeserializeAsync(stream,
             ModrinthModPackIndexModelContext.Default.ModrinthModPackIndexModel);
@@ -103,19 +107,21 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
         if (!this.FailedFiles.IsEmpty)
             throw new NullReferenceException("未能下载全部的 Mods");
 
-        using var archive = ArchiveFactory.Open(Path.GetFullPath(this.ModPackPath));
+        var modPackFullPath = Path.GetFullPath(this.ModPackPath);
+
+        await using var modPackFs = File.OpenRead(modPackFullPath);
+        using var archive = new ZipArchive(modPackFs, ZipArchiveMode.Read);
 
         this.TotalDownloaded = 0;
-        this.NeedToDownload = archive.Entries.Count();
+        this.NeedToDownload = archive.Entries.Count;
 
         const string decompressPrefix = "overrides";
 
         foreach (var entry in archive.Entries)
         {
-            if (string.IsNullOrEmpty(entry.Key)) continue;
-            if (!entry.Key.StartsWith(decompressPrefix, StringComparison.OrdinalIgnoreCase)) continue;
+            if (!entry.FullName.StartsWith(decompressPrefix, StringComparison.OrdinalIgnoreCase)) continue;
 
-            var subPath = entry.Key[(decompressPrefix.Length + 1)..];
+            var subPath = entry.FullName[(decompressPrefix.Length + 1)..];
             if (string.IsNullOrEmpty(subPath)) continue;
 
             var path = Path.Combine(Path.GetFullPath(idPath), subPath);
@@ -123,7 +129,7 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
 
             if (!Directory.Exists(dirPath))
                 Directory.CreateDirectory(dirPath);
-            if (entry.IsDirectory)
+            if (entry.IsDirectory())
             {
                 if (!Directory.Exists(path))
                     Directory.CreateDirectory(path);
@@ -140,7 +146,9 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
             this.InvokeStatusChangedEvent($"解压缩安装文件：{subPathName}", progress);
 
             await using var fs = File.OpenWrite(path);
-            entry.WriteTo(fs);
+            await using var entryStream = entry.Open();
+
+            await entryStream.CopyToAsync(fs);
 
             this.TotalDownloaded++;
         }

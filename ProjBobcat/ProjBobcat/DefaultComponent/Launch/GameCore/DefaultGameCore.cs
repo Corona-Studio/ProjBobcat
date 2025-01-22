@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,7 +15,6 @@ using ProjBobcat.Class.Model.YggdrasilAuth;
 using ProjBobcat.DefaultComponent.Authenticator;
 using ProjBobcat.Event;
 using ProjBobcat.Interface;
-using SharpCompress.Archives;
 using FileInfo = System.IO.FileInfo;
 
 namespace ProjBobcat.DefaultComponent.Launch.GameCore;
@@ -219,17 +219,17 @@ public sealed class DefaultGameCore : GameCoreBase
 
                     if (!File.Exists(path)) continue;
 
-                    // await using var stream = File.OpenRead(path);
-                    // using var reader =  ReaderFactory.Open(stream);
+                    await using var stream = File.OpenRead(path);
+                    using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
 
-                    using var archive = ArchiveFactory.Open(path);
                     foreach (var entry in archive.Entries)
                     {
-                        if (string.IsNullOrEmpty(entry.Key)) continue;
-                        if (n.Extract?.Exclude?.Any(entry.Key.StartsWith) ?? false) continue;
+                        if (n.Extract?.Exclude != null &&
+                            n.Extract.Exclude.Any(e => entry.FullName.StartsWith(e, StringComparison.Ordinal)))
+                            continue;
 
-                        var extractPath = Path.Combine(nativeRootPath, entry.Key);
-                        if (entry.IsDirectory)
+                        var extractPath = Path.Combine(nativeRootPath, entry.FullName);
+                        if (entry.IsDirectory())
                         {
                             if (!Directory.Exists(extractPath))
                                 Directory.CreateDirectory(extractPath);
@@ -237,7 +237,7 @@ public sealed class DefaultGameCore : GameCoreBase
                             continue;
                         }
 
-                        this.InvokeLaunchLogThenStart($"[解压 Natives] - {entry.Key}", ref currentTimestamp);
+                        this.InvokeLaunchLogThenStart($"[解压 Natives] - {entry.FullName}", ref currentTimestamp);
 
                         var fi = new FileInfo(extractPath);
                         var di = fi.Directory ?? new DirectoryInfo(Path.GetDirectoryName(extractPath)!);
@@ -246,7 +246,9 @@ public sealed class DefaultGameCore : GameCoreBase
                             di.Create();
 
                         await using var fs = fi.OpenWrite();
-                        entry.WriteTo(fs);
+                        await using var entryStream = entry.Open();
+
+                        await entryStream.CopyToAsync(fs);
                     }
                 }
             }

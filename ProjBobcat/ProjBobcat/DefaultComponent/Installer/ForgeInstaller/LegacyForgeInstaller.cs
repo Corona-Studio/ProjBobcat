@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -9,7 +10,6 @@ using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Forge;
 using ProjBobcat.Class.Model.YggdrasilAuth;
 using ProjBobcat.Interface;
-using SharpCompress.Archives;
 using VersionInfo = ProjBobcat.Class.Model.Forge.VersionInfo;
 
 namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller;
@@ -43,16 +43,16 @@ public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
         {
             this.InvokeStatusChangedEvent("解压安装文件", ProgressValue.Start);
 
-            using var reader = ArchiveFactory.Open(this.ForgeExecutablePath);
+            await using var forgeFs = File.OpenRead(this.ForgeExecutablePath);
+            using var reader = new ZipArchive(forgeFs, ZipArchiveMode.Read);
+
             var profileEntry =
-                reader.Entries.FirstOrDefault(e =>
-                    e.Key?.Equals("install_profile.json", StringComparison.Ordinal) ?? false);
+                reader.Entries.FirstOrDefault(e => e.FullName.Equals("install_profile.json", StringComparison.Ordinal));
             var legacyJarEntry =
                 reader.Entries.FirstOrDefault(e =>
-                    e.Key?.Equals($"forge-{this.ForgeVersion}-universal.jar", StringComparison.OrdinalIgnoreCase) ??
-                    false);
+                    e.FullName.Equals($"forge-{this.ForgeVersion}-universal.jar", StringComparison.OrdinalIgnoreCase));
 
-            if (profileEntry == default)
+            if (profileEntry == null)
                 return new ForgeInstallResult
                 {
                     Error = new ErrorModel
@@ -64,7 +64,7 @@ public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
                     Succeeded = false
                 };
 
-            if (legacyJarEntry == default)
+            if (legacyJarEntry == null)
                 return new ForgeInstallResult
                 {
                     Error = new ErrorModel
@@ -78,7 +78,7 @@ public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
 
             this.InvokeStatusChangedEvent("解压完成", ProgressValue.FromDisplay(5));
 
-            await using var stream = profileEntry.OpenEntryStream();
+            await using var stream = profileEntry.Open();
 
             this.InvokeStatusChangedEvent("解析安装文档", ProgressValue.FromDisplay(35));
 
@@ -115,7 +115,9 @@ public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
                 libDi.Create();
 
             await using var fs = File.OpenWrite(forgeLibPath);
-            legacyJarEntry.WriteTo(fs);
+            await using var legacyJarEntryStream = legacyJarEntry.Open();
+
+            await legacyJarEntryStream.CopyToAsync(fs);
 
             var versionJsonString = JsonSerializer.Serialize(profileModel.VersionInfo, typeof(VersionInfo),
                 new LegacyForgeInstallVersionInfoContext(JsonHelper.CamelCasePropertyNamesSettings()));
