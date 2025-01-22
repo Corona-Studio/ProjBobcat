@@ -138,7 +138,7 @@ public partial class DefaultLogAnalyzer : ILogAnalyzer
 
             if (logType == LogFileType.Unknown) continue;
 
-            var content = File.ReadAllText(log.FullName, Encoding.GetEncoding("GB2312"));
+            var content = File.ReadAllText(log.FullName, Encoding.UTF8);
 
             if (string.IsNullOrWhiteSpace(content)) continue;
 
