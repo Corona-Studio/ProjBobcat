@@ -25,9 +25,11 @@ public static class RulesHelper
     {
         if (rules == null) return true;
 
-        var jvmRules = rules.Where(r => r != null).Select(r => r!).ToList();
+        var jvmRules = rules
+            .OfType<JvmRules>()
+            .ToList();
 
-        if (jvmRules.Count == 0) return false;
+        if (jvmRules.Count == 0) return true;
 
         var ruleFlag = false;
         var orderedRules = new List<JvmRules>();

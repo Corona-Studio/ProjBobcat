@@ -151,8 +151,10 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
 
         #region Set Output Encoding
 
-        yield return "-Dfile.encoding=utf-8";
-
+        yield return "-Dfile.encoding=UTF-8";
+        yield return "-Dstdout.encoding=UTF-8";
+        yield return "-Dstderr.encoding=UTF-8";
+        
         #endregion
 
         yield return "-Dfml.ignoreInvalidMinecraftCertificates=true";

@@ -125,11 +125,7 @@ public static partial class NativeReplaceHelper
         {
             if (!original.Rules.CheckAllow()) continue;
 
-            var maven = original.Name.ResolveMavenString();
-
-            if (maven == null) continue;
-
-            var isNative = maven.Classifier.StartsWith("natives", StringComparison.OrdinalIgnoreCase);
+            var isNative = original.Natives != null;
 
             if (isNative)
             {
