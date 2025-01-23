@@ -173,64 +173,14 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
 
                 yield return StringHelper.ReplaceByDic(arg, jvmArgumentsDic);
             }
-
-            yield break;
         }
 
-        const string preset = """
-                              [
-                                  {
-                                      "rules": [
-                                          {
-                                              "action": "allow",
-                                              "os": {
-                                                  "name": "osx"
-                                              }
-                                          }
-                                      ],
-                                      "value": [
-                                          "-XstartOnFirstThread"
-                                      ]
-                                  },
-                                  {
-                                      "rules": [
-                                          {
-                                              "action": "allow",
-                                              "os": {
-                                                  "name": "windows"
-                                              }
-                                          }
-                                      ],
-                                      "value": "-XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump"
-                                  },
-                                  {
-                                      "rules": [
-                                          {
-                                              "action": "allow",
-                                              "os": {
-                                                  "name": "windows",
-                                                  "version": "^10\\\\."
-                                              }
-                                          }
-                                      ],
-                                      "value": [
-                                          "-Dos.name=Windows 10",
-                                          "-Dos.version=10.0"
-                                      ]
-                                  },
-                                  "-Djava.library.path=${natives_directory}",
-                                  "-Dminecraft.launcher.brand=${launcher_name}",
-                                  "-Dminecraft.launcher.version=${launcher_version}",
-                                  "-cp",
-                                  "${classpath}"
-                              ]
-                              """;
+        yield return StringHelper.ReplaceByDic("-Djava.library.path=${natives_directory}", jvmArgumentsDic);
+        yield return StringHelper.ReplaceByDic("-Dminecraft.launcher.brand=${launcher_name}", jvmArgumentsDic);
+        yield return StringHelper.ReplaceByDic("-Dminecraft.launcher.version=${launcher_version}", jvmArgumentsDic);
 
-        var preJvmArguments = this.VersionLocator.ParseJvmArguments(JsonSerializer.Deserialize(preset,
-            JsonElementContext.Default.JsonElementArray)!);
-
-        foreach (var preJvmArg in preJvmArguments)
-            yield return StringHelper.ReplaceByDic(preJvmArg, jvmArgumentsDic);
+        yield return "-cp";
+        yield return StringHelper.ReplaceByDic("${classpath}", jvmArgumentsDic);
     }
 
     public IEnumerable<string> ParseGameArguments(AuthResultBase authResult)
