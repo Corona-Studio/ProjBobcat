@@ -101,7 +101,7 @@ public static partial class NativeReplaceHelper
         var osCheckFlag = OperatingSystem.IsWindows() || OperatingSystem.IsMacOS() || OperatingSystem.IsLinux();
 
         if (RuntimeInformation.ProcessArchitecture == Architecture.X86 && osCheckFlag)
-            return replaced;
+            return libs;
 
         var isNotLinux = OperatingSystem.IsWindows() || OperatingSystem.IsMacOS();
         var mcVersion = GameVersionHelper.TryGetMcVersion(versions);
@@ -116,7 +116,7 @@ public static partial class NativeReplaceHelper
         if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64 &&
             isNotLinux &&
             minor is -1 or >= 19)
-            return replaced;
+            return libs;
 
         if (replaceDic == null) return libs;
         if (minor is -1 or >= 19 && policy == NativeReplacementPolicy.LegacyOnly) return libs;
