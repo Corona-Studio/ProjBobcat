@@ -94,7 +94,7 @@ public class MicrosoftAuthenticator : IAuthenticator
 
         var cacheTokenResult = await this.CacheTokenProvider(this);
 
-        if (cacheTokenResult is { IsAuthResultValid: true, AuthResult: { Error: null, AuthStatus: AuthStatus.Succeeded } })
+        if (cacheTokenResult is { IsAuthResultValid: true, AuthResult: MicrosoftAuthResult { Error: null, AuthStatus: AuthStatus.Succeeded, ExpiresIn: >= 60 } })
             return cacheTokenResult.AuthResult;
 
         if (!cacheTokenResult.IsCredentialValid || cacheTokenResult.CacheAuthResult == null)
@@ -112,7 +112,6 @@ public class MicrosoftAuthenticator : IAuthenticator
         var accessToken = cacheTokenResult.CacheAuthResult.AccessToken;
         var refreshToken = cacheTokenResult.CacheAuthResult.RefreshToken;
         var idToken = cacheTokenResult.CacheAuthResult.IdToken;
-        var expiresIn = cacheTokenResult.CacheAuthResult.ExpiresIn;
 
         #region STAGE 1
 
@@ -290,7 +289,7 @@ public class MicrosoftAuthenticator : IAuthenticator
         var accountModel = new AccountModel
         {
             AccessToken = mcRes.AccessToken,
-            AccessTokenExpiresAt = DateTime.Now.AddSeconds(expiresIn > 0 ? expiresIn : mcRes.ExpiresIn),
+            AccessTokenExpiresAt = DateTime.Now.AddSeconds(mcRes.ExpiresIn),
             Avatar = profileRes.GetActiveSkin()?.Url,
             Cape = profileRes.GetActiveCape()?.Url,
             EligibleForMigration = false,
@@ -388,6 +387,7 @@ public class MicrosoftAuthenticator : IAuthenticator
         return new MicrosoftAuthResult
         {
             AccessToken = value.AccessToken,
+            ExpiresIn = (long)(value.AccessTokenExpiresAt - DateTime.Now).TotalSeconds,
             AuthStatus = AuthStatus.Succeeded,
             Skin = value.Avatar,
             Cape = value.Cape,
