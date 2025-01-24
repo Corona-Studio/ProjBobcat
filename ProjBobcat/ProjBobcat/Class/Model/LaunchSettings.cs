@@ -8,11 +8,7 @@ namespace ProjBobcat.Class.Model;
 
 public class GameArguments
 {
-    /// <summary>
-    ///     Java executable file
-    /// </summary>
-    public required string JavaExecutable { get; set; }
-
+    public required JavaRuntimeInfo? Java { get; set; }
     public uint MinMemory { get; set; }
     public required uint MaxMemory { get; set; }
     public ResolutionModel? Resolution { get; set; }
@@ -47,6 +43,10 @@ public class LaunchSettings
     /// </summary>
     public required string Version { get; init; }
 
+    public bool EnableXmlLoggingOutput { get; init; }
+
+    public required NativeReplacementPolicy NativeReplacementPolicy { get; init; }
+
     /// <summary>
     ///     游戏窗口标题
     /// </summary>
@@ -55,6 +55,7 @@ public class LaunchSettings
     public required IVersionLocator VersionLocator { get; init; }
 
     public required IAuthenticator Authenticator { get; init; }
+
     public ProfileInfoModel? SelectedProfile { get; init; }
 
     public bool VersionInsulation { get; init; }

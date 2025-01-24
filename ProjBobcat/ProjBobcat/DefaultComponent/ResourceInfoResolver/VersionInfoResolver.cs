@@ -12,12 +12,15 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver;
 
 public sealed class VersionInfoResolver : ResolverBase
 {
-    public override async IAsyncEnumerable<IGameResource> ResolveResourceAsync()
+    public override async IAsyncEnumerable<IGameResource> ResolveResourceAsync(
+        string basePath,
+        bool checkLocalFiles,
+        ResolvedGameVersion resolvedGame)
     {
-        if (!this.CheckLocalFiles) yield break;
+        if (!checkLocalFiles) yield break;
 
-        var id = this.VersionInfo.RootVersion ?? this.VersionInfo.DirName;
-        var versionJson = GamePathHelper.GetGameJsonPath(this.BasePath, id);
+        var id = resolvedGame.RootVersion ?? resolvedGame.DirName;
+        var versionJson = GamePathHelper.GetGameJsonPath(basePath, id);
 
         if (!File.Exists(versionJson)) yield break;
 
@@ -27,7 +30,7 @@ public sealed class VersionInfoResolver : ResolverBase
         if (rawVersionModel?.Downloads?.Client == null) yield break;
 
         var clientDownload = rawVersionModel.Downloads.Client;
-        var jarPath = GamePathHelper.GetVersionJar(this.BasePath, id);
+        var jarPath = GamePathHelper.GetVersionJar(basePath, id);
 
 
         if (File.Exists(jarPath))
@@ -49,7 +52,7 @@ public sealed class VersionInfoResolver : ResolverBase
             CheckSum = clientDownload.Sha1 ?? string.Empty,
             FileName = $"{id}.jar",
             FileSize = clientDownload.Size,
-            Path = Path.Combine(this.BasePath, GamePathHelper.GetGamePath(id)),
+            Path = Path.Combine(basePath, GamePathHelper.GetGamePath(id)),
             Title = $"{id}.jar",
             Type = ResourceType.GameJar,
             Urls = [clientDownload.Url]

@@ -14,7 +14,6 @@ using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.YggdrasilAuth;
 using ProjBobcat.DefaultComponent.Authenticator;
 using ProjBobcat.Event;
-using ProjBobcat.Interface;
 using FileInfo = System.IO.FileInfo;
 
 namespace ProjBobcat.DefaultComponent.Launch.GameCore;
@@ -25,12 +24,6 @@ namespace ProjBobcat.DefaultComponent.Launch.GameCore;
 public sealed class DefaultGameCore : GameCoreBase
 {
     readonly string _rootPath = null!;
-
-    public IArgumentParser LaunchArgumentParser
-    {
-        get => throw new InvalidOperationException();
-        set => throw new InvalidOperationException();
-    }
 
     /// <summary>
     ///     .minecraft 目录
@@ -47,8 +40,6 @@ public sealed class DefaultGameCore : GameCoreBase
         }
     }
 
-    public bool EnableXmlLoggingOutput { get; init; }
-
     public override async Task<LaunchResult> LaunchTaskAsync(LaunchSettings settings)
     {
         ArgumentNullException.ThrowIfNull(this.VersionLocator.LauncherProfileParser);
@@ -61,15 +52,10 @@ public sealed class DefaultGameCore : GameCoreBase
 
             #region 解析游戏 Game Info Resolver
 
-            var version = this.VersionLocator.GetGame(settings.Version);
+            var tempVersion = this.VersionLocator.GetGame(settings.Version);
 
-            //在以下方法中，我们存储前一个步骤的时间并且重置秒表，以此逐步测量启动时间。
-            //In the method InvokeLaunchLogThenStart(args), we storage the time span of the previous process and restart the watch in order that the time used in each step is recorded.
-            this.InvokeLaunchLogThenStart("解析游戏", ref currentTimestamp);
-
-            //错误处理
-            //Error processor
-            if (version == null)
+            if (tempVersion is BrokenVersionInfo brokenVersion)
+            {
                 return new LaunchResult
                 {
                     ErrorType = LaunchErrorType.OperationFailed,
@@ -77,9 +63,16 @@ public sealed class DefaultGameCore : GameCoreBase
                     {
                         Error = "解析游戏失败",
                         ErrorMessage = "我们在解析游戏时出现了错误",
-                        Cause = "这有可能是因为您的游戏JSON文件损坏所导致的问题"
+                        Cause = $"[{brokenVersion.BrokenReason}] 这有可能是因为您的游戏JSON文件损坏所导致的问题"
                     }
                 };
+            }
+
+            var version = (VersionInfo)tempVersion;
+
+            //在以下方法中，我们存储前一个步骤的时间并且重置秒表，以此逐步测量启动时间。
+            //In the method InvokeLaunchLogThenStart(args), we storage the time span of the previous process and restart the watch in order that the time used in each step is recorded.
+            this.InvokeLaunchLogThenStart("解析游戏", ref currentTimestamp);
 
             #endregion
 
@@ -122,7 +115,7 @@ public sealed class DefaultGameCore : GameCoreBase
                     }
                 };
 
-            if (authResult.SelectedProfile == default && settings.SelectedProfile == default)
+            if (authResult.SelectedProfile == null && settings.SelectedProfile == null)
                 return new LaunchResult
                 {
                     LaunchSettings = settings,
@@ -135,23 +128,15 @@ public sealed class DefaultGameCore : GameCoreBase
                     }
                 };
 
-            if (settings.SelectedProfile != default)
+            if (settings.SelectedProfile != null)
                 authResult.SelectedProfile = settings.SelectedProfile;
 
             #endregion
 
             #region 解析启动参数 Launch Parameters Resolver
 
-            var javasArr = new[]
-            {
-                settings.GameArguments.JavaExecutable,
-                settings.FallBackGameArguments?.JavaExecutable
-            };
-            var isJavaExists = false;
-
-            foreach (var java in javasArr)
-                if (!string.IsNullOrEmpty(java) && File.Exists(java))
-                    isJavaExists = true;
+            var java = settings.GameArguments.Java ?? settings.FallBackGameArguments?.Java;
+            var isJavaExists = !string.IsNullOrWhiteSpace(java?.JavaPath);
 
             if (!isJavaExists)
                 return new LaunchResult
@@ -166,34 +151,33 @@ public sealed class DefaultGameCore : GameCoreBase
                 };
 
             var argumentParser = new DefaultLaunchArgumentParser(
-                settings, this.VersionLocator.LauncherProfileParser, this.VersionLocator,
-                authResult, this.RootPath,
-                version.RootVersion)
-            {
-                EnableXmlLoggingOutput = this.EnableXmlLoggingOutput
-            };
+                this.VersionLocator.LauncherProfileParser,
+                this.VersionLocator,
+                this.RootPath);
 
             //以字符串数组形式生成启动参数。
             //Generates launch cmd arguments in string[].
-            var arguments = argumentParser.GenerateLaunchArguments();
-            this.InvokeLaunchLogThenStart("解析启动参数", ref currentTimestamp);
+            var resolvedVersion = settings.VersionLocator.ResolveGame(
+                (VersionInfo)tempVersion,
+                settings.NativeReplacementPolicy,
+                java);
 
-            if (string.IsNullOrEmpty(arguments.First()))
+            if (resolvedVersion == null)
+            {
                 return new LaunchResult
                 {
-                    ErrorType = LaunchErrorType.IncompleteArguments,
+                    ErrorType = LaunchErrorType.OperationFailed,
                     Error = new ErrorModel
                     {
-                        Cause = "启动核心生成的参数不完整",
-                        Error = "重要参数缺失",
-                        ErrorMessage = "启动参数不完整，很有可能是缺少Java路径导致的"
+                        Error = "解析游戏失败",
+                        ErrorMessage = "我们在解析游戏时出现了错误",
+                        Cause = "这有可能是因为您的游戏JSON文件损坏所导致的问题"
                     }
                 };
+            }
 
-            //从参数数组中移出java路径并加以存储。
-            //Load the first element(java's path) into the executable string and removes it from the generated arguments
-            var executable = arguments[0];
-            arguments.RemoveAt(0);
+            var arguments = argumentParser.GenerateLaunchArguments(version, resolvedVersion, settings, authResult);
+            this.InvokeLaunchLogThenStart("解析启动参数", ref currentTimestamp);
 
             //通过String Builder格式化参数。（转化成字符串）
             //Format the arguments using string builder.(Convert to string)
@@ -206,13 +190,15 @@ public sealed class DefaultGameCore : GameCoreBase
 
             try
             {
-                var nativeRootPath = Path.Combine(this.RootPath, argumentParser.NativeRoot);
+                var nativeRoot = Path.Combine(this.RootPath, GamePathHelper.GetNativeRoot(settings.Version));
+                var nativeRootPath = Path.Combine(this.RootPath, nativeRoot);
+
                 if (!Directory.Exists(nativeRootPath))
                     Directory.CreateDirectory(nativeRootPath);
 
                 DirectoryHelper.CleanDirectory(nativeRootPath);
 
-                foreach (var n in version.Natives)
+                foreach (var n in resolvedVersion.Natives)
                 {
                     var path =
                         Path.Combine(this.RootPath, GamePathHelper.GetLibraryPath(n.FileInfo.Path!));
@@ -274,7 +260,7 @@ public sealed class DefaultGameCore : GameCoreBase
                 ? Path.Combine(this.RootPath, GamePathHelper.GetGamePath(settings.Version))
                 : this.RootPath;
 
-            var psi = new ProcessStartInfo(executable, string.Join(' ', arguments))
+            var psi = new ProcessStartInfo(java!.JavaPath, string.Join(' ', arguments))
             {
                 UseShellExecute = false,
                 WorkingDirectory = rootPath,

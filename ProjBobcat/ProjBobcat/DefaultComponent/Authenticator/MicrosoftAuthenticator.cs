@@ -21,7 +21,12 @@ namespace ProjBobcat.DefaultComponent.Authenticator;
 
 #region Temp Models
 
-record McReqModel(string identityToken);
+public record CacheTokenProviderResult(
+    bool IsCredentialValid,
+    bool IsAuthResultValid,
+    AuthResultBase? AuthResult,
+    GraphAuthResultModel? CacheAuthResult);
+record McReqModel([property: JsonPropertyName("identityToken")] string IdentityToken);
 
 [JsonSerializable(typeof(McReqModel))]
 partial class McReqModelContext : JsonSerializerContext;
@@ -65,7 +70,7 @@ public class MicrosoftAuthenticator : IAuthenticator
     /// </summary>
     public Guid? ProfileId { get; set; }
 
-    public Func<Task<(bool, GraphAuthResultModel?)>>? CacheTokenProvider { get; init; }
+    public Func<MicrosoftAuthenticator, Task<CacheTokenProviderResult>>? CacheTokenProvider { get; init; }
     public required ILauncherAccountParser LauncherAccountParser { get; init; }
 
     public AuthResultBase Auth(bool userField = false)
@@ -87,9 +92,12 @@ public class MicrosoftAuthenticator : IAuthenticator
                 }
             };
 
-        var (isCredentialValid, cacheAuthResult) = await this.CacheTokenProvider();
+        var cacheTokenResult = await this.CacheTokenProvider(this);
 
-        if (!isCredentialValid || cacheAuthResult == null)
+        if (cacheTokenResult is { IsAuthResultValid: true, AuthResult: { Error: null, AuthStatus: AuthStatus.Succeeded } })
+            return cacheTokenResult.AuthResult;
+
+        if (!cacheTokenResult.IsCredentialValid || cacheTokenResult.CacheAuthResult == null)
             return new MicrosoftAuthResult
             {
                 AuthStatus = AuthStatus.Failed,
@@ -101,10 +109,10 @@ public class MicrosoftAuthenticator : IAuthenticator
                 }
             };
 
-        var accessToken = cacheAuthResult.AccessToken;
-        var refreshToken = cacheAuthResult.RefreshToken;
-        var idToken = cacheAuthResult.IdToken;
-        var expiresIn = cacheAuthResult.ExpiresIn;
+        var accessToken = cacheTokenResult.CacheAuthResult.AccessToken;
+        var refreshToken = cacheTokenResult.CacheAuthResult.RefreshToken;
+        var idToken = cacheTokenResult.CacheAuthResult.IdToken;
+        var expiresIn = cacheTokenResult.CacheAuthResult.ExpiresIn;
 
         #region STAGE 1
 
@@ -368,8 +376,8 @@ public class MicrosoftAuthenticator : IAuthenticator
                 (x.Value.MinecraftProfile?.Id.Equals(ProfileId?.ToString("N"), StringComparison.OrdinalIgnoreCase) ?? false) &&
                 x.Value.Type.Equals("XBox", StringComparison.OrdinalIgnoreCase));
 
-        if (value == default)
-            return default;
+        if (value == null)
+            return null;
 
         var sP = new ProfileInfoModel
         {

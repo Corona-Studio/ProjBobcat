@@ -41,13 +41,19 @@ public interface IResourceCompleter : IDisposable
     ///     检查并下载（同步）
     /// </summary>
     /// <returns>任务是否成功完成</returns>
-    TaskResult<ResourceCompleterCheckResult?> CheckAndDownload();
+    TaskResult<ResourceCompleterCheckResult?> CheckAndDownload(
+        string basePath,
+        bool checkLocalFiles,
+        ResolvedGameVersion resolvedGame);
 
     /// <summary>
     ///     检查并下载（异步）
     /// </summary>
     /// <returns>任务是否成功完成</returns>
-    Task<TaskResult<ResourceCompleterCheckResult?>> CheckAndDownloadTaskAsync();
+    Task<TaskResult<ResourceCompleterCheckResult?>> CheckAndDownloadTaskAsync(
+        string basePath,
+        bool checkLocalFiles,
+        ResolvedGameVersion resolvedGame);
 
     /// <summary>
     ///     解析状态事件

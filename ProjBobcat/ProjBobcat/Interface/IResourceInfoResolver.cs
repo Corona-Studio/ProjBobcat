@@ -7,11 +7,8 @@ namespace ProjBobcat.Interface;
 
 public interface IResourceInfoResolver : IDisposable
 {
-    string BasePath { get; init; }
-    bool CheckLocalFiles { get; set; }
-    VersionInfo VersionInfo { get; init; }
-    IAsyncEnumerable<IGameResource> ResolveResourceAsync();
-    IEnumerable<IGameResource> ResolveResource();
+    IAsyncEnumerable<IGameResource> ResolveResourceAsync(string basePath, bool checkLocalFiles, ResolvedGameVersion resolvedGame);
+    IEnumerable<IGameResource> ResolveResource(string basePath, bool checkLocalFiles, ResolvedGameVersion resolvedGame);
 
     event EventHandler<GameResourceInfoResolveEventArgs> GameResourceInfoResolveEvent;
 }

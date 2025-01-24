@@ -26,13 +26,16 @@ public sealed class AssetInfoResolver : ResolverBase
 
     public IReadOnlyList<VersionManifestVersionsModel>? Versions { get; init; }
 
-    public override async IAsyncEnumerable<IGameResource> ResolveResourceAsync()
+    public override async IAsyncEnumerable<IGameResource> ResolveResourceAsync(
+        string basePath,
+        bool checkLocalFiles,
+        ResolvedGameVersion resolvedGame)
     {
-        if (!this.CheckLocalFiles) yield break;
+        if (!checkLocalFiles) yield break;
 
         this.OnResolve("开始进行游戏资源(Asset)检查", ProgressValue.Start);
 
-        if (this.VersionInfo.AssetInfo == null) yield break;
+        if (resolvedGame.AssetInfo == null) yield break;
 
         var versions = this.Versions;
         if ((this.Versions?.Count ?? 0) == 0)
@@ -48,27 +51,27 @@ public sealed class AssetInfoResolver : ResolverBase
         if ((versions?.Count ?? 0) == 0) yield break;
 
         var isAssetInfoNotExists =
-            string.IsNullOrEmpty(this.VersionInfo.AssetInfo?.Url) &&
-            string.IsNullOrEmpty(this.VersionInfo.AssetInfo?.Id);
+            string.IsNullOrEmpty(resolvedGame.AssetInfo?.Url) &&
+            string.IsNullOrEmpty(resolvedGame.AssetInfo?.Id);
         if (isAssetInfoNotExists &&
-            string.IsNullOrEmpty(this.VersionInfo.Assets))
+            string.IsNullOrEmpty(resolvedGame.Assets))
             yield break;
 
         var assetIndexesDi =
-            new DirectoryInfo(Path.Combine(this.BasePath, GamePathHelper.GetAssetsRoot(), "indexes"));
+            new DirectoryInfo(Path.Combine(basePath, GamePathHelper.GetAssetsRoot(), "indexes"));
         var assetObjectsDi =
-            new DirectoryInfo(Path.Combine(this.BasePath, GamePathHelper.GetAssetsRoot(), "objects"));
+            new DirectoryInfo(Path.Combine(basePath, GamePathHelper.GetAssetsRoot(), "objects"));
 
         if (!assetIndexesDi.Exists) assetIndexesDi.Create();
         if (!assetObjectsDi.Exists) assetObjectsDi.Create();
 
-        var id = this.VersionInfo.AssetInfo?.Id ?? this.VersionInfo.Assets;
+        var id = resolvedGame.AssetInfo?.Id ?? resolvedGame.Assets;
         var assetIndexesPath = Path.Combine(assetIndexesDi.FullName, $"{id}.json");
         if (!File.Exists(assetIndexesPath))
         {
             this.OnResolve("没有发现 Asset Indexes 文件， 开始下载", ProgressValue.Start);
 
-            var assetIndexDownloadUri = this.VersionInfo.AssetInfo?.Url;
+            var assetIndexDownloadUri = resolvedGame.AssetInfo?.Url;
 
             if (isAssetInfoNotExists)
             {

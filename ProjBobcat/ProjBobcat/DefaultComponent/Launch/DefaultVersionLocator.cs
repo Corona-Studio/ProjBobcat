@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -11,6 +10,7 @@ using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.JsonContexts;
 using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.Version;
+using ProjBobcat.Interface;
 using ProjBobcat.JsonConverter;
 using FileInfo = ProjBobcat.Class.Model.FileInfo;
 
@@ -31,11 +31,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
     readonly object _lock = new();
 #endif
 
-    public NativeReplacementPolicy NativeReplacementPolicy { get; init; } = NativeReplacementPolicy.LegacyOnly;
-
-    public bool UseSystemGlfwOnLinux { get; init; }
-
-    public bool UseSystemOpenAlOnLinux { get; init; }
+    private readonly string _rootPath;
 
     /// <summary>
     ///     构造函数。
@@ -43,8 +39,9 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
     /// </summary>
     /// <param name="rootPath">指.minecraft/ Refers to .minecraft/</param>
     /// <param name="clientToken"></param>
-    public DefaultVersionLocator(string rootPath, Guid clientToken) : base(rootPath)
+    public DefaultVersionLocator(string rootPath, Guid clientToken)
     {
+        _rootPath = rootPath;
         this.LauncherProfileParser ??= new DefaultLauncherProfileParser(rootPath, clientToken);
 
         //防止给定路径不存在的时候Parser遍历文件夹爆炸。
@@ -53,25 +50,21 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             Directory.CreateDirectory(GamePathHelper.GetVersionPath(rootPath));
     }
 
-    public override IEnumerable<VersionInfo> GetAllGames()
+    public override IEnumerable<IVersionInfo> GetAllGames()
     {
         // 把每个DirectoryInfo类映射到VersionInfo类。
         // Map each DirectoryInfo dir to VersionInfo class.
-        var di = new DirectoryInfo(GamePathHelper.GetVersionPath(this.RootPath));
+        var di = new DirectoryInfo(GamePathHelper.GetVersionPath(_rootPath));
 
         foreach (var dir in di.EnumerateDirectories())
         {
             var version = this.ToVersion(dir.Name);
-            if (version == null) continue;
+
             yield return version;
         }
     }
 
-    public override VersionInfo? GetGame(string id)
-    {
-        var version = this.ToVersion(id);
-        return version;
-    }
+    public override IVersionInfo GetGame(string id) => this.ToVersion(id);
 
     public override IEnumerable<string> ParseJvmArguments(JsonElement[]? arguments)
     {
@@ -119,25 +112,22 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
     /// <summary>
     ///     解析游戏参数
     /// </summary>
-    /// <param name="arguments"></param>
     /// <returns></returns>
-    private protected override (IEnumerable<string>, Dictionary<string, string>) ParseGameArguments(
-        (string?, JsonElement[]?) arguments)
+    private (IEnumerable<string>, Dictionary<string, string>) ParseGameArguments(string? minecraftArgs, JsonElement[]? gameArgs)
     {
         var argList = new List<string>();
         var availableArguments = new Dictionary<string, string>();
 
-        var (item1, item2) = arguments;
-        if (!string.IsNullOrEmpty(item1))
+        if (!string.IsNullOrEmpty(minecraftArgs))
         {
-            argList.Add(item1);
+            argList.Add(minecraftArgs);
             return (argList, availableArguments);
         }
 
-        if ((item2?.Length ?? 0) == 0)
+        if ((gameArgs?.Length ?? 0) == 0)
             return (argList, availableArguments);
 
-        foreach (var gameRule in item2!)
+        foreach (var gameRule in gameArgs!)
         {
             if (gameRule.ValueKind == JsonValueKind.String)
             {
@@ -321,17 +311,17 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
     /// <returns></returns>
     public override RawVersionModel? ParseRawVersion(string id)
     {
-        var gamePath = Path.Combine(this.RootPath, GamePathHelper.GetGamePath(id));
+        var gamePath = Path.Combine(_rootPath, GamePathHelper.GetGamePath(id));
         var possibleFiles = new List<string>
         {
-            GamePathHelper.GetGameJsonPath(this.RootPath, id)
+            GamePathHelper.GetGameJsonPath(_rootPath, id)
         };
 
         // 预防 I/O 的错误。
         // Prevents errors related to I/O.
         if (!Directory.Exists(gamePath))
             return null;
-        if (!File.Exists(GamePathHelper.GetGameJsonPath(this.RootPath, id)))
+        if (!File.Exists(GamePathHelper.GetGameJsonPath(_rootPath, id)))
         {
             var files = Directory
                 .EnumerateFiles(gamePath, "*.json", SearchOption.TopDirectoryOnly)
@@ -360,11 +350,11 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                     fs, typeof(RawVersionModel), new RawVersionModelContext(options));
 
                 if (versionJsonObj is not RawVersionModel versionJson)
-                    return null;
+                    continue;
                 if (string.IsNullOrEmpty(versionJson.MainClass))
-                    return null;
+                    continue;
                 if (string.IsNullOrEmpty(versionJson.MinecraftArguments) && versionJson.Arguments == null)
-                    return null;
+                    continue;
 
                 return versionJson;
             }
@@ -376,73 +366,26 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
         return null;
     }
 
-    /// <summary>
-    ///     游戏信息解析。
-    ///     Game info analysis.
-    /// </summary>
-    /// <param name="id">游戏文件夹名。Name of the game version's folder.</param>
-    /// <returns>一个VersionInfo类。A VersionInfo class.</returns>
-    private protected override VersionInfo? ToVersion(string id)
+    public override ResolvedGameVersion? ResolveGame(
+        IVersionInfo rawVersionInfo,
+        NativeReplacementPolicy nativeReplacementPolicy,
+        JavaRuntimeInfo? javaRuntimeInfo)
     {
-        // 反序列化。
-        // Deserialize.
-        var rawVersion = this.ParseRawVersion(id);
-        if (rawVersion == null)
+        if (rawVersionInfo is not VersionInfo versionInfo)
+            return null;
+        if (versionInfo.RawVersion == null)
             return null;
 
-        var inherits = new List<RawVersionModel>();
-
-        // 检查游戏是否存在继承关系。
-        // Check if there is inheritance.
-        if (!string.IsNullOrEmpty(rawVersion.InheritsFrom))
-        {
-            // 存在继承关系。
-            // Inheritance exists.
-
-            var current = rawVersion;
-            var first = true;
-
-            // 递归式地将所有反序列化的版本继承塞进一个表中。
-            // Add all deserialized inherited version to a list recursively.
-            while (current != null && !string.IsNullOrEmpty(current.InheritsFrom))
-            {
-                if (first)
-                {
-                    inherits.Add(current);
-                    first = false;
-                    current = this.ParseRawVersion(current.InheritsFrom);
-
-                    if (current == null) return null;
-
-                    inherits.Add(current);
-                    continue;
-                }
-
-                var inheritVersion = this.ParseRawVersion(current.InheritsFrom);
-
-                if (inheritVersion == null) return null;
-
-                inherits.Add(inheritVersion);
-                current = this.ParseRawVersion(current.InheritsFrom);
-            }
-        }
-
-        var result = new VersionInfo
-        {
-            Assets = rawVersion.AssetsVersion,
-            AssetInfo = rawVersion.AssetIndex,
-            MainClass = rawVersion.MainClass,
-            Libraries = [],
-            Natives = [],
-            Logging = rawVersion.Logging,
-            Id = rawVersion.Id,
-            InheritsFrom = rawVersion.InheritsFrom,
-            GameBaseVersion = GameVersionHelper.TryGetMcVersion([.. inherits, rawVersion]) ?? id,
-            DirName = id,
-            Name = id,
-            JavaVersion = rawVersion.JavaVersion,
-            GameArguments = []
-        };
+        List<RawVersionModel> inherits = [versionInfo.RawVersion, .. versionInfo.InheritsVersions ?? []];
+        var libraries = new List<FileInfo>();
+        var natives = new List<NativeFileInfo>();
+        var availableGameArgs = new Dictionary<string, string>();
+        var jvmArguments = new List<string>();
+        var gameArguments = new List<string>();
+        var mainClass = versionInfo.RawVersion.MainClass;
+        string? assets = null;
+        Asset? assetInfo = null;
+        Class.Model.Logging? logging = null;
 
         // 检查游戏是否存在继承关系。
         // Check if there is inheritance.
@@ -455,46 +398,47 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             var jvmArgList = new List<string>();
             var gameArgList = new List<string>();
 
-            result.RootVersion = inherits.Last().Id;
-
             // 遍历所有的继承
             // Go through all inherits
             for (var i = inherits.Count - 1; i >= 0; i--)
             {
-                if (result.JavaVersion == null && inherits[i].JavaVersion != null)
-                    result.JavaVersion = inherits[i].JavaVersion;
-                if (result.AssetInfo == null && inherits[i].AssetIndex != null)
-                    result.AssetInfo = inherits[i].AssetIndex;
+                if (assets == null && inherits[i].AssetsVersion != null)
+                    assets = inherits[i].AssetsVersion;
+                if (assetInfo == null && inherits[i].AssetIndex != null)
+                    assetInfo = inherits[i].AssetIndex;
+                if (logging == null && inherits[i].Logging != null)
+                    logging = inherits[i].Logging;
 
                 if (flag)
                 {
                     var inheritsLibs = inherits[i].Libraries.ToList();
                     inheritsLibs = NativeReplaceHelper.Replace(
-                        [rawVersion, ..inherits],
+                        [versionInfo.RawVersion, .. inherits],
                         inheritsLibs,
-                        this.NativeReplacementPolicy,
-                        UseSystemGlfwOnLinux,
-                        UseSystemOpenAlOnLinux);
+                        nativeReplacementPolicy,
+                        javaRuntimeInfo?.JavaPlatform,
+                        javaRuntimeInfo?.JavaArch,
+                        javaRuntimeInfo?.UseSystemGlfwOnLinux ?? false,
+                        javaRuntimeInfo?.UseSystemOpenAlOnLinux ?? false);
 
                     var rootLibs = this.GetNatives([.. inheritsLibs]);
-                    result.Libraries = rootLibs.Item2;
-                    result.Natives = rootLibs.Item1;
+                    libraries = rootLibs.Item2;
+                    natives = rootLibs.Item1;
 
                     jvmArgList.AddRange(this.ParseJvmArguments(inherits[i].Arguments?.Jvm));
 
                     var rootArgs = this.ParseGameArguments(
-                        (inherits[i].MinecraftArguments, inherits[i].Arguments?.Game));
+                        inherits[i].MinecraftArguments,
+                        inherits[i].Arguments?.Game);
 
                     gameArgList.AddRange(rootArgs.Item1);
-                    result.AvailableGameArguments = rootArgs.Item2;
+                    availableGameArgs = rootArgs.Item2;
 
                     flag = false;
                     continue;
                 }
 
                 var middleLibs = this.GetNatives(inherits[i].Libraries);
-
-                // result.Libraries.AddRange(middleLibs.Item2);
 
                 foreach (var mL in middleLibs.Item2)
                 {
@@ -503,12 +447,12 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                     var mLMaven = mL.Name.ResolveMavenString()!;
                     var mLFlag = false;
 
-                    for (var j = 0; j < result.Libraries.Count; j++)
+                    for (var j = 0; j < libraries.Count; j++)
                     {
-                        if (string.IsNullOrEmpty(result.Libraries[j].Name))
+                        if (string.IsNullOrEmpty(libraries[j].Name))
                             continue;
 
-                        var lMaven = result.Libraries[j].Name!.ResolveMavenString()!;
+                        var lMaven = libraries[j].Name!.ResolveMavenString()!;
 
                         if (!lMaven.GetMavenFullName()
                                 .Equals(mLMaven.GetMavenFullName(), StringComparison.OrdinalIgnoreCase))
@@ -518,7 +462,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                         var v2 = new ComparableVersion(mLMaven.Version);
 
                         if (v2 > v1)
-                            result.Libraries[j] = mL;
+                            libraries[j] = mL;
 
                         mLFlag = true;
                     }
@@ -526,10 +470,10 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                     if (mLFlag)
                         continue;
 
-                    result.Libraries.Add(mL);
+                    libraries.Add(mL);
                 }
 
-                var currentNativesNames = new List<string>(result.Natives
+                var currentNativesNames = new List<string>(natives
                     .Where(mL => !string.IsNullOrEmpty(mL.FileInfo.Name))
                     .Select(mL => mL.FileInfo.Name!));
                 var moreMiddleNatives =
@@ -537,50 +481,63 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                         .Where(mL => !string.IsNullOrEmpty(mL.FileInfo.Name))
                         .Where(mL => !currentNativesNames.Contains(mL.FileInfo.Name!))
                         .ToList();
-                result.Natives.AddRange(moreMiddleNatives);
+                natives.AddRange(moreMiddleNatives);
 
                 var jvmArgs = this.ParseJvmArguments(inherits[i].Arguments?.Jvm);
                 var middleGameArgs = this.ParseGameArguments(
-                    (inherits[i].MinecraftArguments, inherits[i].Arguments?.Game));
+                    inherits[i].MinecraftArguments,
+                    inherits[i].Arguments?.Game);
 
                 if (string.IsNullOrEmpty(inherits[i].MinecraftArguments))
                 {
                     jvmArgList.AddRange(jvmArgs);
                     gameArgList.AddRange(middleGameArgs.Item1);
-                    result.AvailableGameArguments = result.AvailableGameArguments?
+                    availableGameArgs = availableGameArgs
                         .Union(middleGameArgs.Item2, KeyValuePairStringStringComparer.Default)
                         .ToDictionary(x => x.Key, y => y.Value);
                 }
                 else
                 {
-                    result.JvmArguments = jvmArgs.ToList();
-                    result.GameArguments = middleGameArgs.Item1;
-                    result.AvailableGameArguments = middleGameArgs.Item2;
+                    jvmArguments = jvmArgs.ToList();
+                    gameArguments = middleGameArgs.Item1.ToList();
+                    availableGameArgs = middleGameArgs.Item2;
                 }
 
-                result.Id = inherits[i].Id;
-                result.MainClass = inherits[i].MainClass;
+                mainClass = inherits[i].MainClass;
             }
 
-            if (result.JvmArguments != null)
-                jvmArgList.AddRange(result.JvmArguments);
+            if (jvmArguments.Count != 0)
+                jvmArgList.AddRange(jvmArguments);
 
-            result.JvmArguments = jvmArgList;
+            jvmArguments = jvmArgList;
 
-            if (result.GameArguments != null)
-                gameArgList.AddRange(result.GameArguments);
+            if (gameArguments.Count != 0)
+                gameArgList.AddRange(gameArguments);
 
-            result.GameArguments = gameArgList
+            gameArguments = gameArgList
                 .Select(arg => arg.Split(' '))
                 .SelectMany(a => a)
-                .ToFrozenSet();
+                .ToHashSet()
+                .ToList();
 
-            this.ProcessProfile(result, id);
+            if (string.IsNullOrEmpty(mainClass))
+                return null;
 
-            return result;
+            return new ResolvedGameVersion(
+                versionInfo.RootVersion,
+                versionInfo.DirName,
+                mainClass,
+                assets,
+                assetInfo,
+                logging,
+                libraries,
+                natives,
+                jvmArguments,
+                gameArguments,
+                availableGameArgs);
         }
 
-        var rawLibs = rawVersion.Libraries.ToList();
+        var rawLibs = versionInfo.RawVersion.Libraries.ToList();
         var duplicateLibs = new Dictionary<string, List<Library>>();
         foreach (var lib in rawLibs)
         {
@@ -611,22 +568,118 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
         }
 
         rawLibs = NativeReplaceHelper.Replace(
-            [rawVersion, .. inherits],
+            [versionInfo.RawVersion],
             rawLibs,
-            this.NativeReplacementPolicy,
-            UseSystemGlfwOnLinux,
-            UseSystemOpenAlOnLinux);
+            nativeReplacementPolicy,
+            javaRuntimeInfo?.JavaPlatform,
+            javaRuntimeInfo?.JavaArch,
+            javaRuntimeInfo?.UseSystemGlfwOnLinux ?? false,
+            javaRuntimeInfo?.UseSystemOpenAlOnLinux ?? false);
 
         var libs = this.GetNatives([.. rawLibs]);
 
-        result.Libraries = libs.Item2;
-        result.Natives = libs.Item1;
-        result.JvmArguments = this.ParseJvmArguments(rawVersion.Arguments?.Jvm).ToList();
+        libraries = libs.Item2;
+        natives = libs.Item1;
+        jvmArguments = this.ParseJvmArguments(versionInfo.RawVersion.Arguments?.Jvm).ToList();
 
-        var gameArgs = this.ParseGameArguments((rawVersion.MinecraftArguments,
-            rawVersion.Arguments?.Game));
-        result.GameArguments = gameArgs.Item1;
-        result.AvailableGameArguments = gameArgs.Item2;
+        var gameArgs = this.ParseGameArguments(
+            versionInfo.RawVersion.MinecraftArguments,
+            versionInfo.RawVersion.Arguments?.Game);
+
+        gameArguments = gameArgs.Item1.ToList();
+        availableGameArgs = gameArgs.Item2;
+
+        return new ResolvedGameVersion(
+            versionInfo.RootVersion,
+            versionInfo.DirName,
+            versionInfo.RawVersion.MainClass,
+            assets,
+            assetInfo,
+            logging,
+            libraries,
+            natives,
+            jvmArguments,
+            gameArguments,
+            availableGameArgs);
+    }
+
+    /// <summary>
+    ///     游戏信息解析。
+    ///     Game info analysis.
+    /// </summary>
+    /// <param name="id">游戏文件夹名。Name of the game version's folder.</param>
+    /// <returns>一个VersionInfo类。A VersionInfo class.</returns>
+    private IVersionInfo ToVersion(string id)
+    {
+        // 反序列化。
+        // Deserialize.
+        var rawVersion = this.ParseRawVersion(id);
+        if (rawVersion == null)
+            return new BrokenVersionInfo(id)
+            {
+                BrokenReason = GameBrokenReason.GameJsonCorrupted
+            };
+
+        var inherits = new List<RawVersionModel>();
+
+        // 检查游戏是否存在继承关系。
+        // Check if there is inheritance.
+        if (!string.IsNullOrEmpty(rawVersion.InheritsFrom))
+        {
+            // 存在继承关系。
+            // Inheritance exists.
+
+            var current = rawVersion;
+
+            // 递归式地将所有反序列化的版本继承塞进一个表中。
+            // Add all deserialized inherited version to a list recursively.
+            while (!string.IsNullOrEmpty(current.InheritsFrom))
+            {
+                current = this.ParseRawVersion(current.InheritsFrom);
+
+                if (current == null)
+                    return new BrokenVersionInfo(id)
+                    {
+                        BrokenReason = GameBrokenReason.ParentVersionNotFound
+                    };
+
+                inherits.Add(current);
+            }
+        }
+
+        var result = new VersionInfo
+        {
+            Assets = rawVersion.AssetsVersion,
+            Id = rawVersion.Id,
+            InheritsFrom = rawVersion.InheritsFrom,
+            GameBaseVersion = GameVersionHelper.TryGetMcVersion([.. inherits, rawVersion]) ?? id,
+            DirName = id,
+            Name = id,
+            JavaVersion = rawVersion.JavaVersion,
+            RawVersion = rawVersion,
+            InheritsVersions = inherits
+        };
+
+        // 检查游戏是否存在继承关系。
+        // Check if there is inheritance.
+        if (inherits is { Count: > 0 })
+        {
+            // 存在继承关系。
+            // Inheritance exists.
+            result.RootVersion = inherits.Last().Id;
+
+            // 遍历所有的继承
+            // Go through all inherits
+            for (var i = inherits.Count - 1; i >= 0; i--)
+            {
+                if (result.JavaVersion == null && inherits[i].JavaVersion != null)
+                    result.JavaVersion = inherits[i].JavaVersion;
+            }
+
+            this.ProcessProfile(result, id);
+
+            return result;
+        }
 
         this.ProcessProfile(result, id);
 
@@ -638,7 +691,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
         if (this.LauncherProfileParser == null) return;
 
         var gameId = id.ToGuidHash().ToString("N");
-        var gamePath = Path.Combine(this.RootPath, GamePathHelper.GetGamePath(id));
+        var gamePath = Path.Combine(_rootPath, GamePathHelper.GetGamePath(id));
 
 #if NET9_0_OR_GREATER
         using (this._lock.EnterScope())

@@ -34,12 +34,18 @@ public class DefaultResourceCompleter : IResourceCompleter
     public event EventHandler<DownloadFileChangedEventArgs>? DownloadFileChangedEvent;
     public event EventHandler<DownloadFileCompletedEventArgs>? DownloadFileCompletedEvent;
 
-    public TaskResult<ResourceCompleterCheckResult?> CheckAndDownload()
+    public TaskResult<ResourceCompleterCheckResult?> CheckAndDownload(
+        string basePath,
+        bool checkLocalFiles,
+        ResolvedGameVersion resolvedGame)
     {
-        return this.CheckAndDownloadTaskAsync().GetAwaiter().GetResult();
+        return this.CheckAndDownloadTaskAsync(basePath, checkLocalFiles, resolvedGame).GetAwaiter().GetResult();
     }
 
-    public async Task<TaskResult<ResourceCompleterCheckResult?>> CheckAndDownloadTaskAsync()
+    public async Task<TaskResult<ResourceCompleterCheckResult?>> CheckAndDownloadTaskAsync(
+        string basePath,
+        bool checkLocalFiles,
+        ResolvedGameVersion resolvedGame)
     {
         if ((this.ResourceInfoResolvers?.Count ?? 0) == 0)
             return new TaskResult<ResourceCompleterCheckResult?>(TaskResultStatus.Success, value: null);
@@ -71,7 +77,7 @@ public class DefaultResourceCompleter : IResourceCompleter
             resolver.GameResourceInfoResolveEvent += FireResolveEvent;
 
             await Parallel.ForEachAsync(
-                resolver.ResolveResourceAsync(),
+                resolver.ResolveResourceAsync(basePath, checkLocalFiles, resolvedGame),
                 new ParallelOptions { MaxDegreeOfParallelism = numBatches },
                 ReceiveGameResourceTask);
 

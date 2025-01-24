@@ -22,26 +22,29 @@ public sealed class LibraryInfoResolver : ResolverBase
     public IReadOnlyList<string> ForgeMavenOldUriRoots { get; init; } = ["https://files.minecraftforge.net/maven/"];
     public IReadOnlyList<string> QuiltMavenUriRoots { get; init; } = ["https://maven.quiltmc.org/repository/release/"];
 
-    public override async IAsyncEnumerable<IGameResource> ResolveResourceAsync()
+    public override async IAsyncEnumerable<IGameResource> ResolveResourceAsync(
+        string basePath,
+        bool checkLocalFiles,
+        ResolvedGameVersion resolvedGame)
     {
-        if (!this.CheckLocalFiles) yield break;
+        if (!checkLocalFiles) yield break;
 
         this.OnResolve("开始进行游戏资源(Library)检查", ProgressValue.Start);
-        if (this.VersionInfo.Natives.Count == 0 && this.VersionInfo.Libraries.Count == 0)
+        if (resolvedGame.Natives.Count == 0 && resolvedGame.Libraries.Count == 0)
             yield break;
 
-        var libDi = new DirectoryInfo(Path.Combine(this.BasePath, GamePathHelper.GetLibraryRootPath()));
+        var libDi = new DirectoryInfo(Path.Combine(basePath, GamePathHelper.GetLibraryRootPath()));
 
         if (!libDi.Exists) libDi.Create();
 
         var checkedLib = 0;
-        var libCount = this.VersionInfo.Libraries.Count;
+        var libCount = resolvedGame.Libraries.Count;
 
         if (libCount > 0)
-            foreach (var lib in this.VersionInfo.Libraries)
+            foreach (var lib in resolvedGame.Libraries)
             {
                 var libPath = GamePathHelper.GetLibraryPath(lib.Path!);
-                var filePath = Path.Combine(this.BasePath, libPath);
+                var filePath = Path.Combine(basePath, libPath);
 
                 var addedCheckedLib = Interlocked.Increment(ref checkedLib);
                 var progress = ProgressValue.Create(addedCheckedLib, libCount);
@@ -58,19 +61,19 @@ public sealed class LibraryInfoResolver : ResolverBase
                     if (computedHash.Equals(lib.Sha1, StringComparison.OrdinalIgnoreCase)) continue;
                 }
 
-                yield return this.GetDownloadFile(lib);
+                yield return this.GetDownloadFile(basePath, lib);
             }
 
         this.OnResolve("检索并验证 Library", ProgressValue.Start);
 
         checkedLib = 0;
-        libCount = this.VersionInfo.Natives.Count;
+        libCount = resolvedGame.Natives.Count;
 
         if (libCount > 0)
-            foreach (var native in this.VersionInfo.Natives)
+            foreach (var native in resolvedGame.Natives)
             {
                 var nativePath = GamePathHelper.GetLibraryPath(native.FileInfo.Path!);
-                var filePath = Path.Combine(this.BasePath, nativePath);
+                var filePath = Path.Combine(basePath, nativePath);
 
                 if (File.Exists(filePath))
                 {
@@ -87,13 +90,13 @@ public sealed class LibraryInfoResolver : ResolverBase
                     if (computedHash.Equals(native.FileInfo.Sha1, StringComparison.OrdinalIgnoreCase)) continue;
                 }
 
-                yield return this.GetDownloadFile(native.FileInfo);
+                yield return this.GetDownloadFile(basePath, native.FileInfo);
             }
 
         this.OnResolve("检查Library完成", ProgressValue.Finished);
     }
 
-    LibraryDownloadInfo GetDownloadFile(FileInfo lL)
+    LibraryDownloadInfo GetDownloadFile(string basePath, FileInfo lL)
     {
         var libType = GetLibType(lL);
         var uris = libType switch
@@ -113,7 +116,7 @@ public sealed class LibraryInfoResolver : ResolverBase
 
         var symbolIndex = lL.Path!.LastIndexOf('/');
         var fileName = lL.Path[(symbolIndex + 1)..];
-        var path = Path.Combine(this.BasePath,
+        var path = Path.Combine(basePath,
             GamePathHelper.GetLibraryPath(lL.Path[..symbolIndex]));
 
         return new LibraryDownloadInfo

@@ -15,14 +15,19 @@ public interface IVersionLocator
     /// </summary>
     /// <param name="id">装有游戏版本的文件夹名。The game version folder's name.</param>
     /// <returns></returns>
-    VersionInfo? GetGame(string id);
+    IVersionInfo GetGame(string id);
+
+    ResolvedGameVersion? ResolveGame(
+        IVersionInfo versionInfo,
+        NativeReplacementPolicy nativeReplacementPolicy,
+        JavaRuntimeInfo? javaRuntimeInfo);
 
     /// <summary>
     ///     获取所有能够正常被解析的游戏信息。
     ///     Fetch all the game versions' information in the .minecraft/ folder.
     /// </summary>
     /// <returns>一个表，包含.minecraft文件夹中所有版本的所有信息。A list, containing all information of all games in .minecraft/ .</returns>
-    IEnumerable<VersionInfo> GetAllGames();
+    IEnumerable<IVersionInfo> GetAllGames();
 
     /// <summary>
     ///     解析游戏JVM参数

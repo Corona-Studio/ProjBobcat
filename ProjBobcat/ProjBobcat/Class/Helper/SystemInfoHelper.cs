@@ -14,6 +14,15 @@ namespace ProjBobcat.Class.Helper;
 /// </summary>
 public static class SystemInfoHelper
 {
+    public static OSPlatform GetOsPlatform()
+    {
+        if (OperatingSystem.IsWindows()) return OSPlatform.Windows;
+        if (OperatingSystem.IsMacOS()) return OSPlatform.OSX;
+        if (OperatingSystem.IsLinux()) return OSPlatform.Linux;
+
+        throw new PlatformNotSupportedException();
+    }
+
     public static string GetSystemArch()
     {
         return RuntimeInformation.OSArchitecture switch

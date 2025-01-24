@@ -11,42 +11,45 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver;
 
 public sealed class GameLoggingInfoResolver : ResolverBase
 {
-    public override async IAsyncEnumerable<IGameResource> ResolveResourceAsync()
+    public override async IAsyncEnumerable<IGameResource> ResolveResourceAsync(
+        string basePath,
+        bool checkLocalFiles,
+        ResolvedGameVersion resolvedGame)
     {
-        if (!this.CheckLocalFiles) yield break;
-        if (this.VersionInfo.Logging?.Client?.File == null) yield break;
-        if (string.IsNullOrEmpty(this.VersionInfo.Logging?.Client?.File.Url)) yield break;
+        if (!checkLocalFiles) yield break;
+        if (resolvedGame.Logging?.Client?.File == null) yield break;
+        if (string.IsNullOrEmpty(resolvedGame.Logging?.Client?.File.Url)) yield break;
 
-        var fileName = Path.GetFileName(this.VersionInfo.Logging.Client.File?.Url);
+        var fileName = Path.GetFileName(resolvedGame.Logging.Client.File?.Url);
 
         if (string.IsNullOrEmpty(fileName)) yield break;
 
-        var loggingPath = GamePathHelper.GetLoggingPath(this.BasePath);
+        var loggingPath = GamePathHelper.GetLoggingPath(basePath);
         var filePath = Path.Combine(loggingPath, fileName);
 
         if (File.Exists(filePath))
         {
-            if (string.IsNullOrEmpty(this.VersionInfo.Logging?.Client?.File?.Sha1)) yield break;
+            if (string.IsNullOrEmpty(resolvedGame.Logging?.Client?.File?.Sha1)) yield break;
 
             await using var fs = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
             var computedHash = Convert.ToHexString(await SHA1.HashDataAsync(fs));
 
-            if (computedHash.Equals(this.VersionInfo.Logging?.Client?.File?.Sha1, StringComparison.OrdinalIgnoreCase))
+            if (computedHash.Equals(resolvedGame.Logging?.Client?.File?.Sha1, StringComparison.OrdinalIgnoreCase))
                 yield break;
         }
 
-        if (string.IsNullOrEmpty(this.VersionInfo.Logging?.Client?.File?.Url))
+        if (string.IsNullOrEmpty(resolvedGame.Logging?.Client?.File?.Url))
             yield break;
 
         yield return new GameLoggingDownloadInfo
         {
-            CheckSum = this.VersionInfo.Logging?.Client?.File?.Sha1,
+            CheckSum = resolvedGame.Logging?.Client?.File?.Sha1,
             FileName = fileName,
-            FileSize = this.VersionInfo.Logging?.Client?.File?.Size ?? 0,
+            FileSize = resolvedGame.Logging?.Client?.File?.Size ?? 0,
             Path = loggingPath,
             Title = fileName,
             Type = ResourceType.Logging,
-            Urls = [this.VersionInfo.Logging!.Client!.File!.Url!]
+            Urls = [resolvedGame.Logging!.Client!.File!.Url!]
         };
     }
 }

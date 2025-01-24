@@ -19,15 +19,17 @@ public abstract class ResolverBase : IResourceInfoResolver
         remove => this._listEventDelegates.RemoveHandler(ResolveEventKey, value);
     }
 
-    public required string BasePath { get; init; }
-    public bool CheckLocalFiles { get; set; }
-    public required VersionInfo VersionInfo { get; init; }
+    public abstract IAsyncEnumerable<IGameResource> ResolveResourceAsync(
+        string basePath,
+        bool checkLocalFiles,
+        ResolvedGameVersion resolvedGame);
 
-    public abstract IAsyncEnumerable<IGameResource> ResolveResourceAsync();
-
-    public virtual IEnumerable<IGameResource> ResolveResource()
+    public virtual IEnumerable<IGameResource> ResolveResource(
+        string basePath,
+        bool checkLocalFiles,
+        ResolvedGameVersion resolvedGame)
     {
-        return this.ResolveResourceAsync().ToListAsync().GetAwaiter().GetResult();
+        return this.ResolveResourceAsync(basePath, checkLocalFiles, resolvedGame).ToListAsync().GetAwaiter().GetResult();
     }
 
     public void Dispose()

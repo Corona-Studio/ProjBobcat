@@ -20,40 +20,45 @@ public static partial class NativeReplaceHelper
         NativeReplaceModel = model;
     }
 
-    static string GetNativeKey()
+    static string GetNativeKey(OSPlatform platform, Architecture architecture)
     {
-        var platform = NativeReplaceModel switch
+        var platformStr = platform switch
         {
-            _ when RuntimeInformation.IsOSPlatform(OSPlatform.Windows) => "windows",
-            _ when RuntimeInformation.IsOSPlatform(OSPlatform.Linux) => "linux",
-            _ when RuntimeInformation.IsOSPlatform(OSPlatform.OSX) => "osx",
-            _ when RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD) => "freebsd",
+            _ when platform == OSPlatform.Windows => "windows",
+            _ when platform == OSPlatform.Linux => "linux",
+            _ when platform == OSPlatform.OSX => "osx",
+            _ when platform == OSPlatform.FreeBSD => "freebsd",
             _ => string.Empty
         };
 
-        var arch = NativeReplaceModel switch
+        var archStr = architecture switch
         {
-            _ when RuntimeInformation.OSArchitecture == Architecture.X64 => "x86_64",
-            _ when RuntimeInformation.OSArchitecture == Architecture.X86 => "x86",
-            _ when RuntimeInformation.OSArchitecture == Architecture.Arm64 => "arm64",
-            _ when RuntimeInformation.OSArchitecture == Architecture.Arm => "arm32",
-            _ when RuntimeInformation.OSArchitecture == Architecture.LoongArch64 => "loongarch64",
+            Architecture.X64 => "x86_64",
+            Architecture.X86 => "x86",
+            Architecture.Arm64 => "arm64",
+            Architecture.Arm => "arm32",
+            Architecture.LoongArch64 => "loongarch64",
             _ => string.Empty
         };
 
-        return $"{platform}-{arch}";
+        return $"{platformStr}-{archStr}";
     }
 
     public static List<Library> Replace(
         List<RawVersionModel> versions,
         List<Library> libs,
         NativeReplacementPolicy policy,
+        OSPlatform? javaPlatform,
+        Architecture? javaArch,
         bool useSystemGlfwOnLinux,
         bool useSystemOpenAlOnLinux)
     {
         if (policy == NativeReplacementPolicy.Disabled) return libs;
 
-        var replaceKey = GetNativeKey();
+        javaPlatform ??= SystemInfoHelper.GetOsPlatform();
+        javaArch ??= RuntimeInformation.OSArchitecture;
+
+        var replaceKey = GetNativeKey(javaPlatform.Value, javaArch.Value);
         var replaceDic = replaceKey switch
         {
             "windows-x86_64" => NativeReplaceModel.WindowsX64,
@@ -100,7 +105,7 @@ public static partial class NativeReplaceHelper
 
         var osCheckFlag = OperatingSystem.IsWindows() || OperatingSystem.IsMacOS() || OperatingSystem.IsLinux();
 
-        if (RuntimeInformation.ProcessArchitecture == Architecture.X86 && osCheckFlag)
+        if (javaArch.Value == Architecture.X86 && osCheckFlag)
             return libs;
 
         var isNotLinux = OperatingSystem.IsWindows() || OperatingSystem.IsMacOS();
@@ -113,7 +118,7 @@ public static partial class NativeReplaceHelper
 
         if (versionsArr is { Length: >= 2 }) minor = int.TryParse(versionsArr[1], out var outMinor) ? outMinor : -1;
 
-        if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64 &&
+        if (javaArch.Value == Architecture.Arm64 &&
             isNotLinux &&
             minor is -1 or >= 19)
             return libs;
