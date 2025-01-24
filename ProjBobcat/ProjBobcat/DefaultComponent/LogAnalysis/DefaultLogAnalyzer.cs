@@ -23,10 +23,8 @@ public partial class DefaultLogAnalyzer : ILogAnalyzer
 
     public IEnumerable<IAnalysisReport> GenerateReport()
     {
-        if (string.IsNullOrEmpty(this.RootPath))
-            throw new NullReferenceException("未提供 RootPath 参数");
-        if (string.IsNullOrEmpty(this.GameId))
-            throw new NullReferenceException("未提供 GameId 参数");
+        ArgumentException.ThrowIfNullOrEmpty(this.RootPath);
+        ArgumentException.ThrowIfNullOrEmpty(this.GameId);
 
         var logs = new Dictionary<LogFileType, List<(string, string)>>();
 
@@ -104,10 +102,8 @@ public partial class DefaultLogAnalyzer : ILogAnalyzer
 
     IEnumerable<(LogFileType, (string, string))> GetAllLogs()
     {
-        if (string.IsNullOrEmpty(this.RootPath))
-            throw new NullReferenceException("未提供 RootPath 参数");
-        if (string.IsNullOrEmpty(this.GameId))
-            throw new NullReferenceException("未提供 GameId 参数");
+        ArgumentException.ThrowIfNullOrEmpty(this.RootPath);
+        ArgumentException.ThrowIfNullOrEmpty(this.GameId);
 
         var logFiles = new List<FileInfo>();
         var fullRootPath = Path.GetFullPath(this.RootPath);

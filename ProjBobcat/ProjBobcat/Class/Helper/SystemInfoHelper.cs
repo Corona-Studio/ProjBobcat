@@ -30,7 +30,7 @@ public static class SystemInfoHelper
             Architecture.X86 => "x86",
             Architecture.X64 => "x64",
             Architecture.Arm64 => "arm64",
-            var arch => throw new Exception($"Unknown system arch: {arch}")
+            var arch => throw new ArgumentOutOfRangeException($"Unknown system arch: {arch}")
         };
     }
 

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -47,8 +48,7 @@ public static class CurseForgeAPIHelper
 
     static HttpRequestMessage Req(HttpMethod method, string url)
     {
-        if (string.IsNullOrEmpty(ApiKey))
-            throw new NullReferenceException("未设置 API KEY，请调用 SetApiKey(string apiKey) 来进行设置。");
+        ArgumentException.ThrowIfNullOrEmpty(ApiKey);
 
         var req = new HttpRequestMessage(method, url);
 
@@ -92,7 +92,7 @@ public static class CurseForgeAPIHelper
             CurseForgeModelContext.Default.AddonInfoReqModel);
 
         using var req = Req(HttpMethod.Post, reqUrl);
-        req.Content = new StringContent(data, Encoding.UTF8, "application/json");
+        req.Content = new StringContent(data, Encoding.UTF8, MediaTypeNames.Application.Json);
 
         using var res = await Client.SendAsync(req);
 

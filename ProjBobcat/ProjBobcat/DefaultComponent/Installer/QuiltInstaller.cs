@@ -48,13 +48,12 @@ public class QuiltInstaller : InstallerBase, IQuiltInstaller
 
         this.InvokeStatusChangedEvent("生成版本总成", ProgressValue.FromDisplay(50));
 
-        if (versionModel == null)
-            throw new NullReferenceException(nameof(versionModel));
+        ArgumentNullException.ThrowIfNull(versionModel);
 
         var hashed = versionModel.Libraries.FirstOrDefault(l =>
             l.Name.StartsWith("org.quiltmc:hashed", StringComparison.OrdinalIgnoreCase));
 
-        if (hashed != default)
+        if (hashed != null)
         {
             var index = Array.IndexOf(versionModel.Libraries, hashed);
 

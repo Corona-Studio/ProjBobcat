@@ -30,12 +30,9 @@ public class LiteLoaderInstaller : InstallerBase, ILiteLoaderInstaller
 
     public async Task<string> InstallTaskAsync()
     {
-        if (string.IsNullOrEmpty(this.RootPath))
-            throw new NullReferenceException("RootPath 不能为 null");
-        if (this.InheritVersion == null)
-            throw new NullReferenceException("InheritVersion 不能为 null");
-        if (this.VersionModel == null)
-            throw new NullReferenceException("VersionModel 不能为 null");
+        ArgumentException.ThrowIfNullOrEmpty(this.RootPath);
+        ArgumentNullException.ThrowIfNull(this.InheritVersion);
+        ArgumentNullException.ThrowIfNull(this.VersionModel);
 
         this.InvokeStatusChangedEvent("开始安装 LiteLoader", ProgressValue.Start);
 

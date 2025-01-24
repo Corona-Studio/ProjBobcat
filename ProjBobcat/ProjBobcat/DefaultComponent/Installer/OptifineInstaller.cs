@@ -29,12 +29,9 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
 
     public async Task<string> InstallTaskAsync()
     {
-        if (string.IsNullOrEmpty(this.JavaExecutablePath))
-            throw new NullReferenceException("未指定 Java 运行时");
-        if (string.IsNullOrEmpty(this.OptifineJarPath))
-            throw new NullReferenceException("未指定 Optifine 安装包路径");
-        if (this.OptifineDownloadVersion == null)
-            throw new NullReferenceException("未指定 Optifine 下载信息");
+        ArgumentException.ThrowIfNullOrEmpty(this.JavaExecutablePath);
+        ArgumentException.ThrowIfNullOrEmpty(this.OptifineJarPath);
+        ArgumentNullException.ThrowIfNull(this.OptifineDownloadVersion);
 
         this.InvokeStatusChangedEvent("开始安装 Optifine", ProgressValue.Start);
         var mcVersion = this.OptifineDownloadVersion.McVersion;
@@ -186,8 +183,7 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
         await p.WaitForExitAsync();
         this.InvokeStatusChangedEvent("安装即将完成", ProgressValue.FromDisplay(95));
 
-        if (errList.Count > 0)
-            throw new NullReferenceException(string.Join(Environment.NewLine, errList));
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(errList.Count, 0);
 
         this.InvokeStatusChangedEvent("Optifine 安装完成", ProgressValue.Finished);
 

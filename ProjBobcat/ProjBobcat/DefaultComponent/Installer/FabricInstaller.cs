@@ -26,8 +26,7 @@ public class FabricInstaller : InstallerBase, IFabricInstaller
     {
         this.InvokeStatusChangedEvent("开始安装", ProgressValue.Start);
 
-        if (string.IsNullOrEmpty(this.RootPath))
-            throw new NullReferenceException("RootPath 字段为空");
+        ArgumentException.ThrowIfNullOrEmpty(this.RootPath);
 
         var mcVersion = this.LoaderArtifact.Intermediary.Version;
         var fabricVersion = this.LoaderArtifact.Loader.Separator == "."
@@ -63,8 +62,7 @@ public class FabricInstaller : InstallerBase, IFabricInstaller
             _ => string.Empty
         };
 
-        if (string.IsNullOrEmpty(mainClass))
-            throw new NullReferenceException("MainClass 字段为空");
+        ArgumentException.ThrowIfNullOrEmpty(mainClass);
 
         var inheritsFrom = string.IsNullOrEmpty(this.InheritsFrom) ? mcVersion : this.InheritsFrom;
 

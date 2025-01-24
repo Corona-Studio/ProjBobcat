@@ -104,8 +104,7 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
             HashType = HashType.SHA1
         });
 
-        if (!this.FailedFiles.IsEmpty)
-            throw new NullReferenceException("未能下载全部的 Mods");
+        ArgumentOutOfRangeException.ThrowIfEqual(this.FailedFiles.IsEmpty, false);
 
         var modPackFullPath = Path.GetFullPath(this.ModPackPath);
 
