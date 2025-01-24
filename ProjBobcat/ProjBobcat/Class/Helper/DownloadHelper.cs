@@ -421,6 +421,7 @@ public static class DownloadHelper
                     }
                     catch (TaskCanceledException)
                     {
+                        // Do nothing
                     }
 
                     // If rawUrlInfo == null, means the request is timeout and canceled

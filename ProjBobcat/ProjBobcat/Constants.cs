@@ -7,57 +7,57 @@ public static class Constants
 {
     public const string FallBackVersion = "0.0.0";
 
-    public static string WhereCommand => OperatingSystem.IsWindows() ? Windows.WhereCommand : UnixKind.WhereCommand;
+    public static string WhereCommand => OperatingSystem.IsWindows() ? Windows.Where : UnixKind.Where;
 
     public static string JavaExecutable =>
-        OperatingSystem.IsWindows() ? Windows.JavaExecutable : UnixKind.JavaExecutable;
+        OperatingSystem.IsWindows() ? Windows.JavaExecutableName : UnixKind.JavaExecutableName;
 
     public static string JavaExecutableExtension => OperatingSystem.IsWindows()
-        ? Windows.JavaExecutableExtension
-        : UnixKind.JavaExecutableExtension;
+        ? Windows.JavaExecutableDefaultExtension
+        : UnixKind.JavaExecutableDefaultExtension;
 
     public static string JavaConsoleExecutableExtension => OperatingSystem.IsWindows()
-        ? Windows.JavaConsoleExecutable
-        : UnixKind.JavaExecutable;
+        ? Windows.JavaConsoleExecutableName
+        : UnixKind.JavaExecutableName;
 
     public static string JavaExecutablePath => RuntimeInformation.RuntimeIdentifier switch
     {
-        _ when RuntimeInformation.IsOSPlatform(OSPlatform.Windows) => Windows.JavaExecutablePath,
-        _ when RuntimeInformation.IsOSPlatform(OSPlatform.Linux) => UnixKind.JavaExecutablePath,
-        _ when RuntimeInformation.IsOSPlatform(OSPlatform.OSX) => UnixKind.MacOs.JavaExecutablePath,
+        _ when RuntimeInformation.IsOSPlatform(OSPlatform.Windows) => Windows.JavaExecutableDefaultPath,
+        _ when RuntimeInformation.IsOSPlatform(OSPlatform.Linux) => UnixKind.JavaExecutableDefaultPath,
+        _ when RuntimeInformation.IsOSPlatform(OSPlatform.OSX) => MacOs.JavaExecutableDefaultPath,
         var id => throw new PlatformNotSupportedException($"Unknown operating system: {id}")
     };
 
     public static string OsSymbol => RuntimeInformation.RuntimeIdentifier switch
     {
-        _ when RuntimeInformation.IsOSPlatform(OSPlatform.Windows) => Windows.OsSymbol,
-        _ when RuntimeInformation.IsOSPlatform(OSPlatform.Linux) => UnixKind.OsSymbol,
-        _ when RuntimeInformation.IsOSPlatform(OSPlatform.OSX) => UnixKind.MacOs.OsSymbol,
+        _ when RuntimeInformation.IsOSPlatform(OSPlatform.Windows) => Windows.Os,
+        _ when RuntimeInformation.IsOSPlatform(OSPlatform.Linux) => UnixKind.Os,
+        _ when RuntimeInformation.IsOSPlatform(OSPlatform.OSX) => MacOs.Os,
         var id => throw new PlatformNotSupportedException($"Unknown operating system: {id}")
     };
 
     static class Windows
     {
-        public const string WhereCommand = "where";
-        public const string JavaExecutable = "javaw.exe";
-        public const string JavaConsoleExecutable = "java.exe";
-        public const string JavaExecutablePath = $"bin\\{JavaExecutable}";
-        public const string JavaExecutableExtension = "exe";
-        public const string OsSymbol = "windows";
+        public const string Where = "where";
+        public const string JavaExecutableName = "javaw.exe";
+        public const string JavaConsoleExecutableName = "java.exe";
+        public const string JavaExecutableDefaultPath = $"bin\\{JavaExecutableName}";
+        public const string JavaExecutableDefaultExtension = "exe";
+        public const string Os = "windows";
     }
 
     static class UnixKind
     {
-        public const string WhereCommand = "whereis";
-        public const string JavaExecutable = "java";
-        public const string JavaExecutablePath = $"bin/{JavaExecutable}";
-        public const string JavaExecutableExtension = "*";
-        public const string OsSymbol = "linux";
+        public const string Where = "whereis";
+        public const string JavaExecutableName = "java";
+        public const string JavaExecutableDefaultPath = $"bin/{JavaExecutableName}";
+        public const string JavaExecutableDefaultExtension = "*";
+        public const string Os = "linux";
+    }
 
-        public static class MacOs
-        {
-            public const string JavaExecutablePath = $"Contents/Home/bin/{JavaExecutable}";
-            public const string OsSymbol = "osx";
-        }
+    static class MacOs
+    {
+        public const string JavaExecutableDefaultPath = $"Contents/Home/bin/{UnixKind.JavaExecutableName}";
+        public const string Os = "osx";
     }
 }
