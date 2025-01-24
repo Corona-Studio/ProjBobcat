@@ -55,7 +55,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
         // 把每个DirectoryInfo类映射到VersionInfo类。
         // Map each DirectoryInfo dir to VersionInfo class.
         var di = new DirectoryInfo(GamePathHelper.GetVersionPath(_rootPath));
-
+        
         foreach (var dir in di.EnumerateDirectories())
         {
             var version = this.ToVersion(dir.Name);
@@ -309,7 +309,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
     /// </summary>
     /// <param name="id">游戏文件夹名。Name of the game's folder.</param>
     /// <returns></returns>
-    public override RawVersionModel? ParseRawVersion(string id)
+    public override (GameBrokenReason?, RawVersionModel?) ParseRawVersion(string id)
     {
         var gamePath = Path.Combine(_rootPath, GamePathHelper.GetGamePath(id));
         var possibleFiles = new List<string>
@@ -320,14 +320,16 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
         // 预防 I/O 的错误。
         // Prevents errors related to I/O.
         if (!Directory.Exists(gamePath))
-            return null;
+            return (GameBrokenReason.GamePathNotFound, null);
+        
         if (!File.Exists(GamePathHelper.GetGameJsonPath(_rootPath, id)))
         {
             var files = Directory
                 .EnumerateFiles(gamePath, "*.json", SearchOption.TopDirectoryOnly)
                 .ToArray();
 
-            if (files.Length == 0) return null;
+            if (files.Length == 0)
+                return (GameBrokenReason.LackGameJson, null);
 
             possibleFiles.AddRange(files);
         }
@@ -356,14 +358,14 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                 if (string.IsNullOrEmpty(versionJson.MinecraftArguments) && versionJson.Arguments == null)
                     continue;
 
-                return versionJson;
+                return (null, versionJson);
             }
             catch (JsonException)
             {
             }
         }
 
-        return null;
+        return (GameBrokenReason.NoCandidateJsonFound, null);
     }
 
     public override ResolvedGameVersion? ResolveGame(
@@ -614,49 +616,51 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
         // 反序列化。
         // Deserialize.
         var rawVersion = this.ParseRawVersion(id);
-        if (rawVersion == null)
+        if (rawVersion.Item1.HasValue)
             return new BrokenVersionInfo(id)
             {
-                BrokenReason = GameBrokenReason.GameJsonCorrupted
+                BrokenReason = rawVersion.Item1.Value
             };
 
+        var unwrappedRawVersion = rawVersion.Item2!;
         var inherits = new List<RawVersionModel>();
 
         // 检查游戏是否存在继承关系。
         // Check if there is inheritance.
-        if (!string.IsNullOrEmpty(rawVersion.InheritsFrom))
+        if (!string.IsNullOrEmpty(unwrappedRawVersion.InheritsFrom))
         {
             // 存在继承关系。
             // Inheritance exists.
 
-            var current = rawVersion;
+            var current = unwrappedRawVersion;
 
             // 递归式地将所有反序列化的版本继承塞进一个表中。
             // Add all deserialized inherited version to a list recursively.
             while (!string.IsNullOrEmpty(current.InheritsFrom))
             {
-                current = this.ParseRawVersion(current.InheritsFrom);
+                var parentRawVersion = this.ParseRawVersion(current.InheritsFrom);
 
-                if (current == null)
+                if (parentRawVersion.Item1.HasValue)
                     return new BrokenVersionInfo(id)
                     {
-                        BrokenReason = GameBrokenReason.ParentVersionNotFound
+                        BrokenReason = GameBrokenReason.Parent | parentRawVersion.Item1.Value
                     };
 
+                current = parentRawVersion.Item2!;
                 inherits.Add(current);
             }
         }
 
         var result = new VersionInfo
         {
-            Assets = rawVersion.AssetsVersion,
-            Id = rawVersion.Id,
-            InheritsFrom = rawVersion.InheritsFrom,
-            GameBaseVersion = GameVersionHelper.TryGetMcVersion([.. inherits, rawVersion]) ?? id,
+            Assets = unwrappedRawVersion.AssetsVersion,
+            Id = unwrappedRawVersion.Id,
+            InheritsFrom = unwrappedRawVersion.InheritsFrom,
+            GameBaseVersion = GameVersionHelper.TryGetMcVersion([.. inherits, unwrappedRawVersion]) ?? id,
             DirName = id,
             Name = id,
-            JavaVersion = rawVersion.JavaVersion,
-            RawVersion = rawVersion,
+            JavaVersion = unwrappedRawVersion.JavaVersion,
+            RawVersion = unwrappedRawVersion,
             InheritsVersions = inherits
         };
 

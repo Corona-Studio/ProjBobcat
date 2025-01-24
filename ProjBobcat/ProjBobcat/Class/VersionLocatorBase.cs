@@ -23,5 +23,5 @@ public abstract class VersionLocatorBase : IVersionLocator
 
     public abstract (List<NativeFileInfo>, List<FileInfo>) GetNatives(Library[] libraries);
 
-    public abstract RawVersionModel? ParseRawVersion(string id);
+    public abstract (GameBrokenReason?, RawVersionModel?) ParseRawVersion(string id);
 }

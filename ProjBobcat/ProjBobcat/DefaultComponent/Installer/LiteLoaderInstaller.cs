@@ -37,12 +37,14 @@ public class LiteLoaderInstaller : InstallerBase, ILiteLoaderInstaller
         this.InvokeStatusChangedEvent("开始安装 LiteLoader", ProgressValue.Start);
 
         var vl = new DefaultVersionLocator(this.RootPath, Guid.Empty);
-        var rawVersion = vl.ParseRawVersion(this.VersionModel.McVersion);
+        var wrappedRawVersion = vl.ParseRawVersion(this.VersionModel.McVersion);
 
         this.InvokeStatusChangedEvent("解析版本", ProgressValue.FromDisplay(10));
 
-        if (rawVersion == null)
+        if (wrappedRawVersion.Item1 != null || wrappedRawVersion.Item2 == null)
             throw new UnknownGameNameException(this.VersionModel.McVersion);
+        
+        var rawVersion = wrappedRawVersion.Item2;
 
         if (rawVersion.Id != this.VersionModel.McVersion)
             throw new NotSupportedException("LiteLoader 并不支持这个 MineCraft 版本");
