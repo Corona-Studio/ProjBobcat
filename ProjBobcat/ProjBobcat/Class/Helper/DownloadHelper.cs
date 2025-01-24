@@ -132,7 +132,7 @@ public static class DownloadHelper
                         await destStream.WriteAsync(buffer.Memory[..bytesRead], cts.Token);
 
                         var duration = Stopwatch.GetElapsedTime(startTime);
-                        var elapsedTime = duration.TotalSeconds == 0 ? 1 : duration.TotalSeconds;
+                        var elapsedTime = duration.TotalSeconds < 0.0001 ? 1 : duration.TotalSeconds;
 
                         averageSpeed = responseLength / elapsedTime;
 
