@@ -198,7 +198,7 @@ public class YggdrasilAuthenticator : IAuthenticator
             Legacy = false,
             LocalId = rUuid,
             Persistent = true,
-            RemoteId = result.User?.UUID.ToString() ?? new Guid().ToString(),
+            RemoteId = result.User?.UUID.ToString() ?? Guid.Empty.ToString(),
             Type = "Mojang",
             UserProperites = result.User?.Properties?.ToAuthProperties(profiles).ToArray() ?? [],
             Username = this.Email
