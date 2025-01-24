@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ProjBobcat.Class.Model.Downloading;
 
@@ -7,7 +8,7 @@ namespace ProjBobcat.Class.Model.Downloading;
 ///     下载范围类
 /// </summary>
 [DebuggerDisplay("[{Start}-{End}]")]
-public readonly struct DownloadRange : IComparable<DownloadRange>
+public readonly struct DownloadRange : IComparable<DownloadRange>, IEquatable<DownloadRange>
 {
     /// <summary>
     ///     开始字节
@@ -38,5 +39,15 @@ public readonly struct DownloadRange : IComparable<DownloadRange>
         if (endComparison != 0) return endComparison;
 
         return string.Compare(this.TempFileName, other.TempFileName, StringComparison.Ordinal);
+    }
+
+    public override bool Equals([NotNullWhen(true)] object? obj)
+    {
+        return obj is DownloadRange other && this.Equals(other);
+    }
+
+    public bool Equals(DownloadRange other)
+    {
+        return this.Start == other.Start && this.End == other.End && this.TempFileName == other.TempFileName;
     }
 }

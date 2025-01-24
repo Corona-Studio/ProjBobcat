@@ -44,7 +44,7 @@ public static class DownloadHelper
         await destStream.FlushAsync(ct);
 
         var duration = Stopwatch.GetElapsedTime(startTime);
-        var elapsedTime = duration.TotalSeconds == 0 ? 1 : duration.TotalSeconds;
+        var elapsedTime = duration.TotalSeconds < 0.0001 ? 1 : duration.TotalSeconds;
         
         return elapsedTime;
     }
