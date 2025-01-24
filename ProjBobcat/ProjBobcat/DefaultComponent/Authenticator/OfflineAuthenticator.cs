@@ -63,7 +63,7 @@ public class OfflineAuthenticator : IAuthenticator
             Username = this.Username
         };
 
-        if (!this.LauncherAccountParser.AddNewAccount(localUuid, accountModel, out var id))
+        if (!this.LauncherAccountParser.AddOrReplaceAccount(localUuid, accountModel, out var id))
             return new AuthResultBase
             {
                 AuthStatus = AuthStatus.Failed,

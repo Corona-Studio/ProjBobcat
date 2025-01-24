@@ -233,7 +233,7 @@ public class YggdrasilAuthenticator : IAuthenticator
         }
         */
 
-        if (!this.LauncherAccountParser.AddNewAccount(rUuid, profile, out var accountId))
+        if (!this.LauncherAccountParser.AddOrReplaceAccount(rUuid, profile, out var accountId))
             return new YggdrasilAuthResult
             {
                 AuthStatus = AuthStatus.Failed,
@@ -412,7 +412,7 @@ public class YggdrasilAuthenticator : IAuthenticator
                     };
                 }
 
-                if (!this.LauncherAccountParser.AddNewAccount(rUuid, profile, out var id))
+                if (!this.LauncherAccountParser.AddOrReplaceAccount(rUuid, profile, out var id))
                     return new YggdrasilAuthResult
                     {
                         AuthStatus = AuthStatus.Failed,

@@ -75,7 +75,7 @@ public sealed class DefaultLauncherAccountParser : LauncherParserBase, ILauncher
         return true;
     }
 
-    public bool AddNewAccount(string uuid, AccountModel account, out Guid? id)
+    public bool AddOrReplaceAccount(string uuid, AccountModel account, out Guid? id)
     {
         this.LauncherAccount.Accounts ??= [];
 

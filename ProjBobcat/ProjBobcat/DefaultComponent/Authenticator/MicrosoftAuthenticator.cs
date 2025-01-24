@@ -309,7 +309,7 @@ public class MicrosoftAuthenticator : IAuthenticator
             Username = profileRes.Name
         };
 
-        if (!this.LauncherAccountParser.AddNewAccount(uuid, accountModel, out var id))
+        if (!this.LauncherAccountParser.AddOrReplaceAccount(uuid, accountModel, out var id))
             return new MicrosoftAuthResult
             {
                 AuthStatus = AuthStatus.Failed,
