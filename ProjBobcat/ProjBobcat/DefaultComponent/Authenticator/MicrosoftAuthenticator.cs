@@ -70,7 +70,7 @@ public class MicrosoftAuthenticator : IAuthenticator
     /// </summary>
     public Guid? ProfileId { get; set; }
 
-    public Func<MicrosoftAuthenticator, Task<CacheTokenProviderResult>>? CacheTokenProvider { get; init; }
+    public Func<MicrosoftAuthenticator, ValueTask<CacheTokenProviderResult>>? CacheTokenProvider { get; init; }
     public required ILauncherAccountParser LauncherAccountParser { get; init; }
 
     public AuthResultBase Auth(bool userField = false)
