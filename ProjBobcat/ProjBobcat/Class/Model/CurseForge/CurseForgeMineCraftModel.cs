@@ -13,5 +13,5 @@ public class CurseForgeMineCraftModel
 {
     [JsonPropertyName("version")] public required string Version { get; init; }
 
-    [JsonPropertyName("modLoaders")] public CurseForgeModLoaderModel[]? ModLoaders { get; init; }
+    [JsonPropertyName("modLoaders")] public CurseForgeModLoaderModel[]? ModLoaders { get; set; }
 }

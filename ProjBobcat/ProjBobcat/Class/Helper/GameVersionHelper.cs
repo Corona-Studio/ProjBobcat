@@ -32,6 +32,26 @@ public static partial class GameVersionHelper
         return null;
     }
 
+    public static string? TryGetForgeVersion(RawVersionModel version)
+    {
+        var gameArgs = version.Arguments?.Game?
+            .Where(arg => arg.ValueKind == JsonValueKind.String)
+            .Select(arg => arg.GetString())
+            .OfType<string>()
+            .ToList();
+
+        if (gameArgs == null) return null;
+
+        var containsForgeArgs = gameArgs.Contains("--fml.forgeVersion", StringComparer.OrdinalIgnoreCase) &&
+                                gameArgs.Contains("--fml.mcVersion", StringComparer.OrdinalIgnoreCase);
+
+        if (!containsForgeArgs) return null;
+
+        var forgeVersion = gameArgs[gameArgs.IndexOf("--fml.forgeVersion") + 1];
+
+        return forgeVersion;
+    }
+
     static string TryGetMcVersionById(RawVersionModel version)
     {
         return version.Id;

@@ -8,6 +8,9 @@ namespace ProjBobcat.Class.Helper;
 
 public static class ArchiveHelper
 {
+    private const int ValidZipDateYearMin = 1980;
+    private const int ValidZipDateYearMax = 2107;
+    
     public static bool IsDirectory(this ZipArchiveEntry entry)
     {
         return entry.Length == 0 && entry.FullName.EndsWith('/');
@@ -16,7 +19,12 @@ public static class ArchiveHelper
     public static void AddEntry(this ZipArchive archive, string entryName, Stream stream, DateTime time, CompressionLevel level = CompressionLevel.SmallestSize)
     {
         var entry = archive.CreateEntry(entryName, level);
-        entry.LastWriteTime = time;
+        
+        entry.LastWriteTime = time.Year switch
+        {
+            < ValidZipDateYearMin or > ValidZipDateYearMax => DateTime.Now,
+            _ => time
+        };
 
         using var entryStream = entry.Open();
 
