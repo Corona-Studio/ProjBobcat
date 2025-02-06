@@ -9,6 +9,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
@@ -474,7 +475,12 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             var maven = processor.Processor.Jar.ResolveMavenString()!;
             var libPath = Path.Combine(this.RootPath, GamePathHelper.GetLibraryPath(maven.Path));
 
-            await using var libFs = File.OpenRead(Path.GetFullPath(libPath));
+            using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(1));
+            
+            await using var libFs = await FileHelper.OpenReadAsync(Path.GetFullPath(libPath), cts.Token);
+            
+            ArgumentNullException.ThrowIfNull(libFs);
+            
             using var libArchive = new ZipArchive(libFs, ZipArchiveMode.Read);
 
             var libEntry =
