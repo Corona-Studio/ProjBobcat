@@ -154,7 +154,7 @@ public sealed class DefaultLauncherProfileParser : LauncherParserBase, ILauncher
 
     public void SelectGameProfile(string name)
     {
-        if (!this.IsGameProfileExist(name)) throw new KeyNotFoundException();
+        ArgumentOutOfRangeException.ThrowIfEqual(this.IsGameProfileExist(name), false);
 
         this.LauncherProfile.SelectedUser ??= new SelectedUserModel();
         this.LauncherProfile.SelectedUser.Profile = name;

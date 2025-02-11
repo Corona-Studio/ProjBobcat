@@ -84,8 +84,8 @@ public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
 
             var profileModel = await JsonSerializer.DeserializeAsync(stream,
                 LegacyForgeInstallProfileContext.Default.LegacyForgeInstallProfile);
-            if (profileModel == null)
-                throw new ArgumentNullException(nameof(profileModel));
+
+            ArgumentNullException.ThrowIfNull(profileModel);
 
             this.InvokeStatusChangedEvent("解析完成", ProgressValue.FromDisplay(75));
 

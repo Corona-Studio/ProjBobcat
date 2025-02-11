@@ -80,14 +80,14 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             archive.Entries.FirstOrDefault(e => e.FullName.Equals("version.json", StringComparison.OrdinalIgnoreCase));
 
         if (versionJsonEntry == null)
-            return this.GetCorruptedFileResult();
+            return GetCorruptedFileResult();
 
         await using var stream = versionJsonEntry.Open();
         var versionJsonModel =
             await JsonSerializer.DeserializeAsync(stream, RawVersionModelContext.Default.RawVersionModel);
 
         if (versionJsonModel == null)
-            return this.GetCorruptedFileResult();
+            return GetCorruptedFileResult();
 
         var forgeVersion = versionJsonModel.Id.Replace("-forge-", "-");
         var id = string.IsNullOrEmpty(this.CustomId) ? versionJsonModel.Id : this.CustomId;
@@ -112,7 +112,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             archive.Entries.FirstOrDefault(e => e.FullName.Equals("install_profile.json", StringComparison.OrdinalIgnoreCase));
 
         if (installProfileEntry == null)
-            return this.GetCorruptedFileResult();
+            return GetCorruptedFileResult();
 
         await using var ipStream = installProfileEntry.Open();
         var ipModel =
@@ -488,11 +488,11 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
                     e.FullName.Equals("META-INF/MANIFEST.MF", StringComparison.OrdinalIgnoreCase));
 
             if (libEntry == null)
-                return this.GetCorruptedFileResult();
+                return GetCorruptedFileResult();
 
             await using var libStream = libEntry.Open();
             using var libSr = new StreamReader(libStream, Encoding.UTF8);
-            var content = await libSr.ReadToEndAsync();
+            var content = await libSr.ReadToEndAsync(cts.Token);
             var mainClass =
                 (from line in content.Split('\n')
                     select line.Split(": ")
@@ -574,17 +574,18 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             p.BeginErrorReadLine();
 
             this._totalProcessed++;
-            await p.WaitForExitAsync();
+            await p.WaitForExitAsync(cts.Token);
 
             var installLogPath = Path.Combine(this.RootPath, GamePathHelper.GetGamePath(id));
 
             if (logSb.Length != 0)
                 await File.WriteAllTextAsync(
                     Path.Combine(installLogPath, $"PROCESSOR #{this._totalProcessed}_Logs.log"),
-                    logSb.ToString());
+                    logSb.ToString(), cts.Token);
             if (errSb.Length != 0)
                 await File.WriteAllTextAsync(
-                    Path.Combine(installLogPath, $"PROCESSOR #{this._totalProcessed}_Errors.log"), errSb.ToString());
+                    Path.Combine(installLogPath, $"PROCESSOR #{this._totalProcessed}_Errors.log"), errSb.ToString(),
+                    cts.Token);
 
             if (errSb.Length != 0)
                 return new ForgeInstallResult
@@ -613,7 +614,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
     [GeneratedRegex("^{.+}$")]
     private static partial Regex VariableRegex();
 
-    ForgeInstallResult GetCorruptedFileResult()
+    static ForgeInstallResult GetCorruptedFileResult()
     {
         return new ForgeInstallResult
         {

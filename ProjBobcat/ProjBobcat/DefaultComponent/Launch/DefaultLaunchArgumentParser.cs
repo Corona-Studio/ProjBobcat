@@ -169,11 +169,10 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
         LaunchSettings launchSettings,
         AuthResultBase authResult)
     {
-        if (authResult.AuthStatus == AuthStatus.Failed ||
-            authResult.AuthStatus == AuthStatus.Unknown ||
-            authResult.SelectedProfile == null ||
-            string.IsNullOrEmpty(authResult.AccessToken))
-            throw new ArgumentNullException("无效的用户凭据，请检查登陆状态");
+        ArgumentOutOfRangeException.ThrowIfEqual((int)authResult.AuthStatus, (int)AuthStatus.Failed);
+        ArgumentOutOfRangeException.ThrowIfEqual((int)authResult.AuthStatus, (int)AuthStatus.Unknown);
+        ArgumentNullException.ThrowIfNull(authResult.SelectedProfile);
+        ArgumentException.ThrowIfNullOrEmpty(authResult.AccessToken);
 
         var gameDir = launchSettings.VersionInsulation
             ? Path.Combine(this.RootPath, GamePathHelper.GetGamePath(launchSettings.Version))

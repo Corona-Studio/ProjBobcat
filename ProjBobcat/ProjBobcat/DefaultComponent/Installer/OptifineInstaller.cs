@@ -164,11 +164,6 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
         p!.BeginOutputReadLine();
         p.BeginErrorReadLine();
 
-        void LogReceivedEvent(object sender, DataReceivedEventArgs args)
-        {
-            this.InvokeStatusChangedEvent(args.Data ?? "loading...", ProgressValue.FromDisplay(85));
-        }
-
         p.OutputDataReceived += LogReceivedEvent;
 
         var errList = new List<string>();
@@ -188,5 +183,10 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
         this.InvokeStatusChangedEvent("Optifine 安装完成", ProgressValue.Finished);
 
         return id;
+
+        void LogReceivedEvent(object sender, DataReceivedEventArgs args)
+        {
+            this.InvokeStatusChangedEvent(args.Data ?? "loading...", ProgressValue.FromDisplay(85));
+        }
     }
 }

@@ -16,11 +16,11 @@ namespace ProjBobcat.Class.Helper;
 
 #region Temp Models
 
-record AddonInfoReqModel(IEnumerable<long> modIds);
+record AddonInfoReqModel([property:JsonPropertyName("modIds")]IEnumerable<long> ModIds);
 
-record FileInfoReqModel(IEnumerable<long> fileIds);
+record FileInfoReqModel([property: JsonPropertyName("fileIds")] IEnumerable<long> FileIds);
 
-record FuzzyFingerPrintReqModel(IEnumerable<long> fingerprints);
+record FuzzyFingerPrintReqModel([property: JsonPropertyName("fingerprints")] IEnumerable<long> Fingerprints);
 
 [JsonSerializable(typeof(AddonInfoReqModel))]
 [JsonSerializable(typeof(FileInfoReqModel))]

@@ -33,8 +33,7 @@ public sealed class DefaultGameCore : GameCoreBase
         get => this._rootPath;
         init
         {
-            if (string.IsNullOrEmpty(value))
-                throw new ArgumentNullException(nameof(this.RootPath));
+            ArgumentException.ThrowIfNullOrEmpty(value);
 
             this._rootPath = Path.GetFullPath(value.TrimEnd('/'));
         }

@@ -51,6 +51,7 @@ public static class SystemInfoHelper
         }
         catch (Exception)
         {
+            // ignored
         }
     }
 

@@ -21,8 +21,7 @@ public abstract class AbstractDownloadBase : IDownloadFile
 
     internal IEnumerable<FileStream> GetFinishedStreamsInorder()
     {
-        if (Ranges == null)
-            throw new InvalidOperationException("Ranges is null.");
+        ArgumentNullException.ThrowIfNull(Ranges);
 
         foreach (var downloadRange in Ranges)
         {
@@ -35,16 +34,14 @@ public abstract class AbstractDownloadBase : IDownloadFile
 
     internal bool IsDownloadFinished()
     {
-        if (Ranges == null)
-            throw new InvalidOperationException("Ranges is null.");
+        ArgumentNullException.ThrowIfNull(Ranges);
 
         return Ranges.All(range => FinishedRangeStreams.ContainsKey(range));
     }
 
     internal IEnumerable<DownloadRange> GetUndoneRanges()
     {
-        if (Ranges == null)
-            throw new InvalidOperationException("Ranges is null.");
+        ArgumentNullException.ThrowIfNull(Ranges);
 
         foreach (var downloadRange in Ranges)
         {

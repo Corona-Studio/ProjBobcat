@@ -141,8 +141,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
         await actionBlock.Completion;
 
-        if (!urlReqExceptions.IsEmpty)
-            throw new AggregateException(urlReqExceptions);
+        ArgumentOutOfRangeException.ThrowIfEqual(urlReqExceptions.IsEmpty, false);
 
         this.TotalDownloaded = 0;
         await DownloadHelper.AdvancedDownloadListFile(urlBags, new DownloadSettings
@@ -152,8 +151,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
             Timeout = TimeSpan.FromMinutes(1)
         });
 
-        if (!this.FailedFiles.IsEmpty)
-            throw new Exception("未能下载全部的 Mods");
+        ArgumentOutOfRangeException.ThrowIfEqual(this.FailedFiles.IsEmpty, false);
 
         var modPackFullPath = Path.GetFullPath(this.ModPackPath);
 

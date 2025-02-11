@@ -48,18 +48,12 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
 
     public async Task InstallTaskAsync()
     {
-        if (string.IsNullOrEmpty(this.GameId))
-            throw new ArgumentNullException(nameof(this.GameId));
-        if (string.IsNullOrEmpty(this.RootPath))
-            throw new ArgumentNullException(nameof(this.RootPath));
+        ArgumentException.ThrowIfNullOrEmpty(this.GameId);
+        ArgumentException.ThrowIfNullOrEmpty(this.RootPath);
 
         this.InvokeStatusChangedEvent("开始安装", ProgressValue.Start);
 
-        var index = await this.ReadIndexTask();
-
-        if (index == null)
-            throw new Exception("无法读取到 Modrinth 的 manifest 文件");
-
+        var index = await this.ReadIndexTask() ?? throw new Exception("无法读取到 Modrinth 的 manifest 文件");
         var idPath = Path.Combine(this.RootPath, GamePathHelper.GetGamePath(this.GameId));
         var downloadPath = Path.Combine(Path.GetFullPath(idPath), "mods");
 

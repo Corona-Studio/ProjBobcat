@@ -45,9 +45,7 @@ public class MicrosoftAuthenticator : IAuthenticator
 
     public MicrosoftAuthenticator()
     {
-        ArgumentNullException.ThrowIfNull(
-            ApiSettings,
-            "请使用 Configure(MicrosoftAuthenticatorAPISettings apiSettings) 方法来配置验证器基础设置！");
+        ArgumentNullException.ThrowIfNull(ApiSettings);
     }
 
     public static MicrosoftAuthenticatorAPISettings? ApiSettings { get; private set; }

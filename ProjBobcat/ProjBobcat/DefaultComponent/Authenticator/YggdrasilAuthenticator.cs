@@ -116,7 +116,7 @@ public class YggdrasilAuthenticator : IAuthenticator
 
         var result = await resultJson.Content.ReadFromJsonAsync(AuthResponseModelContext.Default.AuthResponseModel);
 
-        if (result == default || string.IsNullOrEmpty(result.AccessToken))
+        if (result == null || string.IsNullOrEmpty(result.AccessToken))
         {
             var error = await resultJson.Content.ReadFromJsonAsync(ErrorModelContext.Default.ErrorModel);
 
@@ -316,10 +316,9 @@ public class YggdrasilAuthenticator : IAuthenticator
 
     public async Task<AuthResultBase> AuthRefreshTaskAsync(AuthResponseModel response, bool userField = false)
     {
-        if (string.IsNullOrEmpty(response.AccessToken) ||
-            string.IsNullOrEmpty(response.ClientToken) ||
-            response.SelectedProfile == null)
-            throw new ArgumentException(nameof(response));
+        ArgumentException.ThrowIfNullOrEmpty(response.AccessToken);
+        ArgumentException.ThrowIfNullOrEmpty(response.ClientToken);
+        ArgumentNullException.ThrowIfNull(response.SelectedProfile);
 
         var requestModel = new AuthRefreshRequestModel
         {
@@ -384,7 +383,7 @@ public class YggdrasilAuthenticator : IAuthenticator
                         StringComparison.OrdinalIgnoreCase) ?? false) &&
                     (a.Value.MinecraftProfile?.Id.Equals(uuid, StringComparison.OrdinalIgnoreCase) ?? false));
 
-                if (value != default) this.LauncherAccountParser.RemoveAccount(value.Id);
+                if (value != null) this.LauncherAccountParser.RemoveAccount(value.Id);
 
                 var rUuid = Guid.NewGuid().ToString("N");
                 var profile = new AccountModel
@@ -396,7 +395,7 @@ public class YggdrasilAuthenticator : IAuthenticator
                     Legacy = false,
                     LocalId = rUuid,
                     Persistent = true,
-                    RemoteId = authResponse.User?.UUID.ToString() ?? new Guid().ToString(),
+                    RemoteId = authResponse.User?.UUID.ToString() ?? Guid.Empty.ToString(),
                     Type = "Mojang",
                     UserProperites = authResponse.User?.Properties?.ToAuthProperties(profiles).ToArray() ?? [],
                     Username = this.Email

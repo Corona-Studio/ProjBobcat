@@ -21,8 +21,7 @@ public static class ForgeInstallerFactory
 
     public static bool IsLegacyForgeInstaller(string forgeExecutable, string forgeVersion)
     {
-        if (string.IsNullOrEmpty(forgeExecutable))
-            throw new ArgumentNullException(nameof(forgeExecutable));
+        ArgumentException.ThrowIfNullOrEmpty(forgeExecutable);
 
         var forgeExecutableFullPath = Path.GetFullPath(forgeExecutable);
 

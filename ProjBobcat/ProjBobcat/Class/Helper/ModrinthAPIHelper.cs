@@ -13,7 +13,11 @@ namespace ProjBobcat.Class.Helper;
 
 #region Temp Models
 
-record FileMatchRequestModel(string[] hashes, string algorithm, string[] loaders, string[] game_versions);
+record FileMatchRequestModel(
+    [property:JsonPropertyName("hashes")] string[] Hashes,
+    [property: JsonPropertyName("algorithm")] string Algorithm,
+    [property: JsonPropertyName("loaders")] string[] Loaders,
+    [property: JsonPropertyName("game_versions")] string[] GameVersions);
 
 [JsonSerializable(typeof(FileMatchRequestModel))]
 partial class ModrinthModelContext : JsonSerializerContext;

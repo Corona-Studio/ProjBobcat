@@ -11,7 +11,8 @@ public static class FileTypeHelper
 {
     public static async Task<AssetFileType> TryDetectFileTypeAsync(string filePath)
     {
-        if (!File.Exists(filePath)) throw new IOException("File not found.");
+        if (!File.Exists(filePath))
+            throw new FileNotFoundException(filePath);
 
         var extension = Path.GetExtension(filePath);
 
