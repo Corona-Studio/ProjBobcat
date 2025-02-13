@@ -12,6 +12,20 @@ public static partial class GameVersionHelper
     [GeneratedRegex(@"1.\d{1,2}(.\d{1,2})*")]
     private static partial Regex McVersionMatch();
 
+    public static ModLoaderType TryGetGameModLoaderType(RawVersionModel version)
+    {
+        if (version.Libraries.Any(lib => lib.Name.Contains("neoforged", StringComparison.OrdinalIgnoreCase)))
+            return ModLoaderType.NeoForge;
+        if (version.Libraries.Any(lib => lib.Name.Contains("minecraftforge", StringComparison.OrdinalIgnoreCase)))
+            return ModLoaderType.Forge;
+        if (version.Libraries.Any(lib => lib.Name.Contains("fabricmc", StringComparison.OrdinalIgnoreCase)))
+            return ModLoaderType.Fabric;
+        if (version.Libraries.Any(lib => lib.Name.Contains("quilt", StringComparison.OrdinalIgnoreCase)))
+            return ModLoaderType.Quilt;
+
+        return ModLoaderType.Unknown;
+    }
+
     public static string? TryGetMcVersion(List<RawVersionModel> versions)
     {
         foreach (var version in versions)
