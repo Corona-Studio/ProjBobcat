@@ -13,6 +13,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
+using ProjBobcat.Class.Helper.Download;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Downloading;
 using ProjBobcat.Class.Model.Forge;

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using ProjBobcat.Class.Helper;
+using ProjBobcat.Class.Helper.Download;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Downloading;
 using ProjBobcat.Event;
@@ -22,7 +22,7 @@ public class DefaultResourceCompleter : IResourceCompleter
 
     ulong _needToDownload, _totalDownloaded;
 
-    public TimeSpan TimeoutPerFile { get; set; } = TimeSpan.FromSeconds(3);
+    public TimeSpan TimeoutPerFile { get; set; } = TimeSpan.FromSeconds(8);
     public int DownloadParts { get; set; } = 16;
     public int DownloadThread { get; set; } = 16;
     public int MaxDegreeOfParallelism { get; set; } = 1;

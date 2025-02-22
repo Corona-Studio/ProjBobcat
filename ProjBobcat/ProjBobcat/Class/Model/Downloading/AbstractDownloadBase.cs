@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using ProjBobcat.Event;
@@ -13,7 +12,7 @@ internal record UrlInfo(long FileLength, bool CanPartialDownload);
 
 public abstract class AbstractDownloadBase : IDownloadFile
 {
-    internal ImmutableList<DownloadRange>? Ranges { get; set; }
+    internal ConcurrentDictionary<DownloadRange, DownloadRange>? Ranges { get; set; }
     internal UrlInfo? UrlInfo { get; set; }
     internal ConcurrentDictionary<DownloadRange, FileStream> FinishedRangeStreams { get; } = [];
 
@@ -23,9 +22,9 @@ public abstract class AbstractDownloadBase : IDownloadFile
     {
         ArgumentNullException.ThrowIfNull(Ranges);
 
-        foreach (var downloadRange in Ranges)
+        foreach (var downloadRange in Ranges.OrderBy(p => p.Key.Start))
         {
-            if (!FinishedRangeStreams.TryGetValue(downloadRange, out var stream))
+            if (!FinishedRangeStreams.TryGetValue(downloadRange.Key, out var stream))
                 throw new InvalidOperationException("Stream not found.");
 
             yield return stream;
@@ -36,7 +35,7 @@ public abstract class AbstractDownloadBase : IDownloadFile
     {
         ArgumentNullException.ThrowIfNull(Ranges);
 
-        return Ranges.All(range => FinishedRangeStreams.ContainsKey(range));
+        return Ranges.All(p => FinishedRangeStreams.ContainsKey(p.Key));
     }
 
     internal IEnumerable<DownloadRange> GetUndoneRanges()
@@ -45,10 +44,10 @@ public abstract class AbstractDownloadBase : IDownloadFile
 
         foreach (var downloadRange in Ranges)
         {
-            if (FinishedRangeStreams.ContainsKey(downloadRange))
+            if (FinishedRangeStreams.ContainsKey(downloadRange.Key))
                 continue;
 
-            yield return downloadRange;
+            yield return downloadRange.Key;
         }
     }
 

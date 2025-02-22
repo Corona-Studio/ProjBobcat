@@ -11,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using ProjBobcat.Class.Helper;
+using ProjBobcat.Class.Helper.Download;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.CurseForge;
 using ProjBobcat.Class.Model.Downloading;

@@ -8,6 +8,7 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using System.Threading;
 using ProjBobcat.Class.Helper;
+using ProjBobcat.Class.Helper.Download;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Downloading;
 using ProjBobcat.Class.Model.GameResource;
