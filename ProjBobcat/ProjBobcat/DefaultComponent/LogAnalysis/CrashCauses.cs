@@ -74,5 +74,7 @@ public enum CrashCauses
     EntityCausedGameCrash,
     LogFileNotFound,
 
+    FileIsInUse,
+
     Other
 }

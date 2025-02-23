@@ -91,7 +91,7 @@ public partial class DefaultLogAnalyzer : ILogAnalyzer
         return LogFileType.Unknown;
     }
 
-    static bool IsValidLogFile(FileInfo fi, double minutesAgo = 3)
+    static bool IsValidLogFile(FileInfo fi, double minutesAgo = 5)
     {
         if (!fi.Exists) return false;
         if (fi.Length == 0) return false;
@@ -281,6 +281,10 @@ public partial class DefaultLogAnalyzer : ILogAnalyzer
         {
             "java.lang.NoSuchMethodError: 'void net.minecraft.server.level.DistanceManager.addRegionTicket(net.minecraft.server.level.TicketType, net.minecraft.world.level.ChunkPos, int, java.lang.Object, boolean)'",
             CrashCauses.IncompatibleForgeAndOptifine
+        },
+        {
+            "java.nio.file.FileSystemException",
+            CrashCauses.FileIsInUse
         }
     };
 

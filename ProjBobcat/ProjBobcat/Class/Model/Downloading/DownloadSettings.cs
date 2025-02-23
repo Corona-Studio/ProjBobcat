@@ -24,7 +24,7 @@ public class DownloadSettings
         DownloadParts = 16
     };
 
-    public int MaxSubChunkSplitCount { get; init; } = 5;
+    public int MaxSubChunkSplitCount { get; init; } = 3;
     public int RetryCount { get; init; }
     public bool CheckFile { get; init; }
     public TimeSpan Timeout { get; init; } = TimeSpan.FromSeconds(30);

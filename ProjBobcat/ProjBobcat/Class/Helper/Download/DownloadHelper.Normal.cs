@@ -60,7 +60,7 @@ public static partial class DownloadHelper
 
                 var averageSpeed = 0d;
                 var outputStream = File.Create(filePath);
-                var cryptoStream = new CryptoStream(outputStream, hashProvider, CryptoStreamMode.Write, true);
+                var cryptoStream = new CryptoStream(outputStream, hashProvider, CryptoStreamMode.Write);
 
                 await using (var stream = await res.Content.ReadAsStreamAsync(cts.Token))
                 await using (Stream destStream = hashCheckFile ? cryptoStream : outputStream)

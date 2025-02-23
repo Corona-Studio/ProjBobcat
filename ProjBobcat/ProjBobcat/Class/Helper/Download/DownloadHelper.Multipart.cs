@@ -18,7 +18,7 @@ namespace ProjBobcat.Class.Helper.Download;
 
 public static partial class DownloadHelper
 {
-    private const int DefaultPartialDownloadTimeoutMs = 500;
+    private const int DefaultPartialDownloadTimeoutMs = 3000;
     private const int MinimumChunkSize = 8192;
 
     private static HttpClient Head => HttpClientHelper.HeadClient;
