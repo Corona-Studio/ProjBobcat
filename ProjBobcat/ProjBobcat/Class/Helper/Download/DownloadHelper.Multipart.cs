@@ -24,6 +24,7 @@ public static partial class DownloadHelper
     private static HttpClient MultiPart => HttpClientHelper.MultiPartClient;
 
     record PreChunkInfo(
+        string DownloadUrl,
         DownloadRange Range,
         CancellationTokenSource Cts);
 
@@ -244,7 +245,7 @@ public static partial class DownloadHelper
                     new TransformBlock<PreChunkInfo, ChunkInfo?>(
                         async preChunkInfo =>
                         {
-                            using var request = new HttpRequestMessage(HttpMethod.Get, downloadFile.GetDownloadUrl());
+                            using var request = new HttpRequestMessage(HttpMethod.Get, preChunkInfo.DownloadUrl);
 
                             if (downloadSettings.Authentication != null)
                                 request.Headers.Authorization = downloadSettings.Authentication;
@@ -347,12 +348,48 @@ public static partial class DownloadHelper
                     {
                         // If we end up to here, which means either the chunk is too large or the download speed is too slow
                         // So we need to further split the chunk into smaller parts
+                        var bytesTransmitted = fileToWriteTo.Length;
+
+                        if (bytesTransmitted == 0)
+                        {
+                            // If we haven't received any data, we need to retry
+                            await fileToWriteTo.DisposeAsync();
+                            throw;
+                        }
 
                         // Remove the current range from the download queue
                         ArgumentOutOfRangeException.ThrowIfEqual(downloadFile.Ranges.TryRemove(chunkInfo.Range, out _), false);
 
                         var chunkLength = chunkInfo.Range.End - chunkInfo.Range.Start;
-                        var subChunkRanges = CalculateDownloadRanges(chunkLength, chunkInfo.Range.Start, downloadSettings);
+                        var remaining = chunkLength - bytesTransmitted;
+                        var finishedRange = chunkInfo.Range with { End = chunkInfo.Range.End - remaining };
+
+                        // Add the finished parts
+                        ArgumentOutOfRangeException.ThrowIfEqual(downloadFile.Ranges.TryAdd(finishedRange, null), false);
+                        ArgumentOutOfRangeException.ThrowIfEqual(downloadFile.FinishedRangeStreams.TryAdd(finishedRange, fileToWriteTo), false);
+
+                        if (remaining < 1024)
+                        {
+                            // File is too small to be split, just retry
+                            var remainingRange = new DownloadRange
+                            {
+                                Start = finishedRange.End,
+                                End = chunkInfo.Range.End,
+                                TempFileName = GetTempFilePath()
+                            };
+
+                            if (remainingRange.Start >= remainingRange.End)
+                            {
+                                throw new ArgumentOutOfRangeException(
+                                    $"[{chunkLength}][{remaining}][{bytesTransmitted}][{chunkInfo.Range.End - remaining}]{remainingRange}[{e}]");
+                            }
+
+                            ArgumentOutOfRangeException.ThrowIfEqual(downloadFile.Ranges.TryAdd(remainingRange, null), false);
+
+                            throw;
+                        }
+
+                        var subChunkRanges = CalculateDownloadRanges(remaining, finishedRange.End, downloadSettings);
 
                         // We add the sub chunks to the download queue
                         foreach (var range in subChunkRanges)
@@ -397,8 +434,11 @@ public static partial class DownloadHelper
                 bufferBlock.LinkTo(requestCreationBlock, linkOptions);
                 requestCreationBlock.LinkTo(downloadActionBlock, linkOptions);
 
+                // Acquire the download URL
+                var downloadUrl = downloadFile.GetDownloadUrl();
+
                 foreach (var range in downloadFile.GetUndoneRanges())
-                    await bufferBlock.SendAsync(new PreChunkInfo(range, cts), cts.Token);
+                    await bufferBlock.SendAsync(new PreChunkInfo(downloadUrl, range, cts), cts.Token);
 
                 bufferBlock.Complete();
                 await downloadActionBlock.Completion;
