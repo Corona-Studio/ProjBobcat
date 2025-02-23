@@ -2,19 +2,12 @@
 
 namespace ProjBobcat.Exceptions;
 
-public sealed class HashMismatchException : Exception
+public sealed class HashMismatchException(
+    string filePath,
+    string expectedHash,
+    string actualHash)
+    : Exception(GetMessage(filePath, expectedHash, actualHash))
 {
-    public HashMismatchException(string filePath, string expectedHash, string actualHash) : base(GetMessage(filePath, expectedHash, actualHash))
-    {
-        FilePath = filePath;
-        ExpectedHash = expectedHash;
-        ActualHash = actualHash;
-    }
-
-    public string FilePath { get; }
-    public string ExpectedHash { get; }
-    public string ActualHash { get; }
-
     static string GetMessage(string filePath, string expectedHash, string actualHash)
     {
         return $"""

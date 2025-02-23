@@ -12,7 +12,7 @@ internal record UrlInfo(long FileLength, bool CanPartialDownload);
 
 public abstract class AbstractDownloadBase : IDownloadFile
 {
-    internal ConcurrentDictionary<DownloadRange, DownloadRange>? Ranges { get; set; }
+    internal ConcurrentDictionary<DownloadRange, object?>? Ranges { get; set; }
     internal UrlInfo? UrlInfo { get; set; }
     internal ConcurrentDictionary<DownloadRange, FileStream> FinishedRangeStreams { get; } = [];
 
@@ -22,9 +22,9 @@ public abstract class AbstractDownloadBase : IDownloadFile
     {
         ArgumentNullException.ThrowIfNull(Ranges);
 
-        foreach (var downloadRange in Ranges.OrderBy(p => p.Key.Start))
+        foreach (var (downloadRange, _) in Ranges.OrderBy(p => p.Key.Start))
         {
-            if (!FinishedRangeStreams.TryGetValue(downloadRange.Key, out var stream))
+            if (!FinishedRangeStreams.TryGetValue(downloadRange, out var stream))
                 throw new InvalidOperationException("Stream not found.");
 
             yield return stream;
@@ -42,12 +42,12 @@ public abstract class AbstractDownloadBase : IDownloadFile
     {
         ArgumentNullException.ThrowIfNull(Ranges);
 
-        foreach (var downloadRange in Ranges)
+        foreach (var (range, _) in Ranges)
         {
-            if (FinishedRangeStreams.ContainsKey(downloadRange.Key))
+            if (FinishedRangeStreams.ContainsKey(range))
                 continue;
 
-            yield return downloadRange.Key;
+            yield return range;
         }
     }
 

@@ -18,6 +18,18 @@ public static partial class DownloadHelper
 
     private const int DefaultCopyBufferSize = 1024 * 8 * 10;
 
+    public static string GetTempDownloadPath()
+    {
+        var lxTempDir = Path.Combine(Path.GetTempPath(), "LauncherX");
+
+        return lxTempDir;
+    }
+
+    public static string GetTempFilePath()
+    {
+        return Path.Combine(GetTempDownloadPath(), Path.GetRandomFileName());
+    }
+
     private static async Task RecycleDownloadFile(AbstractDownloadBase download)
     {
         // Once we finished the download, we need to dispose the kept file stream
@@ -101,6 +113,11 @@ public static partial class DownloadHelper
 
     private static (BufferBlock<AbstractDownloadBase> Input, ActionBlock<AbstractDownloadBase> Execution) BuildAdvancedDownloadTplBlock(DownloadSettings downloadSettings)
     {
+        var lxTempPath = GetTempDownloadPath();
+
+        if (!Directory.Exists(lxTempPath))
+            Directory.CreateDirectory(lxTempPath);
+
         var bufferBlock = new BufferBlock<AbstractDownloadBase>(new DataflowBlockOptions { EnsureOrdered = false });
         var actionBlock = new ActionBlock<AbstractDownloadBase>(
             d => AdvancedDownloadFile(d, downloadSettings),
@@ -125,6 +142,11 @@ public static partial class DownloadHelper
         IEnumerable<AbstractDownloadBase> fileEnumerable,
         DownloadSettings downloadSettings)
     {
+        var lxTempPath = GetTempDownloadPath();
+
+        if (!Directory.Exists(lxTempPath))
+            Directory.CreateDirectory(lxTempPath);
+
         var blocks = BuildAdvancedDownloadTplBlock(downloadSettings);
 
         foreach (var downloadFile in fileEnumerable)
