@@ -17,12 +17,14 @@ public class DownloadSettings
 {
     public static DownloadSettings Default => new()
     {
+        MaxSubChunkSplitCount = 5,
         RetryCount = 0,
         CheckFile = false,
         Timeout = TimeSpan.FromMinutes(1),
         DownloadParts = 16
     };
 
+    public int MaxSubChunkSplitCount { get; init; } = 5;
     public int RetryCount { get; init; }
     public bool CheckFile { get; init; }
     public TimeSpan Timeout { get; init; } = TimeSpan.FromSeconds(30);
