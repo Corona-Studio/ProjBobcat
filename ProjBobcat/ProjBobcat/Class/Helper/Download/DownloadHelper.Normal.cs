@@ -24,6 +24,11 @@ public static partial class DownloadHelper
     /// <returns></returns>
     public static async Task DownloadData(AbstractDownloadBase downloadFile, DownloadSettings? downloadSettings = null)
     {
+        var lxTempPath = GetTempDownloadPath();
+
+        if (!Directory.Exists(lxTempPath))
+            Directory.CreateDirectory(lxTempPath);
+
         downloadSettings ??= DownloadSettings.Default;
 
         var trials = downloadSettings.RetryCount == 0 ? 1 : downloadSettings.RetryCount;

@@ -153,6 +153,11 @@ public static partial class DownloadHelper
         AbstractDownloadBase? downloadFile,
         DownloadSettings? downloadSettings = null)
     {
+        var lxTempPath = GetTempDownloadPath();
+
+        if (!Directory.Exists(lxTempPath))
+            Directory.CreateDirectory(lxTempPath);
+
         if (downloadFile == null) return;
 
         downloadSettings ??= DownloadSettings.Default;

@@ -103,6 +103,11 @@ public static partial class DownloadHelper
     /// <param name="downloadSettings"></param>
     private static Task AdvancedDownloadFile(AbstractDownloadBase df, DownloadSettings downloadSettings)
     {
+        var lxTempPath = GetTempDownloadPath();
+
+        if (!Directory.Exists(lxTempPath))
+            Directory.CreateDirectory(lxTempPath);
+
         if (!Directory.Exists(df.DownloadPath))
             Directory.CreateDirectory(df.DownloadPath);
 
