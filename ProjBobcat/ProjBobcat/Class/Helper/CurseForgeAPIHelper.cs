@@ -29,6 +29,7 @@ record FuzzyFingerPrintReqModel([property: JsonPropertyName("fingerprints")] IEn
 [JsonSerializable(typeof(DataModel<CurseForgeAddonInfo>))]
 [JsonSerializable(typeof(DataModel<CurseForgeAddonInfo[]>))]
 [JsonSerializable(typeof(DataModel<CurseForgeLatestFileModel[]>))]
+[JsonSerializable(typeof(DataModelWithPagination<CurseForgeLatestFileModel[]>))]
 [JsonSerializable(typeof(DataModel<CurseForgeSearchCategoryModel[]>))]
 [JsonSerializable(typeof(DataModel<CurseForgeFeaturedAddonModel>))]
 [JsonSerializable(typeof(DataModel<CurseForgeFuzzySearchResponseModel>))]
@@ -102,17 +103,17 @@ public static class CurseForgeAPIHelper
             .DataModelCurseForgeAddonInfoArray))?.Data;
     }
 
-    public static async Task<CurseForgeLatestFileModel[]?> GetAddonFiles(long addonId)
+    public static async Task<DataModelWithPagination<CurseForgeLatestFileModel[]>?> GetAddonFiles(long addonId, int index = 0, int pageSize = 50)
     {
-        var reqUrl = $"{ApiBaseUrl ?? BaseUrl}/mods/{addonId}/files";
+        var reqUrl = $"{ApiBaseUrl ?? BaseUrl}/mods/{addonId}/files?index={index}&pageSize={pageSize}";
 
         using var req = Req(HttpMethod.Get, reqUrl);
         using var res = await Client.SendAsync(req);
 
         res.EnsureSuccessStatusCode();
 
-        return (await res.Content.ReadFromJsonAsync(CurseForgeModelContext.Default
-            .DataModelCurseForgeLatestFileModelArray))?.Data;
+        return await res.Content.ReadFromJsonAsync(CurseForgeModelContext.Default
+            .DataModelWithPaginationCurseForgeLatestFileModelArray);
     }
 
     public static async Task<CurseForgeLatestFileModel[]?> GetFiles(IEnumerable<long> fileIds)
