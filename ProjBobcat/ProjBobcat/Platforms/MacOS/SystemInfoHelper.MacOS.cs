@@ -38,7 +38,7 @@ static partial class SystemInfoHelper
     ///     Get the system overall CPU usage percentage.
     /// </summary>
     /// <returns>
-    ///     The percentange value with the '%' sign. e.g. if the usage is 30.1234 %,
+    ///     The percentage value with the '%' sign. e.g. if the usage is 30.1234 %,
     ///     then it will return 30.12.
     /// </returns>
     public static CPUInfo GetOSXCpuUsage()
@@ -54,13 +54,13 @@ static partial class SystemInfoHelper
         using var process = Process.Start(info);
 
         if (process == null)
-            return new CPUInfo(-1, "Overrall");
+            return new CPUInfo(-1, "Overall");
 
         var output = process.StandardOutput?.ReadToEnd();
         process.WaitForExit();
 
         if (string.IsNullOrEmpty(output))
-            return new CPUInfo(-1, "Overrall");
+            return new CPUInfo(-1, "Overall");
 
         var cpu = output.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
@@ -68,7 +68,7 @@ static partial class SystemInfoHelper
         var sysUsage = double.TryParse(cpu[4].TrimEnd('%'), out var sysOut) ? sysOut : 0;
         var totalUsage = userUsage + sysUsage;
 
-        return new CPUInfo(totalUsage, "Overrall");
+        return new CPUInfo(totalUsage, "Overall");
     }
 
     private static ulong GetTotalMemory()
