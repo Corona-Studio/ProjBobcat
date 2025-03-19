@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
@@ -29,6 +30,7 @@ public class DefaultResourceCompleter : IResourceCompleter
     public int TotalRetry { get; set; } = 2;
     public bool CheckFile { get; set; } = true;
     public IReadOnlyList<IResourceInfoResolver>? ResourceInfoResolvers { get; set; }
+    public required IHttpClientFactory HttpClientFactory { get; init; }
 
     public event EventHandler<GameResourceInfoResolveEventArgs>? GameResourceInfoResolveStatus;
     public event EventHandler<DownloadFileChangedEventArgs>? DownloadFileChangedEvent;
@@ -61,7 +63,8 @@ public class DefaultResourceCompleter : IResourceCompleter
             DownloadParts = this.DownloadParts,
             HashType = HashType.SHA1,
             RetryCount = this.TotalRetry,
-            Timeout = this.TimeoutPerFile
+            Timeout = this.TimeoutPerFile,
+            HttpClientFactory = HttpClientFactory
         };
 
         this.OnResolveComplete(this, new GameResourceInfoResolveEventArgs

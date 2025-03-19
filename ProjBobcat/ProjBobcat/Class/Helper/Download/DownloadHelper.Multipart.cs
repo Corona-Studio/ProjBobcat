@@ -21,16 +21,15 @@ public static partial class DownloadHelper
     private const int DefaultPartialDownloadTimeoutMs = 3000;
     private const int MinimumChunkSize = 8192;
 
-    private static HttpClient Head => HttpClientHelper.HeadClient;
-    private static HttpClient MultiPart => HttpClientHelper.MultiPartClient;
-
     record PreChunkInfo(
+        HttpClient Client,
         int CurrentChunkSplitCount,
         string DownloadUrl,
         DownloadRange Range,
         CancellationTokenSource Cts);
 
     record ChunkInfo(
+        HttpClient Client,
         int CurrentChunkSplitCount,
         HttpResponseMessage Response,
         DownloadRange Range,
@@ -71,6 +70,8 @@ public static partial class DownloadHelper
         DownloadSettings downloadSettings,
         CancellationToken ct)
     {
+        var client = downloadSettings.HttpClientFactory.CreateClient(DefaultDownloadClientName);
+
         try
         {
             using var headReq = new HttpRequestMessage(HttpMethod.Head, url);
@@ -80,7 +81,7 @@ public static partial class DownloadHelper
             if (!string.IsNullOrEmpty(downloadSettings.Host))
                 headReq.Headers.Host = downloadSettings.Host;
 
-            using var headRes = await Head.SendAsync(headReq, HttpCompletionOption.ResponseHeadersRead, ct);
+            using var headRes = await client.SendAsync(headReq, HttpCompletionOption.ResponseHeadersRead, ct);
 
             headRes.EnsureSuccessStatusCode();
 
@@ -95,7 +96,7 @@ public static partial class DownloadHelper
             if (!string.IsNullOrEmpty(downloadSettings.Host))
                 rangeGetMessage.Headers.Host = downloadSettings.Host;
 
-            using var rangeGetRes = await Head.SendAsync(rangeGetMessage, HttpCompletionOption.ResponseHeadersRead, ct);
+            using var rangeGetRes = await client.SendAsync(rangeGetMessage, HttpCompletionOption.ResponseHeadersRead, ct);
 
             var parallelDownloadSupported =
                 responseLength != 0 &&
@@ -151,7 +152,7 @@ public static partial class DownloadHelper
     /// <returns></returns>
     public static async Task MultiPartDownloadTaskAsync(
         AbstractDownloadBase? downloadFile,
-        DownloadSettings? downloadSettings = null)
+        DownloadSettings downloadSettings)
     {
         var lxTempPath = GetTempDownloadPath();
 
@@ -159,8 +160,6 @@ public static partial class DownloadHelper
             Directory.CreateDirectory(lxTempPath);
 
         if (downloadFile == null) return;
-
-        downloadSettings ??= DownloadSettings.Default;
 
         if (downloadSettings.DownloadParts <= 0)
             downloadSettings.DownloadParts = Environment.ProcessorCount;
@@ -270,7 +269,7 @@ public static partial class DownloadHelper
 
                             try
                             {
-                                var downloadTask = await MultiPart.SendAsync(
+                                var downloadTask = await preChunkInfo.Client.SendAsync(
                                     request,
                                     HttpCompletionOption.ResponseHeadersRead,
                                     preChunkInfo.Cts.Token);
@@ -285,6 +284,7 @@ public static partial class DownloadHelper
                                 }
 
                                 return new ChunkInfo(
+                                    preChunkInfo.Client,
                                     preChunkInfo.CurrentChunkSplitCount,
                                     downloadTask,
                                     preChunkInfo.Range,
@@ -438,7 +438,16 @@ public static partial class DownloadHelper
                 var downloadUrl = downloadFile.GetDownloadUrl();
 
                 foreach (var range in downloadFile.GetUndoneRanges())
-                    await bufferBlock.SendAsync(new PreChunkInfo(subChunkSplitCount, downloadUrl, range, cts), cts.Token);
+                {
+                    var chunkInfo = new PreChunkInfo(
+                        downloadSettings.HttpClientFactory.CreateClient(DefaultDownloadClientName),
+                        subChunkSplitCount,
+                        downloadUrl,
+                        range,
+                        cts);
+
+                    await bufferBlock.SendAsync(chunkInfo, cts.Token);
+                }
 
                 bufferBlock.Complete();
                 await downloadActionBlock.Completion;

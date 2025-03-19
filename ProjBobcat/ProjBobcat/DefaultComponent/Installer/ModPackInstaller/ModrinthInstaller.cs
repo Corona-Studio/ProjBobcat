@@ -96,7 +96,8 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
             RetryCount = 10,
             Timeout = TimeSpan.FromMinutes(1),
             CheckFile = true,
-            HashType = HashType.SHA1
+            HashType = HashType.SHA1,
+            HttpClientFactory = HttpClientFactory
         });
 
         ArgumentOutOfRangeException.ThrowIfEqual(this.FailedFiles.IsEmpty, false);

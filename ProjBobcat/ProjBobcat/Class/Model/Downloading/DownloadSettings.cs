@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 
@@ -15,15 +16,6 @@ public enum HashType
 
 public class DownloadSettings
 {
-    public static DownloadSettings Default => new()
-    {
-        MaxSubChunkSplitCount = 5,
-        RetryCount = 0,
-        CheckFile = false,
-        Timeout = TimeSpan.FromMinutes(1),
-        DownloadParts = 16
-    };
-
     public int MaxSubChunkSplitCount { get; init; } = 3;
     public int RetryCount { get; init; }
     public bool CheckFile { get; init; }
@@ -31,6 +23,7 @@ public class DownloadSettings
     public int DownloadParts { get; set; }
     public HashType HashType { get; init; }
     public bool ShowDownloadProgress { get; init; }
+    public required IHttpClientFactory HttpClientFactory { get; init; }
 
     /// <summary>
     ///     认证
@@ -54,4 +47,14 @@ public class DownloadSettings
             _ => throw new NotSupportedException()
         };
     }
+
+    public static DownloadSettings FromDefault(IHttpClientFactory httpClientFactory) => new()
+    {
+        MaxSubChunkSplitCount = 5,
+        RetryCount = 0,
+        CheckFile = false,
+        Timeout = TimeSpan.FromMinutes(1),
+        DownloadParts = 16,
+        HttpClientFactory = httpClientFactory
+    };
 }

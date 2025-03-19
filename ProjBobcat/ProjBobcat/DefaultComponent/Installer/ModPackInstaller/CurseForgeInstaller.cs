@@ -17,6 +17,7 @@ using ProjBobcat.Class.Model.CurseForge;
 using ProjBobcat.Class.Model.Downloading;
 using ProjBobcat.Exceptions;
 using ProjBobcat.Interface;
+using ProjBobcat.Interface.Services;
 
 namespace ProjBobcat.DefaultComponent.Installer.ModPackInstaller;
 
@@ -25,6 +26,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
     public override string RootPath { get; init; } = string.Empty;
     public required string ModPackPath { get; init; }
     public string? GameId { get; init; }
+    public required ICurseForgeApiService CurseForgeApiService { get; init; }
 
     public void Install()
     {
@@ -38,7 +40,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
         this.InvokeStatusChangedEvent("开始安装", ProgressValue.Start);
 
-        var manifest = await this.ReadManifestTask();
+        var manifest = await ReadManifestTask(ModPackPath);
 
         ArgumentNullException.ThrowIfNull(manifest, "无法读取到 CurseForge 的 manifest 文件");
 
@@ -63,7 +65,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         {
             try
             {
-                var downloadUrlRes = await CurseForgeAPIHelper.GetAddonDownloadUrl(t.Item1, t.Item2);
+                var downloadUrlRes = await CurseForgeApiService.GetAddonDownloadUrl(t.Item1, t.Item2);
 
                 if (string.IsNullOrEmpty(downloadUrlRes))
                     throw new CurseForgeModResolveException(t.Item1, t.Item2);
@@ -100,7 +102,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
                 {
                     try
                     {
-                        var info = await CurseForgeAPIHelper.GetAddon(t.Item1);
+                        var info = await CurseForgeApiService.GetAddon(t.Item1);
 
                         ArgumentNullException.ThrowIfNull(info);
 
@@ -149,7 +151,8 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         {
             DownloadParts = 8,
             RetryCount = 10,
-            Timeout = TimeSpan.FromMinutes(1)
+            Timeout = TimeSpan.FromMinutes(1),
+            HttpClientFactory = HttpClientFactory
         });
 
         ArgumentOutOfRangeException.ThrowIfEqual(this.FailedFiles.IsEmpty, false);
@@ -202,9 +205,9 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         this.InvokeStatusChangedEvent("安装完成", ProgressValue.Finished);
     }
 
-    public async Task<CurseForgeManifestModel?> ReadManifestTask()
+    public static async Task<CurseForgeManifestModel?> ReadManifestTask(string modPackPath)
     {
-        var modPackFullPath = Path.GetFullPath(this.ModPackPath);
+        var modPackFullPath = Path.GetFullPath(modPackPath);
 
         await using var fullPackFs = File.OpenRead(modPackFullPath);
         using var archive = new ZipArchive(fullPackFs, ZipArchiveMode.Read);
@@ -225,11 +228,14 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         return manifestModel;
     }
 
-    public static async Task<(string? FileName, string? Url)> TryGuessModDownloadLink(long fileId)
+    public static async Task<(string? FileName, string? Url)> TryGuessModDownloadLink(
+        ICurseForgeApiService curseForgeApiService,
+        IHttpClientFactory httpClientFactory,
+        long fileId)
     {
         try
         {
-            var files = await CurseForgeAPIHelper.GetFiles([fileId]);
+            var files = await curseForgeApiService.GetFiles([fileId]);
 
             if (files == null || files.Length == 0) return default;
 
@@ -245,12 +251,12 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
                 $"https://mediafiles.forgecdn.net/files/{fileIdStr[..4]}/{fileIdStr[4..]}/{fileName}"
             };
 
-            var httpClient = HttpClientHelper.DefaultClient;
+            var client = httpClientFactory.CreateClient();
 
             foreach (var url in pendingCheckUrls)
             {
                 using var checkReq = new HttpRequestMessage(HttpMethod.Head, url);
-                using var checkRes = await httpClient.SendAsync(checkReq);
+                using var checkRes = await client.SendAsync(checkReq);
 
                 if (!checkRes.IsSuccessStatusCode) continue;
 
@@ -268,7 +274,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
     async Task<(bool, SimpleDownloadFile?)> TryGuessModDownloadLink(long fileId, string downloadPath)
     {
-        var pair = await TryGuessModDownloadLink(fileId);
+        var pair = await TryGuessModDownloadLink(CurseForgeApiService, HttpClientFactory, fileId);
 
         if (string.IsNullOrEmpty(pair.FileName) || string.IsNullOrEmpty(pair.Url)) return (false, null);
 

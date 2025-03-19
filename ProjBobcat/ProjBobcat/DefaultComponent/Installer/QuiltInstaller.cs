@@ -17,7 +17,6 @@ public class QuiltInstaller : InstallerBase, IQuiltInstaller
 {
     const string DefaultMetaUrl = "https://meta.quiltmc.org";
 
-    static HttpClient Client => HttpClientHelper.DefaultClient;
     public required string MineCraftVersion { get; init; }
 
     public override required string RootPath { get; init; }
@@ -35,8 +34,9 @@ public class QuiltInstaller : InstallerBase, IQuiltInstaller
         var url =
             $"{DefaultMetaUrl}/v3/versions/loader/{this.MineCraftVersion}/{this.LoaderArtifact.Version}/profile/json";
 
-        using var req = new HttpRequestMessage(HttpMethod.Get, url);
-        using var res = await Client.SendAsync(req);
+        var client = HttpClientFactory.CreateClient();
+
+        using var res = await client.GetAsync(url);
 
         res.EnsureSuccessStatusCode();
 

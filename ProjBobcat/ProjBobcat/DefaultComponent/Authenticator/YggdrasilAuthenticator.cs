@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -74,6 +75,8 @@ public class YggdrasilAuthenticator : IAuthenticator
 
     public required ILauncherAccountParser LauncherAccountParser { get; init; }
 
+    public required IHttpClientFactory HttpClientFactory { get; init; }
+
     /// <summary>
     ///     验证凭据。
     /// </summary>
@@ -98,10 +101,13 @@ public class YggdrasilAuthenticator : IAuthenticator
             Username = this.Email,
             Password = this.Password
         };
-        var requestJson = JsonSerializer.Serialize(requestModel, typeof(AuthRequestModel),
-            new AuthRequestModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
-        using var resultJson = await HttpHelper.Post(this.LoginAddress, requestJson);
+        var client = HttpClientFactory.CreateClient();
+
+        using var authReq = new HttpRequestMessage(HttpMethod.Post, LoginAddress);
+        authReq.Content = JsonContent.Create(requestModel, AuthRequestModelContext.Default.AuthRequestModel);
+
+        using var resultJson = await client.SendAsync(authReq);
 
         if (!resultJson.IsSuccessStatusCode)
             return new YggdrasilAuthResult
@@ -327,11 +333,15 @@ public class YggdrasilAuthenticator : IAuthenticator
             RequestUser = userField,
             SelectedProfile = response.SelectedProfile
         };
-        var requestJson = JsonSerializer.Serialize(requestModel, typeof(AuthRefreshRequestModel),
-            new AuthRefreshRequestModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
-        using var resultJson = await HttpHelper.Post(this.RefreshAddress, requestJson);
-        var resultJsonElement = await resultJson.Content.ReadFromJsonAsync(JsonElementContext.Default.JsonElement);
+        var client = HttpClientFactory.CreateClient();
+
+        using var refreshReq = new HttpRequestMessage(HttpMethod.Post, RefreshAddress);
+        refreshReq.Content = JsonContent.Create(requestModel, AuthRefreshRequestModelContext.Default.AuthRefreshRequestModel);
+        
+        using var refreshRes = await client.SendAsync(refreshReq);
+        var resultJsonElement = await refreshRes.Content.ReadFromJsonAsync(JsonElementContext.Default.JsonElement);
+
         object? result = resultJsonElement.TryGetProperty("cause", out _)
             ? resultJsonElement.Deserialize(ErrorModelContext.Default.ErrorModel)
             : resultJsonElement.Deserialize(AuthResponseModelContext.Default.AuthResponseModel);
@@ -447,25 +457,17 @@ public class YggdrasilAuthenticator : IAuthenticator
             AccessToken = accessToken,
             ClientToken = this.LauncherAccountParser.LauncherAccount.MojangClientToken
         };
-        var requestJson = JsonSerializer.Serialize(requestModel, typeof(AuthTokenRequestModel),
-            new AuthTokenRequestModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
-        using var result = await HttpHelper.Post(this.ValidateAddress, requestJson);
-        return result.StatusCode.Equals(HttpStatusCode.NoContent);
+        var client = HttpClientFactory.CreateClient();
+
+        using var validationReq = new HttpRequestMessage(HttpMethod.Post, ValidateAddress);
+        validationReq.Content = JsonContent.Create(requestModel, AuthTokenRequestModelContext.Default.AuthTokenRequestModel);
+
+        using var validationRes = await client.SendAsync(validationReq);
+
+        return validationRes.StatusCode.Equals(HttpStatusCode.NoContent);
     }
 
-    public async Task TokenRevokeTaskAsync(string accessToken)
-    {
-        var requestModel = new AuthTokenRequestModel
-        {
-            AccessToken = accessToken,
-            ClientToken = this.LauncherAccountParser.LauncherAccount.MojangClientToken
-        };
-        var requestJson = JsonSerializer.Serialize(requestModel, typeof(AuthTokenRequestModel),
-            new AuthTokenRequestModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
-
-        using var x = await HttpHelper.Post(this.RevokeAddress, requestJson);
-    }
 
     /// <summary>
     ///     登出。
@@ -479,10 +481,14 @@ public class YggdrasilAuthenticator : IAuthenticator
             Username = this.Email,
             Password = this.Password
         };
-        var requestJson = JsonSerializer.Serialize(requestModel, typeof(SignOutRequestModel),
-            new SignOutRequestModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
-        using var result = await HttpHelper.Post(this.SignOutAddress, requestJson);
-        return result.StatusCode.Equals(HttpStatusCode.NoContent);
+        var client = HttpClientFactory.CreateClient();
+
+        using var signoutReq = new HttpRequestMessage(HttpMethod.Post, SignOutAddress);
+        signoutReq.Content = JsonContent.Create(requestModel, SignOutRequestModelContext.Default.SignOutRequestModel);
+
+        using var signoutRes = await client.SendAsync(signoutReq);
+
+        return signoutRes.StatusCode.Equals(HttpStatusCode.NoContent);
     }
 }

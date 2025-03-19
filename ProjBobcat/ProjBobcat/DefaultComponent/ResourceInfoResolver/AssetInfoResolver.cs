@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text.Json;
@@ -26,6 +27,7 @@ public sealed class AssetInfoResolver : ResolverBase
     public IReadOnlyList<string> AssetUriRoots { get; init; } = ["https://resources.download.minecraft.net/"];
 
     public IReadOnlyList<VersionManifestVersionsModel>? Versions { get; init; }
+    public required IHttpClientFactory HttpClientFactory { get; init; }
 
     public override async IAsyncEnumerable<IGameResource> ResolveResourceAsync(
         string basePath,
@@ -38,12 +40,16 @@ public sealed class AssetInfoResolver : ResolverBase
 
         if (resolvedGame.AssetInfo == null) yield break;
 
+        var client = HttpClientFactory.CreateClient();
         var versions = this.Versions;
+
         if ((this.Versions?.Count ?? 0) == 0)
         {
             this.OnResolve("没有提供 Version Manifest， 开始下载", ProgressValue.Start);
 
-            using var vmJsonRes = await HttpHelper.Get(DefaultVersionManifestUrl);
+            using var vmJsonReq = new HttpRequestMessage(HttpMethod.Get, DefaultVersionManifestUrl);
+            using var vmJsonRes = await client.SendAsync(vmJsonReq);
+
             var vm = await vmJsonRes.Content.ReadFromJsonAsync(VersionManifestContext.Default.VersionManifest);
 
             versions = vm?.Versions?.ToList();
@@ -81,7 +87,9 @@ public sealed class AssetInfoResolver : ResolverBase
 
                 if (versionObject == null) yield break;
 
-                using var jsonRes = await HttpHelper.Get(versionObject.Url);
+                using var jsonReq = new HttpRequestMessage(HttpMethod.Get, DefaultVersionManifestUrl);
+                using var jsonRes = await client.SendAsync(jsonReq);
+
                 var versionModel =
                     await jsonRes.Content.ReadFromJsonAsync(RawVersionModelContext.Default.RawVersionModel);
 
@@ -108,7 +116,7 @@ public sealed class AssetInfoResolver : ResolverBase
 
             try
             {
-                await DownloadHelper.DownloadData(dp);
+                await DownloadHelper.DownloadData(dp, DownloadSettings.FromDefault(HttpClientFactory));
             }
             catch (Exception e)
             {

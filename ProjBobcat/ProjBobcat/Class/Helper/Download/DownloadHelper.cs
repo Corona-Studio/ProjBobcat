@@ -16,6 +16,8 @@ public static partial class DownloadHelper
     /// </summary>
     public static int DownloadThread { get; set; } = 8;
 
+    internal static string DefaultUserAgent => $"ProjBobcat {typeof(DownloadHelper).Assembly.GetName().Version}";
+    internal const string DefaultDownloadClientName = nameof(DownloadHelper);
     private const int DefaultCopyBufferSize = 1024 * 8 * 10;
 
     public static string GetTempDownloadPath()

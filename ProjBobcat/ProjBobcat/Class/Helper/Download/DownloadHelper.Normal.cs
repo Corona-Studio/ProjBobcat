@@ -14,23 +14,20 @@ namespace ProjBobcat.Class.Helper.Download;
 
 public static partial class DownloadHelper
 {
-    private static HttpClient Data => HttpClientHelper.DataClient;
-
     /// <summary>
     ///     Simple download data impl
     /// </summary>
     /// <param name="downloadFile"></param>
     /// <param name="downloadSettings"></param>
     /// <returns></returns>
-    public static async Task DownloadData(AbstractDownloadBase downloadFile, DownloadSettings? downloadSettings = null)
+    public static async Task DownloadData(AbstractDownloadBase downloadFile, DownloadSettings downloadSettings)
     {
         var lxTempPath = GetTempDownloadPath();
 
         if (!Directory.Exists(lxTempPath))
             Directory.CreateDirectory(lxTempPath);
 
-        downloadSettings ??= DownloadSettings.Default;
-
+        var client = downloadSettings.HttpClientFactory.CreateClient(DefaultDownloadClientName);
         var trials = downloadSettings.RetryCount == 0 ? 1 : downloadSettings.RetryCount;
         var filePath = Path.Combine(downloadFile.DownloadPath, downloadFile.FileName);
         var exceptions = new List<Exception>();
@@ -49,7 +46,7 @@ public static partial class DownloadHelper
                     request.Headers.Host = downloadSettings.Host;
 
                 using var res =
-                    await Data.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token);
+                    await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token);
 
                 res.EnsureSuccessStatusCode();
 

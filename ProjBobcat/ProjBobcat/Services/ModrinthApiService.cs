@@ -2,19 +2,20 @@
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using ProjBobcat.Class.Model.Downloading;
 using ProjBobcat.Class.Model.Modrinth;
+using ProjBobcat.Interface;
+using ProjBobcat.Interface.Services;
 
-namespace ProjBobcat.Class.Helper;
+namespace ProjBobcat.Services;
 
 #region Temp Models
 
 record FileMatchRequestModel(
-    [property:JsonPropertyName("hashes")] string[] Hashes,
+    [property: JsonPropertyName("hashes")] string[] Hashes,
     [property: JsonPropertyName("algorithm")] string Algorithm,
     [property: JsonPropertyName("loaders")] string[] Loaders,
     [property: JsonPropertyName("game_versions")] string[] GameVersions);
@@ -24,23 +25,35 @@ partial class ModrinthModelContext : JsonSerializerContext;
 
 #endregion
 
-public static class ModrinthAPIHelper
+public class ModrinthApiService(
+    HttpClient httpClient,
+    ILauncherCoreSettingsProvider settingsProvider) : IModrinthApiService
 {
-    const string BaseUrl = "https://api.modrinth.com/v2";
+    private const string DefaultApiUrl = "https://api.modrinth.com/v2";
 
-    public static string? ApiBaseUrl { get; set; }
-
-    static async Task<HttpResponseMessage> Get(string reqUrl, CancellationToken ct = default)
+    private string GetApiRoot()
     {
-        var req = await HttpHelper.Get(reqUrl, ct: ct);
+        var customRoot = settingsProvider.ModrinthApiBaseUrl();
+
+        if (!string.IsNullOrEmpty(customRoot))
+            return customRoot;
+
+        return DefaultApiUrl;
+    }
+
+    private async Task<HttpResponseMessage> Get(string reqUrl, CancellationToken ct = default)
+    {
+        using var res = new HttpRequestMessage(HttpMethod.Get, reqUrl);
+        var req = await httpClient.SendAsync(res, ct);
+
         req.EnsureSuccessStatusCode();
 
         return req;
     }
 
-    public static async Task<ModrinthCategoryInfo[]?> GetCategories()
+    public async Task<ModrinthCategoryInfo[]?> GetCategories()
     {
-        var reqUrl = $"{ApiBaseUrl ?? BaseUrl}/tag/category";
+        var reqUrl = $"{GetApiRoot()}/tag/category";
 
         using var res = await Get(reqUrl);
         var resModel =
@@ -49,9 +62,9 @@ public static class ModrinthAPIHelper
         return resModel;
     }
 
-    public static async Task<ModrinthProjectDependencyInfo?> GetProjectDependenciesInfo(string projectId)
+    public async Task<ModrinthProjectDependencyInfo?> GetProjectDependenciesInfo(string projectId)
     {
-        var reqUrl = $"{ApiBaseUrl ?? BaseUrl}/project/{projectId}/dependencies";
+        var reqUrl = $"{GetApiRoot()}/project/{projectId}/dependencies";
 
         using var res = await Get(reqUrl);
         var resModel =
@@ -61,9 +74,9 @@ public static class ModrinthAPIHelper
         return resModel;
     }
 
-    public static async Task<ModrinthProjectInfo?> GetProject(string projectId, CancellationToken ct)
+    public async Task<ModrinthProjectInfo?> GetProject(string projectId, CancellationToken ct)
     {
-        var reqUrl = $"{ApiBaseUrl ?? BaseUrl}/project/{projectId}";
+        var reqUrl = $"{GetApiRoot()}/project/{projectId}";
 
         using var res = await Get(reqUrl, ct);
         var resModel = await res.Content.ReadFromJsonAsync(ModrinthProjectInfoContext.Default.ModrinthProjectInfo, ct);
@@ -71,9 +84,9 @@ public static class ModrinthAPIHelper
         return resModel;
     }
 
-    public static async Task<ModrinthSearchResult?> GetFeaturedMods()
+    public async Task<ModrinthSearchResult?> GetFeaturedMods()
     {
-        var reqUrl = $"{ApiBaseUrl ?? BaseUrl}/search";
+        var reqUrl = $"{GetApiRoot()}/search";
 
         using var res = await Get(reqUrl);
         var resModel = await res.Content.ReadFromJsonAsync(ModrinthSearchResultContext.Default.ModrinthSearchResult);
@@ -81,9 +94,9 @@ public static class ModrinthAPIHelper
         return resModel;
     }
 
-    public static async Task<ModrinthSearchResult?> SearchMod(ModrinthSearchOptions searchOptions, CancellationToken ct)
+    public async Task<ModrinthSearchResult?> SearchMod(ModrinthSearchOptions searchOptions, CancellationToken ct)
     {
-        var reqUrl = $"{ApiBaseUrl ?? BaseUrl}/search{searchOptions}";
+        var reqUrl = $"{GetApiRoot()}/search{searchOptions}";
 
         using var res = await Get(reqUrl, ct);
         var resModel = await res.Content.ReadFromJsonAsync(ModrinthSearchResultContext.Default.ModrinthSearchResult, ct);
@@ -91,9 +104,9 @@ public static class ModrinthAPIHelper
         return resModel;
     }
 
-    public static async Task<ModrinthVersionInfo[]?> GetProjectVersions(string projectId)
+    public async Task<ModrinthVersionInfo[]?> GetProjectVersions(string projectId)
     {
-        var reqUrl = $"{ApiBaseUrl ?? BaseUrl}/project/{projectId}/version";
+        var reqUrl = $"{GetApiRoot()}/project/{projectId}/version";
 
         using var res = await Get(reqUrl);
         var resModel = await res.Content.ReadFromJsonAsync(ModrinthVersionInfoContext.Default.ModrinthVersionInfoArray);
@@ -101,7 +114,7 @@ public static class ModrinthAPIHelper
         return resModel;
     }
 
-    public static async Task<ModrinthVersionInfo?> TryMatchVersionFileByHash(
+    public async Task<ModrinthVersionInfo?> TryMatchVersionFileByHash(
         string hash,
         HashType hashType)
     {
@@ -111,7 +124,7 @@ public static class ModrinthAPIHelper
             HashType.SHA512 => "?algorithm=sha512",
             _ => throw new ArgumentOutOfRangeException(nameof(hashType), hashType, null)
         };
-        var reqUrl = $"{ApiBaseUrl ?? BaseUrl}/version_file/{hash}{para}";
+        var reqUrl = $"{GetApiRoot()}/version_file/{hash}{para}";
 
         using var res = await Get(reqUrl);
         var resModel = await res.Content.ReadFromJsonAsync(ModrinthVersionInfoContext.Default.ModrinthVersionInfo);
@@ -119,9 +132,9 @@ public static class ModrinthAPIHelper
         return resModel;
     }
 
-    public static async Task<ModrinthVersionInfo?> GetVersionInfo(string projectId, string versionId)
+    public async Task<ModrinthVersionInfo?> GetVersionInfo(string projectId, string versionId)
     {
-        var reqUrl = $"{ApiBaseUrl ?? BaseUrl}/project/{projectId}/version/{versionId}";
+        var reqUrl = $"{GetApiRoot()}/project/{projectId}/version/{versionId}";
 
         using var res = await Get(reqUrl);
         var resModel = await res.Content.ReadFromJsonAsync(ModrinthVersionInfoContext.Default.ModrinthVersionInfo);
@@ -129,9 +142,9 @@ public static class ModrinthAPIHelper
         return resModel;
     }
 
-    public static async Task<ModrinthVersionInfo?> GetVersionInfo(string versionId)
+    public async Task<ModrinthVersionInfo?> GetVersionInfo(string versionId)
     {
-        var reqUrl = $"{ApiBaseUrl ?? BaseUrl}/version/{versionId}";
+        var reqUrl = $"{GetApiRoot()}/version/{versionId}";
 
         using var res = await Get(reqUrl);
         var resModel = await res.Content.ReadFromJsonAsync(ModrinthVersionInfoContext.Default.ModrinthVersionInfo);
@@ -139,23 +152,23 @@ public static class ModrinthAPIHelper
         return resModel;
     }
 
-    public static async Task<IReadOnlyDictionary<string, ModrinthVersionInfo>?> TryMatchFile(
+    public async Task<IReadOnlyDictionary<string, ModrinthVersionInfo>?> TryMatchFile(
         string[] hashes,
         string algorithm,
         string[] loaders,
         string[] gameVersions)
     {
-        var reqUrl = $"{ApiBaseUrl ?? BaseUrl}/version_files/update";
-         
-        var data = JsonSerializer.Serialize(new FileMatchRequestModel(hashes, algorithm, loaders, gameVersions),
-            ModrinthModelContext.Default.FileMatchRequestModel);
+        var reqUrl = $"{GetApiRoot()}/version_files/update";
 
-        using var res = await HttpHelper.Post(reqUrl, data);
+        var body = new FileMatchRequestModel(hashes, algorithm, loaders, gameVersions);
 
+        var content = JsonContent.Create(body, ModrinthModelContext.Default.FileMatchRequestModel);
+
+        using var res = await httpClient.PostAsync(reqUrl, content);
 
         if (!res.IsSuccessStatusCode) return null;
 
-        return await res.Content.ReadFromJsonAsync(ModrinthVersionInfoContext.Default
-            .IReadOnlyDictionaryStringModrinthVersionInfo);
+        return await res.Content.ReadFromJsonAsync(
+            ModrinthVersionInfoContext.Default.IReadOnlyDictionaryStringModrinthVersionInfo);
     }
 }

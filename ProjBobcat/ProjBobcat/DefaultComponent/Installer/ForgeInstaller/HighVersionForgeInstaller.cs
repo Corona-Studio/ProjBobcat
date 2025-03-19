@@ -271,7 +271,8 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
                 DownloadParts = 4,
                 HashType = HashType.SHA1,
                 RetryCount = 3,
-                Timeout = TimeSpan.FromSeconds(5)
+                Timeout = TimeSpan.FromSeconds(5),
+                HttpClientFactory = HttpClientFactory
             });
         }
 
@@ -451,7 +452,8 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             DownloadParts = 4,
             HashType = HashType.SHA1,
             RetryCount = 3,
-            Timeout = TimeSpan.FromSeconds(20)
+            Timeout = TimeSpan.FromSeconds(20),
+            HttpClientFactory = HttpClientFactory
         });
 
         if (!this._failedFiles.IsEmpty)

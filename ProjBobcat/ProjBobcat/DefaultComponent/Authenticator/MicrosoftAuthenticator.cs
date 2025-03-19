@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -59,8 +60,6 @@ public class MicrosoftAuthenticator : IAuthenticator
     public static string MSRefreshTokenRequestUrl =>
         $"https://login.microsoftonline.com/{ApiSettings!.TenentId}/oauth2/v2.0/token";
 
-    static HttpClient DefaultClient => HttpClientHelper.DefaultClient;
-
     public string? Email { get; set; }
 
     /// <summary>
@@ -70,6 +69,7 @@ public class MicrosoftAuthenticator : IAuthenticator
 
     public Func<MicrosoftAuthenticator, ValueTask<CacheTokenProviderResult>>? CacheTokenProvider { get; init; }
     public required ILauncherAccountParser LauncherAccountParser { get; init; }
+    public required IHttpClientFactory HttpClientFactory { get; init; }
 
     public AuthResultBase Auth(bool userField = false)
     {
@@ -134,9 +134,14 @@ public class MicrosoftAuthenticator : IAuthenticator
 
         #region STAGE 2
 
-        var xStsReqStr = JsonSerializer.Serialize(AuthXSTSRequestModel.Get(xBoxLiveToken.Token),
+        var client = HttpClientFactory.CreateClient();
+
+        using var xStsReq = new HttpRequestMessage(HttpMethod.Post, MSAuthXSTSUrl);
+        xStsReq.Content = JsonContent.Create(
+            AuthXSTSRequestModel.Get(xBoxLiveToken.Token),
             AuthXSTSRequestModelContext.Default.AuthXSTSRequestModel);
-        using var xStsMessage = await HttpHelper.Post(MSAuthXSTSUrl, xStsReqStr);
+
+        using var xStsMessage = await client.SendAsync(xStsReq);
 
         if (!xStsMessage.IsSuccessStatusCode)
         {
@@ -174,9 +179,12 @@ public class MicrosoftAuthenticator : IAuthenticator
 
         #region STAGE 2.5 (FETCH XBOX UID)
 
-        var xUidReqStr = JsonSerializer.Serialize(AuthXSTSRequestModel.Get(xBoxLiveToken.Token, "http://xboxlive.com"),
+        using var xUidReq = new HttpRequestMessage(HttpMethod.Post, MSAuthXSTSUrl);
+        xUidReq.Content = JsonContent.Create(
+            AuthXSTSRequestModel.Get(xBoxLiveToken.Token, "http://xboxlive.com"),
             AuthXSTSRequestModelContext.Default.AuthXSTSRequestModel);
-        using var xUidMessage = await HttpHelper.Post(MSAuthXSTSUrl, xUidReqStr);
+
+        using var xUidMessage = await client.SendAsync(xUidReq);
 
         var xuid = Guid.Empty.ToString("N");
         if (xUidMessage.IsSuccessStatusCode)
@@ -234,14 +242,16 @@ public class MicrosoftAuthenticator : IAuthenticator
 
         #region STAGE 4
 
-        using var ownResRes = await HttpHelper.Get(
-            MojangOwnershipUrl,
-            ("Bearer", mcRes.AccessToken));
-        var ownRes =
-            await ownResRes.Content.ReadFromJsonAsync(MojangOwnershipResponseModelContext.Default
+        using var ownershipReq = new HttpRequestMessage(HttpMethod.Get, MojangOwnershipUrl);
+        ownershipReq.Headers.Authorization = new AuthenticationHeaderValue("Bearer", mcRes.AccessToken);
+
+        using var ownershipRes = await client.SendAsync(ownershipReq);
+
+        var ownership =
+            await ownershipRes.Content.ReadFromJsonAsync(MojangOwnershipResponseModelContext.Default
                 .MojangOwnershipResponseModel);
 
-        if (ownRes?.Items == null || ownRes.Items.Length == 0)
+        if (ownership?.Items == null || ownership.Items.Length == 0)
             return new MicrosoftAuthResult
             {
                 AuthStatus = AuthStatus.Failed,
@@ -257,16 +267,18 @@ public class MicrosoftAuthenticator : IAuthenticator
 
         #region STAGE 5
 
-        using var profileResRes =
-            await HttpHelper.Get(MojangProfileUrl, ("Bearer", mcRes.AccessToken));
-        var profileRes =
-            await profileResRes.Content.ReadFromJsonAsync(MojangProfileResponseModelContext.Default
+        using var profileReq = new HttpRequestMessage(HttpMethod.Get, MojangProfileUrl);
+        ownershipReq.Headers.Authorization = new AuthenticationHeaderValue("Bearer", mcRes.AccessToken);
+
+        using var profileRes = await client.SendAsync(profileReq);
+        var profile =
+            await profileRes.Content.ReadFromJsonAsync(MojangProfileResponseModelContext.Default
                 .MojangProfileResponseModel);
 
-        if (profileRes == null)
+        if (profile == null)
         {
             var errModel =
-                await profileResRes.Content.ReadFromJsonAsync(MojangErrorResponseModelContext.Default
+                await profileRes.Content.ReadFromJsonAsync(MojangErrorResponseModelContext.Default
                     .MojangErrorResponseModel);
 
             return new MicrosoftAuthResult
@@ -288,22 +300,22 @@ public class MicrosoftAuthenticator : IAuthenticator
         {
             AccessToken = mcRes.AccessToken,
             AccessTokenExpiresAt = DateTime.Now.AddSeconds(mcRes.ExpiresIn),
-            Avatar = profileRes.GetActiveSkin()?.Url,
-            Cape = profileRes.GetActiveCape()?.Url,
+            Avatar = profile.GetActiveSkin()?.Url,
+            Cape = profile.GetActiveCape()?.Url,
             EligibleForMigration = false,
             HasMultipleProfiles = false,
             Legacy = false,
             LocalId = uuid,
             MinecraftProfile = new AccountProfileModel
             {
-                Id = profileRes.Id,
-                Name = profileRes.Name
+                Id = profile.Id,
+                Name = profile.Name
             },
             Persistent = true,
-            RemoteId = profileRes.Name,
+            RemoteId = profile.Name,
             Type = "XBox",
             UserProperites = null,
-            Username = profileRes.Name
+            Username = profile.Name
         };
 
         if (!this.LauncherAccountParser.AddOrReplaceAccount(uuid, accountModel, out var id))
@@ -318,10 +330,10 @@ public class MicrosoftAuthenticator : IAuthenticator
                 }
             };
 
-        var sPUuid = new PlayerUUID(profileRes.Id);
+        var sPUuid = new PlayerUUID(profile.Id);
         var sP = new ProfileInfoModel
         {
-            Name = profileRes.Name,
+            Name = profile.Name,
             UUID = sPUuid
         };
 
@@ -350,8 +362,8 @@ public class MicrosoftAuthenticator : IAuthenticator
             Id = id ?? Guid.Empty,
             AccessToken = mcRes.AccessToken,
             AuthStatus = AuthStatus.Succeeded,
-            Skin = profileRes.GetActiveSkin()?.Url,
-            Cape = profileRes.GetActiveCape()?.Url,
+            Skin = profile.GetActiveSkin()?.Url,
+            Cape = profile.GetActiveCape()?.Url,
             ExpiresIn = mcRes.ExpiresIn,
             RefreshToken = refreshToken,
             CurrentAuthTime = DateTime.Now,
@@ -359,7 +371,7 @@ public class MicrosoftAuthenticator : IAuthenticator
             User = new UserInfoModel
             {
                 UUID = sPUuid,
-                UserName = profileRes.Name
+                UserName = profile.Name
             },
             Email = this.Email,
             XBoxUid = xuid
@@ -421,10 +433,13 @@ public class MicrosoftAuthenticator : IAuthenticator
         return JsonSerializer.Deserialize(content, typeInfo);
     }
 
-    public static async Task<GraphAuthResultModel?> GetMSAuthResult(Action<DeviceIdResponseModel> deviceTokenNotifier)
+    public static async Task<GraphAuthResultModel?> GetMSAuthResult(
+        IHttpClientFactory httpClientFactory,
+        Action<DeviceIdResponseModel> deviceTokenNotifier)
     {
         #region SEND DEVICE TOKEN REQUEST
 
+        var client = httpClientFactory.CreateClient();
         var deviceTokenRequestDic = new[]
         {
             new KeyValuePair<string, string>("client_id", ApiSettings!.ClientId),
@@ -435,7 +450,8 @@ public class MicrosoftAuthenticator : IAuthenticator
 
         deviceTokenReq.Content = new FormUrlEncodedContent(deviceTokenRequestDic);
 
-        using var deviceTokenRes = await DefaultClient.SendAsync(deviceTokenReq);
+        using var deviceTokenRes = await client.SendAsync(deviceTokenReq);
+
         var deviceTokenContent = await deviceTokenRes.Content.ReadAsStringAsync();
         var deviceTokenModel =
             ResolveMSGraphResult(deviceTokenContent, DeviceIdResponseModelContext.Default.DeviceIdResponseModel);
@@ -464,7 +480,8 @@ public class MicrosoftAuthenticator : IAuthenticator
 
             userAuthResultReq.Content = new FormUrlEncodedContent(userAuthResultDic);
 
-            using var userAuthResultRes = await DefaultClient.SendAsync(userAuthResultReq);
+            using var userAuthResultRes = await client.SendAsync(userAuthResultReq);
+
             var userAuthResultContent = await userAuthResultRes.Content.ReadAsStringAsync();
             var userAuthResultModel = ResolveMSGraphResult(userAuthResultContent,
                 GraphAuthResultModelContext.Default.GraphAuthResultModel);
@@ -490,12 +507,16 @@ public class MicrosoftAuthenticator : IAuthenticator
         return result;
     }
 
-    static async Task<T?> SendRequest<T, TReq>(string url, TReq model, JsonTypeInfo<T> typeInfo,
+    private async Task<T?> SendRequest<T, TReq>(
+        string url,
+        TReq model,
+        JsonTypeInfo<T> typeInfo,
         JsonTypeInfo<TReq> reqTypeInfo)
     {
-        var reqStr = JsonSerializer.Serialize(model, reqTypeInfo);
+        var client = HttpClientFactory.CreateClient();
+        var content = JsonContent.Create(model, reqTypeInfo);
 
-        using var res = await HttpHelper.Post(url, reqStr);
+        using var res = await client.PostAsync(url, content);
 
         if (!res.IsSuccessStatusCode) return default;
 
