@@ -271,8 +271,12 @@ public class MicrosoftAuthenticator : IAuthenticator
         profileReq.Headers.Authorization = new AuthenticationHeaderValue("Bearer", mcRes.AccessToken);
 
         using var profileRes = await client.SendAsync(profileReq);
-        
-        if (!profileRes.IsSuccessStatusCode)
+
+        var profile =
+            await profileRes.Content.ReadFromJsonAsync(MojangProfileResponseModelContext.Default
+                .MojangProfileResponseModel);
+
+        if (!profileRes.IsSuccessStatusCode || profile == null)
         {
             var errModel =
                 await profileRes.Content.ReadFromJsonAsync(MojangErrorResponseModelContext.Default
@@ -289,10 +293,6 @@ public class MicrosoftAuthenticator : IAuthenticator
                 }
             };
         }
-
-        var profile =
-            await profileRes.Content.ReadFromJsonAsync(MojangProfileResponseModelContext.Default
-                .MojangProfileResponseModel);
 
         #endregion
 
