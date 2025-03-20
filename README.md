@@ -1,6 +1,6 @@
 # ProjBobcat [![CodeQL](https://github.com/Corona-Studio/ProjBobcat/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/Corona-Studio/ProjBobcat/actions/workflows/codeql-analysis.yml)
 
-# [简体中文](https://github.com/Corona-Studio/ProjBobcat/blob/master/README_zh_cn.md)
+## [简体中文](https://github.com/Corona-Studio/ProjBobcat/blob/master/README_zh_cn.md)
 
 ![Hx18lYLKR43WAb2](https://user-images.githubusercontent.com/25716486/172503112-95515b07-52ee-4d1e-868e-b87137c6034e.png)
 ![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/corona-studio/projbobcat?logo=codefactor&style=for-the-badge)
