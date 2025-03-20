@@ -268,14 +268,11 @@ public class MicrosoftAuthenticator : IAuthenticator
         #region STAGE 5
 
         using var profileReq = new HttpRequestMessage(HttpMethod.Get, MojangProfileUrl);
-        ownershipReq.Headers.Authorization = new AuthenticationHeaderValue("Bearer", mcRes.AccessToken);
+        profileReq.Headers.Authorization = new AuthenticationHeaderValue("Bearer", mcRes.AccessToken);
 
         using var profileRes = await client.SendAsync(profileReq);
-        var profile =
-            await profileRes.Content.ReadFromJsonAsync(MojangProfileResponseModelContext.Default
-                .MojangProfileResponseModel);
-
-        if (profile == null)
+        
+        if (!profileRes.IsSuccessStatusCode)
         {
             var errModel =
                 await profileRes.Content.ReadFromJsonAsync(MojangErrorResponseModelContext.Default
@@ -292,6 +289,10 @@ public class MicrosoftAuthenticator : IAuthenticator
                 }
             };
         }
+
+        var profile =
+            await profileRes.Content.ReadFromJsonAsync(MojangProfileResponseModelContext.Default
+                .MojangProfileResponseModel);
 
         #endregion
 
