@@ -28,6 +28,8 @@ public static class GuidHelper
     /// <summary>
     ///     根据离线玩家名，按一定方式处理并计算哈希值，转换为一个对应的 <see cref="Guid" /> 。
     ///     相等的玩家名将产生相等的 <see cref="Guid" /> 。
+    ///     满足 Bukkit 离线玩家 UUID 生成规则。
+    ///     <see href="https://github.com/MCLF-CN/docs/issues/7"/>
     /// </summary>
     /// <param name="username">玩家名。</param>
     /// <returns>生成结果。</returns>
@@ -42,9 +44,11 @@ public static class GuidHelper
     }
 
     /// <summary>
-    ///     Rfc4122 格式的 Guid 字符串的最小实现结构体，引自 https://github.com/vanbukin/Uuids
+    ///     Rfc4122 格式的 Guid 字符串的最小实现结构体，引自 <see href="https://github.com/vanbukin/Uuids"/>
+    ///     <para>
+    ///     <seealso href="https://github.com/vanbukin/Uuids/blob/main/src/Uuids/Uuid.cs"/>
+    ///     </para>
     /// </summary>
-    /// <seealso cref="https://github.com/vanbukin/Uuids/blob/main/src/Uuids/Uuid.cs"/>
     [StructLayout(LayoutKind.Sequential)]
     private unsafe struct Uuid
     {
@@ -173,6 +177,10 @@ public static class GuidHelper
             }
         }
 
+        /// <summary>
+        /// 仅摘取了原实现中的 FormatN 方法。
+        /// </summary>
+        /// <returns></returns>
         public override string ToString()
         {
             string uuidString = new('\0', 32);
