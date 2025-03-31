@@ -61,10 +61,10 @@ jobs:
         dotnet-version: 9.0.x
 
     - name: Restore packages
-        run: dotnet restore ProjBobcat/ProjBobcat.slnx
+      run: dotnet restore ProjBobcat/ProjBobcat.slnx
 
     - name: Build Test
-        run: dotnet build ProjBobcat/ProjBobcat.slnx -c Release --no-restore
+      run: dotnet build ProjBobcat/ProjBobcat.slnx -c Release --no-restore
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
