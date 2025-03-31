@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+  </Folder>
+  <Project Path="../JsonRepairSharp/JsonRepairSharp/JsonRepairSharp.csproj" />
+  <Project Path="ProjBobcat.Tests/ProjBobcat.Tests.csproj" />
+  <Project Path="ProjBobcat/ProjBobcat.csproj" />
+</Solution>
