@@ -21,10 +21,10 @@ jobs:
             submodules: recursive
 
       - name: Restore packages
-        run: dotnet restore ProjBobcat/ProjBobcat.sln
+        run: dotnet restore ProjBobcat/ProjBobcat.slnx
 
       - name: Build Test
-        run: dotnet build ProjBobcat/ProjBobcat.sln -c Release --no-restore
+        run: dotnet build ProjBobcat/ProjBobcat.slnx -c Release --no-restore
   publish-package:
     name: Publish PreRelease package
     runs-on: windows-latest
