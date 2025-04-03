@@ -5,5 +5,5 @@
 /// </summary>
 public abstract class LauncherParserBase(string rootPath)
 {
-    protected string RootPath { get; init; } = rootPath;
+    protected string RootPath { get; } = rootPath;
 }

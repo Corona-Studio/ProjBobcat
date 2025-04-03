@@ -27,6 +27,7 @@ public interface IArgumentParser
     /// </summary>
     /// <returns>解析好的游戏JVM参数</returns>
     IEnumerable<string> ParseJvmArguments(
+        string nativePath,
         IVersionInfo versionInfo,
         ResolvedGameVersion resolvedGameVersion,
         LaunchSettings launchSettings);
@@ -47,6 +48,7 @@ public interface IArgumentParser
     /// </summary>
     /// <returns>解析好的全部参数</returns>
     IReadOnlyList<string> GenerateLaunchArguments(
+        string nativePath,
         IVersionInfo versionInfo,
         ResolvedGameVersion resolvedVersion,
         LaunchSettings launchSettings,

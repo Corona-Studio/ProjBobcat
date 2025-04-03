@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Frozen;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
@@ -36,6 +37,34 @@ public sealed class DefaultGameCore : GameCoreBase
             ArgumentException.ThrowIfNullOrEmpty(value);
 
             this._rootPath = Path.GetFullPath(value.TrimEnd('/'));
+        }
+    }
+
+    private void CleanupOldNatives(LaunchSettings settings)
+    {
+        var nativeRoot = Path.Combine(this.RootPath, GamePathHelper.GetNativeRoot(settings.Version));
+        var di = new DirectoryInfo(nativeRoot);
+
+        if (!di.Exists) return;
+
+        var dirs = di.EnumerateDirectories()
+            .Where(d => (DateTime.Now - d.CreationTime).TotalDays >= 1)
+            .ToFrozenSet();
+
+        foreach (var dir in dirs)
+        {
+            try
+            {
+                DirectoryHelper.CleanDirectory(dir.FullName, true);
+            }
+            catch (IOException)
+            {
+                // Ignore
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // Ignore
+            }
         }
     }
 
@@ -175,7 +204,8 @@ public sealed class DefaultGameCore : GameCoreBase
                 };
             }
 
-            var arguments = argumentParser.GenerateLaunchArguments(version, resolvedVersion, settings, authResult);
+            var nativeRoot = Path.Combine(this.RootPath, GamePathHelper.CreateNativeRoot(settings.Version));
+            var arguments = argumentParser.GenerateLaunchArguments(nativeRoot, version, resolvedVersion, settings, authResult);
             this.InvokeLaunchLogThenStart("解析启动参数", ref currentTimestamp);
 
             //通过String Builder格式化参数。（转化成字符串）
@@ -189,13 +219,13 @@ public sealed class DefaultGameCore : GameCoreBase
 
             try
             {
-                var nativeRoot = Path.Combine(this.RootPath, GamePathHelper.GetNativeRoot(settings.Version));
                 var nativeRootPath = Path.Combine(this.RootPath, nativeRoot);
 
                 if (!Directory.Exists(nativeRootPath))
                     Directory.CreateDirectory(nativeRootPath);
 
                 DirectoryHelper.CleanDirectory(nativeRootPath);
+                this.CleanupOldNatives(settings);
 
                 foreach (var n in resolvedVersion.Natives)
                 {

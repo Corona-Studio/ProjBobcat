@@ -26,7 +26,6 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
         string rootPath) : base(rootPath, launcherProfileParser, versionLocator)
     {
         this.VersionLocator = versionLocator;
-        this.RootPath = rootPath;
         this.LauncherProfileParser = launcherProfileParser;
     }
 
@@ -88,6 +87,7 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
     }
 
     public IEnumerable<string> ParseJvmArguments(
+        string nativePath,
         IVersionInfo versionInfo,
         ResolvedGameVersion resolvedGameVersion,
         LaunchSettings launchSettings)
@@ -95,7 +95,7 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
         var version = (VersionInfo)versionInfo;
         var versionNameFollowing = string.IsNullOrEmpty(version.RootVersion) ? string.Empty : $",{version.RootVersion}";
         var versionName = $"{launchSettings.Version}{versionNameFollowing}".Replace(' ', '_');
-        var nativeRoot = Path.Combine(this.RootPath, GamePathHelper.GetNativeRoot(launchSettings.Version));
+        var nativeRoot = Path.Combine(this.RootPath, nativePath);
 
         var sb = new StringBuilder();
         foreach (var lib in resolvedGameVersion.Libraries)
@@ -217,6 +217,7 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
     }
 
     public IReadOnlyList<string> GenerateLaunchArguments(
+        string nativePath,
         IVersionInfo versionInfo,
         ResolvedGameVersion resolvedVersion,
         LaunchSettings launchSettings,
@@ -229,7 +230,7 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
         var arguments = new List<string>();
 
         arguments.AddRange(this.ParseJvmHeadArguments(launchSettings, gameProfile));
-        arguments.AddRange(this.ParseJvmArguments(versionInfo, resolvedVersion, launchSettings));
+        arguments.AddRange(this.ParseJvmArguments(nativePath, versionInfo, resolvedVersion, launchSettings));
 
         if (launchSettings.EnableXmlLoggingOutput)
             arguments.AddRange(this.ParseGameLoggingArguments(resolvedVersion));

@@ -89,14 +89,23 @@ public static class GamePathHelper
         return "libraries";
     }
 
+    public static string GetNativeRoot(string versionId)
+    {
+        return Path.Combine("versions", versionId, "natives");
+    }
+
     /// <summary>
     ///     .minecraft/versions/natives/
     /// </summary>
     /// <param name="versionId"></param>
     /// <returns></returns>
-    public static string GetNativeRoot(string versionId)
+    public static string CreateNativeRoot(string versionId)
     {
-        return Path.Combine("versions", versionId, "natives");
+#if NET9_0_OR_GREATER
+        return Path.Combine("versions", versionId, "natives", $"{Guid.CreateVersion7():N}_natives");
+#else
+        return Path.Combine("versions", versionId, "natives", $"{Guid.NewGuid():N}_natives");
+#endif
     }
 
     /// <summary>
