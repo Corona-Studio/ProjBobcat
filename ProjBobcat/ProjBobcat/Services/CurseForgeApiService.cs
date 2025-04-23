@@ -58,6 +58,9 @@ public class CurseForgeApiService(
 
         using var res = await httpClient.GetAsync(reqUrl, ct);
 
+        if (!res.IsSuccessStatusCode)
+            return null;
+
         return await res.Content.ReadFromJsonAsync(CurseForgeModelContext.Default
             .DataModelWithPaginationCurseForgeAddonInfoArray, ct);
     }

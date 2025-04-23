@@ -99,9 +99,11 @@ public class ModrinthApiService(
         var reqUrl = $"{GetApiRoot()}/search{searchOptions}";
 
         using var res = await Get(reqUrl, ct);
-        var resModel = await res.Content.ReadFromJsonAsync(ModrinthSearchResultContext.Default.ModrinthSearchResult, ct);
 
-        return resModel;
+        if (!res.IsSuccessStatusCode)
+            return null;
+
+        return await res.Content.ReadFromJsonAsync(ModrinthSearchResultContext.Default.ModrinthSearchResult, ct);
     }
 
     public async Task<ModrinthVersionInfo[]?> GetProjectVersions(string projectId)
