@@ -566,7 +566,24 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                 .OrderByDescending(l => new ComparableVersion(l.Name.ResolveMavenString()?.Version ?? "0"))
                 .ToList();
 
-            for (var i = 1; i < sortedDuplicates.Count; i++) rawLibs.Remove(sortedDuplicates[i]);
+            for (var i = 1; i < sortedDuplicates.Count; i++)
+                rawLibs.Remove(sortedDuplicates[i]);
+        }
+
+        // Patch for PCL and HMCL
+        var duplicateOw2Lib = rawLibs
+            .Where(lib => lib.Name.Contains("org.ow2.asm:asm:", StringComparison.OrdinalIgnoreCase))
+            .ToArray();
+
+        if (duplicateOw2Lib.Length > 1)
+        {
+            // Pick the latest version of org.ow2.asm:asm
+            var sortedDuplicates = duplicateOw2Lib
+                .OrderByDescending(l => new ComparableVersion(l.Name.ResolveMavenString()?.Version ?? "0"))
+                .Skip(1);
+
+            foreach (var duplicates in sortedDuplicates)
+                rawLibs.Remove(duplicates);
         }
 
         rawLibs = NativeReplaceHelper.Replace(

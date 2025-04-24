@@ -117,7 +117,8 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
             { "${classpath}", $"\"{sb}\"" },
             { "${classpath_separator}", Path.PathSeparator.ToString() },
             { "${library_directory}", $"\"{Path.Combine(this.RootPath, GamePathHelper.GetLibraryRootPath())}\"" },
-            { "${version_name}", versionName }
+            { "${version_name}", versionName },
+            { "${primary_jar_name}", $"\"{version.Id}.jar\""}
         };
 
         #region log4j 缓解措施

@@ -161,13 +161,17 @@ public static partial class DownloadHelper
 
         if (downloadFile == null) return;
 
-        if (downloadSettings.DownloadParts <= 0)
-            downloadSettings.DownloadParts = Environment.ProcessorCount;
+        if (downloadSettings.DownloadParts <= 1)
+        {
+            // Fallback to normal download
+            await DownloadData(downloadFile, downloadSettings);
+            return;
+        }
 
         var exceptions = new List<Exception>();
         var filePath = Path.Combine(downloadFile.DownloadPath, downloadFile.FileName);
         var timeout = downloadSettings.Timeout;
-        var trials = downloadSettings.RetryCount == 0 ? 1 : downloadSettings.RetryCount;
+        var trials = downloadSettings.RetryCount <= 0 ? 1 : downloadSettings.RetryCount;
         var subChunkSplitCount = 0;
 
         var aggregatedSpeed = 0U;
