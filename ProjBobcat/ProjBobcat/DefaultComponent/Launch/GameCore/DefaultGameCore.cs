@@ -311,7 +311,10 @@ public sealed class DefaultGameCore : GameCoreBase
 
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
-                    psi = new ProcessStartInfo("cmd.exe", $"/k \"{javaCommand}\"")
+                    var batFilePath = $"{Path.GetTempFileName()}.bat";
+                    await File.WriteAllTextAsync(batFilePath, $"@echo off\r\ncd /d \"{rootPath}\"\r\n{javaCommand}\r\n");
+
+                    psi = new ProcessStartInfo("cmd.exe", $"/k \"{batFilePath}\"")
                     {
                         UseShellExecute = true,
                         WindowStyle = ProcessWindowStyle.Normal,
