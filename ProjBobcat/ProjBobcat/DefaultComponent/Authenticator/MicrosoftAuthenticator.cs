@@ -272,9 +272,27 @@ public class MicrosoftAuthenticator : IAuthenticator
 
         using var profileRes = await client.SendAsync(profileReq);
 
-        var profile =
-            await profileRes.Content.ReadFromJsonAsync(MojangProfileResponseModelContext.Default
-                .MojangProfileResponseModel);
+        MojangProfileResponseModel? profile;
+
+        try
+        {
+            profile =
+                await profileRes.Content.ReadFromJsonAsync(MojangProfileResponseModelContext.Default
+                    .MojangProfileResponseModel);
+        }
+        catch (JsonException e)
+        {
+            return new MicrosoftAuthResult
+            {
+                AuthStatus = AuthStatus.Failed,
+                Error = new ErrorModel
+                {
+                    Cause = "NOPROFILE",
+                    Error = "无法从服务器拉取用户档案，用户还没有建立 Mojang Profile",
+                    ErrorMessage = e.ToString()
+                }
+            };
+        }
 
         if (!profileRes.IsSuccessStatusCode || profile == null)
         {
@@ -287,7 +305,7 @@ public class MicrosoftAuthenticator : IAuthenticator
                 AuthStatus = AuthStatus.Failed,
                 Error = new ErrorModel
                 {
-                    Cause = "没有找到账户档案",
+                    Cause = "NOPROFILE",
                     Error = $"无法从服务器拉取用户档案，原因：{errModel?.Error ?? "未知"}",
                     ErrorMessage = errModel?.ErrorMessage ?? "未知"
                 }
