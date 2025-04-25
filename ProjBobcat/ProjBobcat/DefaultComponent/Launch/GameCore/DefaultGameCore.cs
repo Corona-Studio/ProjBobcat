@@ -16,6 +16,7 @@ using ProjBobcat.Class.Model.YggdrasilAuth;
 using ProjBobcat.DefaultComponent.Authenticator;
 using ProjBobcat.Event;
 using FileInfo = System.IO.FileInfo;
+using System.Runtime.InteropServices;
 
 namespace ProjBobcat.DefaultComponent.Launch.GameCore;
 
@@ -289,15 +290,63 @@ public sealed class DefaultGameCore : GameCoreBase
                 ? Path.Combine(this.RootPath, GamePathHelper.GetGamePath(settings.Version))
                 : this.RootPath;
 
-            var psi = new ProcessStartInfo(java!.JavaPath, string.Join(' ', arguments))
+            ProcessStartInfo psi;
+
+            if (!settings.UseShellExecute)
             {
-                UseShellExecute = false,
-                WorkingDirectory = rootPath,
-                RedirectStandardError = true,
-                RedirectStandardOutput = true,
-                StandardOutputEncoding = Encoding.UTF8,
-                StandardErrorEncoding = Encoding.UTF8
-            };
+                psi = new ProcessStartInfo(java!.JavaPath, string.Join(' ', arguments))
+                {
+                    UseShellExecute = false,
+                    WorkingDirectory = rootPath,
+                    RedirectStandardError = true,
+                    RedirectStandardOutput = true,
+                    StandardOutputEncoding = Encoding.UTF8,
+                    StandardErrorEncoding = Encoding.UTF8
+                };
+            }
+            else
+            {
+                var normalJavaPath = java!.JavaPath.Replace("javaw", "java", StringComparison.OrdinalIgnoreCase);
+                var javaCommand = $"{normalJavaPath} {string.Join(' ', arguments)}";
+
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    psi = new ProcessStartInfo("cmd.exe", $"/k \"{javaCommand}\"")
+                    {
+                        UseShellExecute = true,
+                        WindowStyle = ProcessWindowStyle.Normal,
+                        WorkingDirectory = rootPath,
+                    };
+                }
+                else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                {
+                    // macOS: Use Terminal.app to open a new terminal window
+                    psi = new ProcessStartInfo("open", $"-a Terminal \"{rootPath}\"")
+                    {
+                        UseShellExecute = true
+                    };
+
+                    // To run the command, you might need a small script placed at rootPath that runs javaCommand
+                    // Alternatively, more complex "osascript" can be used if needed
+                }
+                else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                {
+                    // Linux: Try gnome-terminal or xterm (depends on installed terminal)
+                    psi = new ProcessStartInfo("gnome-terminal", $"-- bash -c \"{javaCommand}; exec bash\"")
+                    {
+                        UseShellExecute = true,
+                        WorkingDirectory = rootPath,
+                    };
+                }
+                else
+                {
+                    throw new PlatformNotSupportedException("Unsupported OS platform.");
+                }
+            }
+
+            // Patch for third-party launcher
+            if (!settings.UseShellExecute)
+                psi.EnvironmentVariables.Remove("JAVA_TOOL_OPTIONS");
 
             #region log4j 缓解措施
 

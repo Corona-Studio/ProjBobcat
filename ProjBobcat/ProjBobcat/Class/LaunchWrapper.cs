@@ -58,7 +58,7 @@ public class LaunchWrapper(AuthResultBase authResult, LaunchSettings launchSetti
     public void Do()
     {
         if (this.Process == null) return;
-        if (this.Process.ProcessName != "Minecraft.Windows")
+        if (!LaunchSettings.UseShellExecute && this.Process.ProcessName != "Minecraft.Windows")
         {
             this.Process.OutputDataReceived += this.ProcessOnOutputDataReceived;
             this.Process.ErrorDataReceived += this.ProcessOnErrorDataReceived;

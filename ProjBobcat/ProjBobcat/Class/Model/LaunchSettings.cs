@@ -43,6 +43,8 @@ public class LaunchSettings
     /// </summary>
     public required string Version { get; init; }
 
+    public required bool UseShellExecute { get; init; }
+
     public bool EnableXmlLoggingOutput { get; init; }
 
     public required NativeReplacementPolicy NativeReplacementPolicy { get; init; }

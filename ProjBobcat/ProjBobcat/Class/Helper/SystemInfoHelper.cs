@@ -75,6 +75,23 @@ public static class SystemInfoHelper
         return null;
     }
 
+    private static bool IsSymbolLink(string path)
+    {
+        try
+        {
+            var fileInfo = new System.IO.FileInfo(path);
+
+            if (!fileInfo.Exists)
+                return false;
+
+            return (fileInfo.Attributes & FileAttributes.ReparsePoint) == FileAttributes.ReparsePoint;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
     [SupportedOSPlatform(nameof(OSPlatform.Windows))]
     [SupportedOSPlatform(nameof(OSPlatform.OSX))]
     [SupportedOSPlatform(nameof(OSPlatform.Linux))]
@@ -84,31 +101,31 @@ public static class SystemInfoHelper
 
         if (fullSearch)
             await foreach (var path in DeepJavaSearcher.DeepSearch())
-                if (searched.Add(path))
+                if (searched.Add(path) && !IsSymbolLink(path))
                     yield return path;
 
         if (OperatingSystem.IsWindows())
             foreach (var path in Platforms.Windows.SystemInfoHelper.FindJavaWindows())
-                if (searched.Add(path))
+                if (searched.Add(path) && !IsSymbolLink(path))
                     yield return path;
 
         if (OperatingSystem.IsMacOS())
             foreach (var path in Platforms.MacOS.SystemInfoHelper.FindJavaMacOS())
-                if (searched.Add(path))
+                if (searched.Add(path) && !IsSymbolLink(path))
                     yield return path;
 
         if (OperatingSystem.IsLinux())
             foreach (var path in Platforms.Linux.SystemInfoHelper.FindJavaLinux())
-                if (searched.Add(path))
+                if (searched.Add(path) && !IsSymbolLink(path))
                     yield return path;
 
         foreach (var path in FindJavaInOfficialGamePath())
-            if (searched.Add(path))
+            if (searched.Add(path) && !IsSymbolLink(path))
                 yield return path;
 
         var evJava = FindJavaUsingEnvironmentVariable();
 
-        if (!string.IsNullOrEmpty(evJava) && searched.Add(evJava))
+        if (!string.IsNullOrEmpty(evJava) && searched.Add(evJava) && !IsSymbolLink(evJava))
             yield return Path.Combine(evJava, Constants.JavaExecutablePath);
     }
 
