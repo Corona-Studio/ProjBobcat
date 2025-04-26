@@ -69,6 +69,70 @@ public sealed class DefaultGameCore : GameCoreBase
         }
     }
 
+    private static async Task<ProcessStartInfo> StartGameInShellInWindows(
+        string rootPath,
+        string command)
+    {
+        var tempScriptPath = Path.Combine(Path.GetTempPath(), "launch_java_command.bat");
+        await File.WriteAllTextAsync(tempScriptPath, $"""
+                                                      @echo off
+                                                      cd /d "{rootPath}"
+                                                      {command}
+                                                      pause
+                                                      """);
+
+        return new ProcessStartInfo("cmd.exe", $"/k \"{tempScriptPath}\"")
+        {
+            UseShellExecute = true,
+            WindowStyle = ProcessWindowStyle.Normal,
+            WorkingDirectory = rootPath,
+        };
+    }
+
+    private static async Task<ProcessStartInfo> StartGameInShellInUnix(
+        string rootPath,
+        string command)
+    {
+        var tempScriptPath = Path.Combine(Path.GetTempPath(), "launch_java_command.sh");
+        await File.WriteAllTextAsync(tempScriptPath, $"""
+                                                      #!/bin/bash
+                                                      cd "{rootPath}"
+                                                      {command}
+                                                      exec bash
+                                                      """);
+        var chmodProcess = Process.Start(new ProcessStartInfo("chmod", $"+x \"{tempScriptPath}\"") { UseShellExecute = false });
+
+        ArgumentNullException.ThrowIfNull(chmodProcess);
+        
+        await chmodProcess.WaitForExitAsync();
+        
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        {
+            return new ProcessStartInfo("open", $"-a Terminal \"{tempScriptPath}\"")
+            {
+                UseShellExecute = true
+            };
+        }
+
+        var terminal = File.Exists("/usr/bin/gnome-terminal") ? "gnome-terminal" : "xterm";
+        if (terminal == "gnome-terminal")
+        {
+            return new ProcessStartInfo(terminal, $"-- bash -c '{tempScriptPath}; exec bash'")
+            {
+                UseShellExecute = true,
+                WorkingDirectory = rootPath,
+            };
+        }
+        else
+        {
+            return new ProcessStartInfo(terminal, $"-e bash -c '{tempScriptPath}; exec bash'")
+            {
+                UseShellExecute = true,
+                WorkingDirectory = rootPath,
+            };
+        }
+    }
+
     public override async Task<LaunchResult> LaunchTaskAsync(LaunchSettings settings)
     {
         ArgumentNullException.ThrowIfNull(this.VersionLocator.LauncherProfileParser);
@@ -309,42 +373,15 @@ public sealed class DefaultGameCore : GameCoreBase
                 var normalJavaPath = java!.JavaPath.Replace("javaw", "java", StringComparison.OrdinalIgnoreCase);
                 var javaCommand = $"{normalJavaPath} {string.Join(' ', arguments)}";
 
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                psi = javaCommand switch
                 {
-                    var batFilePath = $"{Path.GetTempFileName()}.bat";
-                    await File.WriteAllTextAsync(batFilePath, $"@echo off\r\ncd /d \"{rootPath}\"\r\n{javaCommand}\r\n");
-
-                    psi = new ProcessStartInfo("cmd.exe", $"/k \"{batFilePath}\"")
-                    {
-                        UseShellExecute = true,
-                        WindowStyle = ProcessWindowStyle.Normal,
-                        WorkingDirectory = rootPath,
-                    };
-                }
-                else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-                {
-                    // macOS: Use Terminal.app to open a new terminal window
-                    psi = new ProcessStartInfo("open", $"-a Terminal \"{rootPath}\"")
-                    {
-                        UseShellExecute = true
-                    };
-
-                    // To run the command, you might need a small script placed at rootPath that runs javaCommand
-                    // Alternatively, more complex "osascript" can be used if needed
-                }
-                else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                {
-                    // Linux: Try gnome-terminal or xterm (depends on installed terminal)
-                    psi = new ProcessStartInfo("gnome-terminal", $"-- bash -c \"{javaCommand}; exec bash\"")
-                    {
-                        UseShellExecute = true,
-                        WorkingDirectory = rootPath,
-                    };
-                }
-                else
-                {
-                    throw new PlatformNotSupportedException("Unsupported OS platform.");
-                }
+                    _ when RuntimeInformation.IsOSPlatform(OSPlatform.Windows) =>
+                        await StartGameInShellInWindows(rootPath, javaCommand),
+                    _ when RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ||
+                           RuntimeInformation.IsOSPlatform(OSPlatform.Linux) =>
+                        await StartGameInShellInUnix(rootPath, javaCommand),
+                    _ => throw new PlatformNotSupportedException("Unsupported OS platform.")
+                };
             }
 
             // Patch for third-party launcher
