@@ -118,9 +118,9 @@ public class DefaultResourceCompleter : IResourceCompleter
         });
 
         var isLibraryFailed = this._failedFiles.Any(d => d.FileType == ResourceType.LibraryOrNative);
-        var result = this._failedFiles switch
+        var result = isLibraryFailed switch
         {
-            _ when isLibraryFailed => TaskResultStatus.Error,
+            true => TaskResultStatus.Error,
             _ when !this._failedFiles.IsEmpty => TaskResultStatus.PartialSuccess,
             _ => TaskResultStatus.Success
         };
@@ -128,7 +128,7 @@ public class DefaultResourceCompleter : IResourceCompleter
         var resultArgs = new ResourceCompleterCheckResult
         {
             IsLibDownloadFailed = isLibraryFailed,
-            FailedFiles = this._failedFiles
+            FailedFiles = new List<MultiSourceDownloadFile>(this._failedFiles)
         };
 
         return new TaskResult<ResourceCompleterCheckResult?>(result, value: resultArgs);

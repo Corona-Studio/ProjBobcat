@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
@@ -21,16 +23,40 @@ using ProjBobcat.Interface.Services;
 
 namespace ProjBobcat.DefaultComponent.Installer.ModPackInstaller;
 
+public record ResolvedUrlRecord(long ProjectId, long FileId, string Url);
+
+[JsonSerializable(typeof(IReadOnlyDictionary<string, ResolvedUrlRecord>))]
+public partial class CurseForgeCacheJsonContext : JsonSerializerContext;
+
 public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInstaller
 {
     public override string RootPath { get; init; } = string.Empty;
     public required string ModPackPath { get; init; }
     public string? GameId { get; init; }
+    public required int RetryCount { get; init; } = 6;
+    public required bool FreshInstall { get; init; }
     public required ICurseForgeApiService CurseForgeApiService { get; init; }
 
     public void Install()
     {
         this.InstallTaskAsync().GetAwaiter().GetResult();
+    }
+
+    private static async Task<IReadOnlyDictionary<string, ResolvedUrlRecord>> TryReadUrlCacheAsync(string path)
+    {
+        try
+        {
+            await using var fs = File.OpenRead(path);
+            var result = await JsonSerializer.DeserializeAsync(
+                fs,
+                CurseForgeCacheJsonContext.Default.IReadOnlyDictionaryStringResolvedUrlRecord);
+
+            return result ?? ImmutableDictionary<string, ResolvedUrlRecord>.Empty;
+        }
+        catch (Exception)
+        {
+            return ImmutableDictionary<string, ResolvedUrlRecord>.Empty;
+        }
     }
 
     public async Task InstallTaskAsync()
@@ -45,7 +71,13 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         ArgumentNullException.ThrowIfNull(manifest, "无法读取到 CurseForge 的 manifest 文件");
 
         var idPath = Path.Combine(this.RootPath, GamePathHelper.GetGamePath(this.GameId));
+        var resolveUrlPath = Path.Combine(this.RootPath, GamePathHelper.GetGamePath(this.GameId), ".resolved");
         var downloadPath = Path.Combine(Path.GetFullPath(idPath), "mods");
+
+        if (FreshInstall)
+        {
+            FileHelper.DeleteFileWithRetry(resolveUrlPath);
+        }
 
         var di = new DirectoryInfo(downloadPath);
 
@@ -59,20 +91,20 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
             return urls.Select(file => (file.ProjectId, file.FileId));
         });
 
+        var tempResolvedUrl = await TryReadUrlCacheAsync(resolveUrlPath);
+        var resolvedUrl = new ConcurrentDictionary<string, ResolvedUrlRecord>(tempResolvedUrl);
+
         var urlBags = new ConcurrentBag<SimpleDownloadFile>();
         var urlReqExceptions = new ConcurrentBag<CurseForgeModResolveException>();
+        var lastProgress = ProgressValue.Start;
         var actionBlock = new ActionBlock<(long, long)>(async t =>
         {
-            var progress = ProgressValue.FromDisplay(50);
+            var key = $"{t.Item1:####}{t.Item2:####}";
 
-            try
+            if (resolvedUrl.TryGetValue(key, out var value) &&
+                !string.IsNullOrEmpty(value.Url))
             {
-                var downloadUrlRes = await CurseForgeApiService.GetAddonDownloadUrl(t.Item1, t.Item2);
-
-                if (string.IsNullOrEmpty(downloadUrlRes))
-                    throw new CurseForgeModResolveException(t.Item1, t.Item2);
-
-                var d = downloadUrlRes.Trim('"');
+                var d = value.Url;
                 var fn = Path.GetFileName(d);
 
                 var downloadFile = new SimpleDownloadFile
@@ -86,7 +118,58 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
                 urlBags.Add(downloadFile);
 
                 var addedTotalDownloaded = Interlocked.Increment(ref this.TotalDownloaded);
-                progress = ProgressValue.Create(addedTotalDownloaded, this.NeedToDownload);
+                var progress = ProgressValue.Create(addedTotalDownloaded, this.NeedToDownload);
+                lastProgress = progress;
+
+                this.InvokeStatusChangedEvent($"成功解析 MOD [{t.Item1}] 的下载地址",
+                    progress);
+
+                return;
+            }
+
+            try
+            {
+                string? downloadUrlRes = null;
+
+                for (var i = 0; i < this.RetryCount; i++)
+                {
+                    try
+                    {
+                        downloadUrlRes = await CurseForgeApiService.GetAddonDownloadUrl(t.Item1, t.Item2);
+                        break;
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.WriteLine(e);
+                        downloadUrlRes = null;
+
+                        if (i == this.RetryCount - 1)
+                            throw new CurseForgeModResolveException(t.Item1, t.Item2, e);
+                    }
+                }
+
+                if (string.IsNullOrEmpty(downloadUrlRes))
+                    throw new CurseForgeModResolveException(t.Item1, t.Item2);
+
+                var d = downloadUrlRes.Trim('"');
+                var urlRecord = new ResolvedUrlRecord(t.Item2, t.Item1, d);
+                resolvedUrl.AddOrUpdate(key, _ => urlRecord, (_, _) => urlRecord);
+
+                var fn = Path.GetFileName(d);
+
+                var downloadFile = new SimpleDownloadFile
+                {
+                    DownloadPath = di.FullName,
+                    DownloadUri = d,
+                    FileName = fn
+                };
+                downloadFile.Completed += this.WhenCompleted;
+
+                urlBags.Add(downloadFile);
+
+                var addedTotalDownloaded = Interlocked.Increment(ref this.TotalDownloaded);
+                var progress = ProgressValue.Create(addedTotalDownloaded, this.NeedToDownload);
+                lastProgress = progress;
 
                 this.InvokeStatusChangedEvent($"成功解析 MOD [{t.Item1}] 的下载地址",
                     progress);
@@ -95,9 +178,27 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
             {
                 this.InvokeStatusChangedEvent(
                     $"MOD [{t.Item1}] 的下载地址解析失败，尝试手动拼接",
-                    progress);
+                    lastProgress);
 
-                var (guessed, df) = await this.TryGuessModDownloadLink(t.Item2, di.FullName);
+                (bool, SimpleDownloadFile?) pair = (false, null);
+
+                for (var i = 0; i < this.RetryCount; i++)
+                {
+                    try
+                    {
+                        pair = await this.TryGuessModDownloadLink(t.Item2, di.FullName);
+                        break;
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine(ex);
+
+                        if (i == this.RetryCount - 1)
+                            throw;
+                    }
+                }
+
+                var (guessed, df) = pair;
 
                 if (!guessed || df == null)
                 {
@@ -125,8 +226,11 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
                 urlBags.Add(df);
 
+                var urlRecord = new ResolvedUrlRecord(t.Item2, t.Item1, df.DownloadUri);
+                resolvedUrl.AddOrUpdate(key, _ => urlRecord, (_, _) => urlRecord);
+
                 var addedTotalDownloaded = Interlocked.Increment(ref this.TotalDownloaded);
-                progress = ProgressValue.Create(addedTotalDownloaded, this.NeedToDownload);
+                var progress = ProgressValue.Create(addedTotalDownloaded, this.NeedToDownload);
 
                 this.InvokeStatusChangedEvent($"成功解析 MOD [{t.Item1}] 的下载地址",
                     progress);
@@ -143,6 +247,17 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         urlBlock.Complete();
 
         await actionBlock.Completion;
+
+        try
+        {
+            await using var fs = File.Create(resolveUrlPath);
+            await JsonSerializer.SerializeAsync(fs, resolvedUrl,
+                CurseForgeCacheJsonContext.Default.IReadOnlyDictionaryStringResolvedUrlRecord);
+        }
+        catch
+        {
+            // Ignore
+        }
 
         if (!urlReqExceptions.IsEmpty)
             throw new AggregateException(urlReqExceptions);

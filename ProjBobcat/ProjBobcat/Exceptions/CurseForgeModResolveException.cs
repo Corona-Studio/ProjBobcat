@@ -2,9 +2,15 @@ using System;
 
 namespace ProjBobcat.Exceptions;
 
-public sealed class CurseForgeModResolveException : Exception
+public sealed class CurseForgeModResolveException : AggregateException
 {
     public CurseForgeModResolveException(long addonId, long fileId) : base(GetMessage(addonId, fileId, null))
+    {
+        AddonId = addonId;
+        FileId = fileId;
+    }
+
+    public CurseForgeModResolveException(long addonId, long fileId, Exception ex) : base(new Exception(GetMessage(addonId, fileId, null)), ex)
     {
         AddonId = addonId;
         FileId = fileId;

@@ -30,7 +30,6 @@ public static partial class DownloadHelper
         CancellationTokenSource Cts);
 
     record ChunkInfo(
-        HttpClient Client,
         int CurrentChunkSplitCount,
         HttpResponseMessage Response,
         DownloadRange Range,
@@ -181,7 +180,7 @@ public static partial class DownloadHelper
 
         while (downloadFile.RetryCount < trials)
         {
-            using var cts = new CancellationTokenSource(timeout * Math.Max(1, (downloadFile.RetryCount + 1) * 0.5));
+            using var cts = new CancellationTokenSource(timeout * Math.Max(1, downloadFile.RetryCount + 1));
 
             try
             {
@@ -217,7 +216,7 @@ public static partial class DownloadHelper
 
                         // If the retry count is 1 or condition met, we will fall back to normal download
                         if (downloadSettings.RetryCount == 0 ||
-                            downloadFile.PartialDownloadRetryCount > downloadSettings.RetryCount / 2)
+                            downloadFile.PartialDownloadRetryCount >= downloadSettings.RetryCount / 2)
                         {
                             // Reset the retry count
                             downloadFile.RetryCount = 0;
@@ -289,7 +288,6 @@ public static partial class DownloadHelper
                                 }
 
                                 return new ChunkInfo(
-                                    preChunkInfo.Client,
                                     preChunkInfo.CurrentChunkSplitCount,
                                     downloadTask,
                                     preChunkInfo.Range,
@@ -515,6 +513,9 @@ public static partial class DownloadHelper
                         {
                             downloadFile.RetryCount++;
                             downloadFile.FinishedRangeStreams.Clear();
+                            downloadFile.UrlInfo = null;
+                            downloadFile.Ranges = null;
+
                             exceptions.Add(new HashMismatchException(filePath, downloadFile.CheckSum!, checkSum,
                                 downloadFile));
 
@@ -529,12 +530,19 @@ public static partial class DownloadHelper
                         await ms.CopyToAsync(fs, cts.Token);
                     }
                 }
-
-#endregion
+                
+                #endregion
 
                 await RecycleDownloadFile(downloadFile);
                 downloadFile.OnCompleted(true, null, aSpeed);
                 return;
+            }
+            catch (TaskCanceledException)
+            {
+                // We don't want to increase the retry count here
+                downloadFile.PartialDownloadRetryCount++;
+                downloadFile.UrlInfo = null;
+                downloadFile.Ranges = null;
             }
             catch (DownloadChunkSplitException ex)
             {
@@ -550,6 +558,10 @@ public static partial class DownloadHelper
             catch (Exception ex)
             {
                 downloadFile.RetryCount++;
+                downloadFile.PartialDownloadRetryCount++;
+                downloadFile.FinishedRangeStreams.Clear();
+                downloadFile.UrlInfo = null;
+                downloadFile.Ranges = null;
                 exceptions.Add(ex);
             }
         }

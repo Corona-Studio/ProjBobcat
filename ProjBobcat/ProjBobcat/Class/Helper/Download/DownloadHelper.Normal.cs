@@ -3,7 +3,6 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Threading;
@@ -28,14 +27,15 @@ public static partial class DownloadHelper
         if (!Directory.Exists(lxTempPath))
             Directory.CreateDirectory(lxTempPath);
 
+        var timeout = downloadSettings.Timeout;
         var client = downloadSettings.HttpClientFactory.CreateClient(DefaultDownloadClientName);
         var trials = downloadSettings.RetryCount == 0 ? 1 : downloadSettings.RetryCount;
         var filePath = Path.Combine(downloadFile.DownloadPath, downloadFile.FileName);
         var exceptions = new List<Exception>();
 
-        for (var i = 0; i < trials; i++)
+        while (downloadFile.RetryCount < trials)
         {
-            using var cts = new CancellationTokenSource(downloadSettings.Timeout * Math.Max(1, i + 1));
+            using var cts = new CancellationTokenSource(timeout * Math.Max(1, downloadFile.RetryCount + 1));
 
             try
             {
