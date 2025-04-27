@@ -39,14 +39,15 @@ public static partial class DownloadHelper
     ///     Receive data from remote stream (only for partial download)
     /// </summary>
     /// <returns>Elapsed time in seconds</returns>
-    private static async Task<double> ReceiveFromRemoteStreamAsync(
+    private static async Task<(double Speed, long BytesReceived)> ReceiveFromRemoteStreamAsync(
         Stream remoteStream,
         Stream destStream,
+        DownloadSpeedCalculator speedCalculator,
         CancellationToken ct)
     {
-        var startTime = Stopwatch.GetTimestamp();
-
         using var buffer = MemoryPool<byte>.Shared.Rent();
+        var finalSpeed = 0d;
+        var totalBytesReceived = 0L;
 
         while (true)
         {
@@ -56,13 +57,14 @@ public static partial class DownloadHelper
 
             if (bytesRead == 0) break;
 
+            totalBytesReceived += bytesRead;
             await destStream.WriteAsync(buffer.Memory[..bytesRead], ct);
+
+            // 计算速度
+            finalSpeed = speedCalculator.AddSample(bytesRead);
         }
 
-        var duration = Stopwatch.GetElapsedTime(startTime);
-        var elapsedTime = duration.TotalSeconds < 0.0001 ? 1 : duration.TotalSeconds;
-        
-        return elapsedTime;
+        return (finalSpeed, totalBytesReceived);
     }
 
     private static async Task<(long FileLength, bool CanPartialDownload)?> CanUsePartialDownload(
@@ -174,13 +176,15 @@ public static partial class DownloadHelper
         var trials = downloadSettings.RetryCount <= 0 ? 1 : downloadSettings.RetryCount;
         var subChunkSplitCount = 0;
 
-        var aggregatedSpeed = 0U;
-        var aggregatedSpeedCount = 0;
+        // 创建全局速度计算器，用于汇总所有分片下载速度
+        var globalSpeedCalculator = new DownloadSpeedCalculator(TimeSpan.FromSeconds(10), 50);
         var bytesReceived = 0L;
+        var lastProgressUpdateTime = DateTime.UtcNow;
+        var progressUpdateInterval = TimeSpan.FromMilliseconds(200); // 限制更新频率
 
-        while (downloadFile.RetryCount < trials)
+        while (downloadFile.RetryCount++ < trials)
         {
-            using var cts = new CancellationTokenSource(timeout * Math.Max(1, downloadFile.RetryCount + 1));
+            using var cts = new CancellationTokenSource(timeout * Math.Max(1, downloadFile.RetryCount));
 
             try
             {
@@ -226,7 +230,6 @@ public static partial class DownloadHelper
                         }
 
                         // Otherwise, we will retry the partial download
-                        downloadFile.RetryCount++;
                         continue;
                     }
 
@@ -319,16 +322,18 @@ public static partial class DownloadHelper
 
                     // We'll store the written file to a temp file stream, and keep its ref for the future use.
                     var fileToWriteTo = File.Create(chunkInfo.Range.TempFileName);
-                    var elapsedTime = 0d;
+                    var speed = 0d;
+                    var receivedBytes = 0L;
 
                     try
                     {
                         await using var stream = await res.Content.ReadAsStreamAsync(chunkInfo.Cts.Token);
 
                         // Here we are using chunkCts instead of the main cts
-                        elapsedTime = await ReceiveFromRemoteStreamAsync(
+                        (speed, receivedBytes) = await ReceiveFromRemoteStreamAsync(
                             stream,
                             fileToWriteTo,
+                            globalSpeedCalculator, // 使用全局速度计算器
                             chunkCts.Token);
 
                         ArgumentOutOfRangeException.ThrowIfNotEqual(fileToWriteTo.Length,
@@ -403,25 +408,26 @@ public static partial class DownloadHelper
                         }
                     }
 
-                    var addedAggregatedSpeedCount = Interlocked.Increment(ref aggregatedSpeedCount);
+                    // 更新总下载字节数
+                    var addedBytesReceived = Interlocked.Add(ref bytesReceived, receivedBytes);
 
-                    // Because the feature of HTTP range response,
-                    // the first byte of the first range is the last byte of the file.
-                    // So we need to skip the first byte of the first range.
-                    // (Expect the first part)
-                    var correctedSpeed =
-                        addedAggregatedSpeedCount > 1 ? fileToWriteTo.Length - 1 : fileToWriteTo.Length;
+                    // 限制进度更新频率，避免UI过载
+                    var now = DateTime.UtcNow;
+                    if (downloadSettings.ShowDownloadProgress &&
+                        now - lastProgressUpdateTime >= progressUpdateInterval)
+                    {
+                        lastProgressUpdateTime = now;
 
-                    var speed = correctedSpeed / elapsedTime;
-                    var addedAggregatedSpeed = Interlocked.Add(ref aggregatedSpeed, (uint)speed);
-                    var addedBytesReceived = Interlocked.Add(ref bytesReceived, correctedSpeed);
+                        // 使用当前全局速度计算器的速度
+                        // 使用原子操作获取当前速度，避免线程竞争问题
+                        var currentGlobalSpeed = Interlocked.Exchange(ref speed, 0);
 
-                    if (downloadSettings.ShowDownloadProgress)
                         downloadFile.OnChanged(
-                            (double)addedAggregatedSpeed / addedAggregatedSpeedCount,
+                            currentGlobalSpeed,
                             ProgressValue.Create(addedBytesReceived, downloadFile.UrlInfo.FileLength),
                             addedBytesReceived,
                             downloadFile.UrlInfo.FileLength);
+                    }
                 }, new ExecutionDataflowBlockOptions
                 {
                     BoundedCapacity = downloadSettings.DownloadParts,
@@ -455,13 +461,8 @@ public static partial class DownloadHelper
                 bufferBlock.Complete();
                 await downloadActionBlock.Completion;
 
-                var aSpeed = (double)aggregatedSpeed / aggregatedSpeedCount;
-
                 if (!downloadFile.IsDownloadFinished())
-                {
-                    downloadFile.RetryCount++;
                     continue;
-                }
 
                 var hashCheckFile = downloadSettings.CheckFile && !string.IsNullOrEmpty(downloadFile.CheckSum);
 
@@ -511,7 +512,6 @@ public static partial class DownloadHelper
 
                         if (!checkSum.Equals(downloadFile.CheckSum!, StringComparison.OrdinalIgnoreCase))
                         {
-                            downloadFile.RetryCount++;
                             downloadFile.FinishedRangeStreams.Clear();
                             downloadFile.UrlInfo = null;
                             downloadFile.Ranges = null;
@@ -524,17 +524,24 @@ public static partial class DownloadHelper
                             continue;
                         }
 
-                        await using var fs = File.Create(filePath);
-
-                        ms.Seek(0, SeekOrigin.Begin);
-                        await ms.CopyToAsync(fs, cts.Token);
+                        // ReSharper disable once ConvertToUsingDeclaration
+                        await using (var fs = File.Create(filePath))
+                        {
+                            ms.Seek(0, SeekOrigin.Begin);
+                            await ms.CopyToAsync(fs, cts.Token);
+                            await fs.FlushAsync(cts.Token);
+                        }
                     }
                 }
                 
                 #endregion
 
                 await RecycleDownloadFile(downloadFile);
-                downloadFile.OnCompleted(true, null, aSpeed);
+                downloadFile.OnCompleted(true, null, globalSpeedCalculator.TotalBytes /
+                                                     Stopwatch.GetElapsedTime(
+                                                         Stopwatch.GetTimestamp() -
+                                                         (long)(timeout.TotalSeconds * Stopwatch.Frequency)
+                                                     ).TotalSeconds);
                 return;
             }
             catch (TaskCanceledException)
@@ -557,12 +564,14 @@ public static partial class DownloadHelper
             }
             catch (Exception ex)
             {
-                downloadFile.RetryCount++;
                 downloadFile.PartialDownloadRetryCount++;
                 downloadFile.FinishedRangeStreams.Clear();
                 downloadFile.UrlInfo = null;
                 downloadFile.Ranges = null;
                 exceptions.Add(ex);
+
+                var delay = Math.Min(1000 * Math.Pow(2, downloadFile.RetryCount - 1), 60000);
+                await Task.Delay((int)delay, cts.Token);
             }
         }
 

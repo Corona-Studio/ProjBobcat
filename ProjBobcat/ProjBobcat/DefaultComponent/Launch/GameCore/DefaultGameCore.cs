@@ -17,15 +17,19 @@ using ProjBobcat.DefaultComponent.Authenticator;
 using ProjBobcat.Event;
 using FileInfo = System.IO.FileInfo;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 
 namespace ProjBobcat.DefaultComponent.Launch.GameCore;
 
 /// <summary>
 ///     表示一个默认的游戏核心。
 /// </summary>
-public sealed class DefaultGameCore : GameCoreBase
+public sealed partial class DefaultGameCore : GameCoreBase
 {
     readonly string _rootPath = null!;
+
+    [GeneratedRegex(@"\r\n|\r|\n")]
+    private static partial Regex CrLfRegex();
 
     /// <summary>
     ///     .minecraft 目录
@@ -74,12 +78,16 @@ public sealed class DefaultGameCore : GameCoreBase
         string command)
     {
         var tempScriptPath = Path.Combine(Path.GetTempPath(), "launch_java_command.bat");
-        await File.WriteAllTextAsync(tempScriptPath, $"""
-                                                      @echo off
-                                                      cd /d "{rootPath}"
-                                                      {command}
-                                                      pause
-                                                      """);
+        var fileContent = $"""
+                           @echo off
+                           cd /d "{rootPath}"
+                           {command}
+                           pause
+                           """;
+
+        fileContent = CrLfRegex().Replace(fileContent, "\r\n");
+
+        await File.WriteAllTextAsync(tempScriptPath, fileContent);
 
         return new ProcessStartInfo("cmd.exe", $"/k \"{tempScriptPath}\"")
         {

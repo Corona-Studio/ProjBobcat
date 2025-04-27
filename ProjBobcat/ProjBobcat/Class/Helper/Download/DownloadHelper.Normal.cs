@@ -32,10 +32,11 @@ public static partial class DownloadHelper
         var trials = downloadSettings.RetryCount == 0 ? 1 : downloadSettings.RetryCount;
         var filePath = Path.Combine(downloadFile.DownloadPath, downloadFile.FileName);
         var exceptions = new List<Exception>();
+        var speedCalculator = new DownloadSpeedCalculator();
 
-        while (downloadFile.RetryCount < trials)
+        while (downloadFile.RetryCount++ < trials)
         {
-            using var cts = new CancellationTokenSource(timeout * Math.Max(1, downloadFile.RetryCount + 1));
+            using var cts = new CancellationTokenSource(timeout);
 
             try
             {
@@ -56,11 +57,13 @@ public static partial class DownloadHelper
 
                 using var hashProvider = downloadSettings.GetCryptoTransform();
 
-                var averageSpeed = 0d;
                 Stream ms = hashCheckFile
                     ? MemoryStreamManager.GetStream()
                     : File.Create(filePath);
                 var cryptoStream = new CryptoStream(ms, hashProvider, CryptoStreamMode.Write);
+
+                // Reset speed calculator
+                speedCalculator.Reset();
 
                 await using (var stream = await res.Content.ReadAsStreamAsync(cts.Token))
                 await using (var destStream = hashCheckFile ? cryptoStream : ms)
@@ -68,10 +71,11 @@ public static partial class DownloadHelper
                     using var buffer = MemoryPool<byte>.Shared.Rent(DefaultCopyBufferSize);
 
                     var bytesReadInTotal = 0L;
+                    var lastProgressUpdateTime = DateTime.UtcNow;
+                    var progressUpdateInterval = TimeSpan.FromMilliseconds(200); // 更新频率限制
 
                     while (true)
                     {
-                        var startTime = Stopwatch.GetTimestamp();
                         var bytesRead = await stream.ReadAsync(buffer.Memory, cts.Token);
 
                         if (bytesRead == 0) break;
@@ -80,17 +84,22 @@ public static partial class DownloadHelper
 
                         await destStream.WriteAsync(buffer.Memory[..bytesRead], cts.Token);
 
-                        var duration = Stopwatch.GetElapsedTime(startTime);
-                        var elapsedTime = duration.TotalSeconds < 0.0001 ? 1 : duration.TotalSeconds;
+                        // 更新速度计算
+                        var currentSpeed = speedCalculator.AddSample(bytesRead);
 
-                        averageSpeed = responseLength / elapsedTime;
+                        // 限制进度更新频率，避免UI过载
+                        var now = DateTime.UtcNow;
 
-                        if (downloadSettings.ShowDownloadProgress)
-                            downloadFile.OnChanged(
-                                averageSpeed,
-                                ProgressValue.Create(bytesReadInTotal, responseLength),
-                                responseLength,
-                                responseLength);
+                        if (!downloadSettings.ShowDownloadProgress ||
+                            now - lastProgressUpdateTime < progressUpdateInterval)
+                            continue;
+
+                        lastProgressUpdateTime = now;
+                        downloadFile.OnChanged(
+                            currentSpeed,
+                            ProgressValue.Create(bytesReadInTotal, responseLength),
+                            bytesReadInTotal,
+                            responseLength);
                     }
 
                     if (hashCheckFile && destStream is CryptoStream cStream)
@@ -101,28 +110,33 @@ public static partial class DownloadHelper
                         var checkSum = Convert.ToHexString(hashProvider.Hash!.AsSpan());
 
                         if (!checkSum.Equals(downloadFile.CheckSum, StringComparison.OrdinalIgnoreCase))
-                        {
-                            downloadFile.RetryCount++;
                             continue;
+
+                        // ReSharper disable once ConvertToUsingDeclaration
+                        await using (var fs = File.Create(filePath))
+                        {
+                            ms.Seek(0, SeekOrigin.Begin);
+                            await ms.CopyToAsync(fs, cts.Token);
+                            await fs.FlushAsync(cts.Token);
                         }
-
-                        await using var fs = File.Create(filePath);
-
-                        ms.Seek(0, SeekOrigin.Begin);
-                        await ms.CopyToAsync(fs, cts.Token);
                     }
                 }
 
                 await RecycleDownloadFile(downloadFile);
-                downloadFile.OnCompleted(true, null, averageSpeed);
+
+                // 使用最终速度作为完成回调的参数
+                var finalSpeed = speedCalculator.TotalBytes / Stopwatch.GetElapsedTime(
+                    Stopwatch.GetTimestamp() - (long)(timeout.TotalSeconds * Stopwatch.Frequency)
+                ).TotalSeconds;
+
+                downloadFile.OnCompleted(true, null, finalSpeed);
 
                 return;
             }
             catch (Exception e)
             {
-                await Task.Delay(250, cts.Token);
-
-                downloadFile.RetryCount++;
+                var delay = Math.Min(1000 * Math.Pow(2, downloadFile.RetryCount - 1), 60000);
+                await Task.Delay((int)delay, cts.Token);
                 exceptions.Add(e);
             }
         }

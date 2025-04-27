@@ -79,10 +79,23 @@ public class DefaultResourceCompleter : IResourceCompleter
         {
             resolver.GameResourceInfoResolveEvent += FireResolveEvent;
 
-            await Parallel.ForEachAsync(
-                resolver.ResolveResourceAsync(basePath, checkLocalFiles, resolvedGame),
-                new ParallelOptions { MaxDegreeOfParallelism = numBatches },
-                ReceiveGameResourceTask);
+            await foreach (var element in resolver.ResolveResourceAsync(basePath, checkLocalFiles, resolvedGame))
+            {
+                var dF = new MultiSourceDownloadFile
+                {
+                    DownloadPath = element.Path,
+                    DownloadUris = element.Urls,
+                    FileName = element.FileName,
+                    FileSize = element.FileSize,
+                    CheckSum = element.CheckSum,
+                    FileType = element.Type
+                };
+                dF.Completed += this.WhenCompleted;
+
+                await blocks.Input.SendAsync(dF);
+
+                Interlocked.Add(ref this._needToDownload, 1);
+            }
 
             return;
 
@@ -132,24 +145,6 @@ public class DefaultResourceCompleter : IResourceCompleter
         };
 
         return new TaskResult<ResourceCompleterCheckResult?>(result, value: resultArgs);
-
-        async ValueTask ReceiveGameResourceTask(IGameResource element, CancellationToken ct)
-        {
-            var dF = new MultiSourceDownloadFile
-            {
-                DownloadPath = element.Path,
-                DownloadUris = element.Urls,
-                FileName = element.FileName,
-                FileSize = element.FileSize,
-                CheckSum = element.CheckSum,
-                FileType = element.Type
-            };
-            dF.Completed += this.WhenCompleted;
-
-            await blocks.Input.SendAsync(dF, ct);
-
-            Interlocked.Add(ref this._needToDownload, 1);
-        }
     }
 
     public void Dispose()
@@ -178,7 +173,8 @@ public class DefaultResourceCompleter : IResourceCompleter
     void WhenCompleted(object? sender, DownloadFileCompletedEventArgs e)
     {
         if (sender is not MultiSourceDownloadFile df) return;
-        if (!e.Success) this._failedFiles.Add(df);
+        if (!e.Success || e.Error != null)
+            this._failedFiles.Add(df);
 
         df.Completed -= this.WhenCompleted;
 

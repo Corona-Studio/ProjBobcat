@@ -67,7 +67,7 @@ public static partial class DownloadHelper
             _ => "B / s"
         };
 
-        return $"{speed.Speed:F} {unit}";
+        return $"{speed.Speed:F1} {unit}";
     }
 
     public static (double Speed, SizeUnit Unit) AutoFormatSpeed(double transferSpeed)
@@ -133,7 +133,7 @@ public static partial class DownloadHelper
             d => AdvancedDownloadFile(d, downloadSettings),
             new ExecutionDataflowBlockOptions
             {
-                BoundedCapacity = DownloadThread * 10,
+                BoundedCapacity = DownloadThread,
                 MaxDegreeOfParallelism = DownloadThread,
                 EnsureOrdered = false
             });
