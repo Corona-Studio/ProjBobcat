@@ -371,7 +371,7 @@ public sealed class DefaultGameCore : GameCoreBase
             else
             {
                 var normalJavaPath = java!.JavaPath.Replace("javaw", "java", StringComparison.OrdinalIgnoreCase);
-                var javaCommand = $"{normalJavaPath} {string.Join(' ', arguments)}";
+                var javaCommand = $"\"{normalJavaPath}\" {string.Join(' ', arguments)}";
 
                 psi = javaCommand switch
                 {
