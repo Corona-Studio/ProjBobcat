@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -10,6 +11,11 @@ namespace ProjBobcat.Class.Helper;
 /// </summary>
 public static class FileHelper
 {
+    public static string GetValidPathName(string input)
+    {
+        return Path.GetInvalidFileNameChars().Aggregate(input, (current, c) => current.Replace(c, '_'));
+    }
+
     public static async Task<FileStream?> OpenReadAsync(string path, CancellationToken token)
     {
         while (!token.IsCancellationRequested)

@@ -63,6 +63,8 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         var urlReqExceptions = new ConcurrentBag<CurseForgeModResolveException>();
         var actionBlock = new ActionBlock<(long, long)>(async t =>
         {
+            var progress = ProgressValue.FromDisplay(50);
+
             try
             {
                 var downloadUrlRes = await CurseForgeApiService.GetAddonDownloadUrl(t.Item1, t.Item2);
@@ -84,8 +86,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
                 urlBags.Add(downloadFile);
 
                 var addedTotalDownloaded = Interlocked.Increment(ref this.TotalDownloaded);
-                var addedNeedToDownload = Interlocked.Increment(ref this.NeedToDownload);
-                var progress = ProgressValue.Create(addedTotalDownloaded, addedNeedToDownload);
+                progress = ProgressValue.Create(addedTotalDownloaded, this.NeedToDownload);
 
                 this.InvokeStatusChangedEvent($"成功解析 MOD [{t.Item1}] 的下载地址",
                     progress);
@@ -94,7 +95,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
             {
                 this.InvokeStatusChangedEvent(
                     $"MOD [{t.Item1}] 的下载地址解析失败，尝试手动拼接",
-                    ProgressValue.FromDisplay(50));
+                    progress);
 
                 var (guessed, df) = await this.TryGuessModDownloadLink(t.Item2, di.FullName);
 
@@ -125,8 +126,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
                 urlBags.Add(df);
 
                 var addedTotalDownloaded = Interlocked.Increment(ref this.TotalDownloaded);
-                var addedNeedToDownload = Interlocked.Increment(ref this.NeedToDownload);
-                var progress = ProgressValue.Create(addedTotalDownloaded, addedNeedToDownload);
+                progress = ProgressValue.Create(addedTotalDownloaded, this.NeedToDownload);
 
                 this.InvokeStatusChangedEvent($"成功解析 MOD [{t.Item1}] 的下载地址",
                     progress);
@@ -144,7 +144,8 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
         await actionBlock.Completion;
 
-        ArgumentOutOfRangeException.ThrowIfEqual(urlReqExceptions.IsEmpty, false);
+        if (!urlReqExceptions.IsEmpty)
+            throw new AggregateException(urlReqExceptions);
 
         this.TotalDownloaded = 0;
         await DownloadHelper.AdvancedDownloadListFile(urlBags, new DownloadSettings
