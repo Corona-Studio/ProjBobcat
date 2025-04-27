@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
+using Microsoft.IO;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Downloading;
 
@@ -15,6 +16,8 @@ public static partial class DownloadHelper
     ///     Download thread count
     /// </summary>
     public static int DownloadThread { get; set; } = 8;
+
+    private static readonly RecyclableMemoryStreamManager MemoryStreamManager = new();
 
     internal static string DefaultUserAgent => $"ProjBobcat {typeof(DownloadHelper).Assembly.GetName().Version}";
     internal const string DefaultDownloadClientName = nameof(DownloadHelper);

@@ -3,6 +3,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -468,10 +469,19 @@ public static partial class DownloadHelper
 
                 using var hashProvider = downloadSettings.GetCryptoTransform();
 
-                var fileStream = File.Create(filePath);
-                var hashStream = new CryptoStream(fileStream, hashProvider, CryptoStreamMode.Write);
+                Stream ms = hashCheckFile
+                    ? MemoryStreamManager.GetStream(
+#if NET9_0_OR_GREATER
+                        Guid.CreateVersion7(),
+#else
+                        Guid.NewGuid(),
+#endif
+                        null,
+                        downloadFile.FinishedRangeStreams.Sum(p => p.Value.Length))
+                    : File.Create(filePath);
+                var hashStream = new CryptoStream(ms, hashProvider, CryptoStreamMode.Write);
 
-                await using (Stream destStream = hashCheckFile ? hashStream : fileStream)
+                await using (var destStream = hashCheckFile ? hashStream : ms)
                 {
                     var index = 0;
 
@@ -496,27 +506,31 @@ public static partial class DownloadHelper
 
                     if (hashCheckFile && destStream is CryptoStream cStream)
                         await cStream.FlushFinalBlockAsync(cts.Token);
-                }
 
-                if (hashCheckFile)
-                {
-                    var checkSum = Convert.ToHexString(hashProvider.Hash.AsSpan()).ToLowerInvariant();
-
-                    if (!checkSum.Equals(downloadFile.CheckSum!, StringComparison.OrdinalIgnoreCase))
+                    if (hashCheckFile)
                     {
-                        downloadFile.RetryCount++;
-                        exceptions.Add(new HashMismatchException(filePath, downloadFile.CheckSum!, checkSum,
-                            downloadFile));
+                        var checkSum = Convert.ToHexString(hashProvider.Hash.AsSpan());
 
-                        await RecycleDownloadFile(downloadFile);
-                        await fileStream.DisposeAsync();
-                        FileHelper.DeleteFileWithRetry(filePath);
+                        if (!checkSum.Equals(downloadFile.CheckSum!, StringComparison.OrdinalIgnoreCase))
+                        {
+                            downloadFile.RetryCount++;
+                            downloadFile.FinishedRangeStreams.Clear();
+                            exceptions.Add(new HashMismatchException(filePath, downloadFile.CheckSum!, checkSum,
+                                downloadFile));
 
-                        continue;
+                            await RecycleDownloadFile(downloadFile);
+
+                            continue;
+                        }
+
+                        await using var fs = File.Create(filePath);
+
+                        ms.Seek(0, SeekOrigin.Begin);
+                        await ms.CopyToAsync(fs, cts.Token);
                     }
                 }
 
-                #endregion
+#endregion
 
                 await RecycleDownloadFile(downloadFile);
                 downloadFile.OnCompleted(true, null, aSpeed);

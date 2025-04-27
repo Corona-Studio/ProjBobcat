@@ -3,6 +3,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Threading;
@@ -56,11 +57,13 @@ public static partial class DownloadHelper
                 using var hashProvider = downloadSettings.GetCryptoTransform();
 
                 var averageSpeed = 0d;
-                var outputStream = File.Create(filePath);
-                var cryptoStream = new CryptoStream(outputStream, hashProvider, CryptoStreamMode.Write);
+                Stream ms = hashCheckFile
+                    ? MemoryStreamManager.GetStream()
+                    : File.Create(filePath);
+                var cryptoStream = new CryptoStream(ms, hashProvider, CryptoStreamMode.Write);
 
                 await using (var stream = await res.Content.ReadAsStreamAsync(cts.Token))
-                await using (Stream destStream = hashCheckFile ? cryptoStream : outputStream)
+                await using (var destStream = hashCheckFile ? cryptoStream : ms)
                 {
                     using var buffer = MemoryPool<byte>.Shared.Rent(DefaultCopyBufferSize);
 
@@ -92,17 +95,22 @@ public static partial class DownloadHelper
 
                     if (hashCheckFile && destStream is CryptoStream cStream)
                         await cStream.FlushFinalBlockAsync(cts.Token);
-                }
 
-                if (hashCheckFile)
-                {
-                    var checkSum = Convert.ToHexString(hashProvider.Hash!.AsSpan());
-
-                    if (!checkSum.Equals(downloadFile.CheckSum, StringComparison.OrdinalIgnoreCase))
+                    if (hashCheckFile)
                     {
-                        downloadFile.RetryCount++;
-                        FileHelper.DeleteFileWithRetry(filePath);
-                        continue;
+                        var checkSum = Convert.ToHexString(hashProvider.Hash!.AsSpan());
+
+                        if (!checkSum.Equals(downloadFile.CheckSum, StringComparison.OrdinalIgnoreCase))
+                        {
+                            downloadFile.RetryCount++;
+                            FileHelper.DeleteFileWithRetry(filePath);
+                            continue;
+                        }
+
+                        await using var fs = File.Create(filePath);
+
+                        ms.Seek(0, SeekOrigin.Begin);
+                        await ms.CopyToAsync(fs, cts.Token);
                     }
                 }
 

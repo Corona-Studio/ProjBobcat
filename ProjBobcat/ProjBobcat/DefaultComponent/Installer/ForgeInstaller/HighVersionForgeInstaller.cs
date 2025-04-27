@@ -35,7 +35,6 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
     public FileInfo? CustomMojangClientMappings { get; init; }
     public override required string RootPath { get; init; }
-    public required string DownloadUrlRoot { get; init; }
     public required string ForgeExecutablePath { get; init; }
     public required VersionLocatorBase VersionLocator { get; init; }
 
@@ -402,18 +401,6 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             var fileName = lib.Path[(symbolIndex + 1)..];
             var path = Path.Combine(this.RootPath,
                 GamePathHelper.GetLibraryPath(lib.Path[..symbolIndex]));
-
-            /*
-            if (!string.IsNullOrEmpty(DownloadUrlRoot))
-            {
-                var urlRoot = HttpHelper.RegexMatchUri(lib.Url);
-                var url = lib.Url.Replace($"{urlRoot}/", string.Empty);
-                if (!url.StartsWith("maven", StringComparison.OrdinalIgnoreCase))
-                    url = "maven/" + url;
-
-                lib.Url = $"{DownloadUrlRoot}{url}";
-            }
-            */
 
             var fullFilePath = Path.Combine(path, fileName);
             if (File.Exists(fullFilePath))
