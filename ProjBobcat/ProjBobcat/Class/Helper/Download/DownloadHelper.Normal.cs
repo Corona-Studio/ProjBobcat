@@ -103,7 +103,6 @@ public static partial class DownloadHelper
                         if (!checkSum.Equals(downloadFile.CheckSum, StringComparison.OrdinalIgnoreCase))
                         {
                             downloadFile.RetryCount++;
-                            FileHelper.DeleteFileWithRetry(filePath);
                             continue;
                         }
 
