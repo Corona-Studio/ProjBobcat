@@ -532,6 +532,9 @@ public static partial class DownloadHelper
                             await fs.FlushAsync(cts.Token);
                         }
                     }
+
+                    if (!hashCheckFile)
+                        await ms.FlushAsync(cts.Token);
                 }
                 
                 #endregion
