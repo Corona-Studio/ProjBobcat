@@ -22,6 +22,8 @@ public static partial class GameVersionHelper
             return ModLoaderType.Fabric;
         if (version.Libraries.Any(lib => lib.Name.Contains("quilt", StringComparison.OrdinalIgnoreCase)))
             return ModLoaderType.Quilt;
+        if (version.Libraries.Any(lib => lib.Name.Contains("optifine", StringComparison.OrdinalIgnoreCase)))
+            return ModLoaderType.Optifine;
 
         return ModLoaderType.Unknown;
     }

@@ -6,5 +6,6 @@ public enum ModLoaderType
     NeoForge,
     Fabric,
     Quilt,
+    Optifine,
     Unknown
 }

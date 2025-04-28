@@ -45,7 +45,7 @@ public static partial class DownloadHelper
         DownloadSpeedCalculator speedCalculator,
         CancellationToken ct)
     {
-        using var buffer = MemoryPool<byte>.Shared.Rent();
+        using var buffer = MemoryPool<byte>.Shared.Rent(MinimumChunkSize);
         var finalSpeed = 0d;
         var totalBytesReceived = 0L;
 
