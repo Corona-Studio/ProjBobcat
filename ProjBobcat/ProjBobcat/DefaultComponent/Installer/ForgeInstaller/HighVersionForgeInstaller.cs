@@ -270,7 +270,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
                 DownloadParts = 4,
                 HashType = HashType.SHA1,
                 RetryCount = 3,
-                Timeout = TimeSpan.FromSeconds(5),
+                Timeout = TimeSpan.FromMinutes(1),
                 HttpClientFactory = HttpClientFactory
             });
         }
@@ -439,7 +439,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             DownloadParts = 4,
             HashType = HashType.SHA1,
             RetryCount = 3,
-            Timeout = TimeSpan.FromSeconds(20),
+            Timeout = TimeSpan.FromMinutes(1),
             HttpClientFactory = HttpClientFactory
         });
 
@@ -465,7 +465,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             var maven = processor.Processor.Jar.ResolveMavenString()!;
             var libPath = Path.Combine(this.RootPath, GamePathHelper.GetLibraryPath(maven.Path));
 
-            using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(1));
+            using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
             
             await using var libFs = await FileHelper.OpenReadAsync(Path.GetFullPath(libPath), cts.Token);
             

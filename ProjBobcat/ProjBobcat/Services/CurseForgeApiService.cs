@@ -131,7 +131,7 @@ public class CurseForgeApiService(
 
     public async Task<CurseForgeFeaturedAddonModel?> GetFeaturedAddons(FeaturedQueryOptions options)
     {
-        var reqUrl = $"{GetApiRoot()}/mods/featured";
+        const string reqUrl = "https://api.curseforge.com/v1/mods/featured";
 
         var content = JsonContent.Create(options, FeaturedQueryOptionsContext.Default.FeaturedQueryOptions);
 
