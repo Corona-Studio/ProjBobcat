@@ -5,6 +5,8 @@ using System.Security.Cryptography;
 
 namespace ProjBobcat.Class.Model.Downloading;
 
+// ReSharper disable InconsistentNaming
+
 public enum HashType
 {
     MD5,
@@ -16,11 +18,10 @@ public enum HashType
 
 public class DownloadSettings
 {
-    public int MaxSubChunkSplitCount { get; init; } = 3;
     public int RetryCount { get; init; }
     public bool CheckFile { get; init; }
     public TimeSpan Timeout { get; init; } = TimeSpan.FromSeconds(30);
-    public int DownloadParts { get; set; }
+    public int DownloadParts { get; init; }
     public HashType HashType { get; init; }
     public bool ShowDownloadProgress { get; init; }
     public required IHttpClientFactory HttpClientFactory { get; init; }
@@ -52,7 +53,6 @@ public class DownloadSettings
     {
         return new DownloadSettings
         {
-            MaxSubChunkSplitCount = 5,
             RetryCount = 0,
             CheckFile = false,
             Timeout = TimeSpan.FromMinutes(1),

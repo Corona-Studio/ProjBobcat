@@ -19,6 +19,7 @@ namespace ProjBobcat.Class.Helper.Download;
 
 public static partial class DownloadHelper
 {
+    private const double DefaultChunkSplitThreshold = 1.8;
     private const int DefaultPartialDownloadTimeoutMs = 3000;
     private const int MinimumChunkSize = 8192;
 
@@ -296,11 +297,12 @@ public static partial class DownloadHelper
                             CancellationToken = cts.Token
                         });
 
+                var threshold = (int)Math.Ceiling(downloadSettings.DownloadParts * DefaultChunkSplitThreshold);
                 var downloadActionBlock = new ActionBlock<ChunkInfo?>(async chunkInfo =>
                 {
                     if (chunkInfo == null) return;
 
-                    var chunkCts = chunkInfo.CurrentChunkSplitCount < downloadSettings.MaxSubChunkSplitCount
+                    var chunkCts = chunkInfo.CurrentChunkSplitCount < threshold
                         ? new CancellationTokenSource(DefaultPartialDownloadTimeoutMs)
                         : chunkInfo.Cts;
 
@@ -308,8 +310,8 @@ public static partial class DownloadHelper
 
                     // We'll store the written file to a temp file stream, and keep its ref for the future use.
                     var fileToWriteTo = File.Create(chunkInfo.Range.TempFileName);
-                    var speed = 0d;
-                    var receivedBytes = 0L;
+                    double speed;
+                    long receivedBytes;
 
                     try
                     {
@@ -361,7 +363,7 @@ public static partial class DownloadHelper
                         // So we need to further split the chunk into smaller parts
 
                         // If we already used all split trails, we just throw directly.
-                        if (chunkInfo.CurrentChunkSplitCount >= downloadSettings.MaxSubChunkSplitCount)
+                        if (chunkInfo.CurrentChunkSplitCount >= threshold)
                             throw;
 
                         // If the chunk is small enough, we don't need to split it
@@ -385,7 +387,7 @@ public static partial class DownloadHelper
                     }
                     finally
                     {
-                        if (chunkInfo.CurrentChunkSplitCount < downloadSettings.MaxSubChunkSplitCount)
+                        if (chunkInfo.CurrentChunkSplitCount < threshold)
                             // If the sub chunk split count is greater than the max split count, we need to cancel the main cts
                             chunkCts.Dispose();
                     }
