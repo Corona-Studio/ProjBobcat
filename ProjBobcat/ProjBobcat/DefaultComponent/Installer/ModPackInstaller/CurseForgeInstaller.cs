@@ -251,8 +251,11 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
         var modPackFullPath = Path.GetFullPath(this.ModPackPath);
 
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        var gbk = Encoding.GetEncoding("GBK");
+
         await using var modPackFs = File.OpenRead(modPackFullPath);
-        using var archive = new ZipArchive(modPackFs, ZipArchiveMode.Read, true, Encoding.UTF8);
+        using var archive = new ZipArchive(modPackFs, ZipArchiveMode.Read, true, gbk);
 
         this.TotalDownloaded = 0;
         this.NeedToDownload = archive.Entries.Count;
