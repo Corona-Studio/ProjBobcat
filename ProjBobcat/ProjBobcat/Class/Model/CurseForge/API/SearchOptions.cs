@@ -11,6 +11,7 @@ public class SearchOptions
     public int? PageSize { get; init; }
     public string? SearchFilter { get; init; }
     public int? Sort { get; init; }
+    public int? ModLoaderFilter { get; init; }
 
 
     public override string ToString()
@@ -33,6 +34,8 @@ public class SearchOptions
             result += $"&classId={this.ClassId}";
         if (this.CategoryId != null)
             result += $"&categoryId={this.CategoryId}";
+        if (this.ModLoaderFilter != null)
+            result += $"&modLoaderType={this.ModLoaderFilter}";
 
         return result;
     }
