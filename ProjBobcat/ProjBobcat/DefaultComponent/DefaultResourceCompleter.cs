@@ -90,7 +90,7 @@ public class DefaultResourceCompleter : IResourceCompleter
             await checkBlock.SendAsync(new CheckFileInfo(r, basePath, checkLocalFiles, resolvedGame));
 
         checkBlock.Complete();
-        await checkBlock.Completion;
+        await downloadBlock.Completion;
 
         this.OnResolveComplete(this, new GameResourceInfoResolveEventArgs
         {
