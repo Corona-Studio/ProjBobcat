@@ -243,7 +243,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         {
             DownloadParts = 8,
             RetryCount = 10,
-            Timeout = TimeSpan.FromMinutes(1),
+            Timeout = TimeSpan.FromMinutes(5),
             HttpClientFactory = this.HttpClientFactory
         });
 

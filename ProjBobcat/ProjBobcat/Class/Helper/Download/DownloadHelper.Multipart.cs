@@ -20,7 +20,6 @@ namespace ProjBobcat.Class.Helper.Download;
 public static partial class DownloadHelper
 {
     private const double DefaultChunkSplitThreshold = 1.8;
-    private const int DefaultPartialDownloadTimeoutMs = 3000;
     private const int MinimumChunkSize = 8192;
 
     /// <summary>
@@ -303,7 +302,7 @@ public static partial class DownloadHelper
                     if (chunkInfo == null) return;
 
                     var chunkCts = chunkInfo.CurrentChunkSplitCount < threshold
-                        ? new CancellationTokenSource(DefaultPartialDownloadTimeoutMs)
+                        ? new CancellationTokenSource(timeout)
                         : chunkInfo.Cts;
 
                     using var res = chunkInfo.Response;

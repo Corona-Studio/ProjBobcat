@@ -439,8 +439,8 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             CheckFile = true,
             DownloadParts = 4,
             HashType = HashType.SHA1,
-            RetryCount = 3,
-            Timeout = TimeSpan.FromMinutes(1),
+            RetryCount = 8,
+            Timeout = TimeSpan.FromMinutes(5),
             HttpClientFactory = this.HttpClientFactory
         });
 
