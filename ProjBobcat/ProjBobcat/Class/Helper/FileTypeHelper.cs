@@ -25,8 +25,7 @@ public static class FileTypeHelper
                 await using var fs = File.OpenRead(filePath);
                 using var archive = new ZipArchive(fs, ZipArchiveMode.Read);
 
-                if (archive.Entries.Any(
-                        e => e.FullName.Equals("manifest.json", StringComparison.OrdinalIgnoreCase)))
+                if (archive.Entries.Any(e => e.FullName.Equals("manifest.json", StringComparison.OrdinalIgnoreCase)))
                     return AssetFileType.CurseForgeModPack;
                 if (archive.Entries.Any(e =>
                         e.FullName.Equals("modrinth.index.json", StringComparison.OrdinalIgnoreCase)))

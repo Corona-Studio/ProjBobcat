@@ -2,8 +2,8 @@
 
 public interface ILauncherCoreSettingsProvider
 {
-    string? CurseForgeApiBaseUrl();
-    string? ModrinthApiBaseUrl();
     string? DefaultUserAgent { get; }
     string CurseForgeApiKey { get; }
+    string? CurseForgeApiBaseUrl();
+    string? ModrinthApiBaseUrl();
 }

@@ -48,13 +48,16 @@ public class DownloadSettings
         };
     }
 
-    public static DownloadSettings FromDefault(IHttpClientFactory httpClientFactory) => new()
+    public static DownloadSettings FromDefault(IHttpClientFactory httpClientFactory)
     {
-        MaxSubChunkSplitCount = 5,
-        RetryCount = 0,
-        CheckFile = false,
-        Timeout = TimeSpan.FromMinutes(1),
-        DownloadParts = 16,
-        HttpClientFactory = httpClientFactory
-    };
+        return new DownloadSettings
+        {
+            MaxSubChunkSplitCount = 5,
+            RetryCount = 0,
+            CheckFile = false,
+            Timeout = TimeSpan.FromMinutes(1),
+            DownloadParts = 16,
+            HttpClientFactory = httpClientFactory
+        };
+    }
 }

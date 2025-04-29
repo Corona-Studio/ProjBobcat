@@ -17,7 +17,7 @@ public class GameArguments
     public ServerSettings? ServerSettings { get; set; }
 
     /// <summary>
-    /// Join world name (Starting from 1.20, single player only)
+    ///     Join world name (Starting from 1.20, single player only)
     /// </summary>
     public string? JoinWorldName { get; set; }
 

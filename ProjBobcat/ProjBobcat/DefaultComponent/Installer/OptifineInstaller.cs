@@ -123,7 +123,8 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
             $"launchwrapper-of-{launchWrapperVersion}.jar");
         if (!File.Exists(launchWrapperPath) && launchWrapperEntry != null)
         {
-            this.InvokeStatusChangedEvent($"解压 launcherwrapper-{launchWrapperVersion} 数据", ProgressValue.FromDisplay(65));
+            this.InvokeStatusChangedEvent($"解压 launcherwrapper-{launchWrapperVersion} 数据",
+                ProgressValue.FromDisplay(65));
 
             await using var launchWrapperFs = File.OpenWrite(launchWrapperPath);
             await using var launchWrapperStream = launchWrapperEntry.Open();

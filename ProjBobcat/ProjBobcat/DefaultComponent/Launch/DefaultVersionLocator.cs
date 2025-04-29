@@ -41,7 +41,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
     /// <param name="clientToken"></param>
     public DefaultVersionLocator(string rootPath, Guid clientToken)
     {
-        _rootPath = rootPath;
+        this._rootPath = rootPath;
         this.LauncherProfileParser ??= new DefaultLauncherProfileParser(rootPath, clientToken);
 
         //防止给定路径不存在的时候Parser遍历文件夹爆炸。
@@ -54,8 +54,8 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
     {
         // 把每个DirectoryInfo类映射到VersionInfo类。
         // Map each DirectoryInfo dir to VersionInfo class.
-        var di = new DirectoryInfo(GamePathHelper.GetVersionPath(_rootPath));
-        
+        var di = new DirectoryInfo(GamePathHelper.GetVersionPath(this._rootPath));
+
         foreach (var dir in di.EnumerateDirectories())
         {
             var version = this.ToVersion(dir.Name);
@@ -64,7 +64,10 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
         }
     }
 
-    public override IVersionInfo GetGame(string id) => this.ToVersion(id);
+    public override IVersionInfo GetGame(string id)
+    {
+        return this.ToVersion(id);
+    }
 
     public override IEnumerable<string> ParseJvmArguments(JsonElement[]? arguments)
     {
@@ -113,7 +116,8 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
     ///     解析游戏参数
     /// </summary>
     /// <returns></returns>
-    private (IEnumerable<string>, Dictionary<string, string>) ParseGameArguments(string? minecraftArgs, JsonElement[]? gameArgs)
+    private (IEnumerable<string>, Dictionary<string, string>) ParseGameArguments(string? minecraftArgs,
+        JsonElement[]? gameArgs)
     {
         var argList = new List<string>();
         var availableArguments = new Dictionary<string, string>();
@@ -311,18 +315,18 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
     /// <returns></returns>
     public override (GameBrokenReason?, RawVersionModel?) ParseRawVersion(string id)
     {
-        var gamePath = Path.Combine(_rootPath, GamePathHelper.GetGamePath(id));
+        var gamePath = Path.Combine(this._rootPath, GamePathHelper.GetGamePath(id));
         var possibleFiles = new List<string>
         {
-            GamePathHelper.GetGameJsonPath(_rootPath, id)
+            GamePathHelper.GetGameJsonPath(this._rootPath, id)
         };
 
         // 预防 I/O 的错误。
         // Prevents errors related to I/O.
         if (!Directory.Exists(gamePath))
             return (GameBrokenReason.GamePathNotFound, null);
-        
-        if (!File.Exists(GamePathHelper.GetGameJsonPath(_rootPath, id)))
+
+        if (!File.Exists(GamePathHelper.GetGameJsonPath(this._rootPath, id)))
         {
             var files = Directory
                 .EnumerateFiles(gamePath, "*.json", SearchOption.TopDirectoryOnly)
@@ -692,10 +696,8 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             // 遍历所有的继承
             // Go through all inherits
             for (var i = inherits.Count - 1; i >= 0; i--)
-            {
                 if (result.JavaVersion == null && inherits[i].JavaVersion != null)
                     result.JavaVersion = inherits[i].JavaVersion;
-            }
 
             this.ProcessProfile(result, id);
 
@@ -712,7 +714,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
         if (this.LauncherProfileParser == null) return;
 
         var gameId = id.ToGuidHash().ToString("N");
-        var gamePath = Path.Combine(_rootPath, GamePathHelper.GetGamePath(id));
+        var gamePath = Path.Combine(this._rootPath, GamePathHelper.GetGamePath(id));
 
 #if NET9_0_OR_GREATER
         using (this._lock.EnterScope())
@@ -747,7 +749,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
 
 file class KeyValuePairStringStringComparer : IEqualityComparer<KeyValuePair<string, string>>
 {
-    public static KeyValuePairStringStringComparer Default => new ();
+    public static KeyValuePairStringStringComparer Default => new();
 
     public bool Equals(KeyValuePair<string, string> x, KeyValuePair<string, string> y)
     {

@@ -77,7 +77,6 @@ public static partial class NativeReplaceHelper
 
         // Replace special LWJGL and OpenAL libraries on Linux
         if (OperatingSystem.IsLinux() && (useSystemGlfwOnLinux || useSystemOpenAlOnLinux))
-        {
             foreach (var original in libs)
             {
                 var originalMaven = original.Name.ResolveMavenString();
@@ -96,12 +95,9 @@ public static partial class NativeReplaceHelper
 
                     if (useSystemOpenAlOnLinux &&
                         !originalMaven.ArtifactId.Equals("lwjgl-openal", StringComparison.OrdinalIgnoreCase))
-                    {
                         replaced.Add(original);
-                    }
                 }
             }
-        }
 
         var osCheckFlag = OperatingSystem.IsWindows() || OperatingSystem.IsMacOS() || OperatingSystem.IsLinux();
 
@@ -134,7 +130,8 @@ public static partial class NativeReplaceHelper
 
             if (isNative)
             {
-                if (!replaceDic.TryGetValue($"{original.Name}:natives", out var candidateNative) || candidateNative == null)
+                if (!replaceDic.TryGetValue($"{original.Name}:natives", out var candidateNative) ||
+                    candidateNative == null)
                 {
                     replaced.Add(original);
                     continue;

@@ -43,7 +43,7 @@ public class LiteLoaderInstaller : InstallerBase, ILiteLoaderInstaller
 
         if (wrappedRawVersion.Item1 != null || wrappedRawVersion.Item2 == null)
             throw new UnknownGameNameException(this.VersionModel.McVersion);
-        
+
         var rawVersion = wrappedRawVersion.Item2;
 
         if (rawVersion.Id != this.VersionModel.McVersion)

@@ -1,8 +1,8 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using ProjBobcat.Class.Model.CurseForge;
 using ProjBobcat.Class.Model.CurseForge.API;
-using System.Collections.Generic;
 
 namespace ProjBobcat.Interface.Services;
 

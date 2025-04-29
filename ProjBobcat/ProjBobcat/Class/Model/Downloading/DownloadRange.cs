@@ -27,7 +27,7 @@ public readonly struct DownloadRange : IComparable<DownloadRange>, IEquatable<Do
 
     public override string ToString()
     {
-        return $"[{Start}-{End}] {TempFileName}";
+        return $"[{this.Start}-{this.End}] {this.TempFileName}";
     }
 
     public override int GetHashCode()

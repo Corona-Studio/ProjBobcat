@@ -27,7 +27,10 @@ public record CacheTokenProviderResult(
     bool IsAuthResultValid,
     AuthResultBase? AuthResult,
     GraphAuthResultModel? CacheAuthResult);
-record McReqModel([property: JsonPropertyName("identityToken")] string IdentityToken);
+
+record McReqModel(
+    [property: JsonPropertyName("identityToken")]
+    string IdentityToken);
 
 [JsonSerializable(typeof(McReqModel))]
 partial class McReqModelContext : JsonSerializerContext;
@@ -63,13 +66,13 @@ public class MicrosoftAuthenticator : IAuthenticator
     public string? Email { get; set; }
 
     /// <summary>
-    /// MineCraft profile id, used to match the account history
+    ///     MineCraft profile id, used to match the account history
     /// </summary>
     public Guid? ProfileId { get; set; }
 
     public Func<MicrosoftAuthenticator, ValueTask<CacheTokenProviderResult>>? CacheTokenProvider { get; init; }
-    public required ILauncherAccountParser LauncherAccountParser { get; init; }
     public required IHttpClientFactory HttpClientFactory { get; init; }
+    public required ILauncherAccountParser LauncherAccountParser { get; init; }
 
     public AuthResultBase Auth(bool userField = false)
     {
@@ -92,7 +95,11 @@ public class MicrosoftAuthenticator : IAuthenticator
 
         var cacheTokenResult = await this.CacheTokenProvider(this);
 
-        if (cacheTokenResult is { IsAuthResultValid: true, AuthResult: MicrosoftAuthResult { Error: null, AuthStatus: AuthStatus.Succeeded, ExpiresIn: >= 60 } })
+        if (cacheTokenResult is
+            {
+                IsAuthResultValid: true,
+                AuthResult: MicrosoftAuthResult { Error: null, AuthStatus: AuthStatus.Succeeded, ExpiresIn: >= 60 }
+            })
             return cacheTokenResult.AuthResult;
 
         if (!cacheTokenResult.IsCredentialValid || cacheTokenResult.CacheAuthResult == null)
@@ -114,7 +121,7 @@ public class MicrosoftAuthenticator : IAuthenticator
         #region STAGE 1
 
         var xBoxLiveToken =
-            await SendRequest(MSAuthXBLUrl, AuthXBLRequestModel.Get(accessToken),
+            await this.SendRequest(MSAuthXBLUrl, AuthXBLRequestModel.Get(accessToken),
                 AuthXSTSResponseModelContext.Default.AuthXSTSResponseModel,
                 AuthXBLRequestModelContext.Default.AuthXBLRequestModel);
 
@@ -134,7 +141,7 @@ public class MicrosoftAuthenticator : IAuthenticator
 
         #region STAGE 2
 
-        var client = HttpClientFactory.CreateClient();
+        var client = this.HttpClientFactory.CreateClient();
 
         using var xStsReq = new HttpRequestMessage(HttpMethod.Post, MSAuthXSTSUrl);
         xStsReq.Content = JsonContent.Create(
@@ -223,7 +230,7 @@ public class MicrosoftAuthenticator : IAuthenticator
 
         var uhsValue = uhs.GetString()!;
         var mcReqModel = new McReqModel($"XBL3.0 x={uhsValue};{xStsRes.Token}");
-        var mcRes = await SendRequest(MojangAuthUrl, mcReqModel,
+        var mcRes = await this.SendRequest(MojangAuthUrl, mcReqModel,
             AuthMojangResponseModelContext.Default.AuthMojangResponseModel, McReqModelContext.Default.McReqModel);
 
         #endregion
@@ -401,7 +408,8 @@ public class MicrosoftAuthenticator : IAuthenticator
     {
         var (_, value) = this.LauncherAccountParser.LauncherAccount.Accounts!
             .FirstOrDefault(x =>
-                (x.Value.MinecraftProfile?.Id.Equals(ProfileId?.ToString("N"), StringComparison.OrdinalIgnoreCase) ?? false) &&
+                (x.Value.MinecraftProfile?.Id.Equals(this.ProfileId?.ToString("N"),
+                    StringComparison.OrdinalIgnoreCase) ?? false) &&
                 x.Value.Type.Equals("XBox", StringComparison.OrdinalIgnoreCase));
 
         if (value == null)
@@ -532,7 +540,7 @@ public class MicrosoftAuthenticator : IAuthenticator
         JsonTypeInfo<T> typeInfo,
         JsonTypeInfo<TReq> reqTypeInfo)
     {
-        var client = HttpClientFactory.CreateClient();
+        var client = this.HttpClientFactory.CreateClient();
         var content = JsonContent.Create(model, reqTypeInfo);
 
         using var res = await client.PostAsync(url, content);

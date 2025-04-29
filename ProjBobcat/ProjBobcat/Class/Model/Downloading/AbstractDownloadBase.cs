@@ -1,10 +1,10 @@
-﻿using ProjBobcat.Interface;
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using ProjBobcat.Event;
+using ProjBobcat.Interface;
 
 namespace ProjBobcat.Class.Model.Downloading;
 
@@ -17,39 +17,6 @@ public abstract class AbstractDownloadBase : IDownloadFile
     internal ConcurrentDictionary<DownloadRange, FileStream> FinishedRangeStreams { get; } = [];
 
     public int PartialDownloadRetryCount { get; internal set; }
-
-    internal IEnumerable<FileStream> GetFinishedStreamsInorder()
-    {
-        ArgumentNullException.ThrowIfNull(Ranges);
-
-        foreach (var (downloadRange, _) in Ranges.OrderBy(p => p.Key.Start))
-        {
-            if (!FinishedRangeStreams.TryGetValue(downloadRange, out var stream))
-                throw new InvalidOperationException("Stream not found.");
-
-            yield return stream;
-        }
-    }
-
-    internal bool IsDownloadFinished()
-    {
-        ArgumentNullException.ThrowIfNull(Ranges);
-
-        return Ranges.All(p => FinishedRangeStreams.ContainsKey(p.Key));
-    }
-
-    internal IEnumerable<DownloadRange> GetUndoneRanges()
-    {
-        ArgumentNullException.ThrowIfNull(Ranges);
-
-        foreach (var (range, _) in Ranges)
-        {
-            if (FinishedRangeStreams.ContainsKey(range))
-                continue;
-
-            yield return range;
-        }
-    }
 
     /// <summary>
     ///     下载路径
@@ -92,6 +59,39 @@ public abstract class AbstractDownloadBase : IDownloadFile
     public event EventHandler<DownloadFileChangedEventArgs>? Changed;
 
     public abstract string GetDownloadUrl();
+
+    internal IEnumerable<FileStream> GetFinishedStreamsInorder()
+    {
+        ArgumentNullException.ThrowIfNull(this.Ranges);
+
+        foreach (var (downloadRange, _) in this.Ranges.OrderBy(p => p.Key.Start))
+        {
+            if (!this.FinishedRangeStreams.TryGetValue(downloadRange, out var stream))
+                throw new InvalidOperationException("Stream not found.");
+
+            yield return stream;
+        }
+    }
+
+    internal bool IsDownloadFinished()
+    {
+        ArgumentNullException.ThrowIfNull(this.Ranges);
+
+        return this.Ranges.All(p => this.FinishedRangeStreams.ContainsKey(p.Key));
+    }
+
+    internal IEnumerable<DownloadRange> GetUndoneRanges()
+    {
+        ArgumentNullException.ThrowIfNull(this.Ranges);
+
+        foreach (var (range, _) in this.Ranges)
+        {
+            if (this.FinishedRangeStreams.ContainsKey(range))
+                continue;
+
+            yield return range;
+        }
+    }
 
     internal void OnChanged(double speed, ProgressValue progress, long bytesReceived, long totalBytes)
     {

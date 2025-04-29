@@ -16,9 +16,13 @@ namespace ProjBobcat.Services;
 
 record AddonInfoReqModel([property: JsonPropertyName("modIds")] IEnumerable<long> ModIds);
 
-record FileInfoReqModel([property: JsonPropertyName("fileIds")] IEnumerable<long> FileIds);
+record FileInfoReqModel(
+    [property: JsonPropertyName("fileIds")]
+    IEnumerable<long> FileIds);
 
-record FuzzyFingerPrintReqModel([property: JsonPropertyName("fingerprints")] IEnumerable<long> Fingerprints);
+record FuzzyFingerPrintReqModel(
+    [property: JsonPropertyName("fingerprints")]
+    IEnumerable<long> Fingerprints);
 
 [JsonSerializable(typeof(AddonInfoReqModel))]
 [JsonSerializable(typeof(FileInfoReqModel))]
@@ -42,19 +46,10 @@ public class CurseForgeApiService(
 {
     private const string DefaultApiUrl = "https://api.curseforge.com/v1";
 
-    private string GetApiRoot()
+    public async Task<DataModelWithPagination<CurseForgeAddonInfo[]>?> SearchAddons(SearchOptions options,
+        CancellationToken ct)
     {
-        var customRoot = settingsProvider.CurseForgeApiBaseUrl();
-
-        if (!string.IsNullOrEmpty(customRoot))
-            return customRoot;
-
-        return DefaultApiUrl;
-    }
-
-    public async Task<DataModelWithPagination<CurseForgeAddonInfo[]>?> SearchAddons(SearchOptions options, CancellationToken ct)
-    {
-        var reqUrl = $"{GetApiRoot()}/mods/search{options}";
+        var reqUrl = $"{this.GetApiRoot()}/mods/search{options}";
 
         using var res = await httpClient.GetAsync(reqUrl, ct);
 
@@ -67,7 +62,7 @@ public class CurseForgeApiService(
 
     public async Task<CurseForgeAddonInfo?> GetAddon(long addonId)
     {
-        var reqUrl = $"{GetApiRoot()}/mods/{addonId}";
+        var reqUrl = $"{this.GetApiRoot()}/mods/{addonId}";
 
         using var res = await httpClient.GetAsync(reqUrl);
 
@@ -77,7 +72,7 @@ public class CurseForgeApiService(
 
     public async Task<CurseForgeAddonInfo[]?> GetAddons(IEnumerable<long> addonIds)
     {
-        var reqUrl = $"{GetApiRoot()}/mods";
+        var reqUrl = $"{this.GetApiRoot()}/mods";
 
         var content = JsonContent.Create(
             new AddonInfoReqModel(addonIds),
@@ -91,9 +86,10 @@ public class CurseForgeApiService(
             .DataModelCurseForgeAddonInfoArray))?.Data;
     }
 
-    public async Task<DataModelWithPagination<CurseForgeLatestFileModel[]>?> GetAddonFiles(long addonId, int index = 0, int pageSize = 50)
+    public async Task<DataModelWithPagination<CurseForgeLatestFileModel[]>?> GetAddonFiles(long addonId, int index = 0,
+        int pageSize = 50)
     {
-        var reqUrl = $"{GetApiRoot()}/mods/{addonId}/files?index={index}&pageSize={pageSize}";
+        var reqUrl = $"{this.GetApiRoot()}/mods/{addonId}/files?index={index}&pageSize={pageSize}";
 
         using var res = await httpClient.GetAsync(reqUrl);
 
@@ -105,7 +101,7 @@ public class CurseForgeApiService(
 
     public async Task<CurseForgeLatestFileModel[]?> GetFiles(IEnumerable<long> fileIds)
     {
-        var reqUrl = $"{GetApiRoot()}/mods/files";
+        var reqUrl = $"{this.GetApiRoot()}/mods/files";
 
         var content = JsonContent.Create(
             new FileInfoReqModel(fileIds),
@@ -121,7 +117,7 @@ public class CurseForgeApiService(
 
     public async Task<CurseForgeSearchCategoryModel[]?> GetCategories(int gameId = 432)
     {
-        var reqUrl = $"{GetApiRoot()}/categories?gameId={gameId}";
+        var reqUrl = $"{this.GetApiRoot()}/categories?gameId={gameId}";
 
         using var res = await httpClient.GetAsync(reqUrl);
 
@@ -144,7 +140,7 @@ public class CurseForgeApiService(
 
     public async Task<string?> GetAddonDownloadUrl(long addonId, long fileId)
     {
-        var reqUrl = $"{GetApiRoot()}/mods/{addonId}/files/{fileId}/download-url";
+        var reqUrl = $"{this.GetApiRoot()}/mods/{addonId}/files/{fileId}/download-url";
 
         using var res = await httpClient.GetAsync(reqUrl);
 
@@ -156,7 +152,7 @@ public class CurseForgeApiService(
 
     public async Task<string?> GetAddonDescriptionHtml(long addonId)
     {
-        var reqUrl = $"{GetApiRoot()}/mods/{addonId}/description";
+        var reqUrl = $"{this.GetApiRoot()}/mods/{addonId}/description";
 
         using var res = await httpClient.GetAsync(reqUrl);
         res.EnsureSuccessStatusCode();
@@ -168,7 +164,7 @@ public class CurseForgeApiService(
         long[] fingerprint,
         int gameId = 432)
     {
-        var reqUrl = $"{GetApiRoot()}/fingerprints/{gameId}";
+        var reqUrl = $"{this.GetApiRoot()}/fingerprints/{gameId}";
 
         var content = JsonContent.Create(
             new FuzzyFingerPrintReqModel(fingerprint),
@@ -179,5 +175,15 @@ public class CurseForgeApiService(
 
         return (await res.Content.ReadFromJsonAsync(CurseForgeModelContext.Default
             .DataModelCurseForgeFuzzySearchResponseModel))?.Data;
+    }
+
+    private string GetApiRoot()
+    {
+        var customRoot = settingsProvider.CurseForgeApiBaseUrl();
+
+        if (!string.IsNullOrEmpty(customRoot))
+            return customRoot;
+
+        return DefaultApiUrl;
     }
 }

@@ -68,5 +68,5 @@ public interface IResourceCompleter : IDisposable
     /// <summary>
     ///     文件下载完成事件
     /// </summary>
-    event EventHandler<DownloadFileCompletedEventArgs> DownloadFileCompletedEvent;
+    event EventHandler<GameResourceDownloadedEventArgs> DownloadFileCompletedEvent;
 }

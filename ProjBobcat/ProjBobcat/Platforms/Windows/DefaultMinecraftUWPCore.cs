@@ -72,5 +72,8 @@ public class DefaultMineCraftUWPCore : GameCoreBase
         };
     }
 
-    public override Task<LaunchResult> LaunchTaskAsync(LaunchSettings? settings) => throw new InvalidOperationException();
+    public override Task<LaunchResult> LaunchTaskAsync(LaunchSettings? settings)
+    {
+        throw new InvalidOperationException();
+    }
 }

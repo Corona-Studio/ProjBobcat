@@ -73,9 +73,9 @@ public class YggdrasilAuthenticator : IAuthenticator
     string SignOutAddress =>
         $"{this.AuthServer}{(string.IsNullOrEmpty(this.AuthServer) ? OfficialAuthServer : "/authserver")}/signout";
 
-    public required ILauncherAccountParser LauncherAccountParser { get; init; }
-
     public required IHttpClientFactory HttpClientFactory { get; init; }
+
+    public required ILauncherAccountParser LauncherAccountParser { get; init; }
 
     /// <summary>
     ///     验证凭据。
@@ -102,9 +102,9 @@ public class YggdrasilAuthenticator : IAuthenticator
             Password = this.Password
         };
 
-        var client = HttpClientFactory.CreateClient();
+        var client = this.HttpClientFactory.CreateClient();
 
-        using var authReq = new HttpRequestMessage(HttpMethod.Post, LoginAddress);
+        using var authReq = new HttpRequestMessage(HttpMethod.Post, this.LoginAddress);
         authReq.Content = JsonContent.Create(requestModel, AuthRequestModelContext.Default.AuthRequestModel);
 
         using var resultJson = await client.SendAsync(authReq);
@@ -334,11 +334,12 @@ public class YggdrasilAuthenticator : IAuthenticator
             SelectedProfile = response.SelectedProfile
         };
 
-        var client = HttpClientFactory.CreateClient();
+        var client = this.HttpClientFactory.CreateClient();
 
-        using var refreshReq = new HttpRequestMessage(HttpMethod.Post, RefreshAddress);
-        refreshReq.Content = JsonContent.Create(requestModel, AuthRefreshRequestModelContext.Default.AuthRefreshRequestModel);
-        
+        using var refreshReq = new HttpRequestMessage(HttpMethod.Post, this.RefreshAddress);
+        refreshReq.Content =
+            JsonContent.Create(requestModel, AuthRefreshRequestModelContext.Default.AuthRefreshRequestModel);
+
         using var refreshRes = await client.SendAsync(refreshReq);
         var resultJsonElement = await refreshRes.Content.ReadFromJsonAsync(JsonElementContext.Default.JsonElement);
 
@@ -458,10 +459,11 @@ public class YggdrasilAuthenticator : IAuthenticator
             ClientToken = this.LauncherAccountParser.LauncherAccount.MojangClientToken
         };
 
-        var client = HttpClientFactory.CreateClient();
+        var client = this.HttpClientFactory.CreateClient();
 
-        using var validationReq = new HttpRequestMessage(HttpMethod.Post, ValidateAddress);
-        validationReq.Content = JsonContent.Create(requestModel, AuthTokenRequestModelContext.Default.AuthTokenRequestModel);
+        using var validationReq = new HttpRequestMessage(HttpMethod.Post, this.ValidateAddress);
+        validationReq.Content =
+            JsonContent.Create(requestModel, AuthTokenRequestModelContext.Default.AuthTokenRequestModel);
 
         using var validationRes = await client.SendAsync(validationReq);
 
@@ -482,9 +484,9 @@ public class YggdrasilAuthenticator : IAuthenticator
             Password = this.Password
         };
 
-        var client = HttpClientFactory.CreateClient();
+        var client = this.HttpClientFactory.CreateClient();
 
-        using var signoutReq = new HttpRequestMessage(HttpMethod.Post, SignOutAddress);
+        using var signoutReq = new HttpRequestMessage(HttpMethod.Post, this.SignOutAddress);
         signoutReq.Content = JsonContent.Create(requestModel, SignOutRequestModelContext.Default.SignOutRequestModel);
 
         using var signoutRes = await client.SendAsync(signoutReq);

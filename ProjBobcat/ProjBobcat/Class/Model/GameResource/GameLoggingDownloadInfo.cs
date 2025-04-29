@@ -1,5 +1,5 @@
-﻿using ProjBobcat.Interface;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using ProjBobcat.Interface;
 
 namespace ProjBobcat.Class.Model.GameResource;
 

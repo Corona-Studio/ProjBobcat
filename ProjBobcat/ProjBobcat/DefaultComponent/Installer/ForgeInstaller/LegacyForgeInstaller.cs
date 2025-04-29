@@ -17,16 +17,17 @@ namespace ProjBobcat.DefaultComponent.Installer.ForgeInstaller;
 public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
 {
     public required string ForgeVersion { get; init; }
-    public required string ForgeExecutablePath { get; init; }
-    public override required string RootPath { get; init; }
 
-    public VersionLocatorBase VersionLocator
+    public string DownloadUrlRoot
     {
         get => throw new NotImplementedException();
         init => throw new NotImplementedException();
     }
 
-    public string DownloadUrlRoot
+    public required string ForgeExecutablePath { get; init; }
+    public override required string RootPath { get; init; }
+
+    public VersionLocatorBase VersionLocator
     {
         get => throw new NotImplementedException();
         init => throw new NotImplementedException();

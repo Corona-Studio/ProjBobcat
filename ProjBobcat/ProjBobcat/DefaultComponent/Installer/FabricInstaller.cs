@@ -34,7 +34,7 @@ public class FabricInstaller : InstallerBase, IFabricInstaller
             : this.LoaderArtifact.Loader.Version.Replace(this.LoaderArtifact.Loader.Separator ?? "+build.", ".build.");
         var id = string.IsNullOrEmpty(this.CustomId)
             ? $"{mcVersion}-fabric-{fabricVersion}"
-            : CustomId;
+            : this.CustomId;
 
         var libraries = new List<Library>
         {

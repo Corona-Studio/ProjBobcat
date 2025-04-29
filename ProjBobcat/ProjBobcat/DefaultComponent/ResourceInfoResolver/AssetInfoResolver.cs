@@ -40,7 +40,7 @@ public sealed class AssetInfoResolver : ResolverBase
 
         if (resolvedGame.AssetInfo == null) yield break;
 
-        var client = HttpClientFactory.CreateClient();
+        var client = this.HttpClientFactory.CreateClient();
         var versions = this.Versions;
 
         if ((this.Versions?.Count ?? 0) == 0)
@@ -100,7 +100,7 @@ public sealed class AssetInfoResolver : ResolverBase
 
             if (string.IsNullOrEmpty(assetIndexDownloadUri)) yield break;
 
-            if (!string.IsNullOrEmpty(AssetIndexUriRoot))
+            if (!string.IsNullOrEmpty(this.AssetIndexUriRoot))
             {
                 var assetIndexUriRoot = HttpHelper.RegexMatchUri(assetIndexDownloadUri);
                 assetIndexDownloadUri =
@@ -116,7 +116,7 @@ public sealed class AssetInfoResolver : ResolverBase
 
             try
             {
-                await DownloadHelper.DownloadData(dp, DownloadSettings.FromDefault(HttpClientFactory));
+                await DownloadHelper.DownloadData(dp, DownloadSettings.FromDefault(this.HttpClientFactory));
             }
             catch (Exception e)
             {
@@ -196,7 +196,7 @@ public sealed class AssetInfoResolver : ResolverBase
                 Title = hash,
                 Path = path,
                 Type = ResourceType.Asset,
-                Urls = AssetUriRoots.Select(r => $"{r}{twoDigitsHash}/{fi.Hash}").ToImmutableList(),
+                Urls = this.AssetUriRoots.Select(r => $"{r}{twoDigitsHash}/{fi.Hash}").ToImmutableList(),
                 FileSize = fi.Size,
                 CheckSum = hash,
                 FileName = hash

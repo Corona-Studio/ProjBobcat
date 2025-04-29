@@ -12,16 +12,17 @@ namespace ProjBobcat.Class.Helper.Download;
 
 public static partial class DownloadHelper
 {
+    internal const string DefaultDownloadClientName = nameof(DownloadHelper);
+    private const int DefaultCopyBufferSize = 1024 * 8 * 10;
+
+    private static readonly RecyclableMemoryStreamManager MemoryStreamManager = new();
+
     /// <summary>
     ///     Download thread count
     /// </summary>
     public static int DownloadThread { get; set; } = 8;
 
-    private static readonly RecyclableMemoryStreamManager MemoryStreamManager = new();
-
     internal static string DefaultUserAgent => $"ProjBobcat {typeof(DownloadHelper).Assembly.GetName().Version}";
-    internal const string DefaultDownloadClientName = nameof(DownloadHelper);
-    private const int DefaultCopyBufferSize = 1024 * 8 * 10;
 
     public static string GetTempDownloadPath()
     {
@@ -39,7 +40,6 @@ public static partial class DownloadHelper
     {
         // Once we finished the download, we need to dispose the kept file stream
         foreach (var (_, stream) in download.FinishedRangeStreams)
-        {
             try
             {
                 await stream.DisposeAsync();
@@ -49,7 +49,6 @@ public static partial class DownloadHelper
                 // Do nothing because we don't care about the exception
                 Debug.WriteLine(e);
             }
-        }
 
         download.FinishedRangeStreams.Clear();
     }
@@ -59,15 +58,15 @@ public static partial class DownloadHelper
         var speed = AutoFormatSpeed(speedInBytePerSecond);
         var unit = speed.Unit switch
         {
-            SizeUnit.B => "B / s",
+            SizeUnit.B =>  " B / s",
             SizeUnit.Kb => "Kb / s",
             SizeUnit.Mb => "Mb / s",
             SizeUnit.Gb => "Gb / s",
             SizeUnit.Tb => "Tb / s",
-            _ => "B / s"
+            _ =>           " B / s"
         };
 
-        return $"{speed.Speed:F1} {unit}";
+        return $"{speed.Speed:F1} {unit,6}";
     }
 
     public static (double Speed, SizeUnit Unit) AutoFormatSpeed(double transferSpeed)
@@ -121,26 +120,21 @@ public static partial class DownloadHelper
             : DownloadData(df, downloadSettings);
     }
 
-    private static (BufferBlock<AbstractDownloadBase> Input, ActionBlock<AbstractDownloadBase> Execution) BuildAdvancedDownloadTplBlock(DownloadSettings downloadSettings)
+    public static ActionBlock<AbstractDownloadBase> BuildAdvancedDownloadTplBlock(DownloadSettings downloadSettings)
     {
         var lxTempPath = GetTempDownloadPath();
 
         if (!Directory.Exists(lxTempPath))
             Directory.CreateDirectory(lxTempPath);
 
-        var bufferBlock = new BufferBlock<AbstractDownloadBase>(new DataflowBlockOptions { EnsureOrdered = false });
         var actionBlock = new ActionBlock<AbstractDownloadBase>(
-            d => AdvancedDownloadFile(d, downloadSettings),
+            async d => await AdvancedDownloadFile(d, downloadSettings),
             new ExecutionDataflowBlockOptions
             {
-                BoundedCapacity = DownloadThread,
-                MaxDegreeOfParallelism = DownloadThread,
-                EnsureOrdered = false
+                MaxDegreeOfParallelism = DownloadThread
             });
 
-        bufferBlock.LinkTo(actionBlock, new DataflowLinkOptions { PropagateCompletion = true });
-        
-        return (bufferBlock, actionBlock);
+        return actionBlock;
     }
 
     /// <summary>
@@ -157,18 +151,14 @@ public static partial class DownloadHelper
         if (!Directory.Exists(lxTempPath))
             Directory.CreateDirectory(lxTempPath);
 
-        var blocks = BuildAdvancedDownloadTplBlock(downloadSettings);
+        var block = BuildAdvancedDownloadTplBlock(downloadSettings);
 
         foreach (var downloadFile in fileEnumerable)
-            await blocks.Input.SendAsync(downloadFile);
+            await block.SendAsync(downloadFile);
 
-        blocks.Input.Complete();
-        await blocks.Execution.Completion;
+        block.Complete();
+        await block.Completion;
     }
-
-    public static (BufferBlock<AbstractDownloadBase> Input, ActionBlock<AbstractDownloadBase> Execution)
-        AdvancedDownloadListFileActionBlock(DownloadSettings downloadSettings) =>
-        BuildAdvancedDownloadTplBlock(downloadSettings);
 
     #endregion
 }

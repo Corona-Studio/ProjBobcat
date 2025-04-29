@@ -29,7 +29,8 @@ public abstract class ResolverBase : IResourceInfoResolver
         bool checkLocalFiles,
         ResolvedGameVersion resolvedGame)
     {
-        return this.ResolveResourceAsync(basePath, checkLocalFiles, resolvedGame).ToListAsync().GetAwaiter().GetResult();
+        return this.ResolveResourceAsync(basePath, checkLocalFiles, resolvedGame).ToListAsync().GetAwaiter()
+            .GetResult();
     }
 
     public void Dispose()

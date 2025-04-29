@@ -102,15 +102,16 @@ public sealed class LibraryInfoResolver : ResolverBase
         var uris = libType switch
         {
             LibraryType.Forge when lL.Url?.StartsWith("https://maven.minecraftforge.net",
-                    StringComparison.OrdinalIgnoreCase) ?? false => ForgeMavenUriRoots.Select(r => $"{r}{lL.Path}").ToImmutableList(),
+                                       StringComparison.OrdinalIgnoreCase) ??
+                                   false => this.ForgeMavenUriRoots.Select(r => $"{r}{lL.Path}").ToImmutableList(),
             LibraryType.Forge when lL.Url?.StartsWith("https://files.minecraftforge.net/maven/",
                                        StringComparison.OrdinalIgnoreCase) ??
-                                   false => ForgeMavenOldUriRoots.Select(r => $"{r}{lL.Path}").ToImmutableList(),
-            LibraryType.Forge => ForgeUriRoots.Select(r => $"{r}{lL.Path}").ToImmutableList(),
-            LibraryType.Fabric => FabricMavenUriRoots.Select(r => $"{r}{lL.Path}").ToImmutableList(),
-            LibraryType.Quilt when !string.IsNullOrEmpty(lL.Url) =>
-                QuiltMavenUriRoots.Select(r => $"{r}{lL.Path}").ToImmutableList(),
-            LibraryType.Other => LibraryUriRoots.Select(r => $"{r}{lL.Path}").ToImmutableList(),
+                                   false => this.ForgeMavenOldUriRoots.Select(r => $"{r}{lL.Path}").ToImmutableList(),
+            LibraryType.Forge => this.ForgeUriRoots.Select(r => $"{r}{lL.Path}").ToImmutableList(),
+            LibraryType.Fabric => this.FabricMavenUriRoots.Select(r => $"{r}{lL.Path}").ToImmutableList(),
+            LibraryType.Quilt when !string.IsNullOrEmpty(lL.Url) => this.QuiltMavenUriRoots.Select(r => $"{r}{lL.Path}")
+                .ToImmutableList(),
+            LibraryType.Other => this.LibraryUriRoots.Select(r => $"{r}{lL.Path}").ToImmutableList(),
             _ => [string.Empty]
         };
 

@@ -18,14 +18,14 @@ public class ErrorModel
     {
         var sb = new StringBuilder().AppendLine();
 
-        if (!string.IsNullOrEmpty(Error))
-            sb.AppendLine("[ERROR]").AppendLine(Error);
-        if (!string.IsNullOrEmpty(ErrorMessage))
-            sb.AppendLine("[ERROR MESSAGE]").AppendLine(ErrorMessage);
-        if (!string.IsNullOrEmpty(Cause))
-            sb.AppendLine("[CAUSE]").AppendLine(Cause);
-        if (Exception != null)
-            sb.AppendLine("[EXCEPTION]").AppendLine(Exception.ToString());
+        if (!string.IsNullOrEmpty(this.Error))
+            sb.AppendLine("[ERROR]").AppendLine(this.Error);
+        if (!string.IsNullOrEmpty(this.ErrorMessage))
+            sb.AppendLine("[ERROR MESSAGE]").AppendLine(this.ErrorMessage);
+        if (!string.IsNullOrEmpty(this.Cause))
+            sb.AppendLine("[CAUSE]").AppendLine(this.Cause);
+        if (this.Exception != null)
+            sb.AppendLine("[EXCEPTION]").AppendLine(this.Exception.ToString());
 
         return sb.AppendLine().ToString();
     }

@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using Microsoft.Extensions.Configuration;
 using ProjBobcat.Class.Model;
+using FileInfo = System.IO.FileInfo;
 
 namespace ProjBobcat.Class.Helper;
 
@@ -79,7 +80,7 @@ public static class SystemInfoHelper
     {
         try
         {
-            var fileInfo = new System.IO.FileInfo(path);
+            var fileInfo = new FileInfo(path);
 
             if (!fileInfo.Exists)
                 return false;

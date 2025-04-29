@@ -118,7 +118,7 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
             { "${classpath_separator}", Path.PathSeparator.ToString() },
             { "${library_directory}", $"\"{Path.Combine(this.RootPath, GamePathHelper.GetLibraryRootPath())}\"" },
             { "${version_name}", versionName },
-            { "${primary_jar_name}", $"\"{version.Id}.jar\""}
+            { "${primary_jar_name}", $"\"{version.Id}.jar\"" }
         };
 
         #region log4j 缓解措施
@@ -132,7 +132,7 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
         yield return "-Dfile.encoding=UTF-8";
         yield return "-Dstdout.encoding=UTF-8";
         yield return "-Dstderr.encoding=UTF-8";
-        
+
         #endregion
 
         yield return "-Dfml.ignoreInvalidMinecraftCertificates=true";
@@ -201,7 +201,8 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
             { "${version_type}", $"\"{gameProfile.Type ?? launchSettings.LauncherName}\"" },
             { "${assets_root}", $"\"{assetRoot}\"" },
             {
-                "${assets_index_name}", resolvedGameVersion.AssetInfo?.Id ?? castVersionInfo.Assets ?? castVersionInfo.Id
+                "${assets_index_name}",
+                resolvedGameVersion.AssetInfo?.Id ?? castVersionInfo.Assets ?? castVersionInfo.Id
             },
             { "${game_directory}", $"\"{gameDir}\"" },
             { "${auth_player_name}", authResult.SelectedProfile.Name },
@@ -238,7 +239,8 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
 
         arguments.Add(resolvedVersion!.MainClass);
 
-        arguments.AddRange(this.ParseGameArguments(versionInfo, resolvedVersion, gameProfile, launchSettings, authResult));
+        arguments.AddRange(this.ParseGameArguments(versionInfo, resolvedVersion, gameProfile, launchSettings,
+            authResult));
         arguments.AddRange(this.ParseAdditionalArguments(versionInfo, resolvedVersion, launchSettings, gameProfile));
 
         for (var i = 0; i < arguments.Count; i++)
@@ -317,7 +319,7 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
         var serverSettings = launchSettings.GameArguments.ServerSettings ??
                              launchSettings.FallBackGameArguments?.ServerSettings;
         var joinWorldName = launchSettings.GameArguments.JoinWorldName ??
-                                launchSettings.FallBackGameArguments?.JoinWorldName;
+                            launchSettings.FallBackGameArguments?.JoinWorldName;
 
         // Starting from 1.20, we need to use the new command line arguments
         var newFormatVersionLimit = new ComparableVersion("1.20");

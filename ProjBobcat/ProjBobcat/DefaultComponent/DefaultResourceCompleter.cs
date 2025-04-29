@@ -22,6 +22,7 @@ public class DefaultResourceCompleter : IResourceCompleter
     readonly ConcurrentBag<MultiSourceDownloadFile> _failedFiles = [];
 
     ulong _needToDownload, _totalDownloaded;
+    public required IHttpClientFactory HttpClientFactory { get; init; }
 
     public TimeSpan TimeoutPerFile { get; set; } = TimeSpan.FromSeconds(8);
     public int DownloadParts { get; set; } = 16;
@@ -30,11 +31,12 @@ public class DefaultResourceCompleter : IResourceCompleter
     public int TotalRetry { get; set; } = 2;
     public bool CheckFile { get; set; } = true;
     public IReadOnlyList<IResourceInfoResolver>? ResourceInfoResolvers { get; set; }
-    public required IHttpClientFactory HttpClientFactory { get; init; }
 
     public event EventHandler<GameResourceInfoResolveEventArgs>? GameResourceInfoResolveStatus;
     public event EventHandler<DownloadFileChangedEventArgs>? DownloadFileChangedEvent;
-    public event EventHandler<DownloadFileCompletedEventArgs>? DownloadFileCompletedEvent;
+    public event EventHandler<GameResourceDownloadedEventArgs>? DownloadFileCompletedEvent;
+
+    record CheckFileInfo(IResourceInfoResolver Resolver, string BasePath, bool CheckLocalFiles, ResolvedGameVersion ResolvedGame);
 
     public TaskResult<ResourceCompleterCheckResult?> CheckAndDownload(
         string basePath,
@@ -55,8 +57,10 @@ public class DefaultResourceCompleter : IResourceCompleter
         this.DownloadThread = this.DownloadThread <= 1 ? 16 : this.DownloadThread;
 
         Interlocked.Exchange(ref this._needToDownload, 0);
+        Interlocked.Exchange(ref this._totalDownloaded, 0);
         this._failedFiles.Clear();
 
+        var numBatches = Math.Min(MaxDegreeOfParallelism, Environment.ProcessorCount);
         var downloadSettings = new DownloadSettings
         {
             CheckFile = this.CheckFile,
@@ -64,7 +68,7 @@ public class DefaultResourceCompleter : IResourceCompleter
             HashType = HashType.SHA1,
             RetryCount = this.TotalRetry,
             Timeout = this.TimeoutPerFile,
-            HttpClientFactory = HttpClientFactory
+            HttpClientFactory = this.HttpClientFactory
         };
 
         this.OnResolveComplete(this, new GameResourceInfoResolveEventArgs
@@ -73,56 +77,20 @@ public class DefaultResourceCompleter : IResourceCompleter
             Status = "正在进行资源检查"
         });
 
-        var numBatches = Math.Min(MaxDegreeOfParallelism, Environment.ProcessorCount);
-        var blocks = DownloadHelper.AdvancedDownloadListFileActionBlock(downloadSettings);
-        var checkAction = new ActionBlock<IResourceInfoResolver>(async resolver =>
+        var linkOption = new DataflowLinkOptions { PropagateCompletion = true };
+        var downloadBlock = DownloadHelper.BuildAdvancedDownloadTplBlock(downloadSettings);
+        var checkBlock = new TransformManyBlock<CheckFileInfo, AbstractDownloadBase>(TransformCheckFiles, new ExecutionDataflowBlockOptions
         {
-            resolver.GameResourceInfoResolveEvent += FireResolveEvent;
-
-            await foreach (var element in resolver.ResolveResourceAsync(basePath, checkLocalFiles, resolvedGame))
-            {
-                var dF = new MultiSourceDownloadFile
-                {
-                    DownloadPath = element.Path,
-                    DownloadUris = element.Urls,
-                    FileName = element.FileName,
-                    FileSize = element.FileSize,
-                    CheckSum = element.CheckSum,
-                    FileType = element.Type
-                };
-                dF.Completed += this.WhenCompleted;
-
-                await blocks.Input.SendAsync(dF);
-
-                Interlocked.Add(ref this._needToDownload, 1);
-            }
-
-            return;
-
-            void FireResolveEvent(object? sender, GameResourceInfoResolveEventArgs e)
-            {
-                if (Interlocked.Read(ref this._needToDownload) != 0)
-                {
-                    resolver.GameResourceInfoResolveEvent -= FireResolveEvent;
-                    return;
-                }
-
-                this.OnResolveComplete(sender, e);
-            }
-        }, new ExecutionDataflowBlockOptions
-        {
-            BoundedCapacity = numBatches,
             MaxDegreeOfParallelism = numBatches
         });
 
+        checkBlock.LinkTo(downloadBlock, linkOption);
+
         foreach (var r in this.ResourceInfoResolvers!)
-            await checkAction.SendAsync(r);
+            await checkBlock.SendAsync(new CheckFileInfo(r, basePath, checkLocalFiles, resolvedGame));
 
-        checkAction.Complete();
-        await checkAction.Completion;
-
-        blocks.Input.Complete();
-        await blocks.Execution.Completion;
+        checkBlock.Complete();
+        await checkBlock.Completion;
 
         this.OnResolveComplete(this, new GameResourceInfoResolveEventArgs
         {
@@ -147,6 +115,30 @@ public class DefaultResourceCompleter : IResourceCompleter
         return new TaskResult<ResourceCompleterCheckResult?>(result, value: resultArgs);
     }
 
+    async IAsyncEnumerable<AbstractDownloadBase> TransformCheckFiles(CheckFileInfo arg)
+    {
+        await foreach (var element in arg.Resolver.ResolveResourceAsync(
+                           arg.BasePath,
+                           arg.CheckLocalFiles,
+                           arg.ResolvedGame))
+        {
+            var dF = new MultiSourceDownloadFile
+            {
+                DownloadPath = element.Path,
+                DownloadUris = element.Urls,
+                FileName = element.FileName,
+                FileSize = element.FileSize,
+                CheckSum = element.CheckSum,
+                FileType = element.Type
+            };
+            dF.Completed += this.WhenCompleted;
+
+            Interlocked.Increment(ref this._needToDownload);
+
+            yield return dF;
+        }
+    }
+
     public void Dispose()
     {
     }
@@ -156,7 +148,7 @@ public class DefaultResourceCompleter : IResourceCompleter
         this.GameResourceInfoResolveStatus?.Invoke(sender, e);
     }
 
-    void OnCompleted(object? sender, DownloadFileCompletedEventArgs e)
+    void OnCompleted(object? sender, GameResourceDownloadedEventArgs e)
     {
         this.DownloadFileCompletedEvent?.Invoke(sender, e);
     }
@@ -182,6 +174,10 @@ public class DefaultResourceCompleter : IResourceCompleter
         var needToDownload = Interlocked.Read(ref this._needToDownload);
 
         this.OnChanged(ProgressValue.Create(downloaded, needToDownload), e.AverageSpeed);
-        this.OnCompleted(sender, e);
+        this.OnCompleted(sender, new GameResourceDownloadedEventArgs
+        {
+            TotalNeedToDownload = needToDownload,
+            DownloadEventArgs = e
+        });
     }
 }

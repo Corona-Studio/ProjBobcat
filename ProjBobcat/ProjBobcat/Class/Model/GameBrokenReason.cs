@@ -10,7 +10,7 @@ public enum GameBrokenReason
     LackGameJson = 1 << 1,
     GamePathNotFound = 1 << 2,
     NoCandidateJsonFound = 1 << 3,
-    
+
     // A special flag to indicate that the  parent game is broken.
     Parent = 1 << 16
 }

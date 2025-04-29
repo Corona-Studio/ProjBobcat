@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -10,7 +9,6 @@ using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Exceptions;
 using ProjBobcat.Interface;
-
 #if NET9_0_OR_GREATER
 using System.Threading;
 #endif
@@ -99,8 +97,9 @@ public sealed class DefaultLauncherProfileParser : LauncherParserBase, ILauncher
         lock (this._lock)
 #endif
         {
-            var profile = this.LauncherProfile.Profiles!.FirstOrDefault(
-                              p => p.Value.Name?.Equals(name, StringComparison.Ordinal) ?? false).Value ??
+            var profile = this.LauncherProfile.Profiles!
+                              .FirstOrDefault(p => p.Value.Name?.Equals(name, StringComparison.Ordinal) ?? false)
+                              .Value ??
                           throw new UnknownGameNameException(name);
 
             profile.Resolution ??= new ResolutionModel();

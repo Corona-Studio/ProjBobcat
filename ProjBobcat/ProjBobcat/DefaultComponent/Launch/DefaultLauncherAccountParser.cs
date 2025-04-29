@@ -8,7 +8,6 @@ using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model.LauncherAccount;
 using ProjBobcat.Interface;
-
 #if NET9_0_OR_GREATER
 using System.Threading;
 #endif

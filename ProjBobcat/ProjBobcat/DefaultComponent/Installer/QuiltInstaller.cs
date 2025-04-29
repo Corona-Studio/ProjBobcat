@@ -34,7 +34,7 @@ public class QuiltInstaller : InstallerBase, IQuiltInstaller
         var url =
             $"{DefaultMetaUrl}/v3/versions/loader/{this.MineCraftVersion}/{this.LoaderArtifact.Version}/profile/json";
 
-        var client = HttpClientFactory.CreateClient();
+        var client = this.HttpClientFactory.CreateClient();
 
         using var res = await client.GetAsync(url);
 

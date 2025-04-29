@@ -109,7 +109,8 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
         this.InvokeStatusChangedEvent("解析 Install_profile.json", ProgressValue.FromDisplay(20));
 
         var installProfileEntry =
-            archive.Entries.FirstOrDefault(e => e.FullName.Equals("install_profile.json", StringComparison.OrdinalIgnoreCase));
+            archive.Entries.FirstOrDefault(e =>
+                e.FullName.Equals("install_profile.json", StringComparison.OrdinalIgnoreCase));
 
         if (installProfileEntry == null)
             return GetCorruptedFileResult();
@@ -271,7 +272,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
                 HashType = HashType.SHA1,
                 RetryCount = 3,
                 Timeout = TimeSpan.FromMinutes(1),
-                HttpClientFactory = HttpClientFactory
+                HttpClientFactory = this.HttpClientFactory
             });
         }
 
@@ -440,7 +441,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             HashType = HashType.SHA1,
             RetryCount = 3,
             Timeout = TimeSpan.FromMinutes(1),
-            HttpClientFactory = HttpClientFactory
+            HttpClientFactory = this.HttpClientFactory
         });
 
         if (!this._failedFiles.IsEmpty)
@@ -466,11 +467,11 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             var libPath = Path.Combine(this.RootPath, GamePathHelper.GetLibraryPath(maven.Path));
 
             using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
-            
+
             await using var libFs = await FileHelper.OpenReadAsync(Path.GetFullPath(libPath), cts.Token);
-            
+
             ArgumentNullException.ThrowIfNull(libFs);
-            
+
             using var libArchive = new ZipArchive(libFs, ZipArchiveMode.Read);
 
             var libEntry =
@@ -538,7 +539,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
                 logSb.AppendLine(args.Data);
 
                 var data = args.Data;
-                
+
                 var progress = ProgressValue.Create(this._totalProcessed, this._needToProcess);
                 var dataStr = data.CropStr(40);
 

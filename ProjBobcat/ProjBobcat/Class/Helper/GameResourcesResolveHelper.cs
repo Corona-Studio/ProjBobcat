@@ -59,7 +59,6 @@ public static class GameResourcesResolveHelper
         var modList = new List<string>();
 
         if (dependencies != null)
-        {
             foreach (var dep in dependencies.Children)
             {
                 if (!dep.HasKey("modId")) continue;
@@ -72,7 +71,6 @@ public static class GameResourcesResolveHelper
                 modList.Add(
                     $"{dep["modId"]?.AsString ?? string.Empty} ({dep["versionRange"]?.AsString ?? string.Empty})");
             }
-        }
 
         return new GameModResolvedInfo(
             author?.Value,
@@ -218,20 +216,20 @@ public static class GameResourcesResolveHelper
             .ToList();
 
         var iconEntry = iconEntries
-            .FirstOrDefault(e => e.FullName.Contains("icon", StringComparison.OrdinalIgnoreCase) ||
-                                 e.FullName.Contains("logo", StringComparison.OrdinalIgnoreCase) ||
-                                 e.FullName.Contains("cover", StringComparison.OrdinalIgnoreCase) ||
-                                 e.FullName.Contains("banner", StringComparison.OrdinalIgnoreCase))
-            ?? iconEntries.FirstOrDefault();
-        
+                            .FirstOrDefault(e => e.FullName.Contains("icon", StringComparison.OrdinalIgnoreCase) ||
+                                                 e.FullName.Contains("logo", StringComparison.OrdinalIgnoreCase) ||
+                                                 e.FullName.Contains("cover", StringComparison.OrdinalIgnoreCase) ||
+                                                 e.FullName.Contains("banner", StringComparison.OrdinalIgnoreCase))
+                        ?? iconEntries.FirstOrDefault();
+
         if (iconEntry == null)
             return null;
 
         await using var entryStream = iconEntry.Open();
         await using var ms = new MemoryStream();
-        
+
         await entryStream.CopyToAsync(ms);
-        
+
         return ms.ToArray();
 
         static bool IsImageFile(ZipArchiveEntry entry)

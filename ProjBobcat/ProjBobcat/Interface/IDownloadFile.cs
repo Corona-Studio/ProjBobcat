@@ -1,5 +1,5 @@
-﻿using ProjBobcat.Class.Model;
-using System;
+﻿using System;
+using ProjBobcat.Class.Model;
 using ProjBobcat.Event;
 
 namespace ProjBobcat.Interface;
@@ -7,11 +7,6 @@ namespace ProjBobcat.Interface;
 public interface IDownloadFile
 {
     int PartialDownloadRetryCount { get; }
-
-    /// <summary>
-    ///     下载Uri
-    /// </summary>
-    string GetDownloadUrl();
 
     /// <summary>
     ///     下载路径
@@ -42,6 +37,11 @@ public interface IDownloadFile
     ///     文件检验码
     /// </summary>
     string? CheckSum { get; init; }
+
+    /// <summary>
+    ///     下载Uri
+    /// </summary>
+    string GetDownloadUrl();
 
     /// <summary>
     ///     下载完成事件

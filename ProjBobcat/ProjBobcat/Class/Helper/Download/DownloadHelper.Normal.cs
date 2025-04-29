@@ -36,7 +36,8 @@ public static partial class DownloadHelper
 
         while (downloadFile.RetryCount++ < trials)
         {
-            using var cts = new CancellationTokenSource(timeout);
+            var timeoutMs = timeout.TotalMilliseconds;
+            using var cts = new CancellationTokenSource((int )timeoutMs);
 
             try
             {
@@ -120,9 +121,10 @@ public static partial class DownloadHelper
                             await fs.FlushAsync(cts.Token);
                         }
                     }
-
-                    if (!hashCheckFile)
+                    else
+                    {
                         await ms.FlushAsync(cts.Token);
+                    }
                 }
 
                 await RecycleDownloadFile(downloadFile);
@@ -132,14 +134,15 @@ public static partial class DownloadHelper
                     Stopwatch.GetTimestamp() - (long)(timeout.TotalSeconds * Stopwatch.Frequency)
                 ).TotalSeconds;
 
+                downloadFile.RetryCount--;
                 downloadFile.OnCompleted(true, null, finalSpeed);
 
                 return;
             }
             catch (Exception e)
             {
-                var delay = Math.Min(1000 * Math.Pow(2, downloadFile.RetryCount - 1), 60000);
-                await Task.Delay((int)delay, cts.Token);
+                var delay = Math.Min(1000 * Math.Pow(2, downloadFile.RetryCount - 1), 10000);
+                await Task.Delay((int)delay, CancellationToken.None);
                 exceptions.Add(e);
             }
         }

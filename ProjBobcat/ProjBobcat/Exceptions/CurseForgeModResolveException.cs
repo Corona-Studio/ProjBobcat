@@ -6,21 +6,23 @@ public sealed class CurseForgeModResolveException : AggregateException
 {
     public CurseForgeModResolveException(long addonId, long fileId) : base(GetMessage(addonId, fileId, null))
     {
-        AddonId = addonId;
-        FileId = fileId;
+        this.AddonId = addonId;
+        this.FileId = fileId;
     }
 
-    public CurseForgeModResolveException(long addonId, long fileId, Exception ex) : base(new Exception(GetMessage(addonId, fileId, null)), ex)
+    public CurseForgeModResolveException(long addonId, long fileId, Exception ex) : base(
+        new Exception(GetMessage(addonId, fileId, null)), ex)
     {
-        AddonId = addonId;
-        FileId = fileId;
+        this.AddonId = addonId;
+        this.FileId = fileId;
     }
 
-    public CurseForgeModResolveException(long addonId, long fileId, string moreInfo) : base(GetMessage(addonId, fileId, moreInfo))
+    public CurseForgeModResolveException(long addonId, long fileId, string moreInfo) : base(GetMessage(addonId, fileId,
+        moreInfo))
     {
-        AddonId = addonId;
-        FileId = fileId;
-        MoreInfo = moreInfo;
+        this.AddonId = addonId;
+        this.FileId = fileId;
+        this.MoreInfo = moreInfo;
     }
 
     public long AddonId { get; }

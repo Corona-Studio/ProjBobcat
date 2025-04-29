@@ -4,7 +4,9 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Windows.Win32;
 using Windows.Win32.Foundation;
@@ -16,8 +18,6 @@ using ProjBobcat.Class.Model.YggdrasilAuth;
 using ProjBobcat.DefaultComponent.Authenticator;
 using ProjBobcat.Event;
 using FileInfo = System.IO.FileInfo;
-using System.Runtime.InteropServices;
-using System.Text.RegularExpressions;
 
 namespace ProjBobcat.DefaultComponent.Launch.GameCore;
 
@@ -27,9 +27,6 @@ namespace ProjBobcat.DefaultComponent.Launch.GameCore;
 public sealed partial class DefaultGameCore : GameCoreBase
 {
     readonly string _rootPath = null!;
-
-    [GeneratedRegex(@"\r\n|\r|\n")]
-    private static partial Regex CrLfRegex();
 
     /// <summary>
     ///     .minecraft 目录
@@ -45,6 +42,9 @@ public sealed partial class DefaultGameCore : GameCoreBase
         }
     }
 
+    [GeneratedRegex(@"\r\n|\r|\n")]
+    private static partial Regex CrLfRegex();
+
     private void CleanupOldNatives(LaunchSettings settings)
     {
         var nativeRoot = Path.Combine(this.RootPath, GamePathHelper.GetNativeRoot(settings.Version));
@@ -57,7 +57,6 @@ public sealed partial class DefaultGameCore : GameCoreBase
             .ToFrozenSet();
 
         foreach (var dir in dirs)
-        {
             try
             {
                 DirectoryHelper.CleanDirectory(dir.FullName, true);
@@ -70,7 +69,6 @@ public sealed partial class DefaultGameCore : GameCoreBase
             {
                 // Ignore
             }
-        }
     }
 
     private static async Task<ProcessStartInfo> StartGameInShellInWindows(
@@ -93,7 +91,7 @@ public sealed partial class DefaultGameCore : GameCoreBase
         {
             UseShellExecute = true,
             WindowStyle = ProcessWindowStyle.Normal,
-            WorkingDirectory = rootPath,
+            WorkingDirectory = rootPath
         };
     }
 
@@ -108,37 +106,32 @@ public sealed partial class DefaultGameCore : GameCoreBase
                                                       {command}
                                                       exec bash
                                                       """);
-        var chmodProcess = Process.Start(new ProcessStartInfo("chmod", $"+x \"{tempScriptPath}\"") { UseShellExecute = false });
+        var chmodProcess = Process.Start(new ProcessStartInfo("chmod", $"+x \"{tempScriptPath}\"")
+            { UseShellExecute = false });
 
         ArgumentNullException.ThrowIfNull(chmodProcess);
-        
+
         await chmodProcess.WaitForExitAsync();
-        
+
         if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-        {
             return new ProcessStartInfo("open", $"-a Terminal \"{tempScriptPath}\"")
             {
                 UseShellExecute = true
             };
-        }
 
         var terminal = File.Exists("/usr/bin/gnome-terminal") ? "gnome-terminal" : "xterm";
         if (terminal == "gnome-terminal")
-        {
             return new ProcessStartInfo(terminal, $"-- bash -c '{tempScriptPath}; exec bash'")
             {
                 UseShellExecute = true,
-                WorkingDirectory = rootPath,
+                WorkingDirectory = rootPath
             };
-        }
-        else
+
+        return new ProcessStartInfo(terminal, $"-e bash -c '{tempScriptPath}; exec bash'")
         {
-            return new ProcessStartInfo(terminal, $"-e bash -c '{tempScriptPath}; exec bash'")
-            {
-                UseShellExecute = true,
-                WorkingDirectory = rootPath,
-            };
-        }
+            UseShellExecute = true,
+            WorkingDirectory = rootPath
+        };
     }
 
     public override async Task<LaunchResult> LaunchTaskAsync(LaunchSettings settings)
@@ -156,7 +149,6 @@ public sealed partial class DefaultGameCore : GameCoreBase
             var tempVersion = this.VersionLocator.GetGame(settings.Version);
 
             if (tempVersion is BrokenVersionInfo brokenVersion)
-            {
                 return new LaunchResult
                 {
                     ErrorType = LaunchErrorType.OperationFailed,
@@ -167,7 +159,6 @@ public sealed partial class DefaultGameCore : GameCoreBase
                         Cause = $"[{brokenVersion.BrokenReason}] 这有可能是因为您的游戏JSON文件损坏所导致的问题"
                     }
                 };
-            }
 
             var version = (VersionInfo)tempVersion;
 
@@ -264,7 +255,6 @@ public sealed partial class DefaultGameCore : GameCoreBase
                 java);
 
             if (resolvedVersion == null)
-            {
                 return new LaunchResult
                 {
                     ErrorType = LaunchErrorType.OperationFailed,
@@ -275,10 +265,10 @@ public sealed partial class DefaultGameCore : GameCoreBase
                         Cause = "这有可能是因为您的游戏JSON文件损坏所导致的问题"
                     }
                 };
-            }
 
             var nativeRoot = Path.Combine(this.RootPath, GamePathHelper.CreateNativeRoot(settings.Version));
-            var arguments = argumentParser.GenerateLaunchArguments(nativeRoot, version, resolvedVersion, settings, authResult);
+            var arguments =
+                argumentParser.GenerateLaunchArguments(nativeRoot, version, resolvedVersion, settings, authResult);
             this.InvokeLaunchLogThenStart("解析启动参数", ref currentTimestamp);
 
             //通过String Builder格式化参数。（转化成字符串）

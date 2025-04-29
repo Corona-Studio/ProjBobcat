@@ -22,19 +22,6 @@ public static partial class DownloadHelper
     private const int DefaultPartialDownloadTimeoutMs = 3000;
     private const int MinimumChunkSize = 8192;
 
-    record PreChunkInfo(
-        HttpClient Client,
-        int CurrentChunkSplitCount,
-        string DownloadUrl,
-        DownloadRange Range,
-        CancellationTokenSource Cts);
-
-    record ChunkInfo(
-        int CurrentChunkSplitCount,
-        HttpResponseMessage Response,
-        DownloadRange Range,
-        CancellationTokenSource Cts);
-
     /// <summary>
     ///     Receive data from remote stream (only for partial download)
     /// </summary>
@@ -98,7 +85,8 @@ public static partial class DownloadHelper
             if (!string.IsNullOrEmpty(downloadSettings.Host))
                 rangeGetMessage.Headers.Host = downloadSettings.Host;
 
-            using var rangeGetRes = await client.SendAsync(rangeGetMessage, HttpCompletionOption.ResponseHeadersRead, ct);
+            using var rangeGetRes =
+                await client.SendAsync(rangeGetMessage, HttpCompletionOption.ResponseHeadersRead, ct);
 
             var parallelDownloadSupported =
                 responseLength != 0 &&
@@ -184,7 +172,8 @@ public static partial class DownloadHelper
 
         while (downloadFile.RetryCount++ < trials)
         {
-            using var cts = new CancellationTokenSource(timeout);
+            var timeoutMs = timeout.TotalMilliseconds;
+            using var cts = new CancellationTokenSource((int)Math.Min(timeoutMs * 5, timeoutMs * downloadFile.RetryCount));
 
             try
             {
@@ -284,11 +273,9 @@ public static partial class DownloadHelper
                                 if (!downloadTask.IsSuccessStatusCode ||
                                     !downloadTask.Content.Headers.ContentLength.HasValue ||
                                     downloadTask.Content.Headers.ContentLength == 0)
-                                {
                                     // Some mirror will return non-200 code during the high load
                                     throw new HttpRequestException(
                                         $"Failed to download part {preChunkInfo.Range.Start}-{preChunkInfo.Range.End}, status code: {downloadTask.StatusCode}");
-                                }
 
                                 return new ChunkInfo(
                                     preChunkInfo.CurrentChunkSplitCount,
@@ -304,7 +291,6 @@ public static partial class DownloadHelper
                             }
                         }, new ExecutionDataflowBlockOptions
                         {
-                            BoundedCapacity = downloadSettings.DownloadParts,
                             EnsureOrdered = false,
                             MaxDegreeOfParallelism = downloadSettings.DownloadParts,
                             CancellationToken = cts.Token
@@ -392,20 +378,16 @@ public static partial class DownloadHelper
 
                         // We add the sub chunks to the download queue
                         foreach (var range in subChunkRanges)
-                        {
                             // Update the original range list
                             ArgumentOutOfRangeException.ThrowIfEqual(downloadFile.Ranges.TryAdd(range, null), false);
-                        }
 
                         throw new DownloadChunkSplitException(true, e);
                     }
                     finally
                     {
                         if (chunkInfo.CurrentChunkSplitCount < downloadSettings.MaxSubChunkSplitCount)
-                        {
                             // If the sub chunk split count is greater than the max split count, we need to cancel the main cts
                             chunkCts.Dispose();
-                        }
                     }
 
                     // 更新总下载字节数
@@ -430,7 +412,6 @@ public static partial class DownloadHelper
                     }
                 }, new ExecutionDataflowBlockOptions
                 {
-                    BoundedCapacity = downloadSettings.DownloadParts,
                     EnsureOrdered = false,
                     MaxDegreeOfParallelism = downloadSettings.DownloadParts,
                     CancellationToken = cts.Token
@@ -532,14 +513,17 @@ public static partial class DownloadHelper
                             await fs.FlushAsync(cts.Token);
                         }
                     }
-
-                    if (!hashCheckFile)
+                    else
+                    {
                         await ms.FlushAsync(cts.Token);
+                    }
                 }
-                
+
                 #endregion
 
                 await RecycleDownloadFile(downloadFile);
+
+                downloadFile.RetryCount--;
                 downloadFile.OnCompleted(true, null, globalSpeedCalculator.TotalBytes /
                                                      Stopwatch.GetElapsedTime(
                                                          Stopwatch.GetTimestamp() -
@@ -573,8 +557,8 @@ public static partial class DownloadHelper
                 downloadFile.Ranges = null;
                 exceptions.Add(ex);
 
-                var delay = Math.Min(1000 * Math.Pow(2, downloadFile.RetryCount - 1), 60000);
-                await Task.Delay((int)delay, cts.Token);
+                var delay = Math.Min(1000 * Math.Pow(2, downloadFile.RetryCount - 1), 10000);
+                await Task.Delay((int)delay, CancellationToken.None);
             }
         }
 
@@ -585,4 +569,17 @@ public static partial class DownloadHelper
         downloadFile.RetryCount--;
         downloadFile.OnCompleted(false, new AggregateException(exceptions), -1);
     }
+
+    record PreChunkInfo(
+        HttpClient Client,
+        int CurrentChunkSplitCount,
+        string DownloadUrl,
+        DownloadRange Range,
+        CancellationTokenSource Cts);
+
+    record ChunkInfo(
+        int CurrentChunkSplitCount,
+        HttpResponseMessage Response,
+        DownloadRange Range,
+        CancellationTokenSource Cts);
 }

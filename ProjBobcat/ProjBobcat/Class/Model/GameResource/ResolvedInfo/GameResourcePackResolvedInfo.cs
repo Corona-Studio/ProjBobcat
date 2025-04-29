@@ -12,8 +12,10 @@ public record PlainTextResourcePackDescription(string Text) : IResourcePackDescr
 public record ObjectResourcePackDescription(
     [property: JsonPropertyName("bold")] bool Bold,
     [property: JsonPropertyName("italic")] bool Italic,
-    [property: JsonPropertyName("underlined")] bool Underlined,
-    [property: JsonPropertyName("strikethrough")] bool Strikethrough,
+    [property: JsonPropertyName("underlined")]
+    bool Underlined,
+    [property: JsonPropertyName("strikethrough")]
+    bool Strikethrough,
     [property: JsonPropertyName("text")] string Text,
     [property: JsonPropertyName("color")] string? Color) : IResourcePackDescription;
 

@@ -7,5 +7,8 @@ public sealed class SimpleDownloadFile : AbstractDownloadBase
 {
     public required string DownloadUri { get; init; }
 
-    public override string GetDownloadUrl() => DownloadUri;
+    public override string GetDownloadUrl()
+    {
+        return this.DownloadUri;
+    }
 }
