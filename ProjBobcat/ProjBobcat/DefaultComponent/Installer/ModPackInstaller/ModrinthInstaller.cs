@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using ProjBobcat.Class.Helper;
@@ -105,7 +106,7 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
         var modPackFullPath = Path.GetFullPath(this.ModPackPath);
 
         await using var modPackFs = File.OpenRead(modPackFullPath);
-        using var archive = new ZipArchive(modPackFs, ZipArchiveMode.Read);
+        using var archive = new ZipArchive(modPackFs, ZipArchiveMode.Read, true, Encoding.UTF8);
 
         this.TotalDownloaded = 0;
         this.NeedToDownload = archive.Entries.Count;

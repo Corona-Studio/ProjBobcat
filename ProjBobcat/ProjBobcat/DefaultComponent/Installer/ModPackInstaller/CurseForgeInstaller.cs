@@ -7,6 +7,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
@@ -251,7 +252,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         var modPackFullPath = Path.GetFullPath(this.ModPackPath);
 
         await using var modPackFs = File.OpenRead(modPackFullPath);
-        using var archive = new ZipArchive(modPackFs, ZipArchiveMode.Read);
+        using var archive = new ZipArchive(modPackFs, ZipArchiveMode.Read, true, Encoding.UTF8);
 
         this.TotalDownloaded = 0;
         this.NeedToDownload = archive.Entries.Count;
