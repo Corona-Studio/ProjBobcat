@@ -117,6 +117,8 @@ public class DefaultResourceCompleter : IResourceCompleter
 
     async IAsyncEnumerable<AbstractDownloadBase> TransformCheckFiles(CheckFileInfo arg)
     {
+        arg.Resolver.GameResourceInfoResolveEvent += FireResolveEvent;
+
         await foreach (var element in arg.Resolver.ResolveResourceAsync(
                            arg.BasePath,
                            arg.CheckLocalFiles,
@@ -136,6 +138,19 @@ public class DefaultResourceCompleter : IResourceCompleter
             Interlocked.Increment(ref this._needToDownload);
 
             yield return dF;
+        }
+
+        yield break;
+
+        void FireResolveEvent(object? sender, GameResourceInfoResolveEventArgs e)
+        {
+            if (Interlocked.Read(ref this._needToDownload) != 0)
+            {
+                arg.Resolver.GameResourceInfoResolveEvent -= FireResolveEvent;
+                return;
+            }
+
+            this.OnResolveComplete(sender, e);
         }
     }
 
