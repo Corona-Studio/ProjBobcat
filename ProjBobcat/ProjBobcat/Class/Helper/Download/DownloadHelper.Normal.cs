@@ -37,7 +37,7 @@ public static partial class DownloadHelper
         while (downloadFile.RetryCount++ < trials)
         {
             var timeoutMs = timeout.TotalMilliseconds;
-            using var cts = new CancellationTokenSource((int )timeoutMs);
+            using var cts = new CancellationTokenSource((int)Math.Min(timeoutMs * 5, timeoutMs * downloadFile.RetryCount));
 
             try
             {
