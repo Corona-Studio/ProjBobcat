@@ -178,7 +178,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
         #region 解压 Forge Jar
 
-        this.InvokeStatusChangedEvent("解压 Forge Jar", ProgressValue.FromDisplay(50));
+        this.InvokeStatusChangedEvent("解压 Forge Jar", ProgressValue.Finished);
 
         var forgeJar = archive.Entries.FirstOrDefault(e =>
             e.FullName.Equals($"maven/net/minecraftforge/forge/{forgeVersion}/forge-{forgeVersion}.jar",
@@ -243,6 +243,8 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             !string.IsNullOrEmpty(mapsVal.Client) && this.CustomMojangClientMappings != null &&
             !string.IsNullOrEmpty(this.CustomMojangClientMappings.Url))
         {
+            this.InvokeStatusChangedEvent("预下载 MOJMAP...", ProgressValue.Start);
+
             var clientMavenStr = mapsVal.Client.TrimStart('[').TrimEnd(']');
             var resolvedMappingMaven = clientMavenStr.ResolveMavenString()!;
             var mappingPath = Path.GetDirectoryName(resolvedMappingMaven.Path);
