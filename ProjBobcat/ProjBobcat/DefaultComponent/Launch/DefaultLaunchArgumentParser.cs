@@ -304,7 +304,7 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
             yield return "--height";
             yield return launchSettings.FallBackGameArguments.Resolution.Height.ToString();
         }
-        else if (!gameProfile.Resolution!.IsDefault())
+        else if (!(gameProfile.Resolution?.IsDefault() ?? true))
         {
             yield return "--width";
             yield return gameProfile.Resolution.Width.ToString();
