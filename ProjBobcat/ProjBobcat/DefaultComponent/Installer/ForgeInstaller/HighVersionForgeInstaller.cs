@@ -246,8 +246,20 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             this.InvokeStatusChangedEvent("预下载 MOJMAP...", ProgressValue.Start);
 
             var clientMavenStr = mapsVal.Client.TrimStart('[').TrimEnd(']');
-            var resolvedMappingMaven = clientMavenStr.ResolveMavenString()!;
-            var mappingPath = Path.GetDirectoryName(resolvedMappingMaven.Path);
+            var resolvedMappingMaven = clientMavenStr.ResolveMavenString();
+            
+            if (resolvedMappingMaven == null)
+                goto SkipMojMapDownload;
+
+            var mavenDirName = Path.GetDirectoryName(resolvedMappingMaven.Path);
+
+            if (string.IsNullOrEmpty(mavenDirName))
+                goto SkipMojMapDownload;
+
+            var mappingPath = Path.Combine(
+                RootPath,
+                GamePathHelper.GetLibraryRootPath(),
+                mavenDirName);
             var mappingFileName = Path.GetFileName(resolvedMappingMaven.Path);
             var mappingDf = new SimpleDownloadFile
             {
@@ -280,6 +292,8 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
         }
 
         #endregion
+
+        SkipMojMapDownload:
 
         #region 解析 Processor
 
