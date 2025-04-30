@@ -264,7 +264,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             var mappingDf = new SimpleDownloadFile
             {
                 CheckSum = this.CustomMojangClientMappings.Sha1,
-                DownloadPath = mappingPath!,
+                DownloadPath = mappingPath,
                 DownloadUri = this.CustomMojangClientMappings.Url,
                 FileName = mappingFileName
             };
@@ -277,7 +277,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             };
 
             if (!Directory.Exists(mappingPath))
-                Directory.CreateDirectory(mappingPath!);
+                Directory.CreateDirectory(mappingPath);
 
             await DownloadHelper.DownloadData(mappingDf, new DownloadSettings
             {
