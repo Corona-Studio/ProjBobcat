@@ -265,14 +265,15 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             if (!Directory.Exists(mappingPath))
                 Directory.CreateDirectory(mappingPath!);
 
-            await DownloadHelper.MultiPartDownloadTaskAsync(mappingDf, new DownloadSettings
+            await DownloadHelper.DownloadData(mappingDf, new DownloadSettings
             {
                 CheckFile = true,
-                DownloadParts = 4,
+                DownloadParts = 1,
                 HashType = HashType.SHA1,
-                RetryCount = 3,
+                RetryCount = 12,
                 Timeout = TimeSpan.FromMinutes(1),
-                HttpClientFactory = this.HttpClientFactory
+                HttpClientFactory = this.HttpClientFactory,
+                ShowDownloadProgress = true
             });
         }
 
