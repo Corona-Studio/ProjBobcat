@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Frozen;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
@@ -132,6 +133,29 @@ public sealed partial class DefaultGameCore : GameCoreBase
             UseShellExecute = true,
             WorkingDirectory = rootPath
         };
+    }
+
+    private static IReadOnlyDictionary<string, string> ParseGameEnv(string[] lines)
+    {
+        var result = new Dictionary<string, string>();
+
+        foreach (var line in lines)
+        {
+            if (string.IsNullOrWhiteSpace(line)) continue;
+
+            var firstEqualIndex = line.IndexOf('=');
+
+            if (firstEqualIndex == -1) continue;
+
+            var key = line[..firstEqualIndex].Trim();
+            var value = line[(firstEqualIndex + 1)..].Trim().Trim('"');
+
+            if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(value)) continue;
+
+            result[key] = value;
+        }
+
+        return result;
     }
 
     public override async Task<LaunchResult> LaunchTaskAsync(LaunchSettings settings)
@@ -381,10 +405,17 @@ public sealed partial class DefaultGameCore : GameCoreBase
                     _ => throw new PlatformNotSupportedException("Unsupported OS platform.")
                 };
             }
-
-            // Patch for third-party launcher
+            
             if (!settings.UseShellExecute)
+            {
+                // Patch for third-party launcher
                 psi.EnvironmentVariables.Remove("JAVA_TOOL_OPTIONS");
+
+                foreach (var (k, v) in ParseGameEnv(settings.GameEnvironmentVariables))
+                {
+                    psi.EnvironmentVariables.Add(k, v);
+                }
+            }
 
             #region log4j 缓解措施
 

@@ -65,6 +65,7 @@ public class LaunchSettings
 
     public GameArguments? FallBackGameArguments { get; init; }
     public required GameArguments GameArguments { get; init; }
+    public required string[] GameEnvironmentVariables { get; init; }
 
     public override string ToString()
     {
@@ -77,6 +78,7 @@ public class LaunchSettings
             .Append($"Version: {this.Version}").AppendLine()
             .Append($"Authenticator: {this.Authenticator?.GetType().Name ?? "-"}").AppendLine()
             .Append($"Version Insulation: {this.VersionInsulation}").AppendLine()
+            .Append($"ENV: [{string.Join(',', this.GameEnvironmentVariables)}]").AppendLine()
             .AppendLine();
 
         return sb.ToString();
