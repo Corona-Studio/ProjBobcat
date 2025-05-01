@@ -239,6 +239,8 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
         #region 预下载 Mojang Mappings
 
+        var isMojMapDownloaded = false;
+
         if (ipModel.Data.TryGetValue("MOJMAPS", out var mapsVal) &&
             !string.IsNullOrEmpty(mapsVal.Client) && this.CustomMojangClientMappings != null &&
             !string.IsNullOrEmpty(this.CustomMojangClientMappings.Url))
@@ -276,6 +278,12 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
                     args.ProgressPercentage);
             };
 
+            mappingDf.Completed += (_, args) =>
+            {
+                if (args.Success)
+                    isMojMapDownloaded = true;
+            };
+
             if (!Directory.Exists(mappingPath))
                 Directory.CreateDirectory(mappingPath);
 
@@ -289,6 +297,8 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
                 HttpClientFactory = this.HttpClientFactory,
                 ShowDownloadProgress = true
             });
+
+
         }
 
         #endregion
@@ -378,6 +388,10 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
                     outputs.TryAdd(resolvedKey, resolvedValue);
                 }
 
+            if (isMojMapDownloaded &&
+                proc.Arguments.Contains("DOWNLOAD_MOJMAPS"))
+                continue;
+
             var args = proc.Arguments
                 .Select(arg => StringHelper.ReplaceByDic(arg, argsReplaceList))
                 .Select(ResolvePathRegex)
@@ -385,6 +399,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
                 .Select(StringHelper.FixPathArgument)
                 .OfType<string>()
                 .ToArray();
+
             var model = new ForgeInstallProcessorModel
             {
                 Processor = proc,
