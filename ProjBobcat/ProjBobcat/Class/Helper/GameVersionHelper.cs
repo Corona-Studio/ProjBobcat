@@ -68,6 +68,37 @@ public static partial class GameVersionHelper
         return forgeVersion;
     }
 
+    public static string? TryGetNeoForgeVersion(RawVersionModel version)
+    {
+        var gameArgs = version.Arguments?.Game?
+            .Where(arg => arg.ValueKind == JsonValueKind.String)
+            .Select(arg => arg.GetString())
+            .OfType<string>()
+            .ToList();
+
+        if (gameArgs == null) return null;
+
+        var containsForgeArgs = gameArgs.Contains("--fml.neoForgeVersion", StringComparer.OrdinalIgnoreCase) &&
+                                gameArgs.Contains("--fml.mcVersion", StringComparer.OrdinalIgnoreCase);
+
+        if (!containsForgeArgs) return null;
+
+        var neoforgeVersion = gameArgs[gameArgs.IndexOf("--fml.neoForgeVersion") + 1];
+
+        return neoforgeVersion;
+    }
+
+    public static string? TryGetFabricVersion(RawVersionModel version)
+    {
+        const string fabricLibPrefix = "net.fabricmc:fabric-loader:";
+
+        var fabricLib = version.Libraries
+            .FirstOrDefault(lib => lib.Name.StartsWith(fabricLibPrefix, StringComparison.OrdinalIgnoreCase));
+        var fabricVersion = fabricLib?.Name[fabricLibPrefix.Length..];
+
+        return fabricVersion;
+    }
+
     static string TryGetMcVersionById(RawVersionModel version)
     {
         return version.Id;
