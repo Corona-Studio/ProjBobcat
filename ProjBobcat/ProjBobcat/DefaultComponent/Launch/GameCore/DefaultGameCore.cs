@@ -78,6 +78,7 @@ public sealed partial class DefaultGameCore : GameCoreBase
     {
         var tempScriptPath = Path.Combine(Path.GetTempPath(), "launch_java_command.bat");
         var fileContent = $"""
+                           chcp 65001
                            @echo off
                            cd /d "{rootPath}"
                            {command}
