@@ -8,6 +8,7 @@ using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model.LauncherAccount;
 using ProjBobcat.Interface;
+using ProjBobcat.JsonConverter;
 #if NET9_0_OR_GREATER
 using System.Threading;
 #endif
@@ -39,18 +40,27 @@ public sealed class DefaultLauncherAccountParser : LauncherParserBase, ILauncher
         }
         else
         {
-            var launcherProfileJson =
-                File.ReadAllText(this._fullLauncherAccountPath, Encoding.UTF8);
-            var val = JsonSerializer.Deserialize(launcherProfileJson,
-                LauncherAccountModelContext.Default.LauncherAccountModel);
+            var launcherProfileJson = File.ReadAllText(this._fullLauncherAccountPath, Encoding.UTF8);
+            var options = new JsonSerializerOptions
+            {
+                Converters =
+                {
+                    new DateTimeConverterUsingDateTimeParse()
+                }
+            };
 
-            if (val == null)
+            var val = JsonSerializer.Deserialize(
+                launcherProfileJson,
+                typeof(LauncherAccountModel),
+                new LauncherAccountModelContext(options));
+
+            if (val is not LauncherAccountModel accounts)
             {
                 this.LauncherAccount = this.GenerateLauncherAccountModel(clientToken);
                 return;
             }
 
-            this.LauncherAccount = val;
+            this.LauncherAccount = accounts;
         }
     }
 

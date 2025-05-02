@@ -9,6 +9,7 @@ using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Exceptions;
 using ProjBobcat.Interface;
+using ProjBobcat.JsonConverter;
 #if NET9_0_OR_GREATER
 using System.Threading;
 #endif
@@ -43,18 +44,27 @@ public sealed class DefaultLauncherProfileParser : LauncherParserBase, ILauncher
         }
         else
         {
-            var launcherProfileJson =
-                File.ReadAllText(this._fullLauncherProfilePath, Encoding.UTF8);
-            var result = JsonSerializer.Deserialize(launcherProfileJson,
-                LauncherProfileModelContext.Default.LauncherProfileModel);
+            var launcherProfileJson = File.ReadAllText(this._fullLauncherProfilePath, Encoding.UTF8);
+            var options = new JsonSerializerOptions
+            {
+                Converters =
+                {
+                    new DateTimeConverterUsingDateTimeParse()
+                }
+            };
 
-            if (result == null)
+            var result = JsonSerializer.Deserialize(
+                launcherProfileJson,
+                typeof(LauncherProfileModel),
+                new LauncherProfileModelContext(options));
+
+            if (result is not LauncherProfileModel profile)
             {
                 this.LauncherProfile = this.GenerateLauncherProfile(clientToken, rootPath);
                 return;
             }
 
-            this.LauncherProfile = result;
+            this.LauncherProfile = profile;
         }
     }
 
