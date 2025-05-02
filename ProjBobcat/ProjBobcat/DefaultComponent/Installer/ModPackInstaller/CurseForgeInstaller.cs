@@ -68,9 +68,9 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
             ?.Select(file => file.FileId)
             .ToArray() ?? [];
 
-        var files = await this.GetModPackFiles(this.CurseForgeApiService, fileIds);
+        var files = await GetModPackFiles(this.CurseForgeApiService, fileIds);
         var projectIds = files.Select(file => file.ProjectId).ToArray();
-        var modProjectDetails = await this.GetModProjectDetails(this.CurseForgeApiService, projectIds) ?? [];
+        var modProjectDetails = await GetModProjectDetails(this.CurseForgeApiService, projectIds) ?? [];
 
         ArgumentOutOfRangeException.ThrowIfNotEqual(fileIds.Length, files.Length);
 
@@ -296,7 +296,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         
     }
 
-    private async Task<CurseForgeAddonInfo[]> GetModProjectDetails(
+    private static async Task<CurseForgeAddonInfo[]> GetModProjectDetails(
         ICurseForgeApiService curseForgeApiService,
         long[] ids)
     {
@@ -326,7 +326,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         }
     }
 
-    private async Task<CurseForgeLatestFileModel[]> GetModPackFiles(
+    private static async Task<CurseForgeLatestFileModel[]> GetModPackFiles(
         ICurseForgeApiService curseForgeApiService,
         long[] ids)
     {
@@ -338,7 +338,8 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         }
         catch (HttpRequestException e)
         {
-            if (e.StatusCode != HttpStatusCode.BadRequest)
+            if (e.StatusCode != HttpStatusCode.BadRequest &&
+                e.StatusCode != HttpStatusCode.UnprocessableEntity)
                 throw;
 
             if (ids.Length <= 1)
@@ -359,13 +360,11 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
     private static string[] GeneratePossibleDownloadUrls(long fileId, string fileName)
     {
         var fileIdStr = fileId.ToString();
-        var pendingCheckUrls = new[]
-        {
+        
+        return [
             $"https://edge.forgecdn.net/files/{fileIdStr[..4]}/{fileIdStr[4..]}/{fileName}",
             $"https://mediafiles.forgecdn.net/files/{fileIdStr[..4]}/{fileIdStr[4..]}/{fileName}"
-        };
-
-        return pendingCheckUrls;
+        ];
     }
 
     public static async Task<(string? FileName, string? Url)> TryGuessModDownloadLink(
