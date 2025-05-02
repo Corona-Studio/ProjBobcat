@@ -211,6 +211,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
                 {
                     SimpleDownloadFile sd => [sd.DownloadUri],
                     MultiSourceDownloadFile msd => msd.DownloadUris,
+                    _ => throw new ArgumentOutOfRangeException(nameof(failedFile))
                 };
 
                 failedFileExList.Add(new Exception($"""
