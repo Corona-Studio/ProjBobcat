@@ -165,7 +165,7 @@ public static partial class DownloadHelper
         var subChunkSplitCount = 0;
 
         // 创建全局速度计算器，用于汇总所有分片下载速度
-        var globalSpeedCalculator = new DownloadSpeedCalculator(TimeSpan.FromSeconds(10), 50);
+        var globalSpeedCalculator = new DownloadSpeedCalculator();
         var bytesReceived = 0L;
         var lastProgressUpdateTime = DateTime.UtcNow;
         var progressUpdateInterval = TimeSpan.FromMilliseconds(200); // 限制更新频率
