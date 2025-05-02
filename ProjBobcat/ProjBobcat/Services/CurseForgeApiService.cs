@@ -86,7 +86,9 @@ public class CurseForgeApiService(
             .DataModelCurseForgeAddonInfoArray))?.Data;
     }
 
-    public async Task<DataModelWithPagination<CurseForgeLatestFileModel[]>?> GetAddonFiles(long addonId, int index = 0,
+    public async Task<DataModelWithPagination<CurseForgeLatestFileModel[]>?> GetAddonFiles(
+        long addonId,
+        int index = 0,
         int pageSize = 50)
     {
         var reqUrl = $"{this.GetApiRoot()}/mods/{addonId}/files?index={index}&pageSize={pageSize}";

@@ -1,24 +1,23 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Helper.Download;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.CurseForge;
 using ProjBobcat.Class.Model.Downloading;
-using ProjBobcat.Exceptions;
 using ProjBobcat.Interface;
 using ProjBobcat.Interface.Services;
 
@@ -56,173 +55,81 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
         var idPath = Path.Combine(this.RootPath, GamePathHelper.GetGamePath(this.GameId));
         var resolveUrlPath = Path.Combine(this.RootPath, GamePathHelper.GetGamePath(this.GameId), ".resolved");
-        var downloadPath = Path.Combine(Path.GetFullPath(idPath), "mods");
-
+        
         if (this.FreshInstall) FileHelper.DeleteFileWithRetry(resolveUrlPath);
-
-        var di = new DirectoryInfo(downloadPath);
-
-        if (!di.Exists)
-            di.Create();
+        
 
         this.NeedToDownload = manifest.Files?.Length ?? 0;
-
-        var urlBlock = new TransformManyBlock<IEnumerable<CurseForgeFileModel>, (long, long)>(urls =>
-        {
-            return urls.Select(file => (file.ProjectId, file.FileId));
-        });
 
         var tempResolvedUrl = await TryReadUrlCacheAsync(resolveUrlPath);
         var resolvedUrl = new ConcurrentDictionary<string, ResolvedUrlRecord>(tempResolvedUrl);
 
-        var urlBags = new ConcurrentBag<SimpleDownloadFile>();
-        var urlReqExceptions = new ConcurrentBag<CurseForgeModResolveException>();
-        var lastProgress = ProgressValue.Start;
-        var actionBlock = new ActionBlock<(long, long)>(async t =>
+        var fileIds = manifest.Files
+            ?.Select(file => file.FileId)
+            .ToArray() ?? [];
+
+        var files = await this.GetModPackFiles(this.CurseForgeApiService, fileIds);
+        var projectIds = files.Select(file => file.ProjectId).ToArray();
+        var modProjectDetails = await this.GetModProjectDetails(this.CurseForgeApiService, projectIds) ?? [];
+
+        ArgumentOutOfRangeException.ThrowIfNotEqual(fileIds.Length, files.Length);
+
+        var fileDic = files.ToDictionary(k => k.Id, v => v);
+        var projectDic = modProjectDetails.ToDictionary(k => k.Id, v => v);
+        var downloadFiles = new List<AbstractDownloadBase>();
+
+        foreach (var fileId in fileIds)
         {
-            var key = $"{t.Item1:####}{t.Item2:####}";
+            var file = fileDic.GetValueOrDefault(fileId);
+            var mod = projectDic.GetValueOrDefault(file?.ProjectId ?? 0);
 
-            if (resolvedUrl.TryGetValue(key, out var value) &&
-                !string.IsNullOrEmpty(value.Url))
+            if (file == null) continue;
+
+            string? downloadPath = null;
+
+            if (mod != null)
+                downloadPath = GetResourceFolderName(mod.PrimaryCategoryId);
+            if (string.IsNullOrEmpty(downloadPath))
+                downloadPath = file.FileName.EndsWith(".jar", StringComparison.OrdinalIgnoreCase)
+                    ? "mods"
+                    : file.Modules?.Any(f => f.FolderName == "META-INF") ?? false
+                        ? "mods"
+                        : "resourcepacks";
+
+            var fullDownloadPath = Path.Combine(Path.GetFullPath(idPath), downloadPath);
+            var di = new DirectoryInfo(fullDownloadPath);
+
+            if (!di.Exists)
+                di.Create();
+
+            var downloadUrl = file.DownloadUrl;
+
+            if (string.IsNullOrEmpty(downloadUrl))
             {
-                var d = value.Url;
-                var fn = Path.GetFileName(d);
-
-                var downloadFile = new SimpleDownloadFile
+                var guessDownloadFile = new MultiSourceDownloadFile
                 {
                     DownloadPath = di.FullName,
-                    DownloadUri = d,
-                    FileName = fn
+                    DownloadUris = GeneratePossibleDownloadUrls(file.Id, file.FileName),
+                    FileName = file.FileName
                 };
-                downloadFile.Completed += this.WhenCompleted;
 
-                urlBags.Add(downloadFile);
-
-                var addedTotalDownloaded = Interlocked.Increment(ref this.TotalDownloaded);
-                var progress = ProgressValue.Create(addedTotalDownloaded, this.NeedToDownload);
-                lastProgress = progress;
-
-                this.InvokeStatusChangedEvent($"成功解析 MOD [{t.Item1}] 的下载地址",
-                    progress);
-
-                return;
+                guessDownloadFile.Completed += this.WhenCompleted;
+                downloadFiles.Add(guessDownloadFile);
+                continue;
             }
 
-            try
+            var downloadFile = new SimpleDownloadFile
             {
-                string? downloadUrlRes = null;
+                DownloadPath = di.FullName,
+                DownloadUri = downloadUrl,
+                FileName = file.FileName
+            };
 
-                for (var i = 0; i < this.RetryCount; i++)
-                    try
-                    {
-                        downloadUrlRes = await this.CurseForgeApiService.GetAddonDownloadUrl(t.Item1, t.Item2);
-                        break;
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.WriteLine(e);
-                        downloadUrlRes = null;
+            downloadFile.Completed += this.WhenCompleted;
+            downloadFiles.Add(downloadFile);
+        }
 
-                        if (i == this.RetryCount - 1)
-                            throw new CurseForgeModResolveException(t.Item1, t.Item2, e);
-                    }
-
-                if (string.IsNullOrEmpty(downloadUrlRes))
-                    throw new CurseForgeModResolveException(t.Item1, t.Item2);
-
-                var d = downloadUrlRes.Trim('"');
-                var urlRecord = new ResolvedUrlRecord(t.Item2, t.Item1, d);
-                resolvedUrl.AddOrUpdate(key, _ => urlRecord, (_, _) => urlRecord);
-
-                var fn = Path.GetFileName(d);
-
-                var downloadFile = new SimpleDownloadFile
-                {
-                    DownloadPath = di.FullName,
-                    DownloadUri = d,
-                    FileName = fn
-                };
-                downloadFile.Completed += this.WhenCompleted;
-
-                urlBags.Add(downloadFile);
-
-                var addedTotalDownloaded = Interlocked.Increment(ref this.TotalDownloaded);
-                var progress = ProgressValue.Create(addedTotalDownloaded, this.NeedToDownload);
-                lastProgress = progress;
-
-                this.InvokeStatusChangedEvent($"成功解析 MOD [{t.Item1}] 的下载地址",
-                    progress);
-            }
-            catch (CurseForgeModResolveException e)
-            {
-                this.InvokeStatusChangedEvent(
-                    $"MOD [{t.Item1}] 的下载地址解析失败，尝试手动拼接",
-                    lastProgress);
-
-                (bool, SimpleDownloadFile?) pair = (false, null);
-
-                for (var i = 0; i < this.RetryCount; i++)
-                    try
-                    {
-                        pair = await this.TryGuessModDownloadLink(t.Item2, di.FullName);
-                        break;
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine(ex);
-
-                        if (i == this.RetryCount - 1)
-                            throw;
-                    }
-
-                var (guessed, df) = pair;
-
-                if (!guessed || df == null)
-                {
-                    try
-                    {
-                        var info = await this.CurseForgeApiService.GetAddon(t.Item1);
-
-                        ArgumentNullException.ThrowIfNull(info);
-
-                        var moreInfo = $"""
-                                        模组名称：{info.Name}
-                                        模组链接：{(info.Links?.TryGetValue("websiteUrl", out var link) ?? false ? link : "-")}
-                                        """;
-                        var ex = new CurseForgeModResolveException(t.Item1, t.Item2, moreInfo);
-
-                        urlReqExceptions.Add(ex);
-                    }
-                    catch
-                    {
-                        urlReqExceptions.Add(e);
-                    }
-
-                    return;
-                }
-
-                urlBags.Add(df);
-
-                var urlRecord = new ResolvedUrlRecord(t.Item2, t.Item1, df.DownloadUri);
-                resolvedUrl.AddOrUpdate(key, _ => urlRecord, (_, _) => urlRecord);
-
-                var addedTotalDownloaded = Interlocked.Increment(ref this.TotalDownloaded);
-                var progress = ProgressValue.Create(addedTotalDownloaded, this.NeedToDownload);
-
-                this.InvokeStatusChangedEvent($"成功解析 MOD [{t.Item1}] 的下载地址",
-                    progress);
-            }
-        }, new ExecutionDataflowBlockOptions
-        {
-            MaxDegreeOfParallelism = 32
-        });
-
-        var linkOptions = new DataflowLinkOptions { PropagateCompletion = true };
-        urlBlock.LinkTo(actionBlock, linkOptions);
-        urlBlock.Post(manifest.Files ?? []);
-        urlBlock.Complete();
-
-        await actionBlock.Completion;
+        this.InvokeStatusChangedEvent("成功解析整合包模组的下载地址", ProgressValue.Finished);
 
         try
         {
@@ -235,19 +142,14 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
             // Ignore
         }
 
-        if (!urlReqExceptions.IsEmpty)
-            throw new AggregateException(urlReqExceptions);
-
         this.TotalDownloaded = 0;
-        await DownloadHelper.AdvancedDownloadListFile(urlBags, new DownloadSettings
+        await DownloadHelper.AdvancedDownloadListFile(downloadFiles, new DownloadSettings
         {
             DownloadParts = 8,
             RetryCount = 10,
             Timeout = TimeSpan.FromMinutes(5),
             HttpClientFactory = this.HttpClientFactory
         });
-
-        ArgumentOutOfRangeException.ThrowIfEqual(this.FailedFiles.IsEmpty, false);
 
         var modPackFullPath = Path.GetFullPath(this.ModPackPath);
 
@@ -298,6 +200,59 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         }
 
         this.InvokeStatusChangedEvent("安装完成", ProgressValue.Finished);
+
+        if (!this.FailedFiles.IsEmpty)
+        {
+            var failedFileExList = new List<Exception>();
+
+            foreach (var failedFile in this.FailedFiles)
+            {
+                var urls = failedFile switch
+                {
+                    SimpleDownloadFile sd => [sd.DownloadUri],
+                    MultiSourceDownloadFile msd => msd.DownloadUris,
+                };
+
+                failedFileExList.Add(new Exception($"""
+                                                    文件名：{failedFile.FileName}
+                                                    下载链接：[{string.Join(',', urls)}]
+                                                    """));
+            }
+
+            throw new AggregateException(
+                "整合包已经成功安装，但是部分文件还是下载失败了。这不一定会影响游戏的启动。您可以选择稍后手动下载这些文件。",
+                failedFileExList);
+        }
+    }
+
+    private static readonly FrozenSet<long> ResourcePacksFilterIds = new HashSet<long>
+    {
+        4465, 5193, 5244
+    }.ToFrozenSet();
+
+    private static readonly FrozenSet<long> ModFilterIds = new HashSet<long>
+    {
+        4485, 4545, 4558,
+        4671, 4672, 4773,
+        4843, 4906, 5191,
+        5232, 5299, 5314,
+        6145, 6484, 6814,
+        6821, 6954
+    }.ToFrozenSet();
+
+    private static string? GetResourceFolderName(long type)
+    {
+        if (type == 12 || type is >= 6945 and <= 6953 || type is >= 393 and <= 405 ||
+            ResourcePacksFilterIds.Contains(type))
+            return "resourcepacks";
+
+        if (type == 6 || type is >= 406 and <= 436 || ModFilterIds.Contains(type))
+            return "mods";
+
+        if (type is >= 6552 and <= 6555)
+            return "shaderpacks";
+
+        return null;
     }
 
     public static async Task<CurseForgeManifestModel?> ReadManifestTask(string modPackPath)
@@ -338,6 +293,79 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         {
             return ImmutableDictionary<string, ResolvedUrlRecord>.Empty;
         }
+        
+    }
+
+    private async Task<CurseForgeAddonInfo[]> GetModProjectDetails(
+        ICurseForgeApiService curseForgeApiService,
+        long[] ids)
+    {
+        if (ids.Length == 0) return [];
+
+        try
+        {
+            return await curseForgeApiService.GetAddons(ids) ?? [];
+        }
+        catch (HttpRequestException e)
+        {
+            if (e.StatusCode != HttpStatusCode.BadRequest)
+                throw;
+
+            if (ids.Length <= 1)
+                return await curseForgeApiService.GetAddons(ids) ?? [];
+
+            var mid = ids.Length / 2;
+            var leftTask = curseForgeApiService.GetAddons(ids[..mid]);
+            var rightTask = curseForgeApiService.GetAddons(ids[mid..]);
+            var files = await Task.WhenAll(leftTask, rightTask);
+
+            return [
+                .. (files[0] ?? []),
+                .. (files[1] ?? [])
+            ];
+        }
+    }
+
+    private async Task<CurseForgeLatestFileModel[]> GetModPackFiles(
+        ICurseForgeApiService curseForgeApiService,
+        long[] ids)
+    {
+        if (ids.Length == 0) return [];
+
+        try
+        {
+            return await curseForgeApiService.GetFiles(ids) ?? [];
+        }
+        catch (HttpRequestException e)
+        {
+            if (e.StatusCode != HttpStatusCode.BadRequest)
+                throw;
+
+            if (ids.Length <= 1)
+                return await curseForgeApiService.GetFiles(ids) ?? [];
+
+            var mid = ids.Length / 2;
+            var leftTask = curseForgeApiService.GetFiles(ids[..mid]);
+            var rightTask = curseForgeApiService.GetFiles(ids[mid..]);
+            var files = await Task.WhenAll(leftTask, rightTask);
+
+            return [
+                .. (files[0] ?? []),
+                .. (files[1] ?? [])
+            ];
+        }
+    }
+
+    private static string[] GeneratePossibleDownloadUrls(long fileId, string fileName)
+    {
+        var fileIdStr = fileId.ToString();
+        var pendingCheckUrls = new[]
+        {
+            $"https://edge.forgecdn.net/files/{fileIdStr[..4]}/{fileIdStr[4..]}/{fileName}",
+            $"https://mediafiles.forgecdn.net/files/{fileIdStr[..4]}/{fileIdStr[4..]}/{fileName}"
+        };
+
+        return pendingCheckUrls;
     }
 
     public static async Task<(string? FileName, string? Url)> TryGuessModDownloadLink(
@@ -356,13 +384,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
             if (file == null || string.IsNullOrEmpty(file.FileName)) return default;
 
             var fileName = file.FileName;
-            var fileIdStr = fileId.ToString();
-            var pendingCheckUrls = new[]
-            {
-                $"https://edge.forgecdn.net/files/{fileIdStr[..4]}/{fileIdStr[4..]}/{fileName}",
-                $"https://mediafiles.forgecdn.net/files/{fileIdStr[..4]}/{fileIdStr[4..]}/{fileName}"
-            };
-
+            var pendingCheckUrls = GeneratePossibleDownloadUrls(fileId, fileName);
             var client = httpClientFactory.CreateClient();
 
             foreach (var url in pendingCheckUrls)
@@ -382,23 +404,5 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
             Debug.WriteLine(e);
             return default;
         }
-    }
-
-    async Task<(bool, SimpleDownloadFile?)> TryGuessModDownloadLink(long fileId, string downloadPath)
-    {
-        var pair = await TryGuessModDownloadLink(this.CurseForgeApiService, this.HttpClientFactory, fileId);
-
-        if (string.IsNullOrEmpty(pair.FileName) || string.IsNullOrEmpty(pair.Url)) return (false, null);
-
-        var df = new SimpleDownloadFile
-        {
-            DownloadPath = downloadPath,
-            DownloadUri = pair.Url,
-            FileName = pair.FileName
-        };
-
-        df.Completed += this.WhenCompleted;
-
-        return (true, df);
     }
 }

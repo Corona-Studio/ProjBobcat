@@ -72,7 +72,7 @@ public class CurseForgeLatestFileModel
     [JsonPropertyName("fileLegacyMappingId")]
     public JsonElement FileLegacyMappingId { get; set; }
 
-    [JsonPropertyName("projectId")] public int ProjectId { get; set; }
+    [JsonPropertyName("projectId")] public long ProjectId { get; set; }
 
     [JsonPropertyName("parentProjectFileId")]
     public JsonElement ParentProjectFileId { get; set; }

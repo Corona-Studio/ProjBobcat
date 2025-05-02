@@ -6,7 +6,7 @@ namespace ProjBobcat.Class.Model.CurseForge;
 
 public class CurseForgeAddonInfo
 {
-    [JsonPropertyName("id")] public int Id { get; set; }
+    [JsonPropertyName("id")] public long Id { get; set; }
 
     [JsonPropertyName("name")] public required string Name { get; init; }
 
