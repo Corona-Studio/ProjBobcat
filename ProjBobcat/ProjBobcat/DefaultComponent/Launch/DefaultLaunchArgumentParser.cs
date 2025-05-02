@@ -138,6 +138,9 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
         yield return "-Dfml.ignoreInvalidMinecraftCertificates=true";
         yield return "-Dfml.ignorePatchDiscrepancies=true";
 
+        if (launchSettings.UseV4NetworkingStack)
+            yield return "-Djava.net.preferIPv4Stack=true";
+
         if (resolvedGameVersion.JvmArguments is { Count: > 0 })
         {
             foreach (var jvmArg in resolvedGameVersion.JvmArguments)
