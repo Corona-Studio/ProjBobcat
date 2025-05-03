@@ -25,15 +25,29 @@ public static class SystemInfoHelper
     static readonly string[] LineChArr = ["\r\n", "\r", "\n"];
     static readonly char[] SepArr = [':'];
 
-    static readonly FrozenSet<string> PossibleJavaDirs = FrozenSet.Create(
-        "java", "jdk", "env", "环境", "run", "软件", "jre", "mc", "soft", "cache", "temp", "corretto", "roaming",
-        "users", "craft", "program", "世界", "net", "游戏", "oracle", "game", "file", "data", "jvm", "服务", "server", "客户",
-        "client", "整合", "应用", "运行", "前置", "mojang", "官启", "新建文件夹", "eclipse", "microsoft", "hotspot", "runtime", "x86",
-        "x64", "forge", "原版", "optifine", "官方", "启动", "hmcl", "mod", "高清", "download", "launch", "程序", "path",
-        "version", "baka", "pcl", "zulu", "local", "packages", "4297127d64ec6", "国服", "网易", "ext", "netease", "1.",
-        "启动",
-        "jdks"
-    );
+    static readonly FrozenSet<string> PossibleJavaDirs =
+#if NET9_0_OR_GREATER
+        FrozenSet.Create(
+            "java", "jdk", "env", "环境", "run", "软件", "jre", "mc", "soft", "cache", "temp", "corretto", "roaming",
+            "users", "craft", "program", "世界", "net", "游戏", "oracle", "game", "file", "data", "jvm", "服务", "server", "客户",
+            "client", "整合", "应用", "运行", "前置", "mojang", "官启", "新建文件夹", "eclipse", "microsoft", "hotspot", "runtime", "x86",
+            "x64", "forge", "原版", "optifine", "官方", "启动", "hmcl", "mod", "高清", "download", "launch", "程序", "path",
+            "version", "baka", "pcl", "zulu", "local", "packages", "4297127d64ec6", "国服", "网易", "ext", "netease", "1.",
+            "启动",
+            "jdks"
+        );
+#else
+        new []{
+            "java", "jdk", "env", "环境", "run", "软件", "jre", "mc", "soft", "cache", "temp", "corretto", "roaming",
+            "users", "craft", "program", "世界", "net", "游戏", "oracle", "game", "file", "data", "jvm", "服务", "server", "客户",
+            "client", "整合", "应用", "运行", "前置", "mojang", "官启", "新建文件夹", "eclipse", "microsoft", "hotspot", "runtime", "x86",
+            "x64", "forge", "原版", "optifine", "官方", "启动", "hmcl", "mod", "高清", "download", "launch", "程序", "path",
+            "version", "baka", "pcl", "zulu", "local", "packages", "4297127d64ec6", "国服", "网易", "ext", "netease", "1.",
+            "启动",
+            "jdks"
+        }.ToFrozenSet();
+#endif
+
 
     static SystemInfoHelper()
     {
