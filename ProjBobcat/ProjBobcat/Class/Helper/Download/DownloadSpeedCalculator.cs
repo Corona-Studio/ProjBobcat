@@ -10,7 +10,12 @@ namespace ProjBobcat.Class.Helper.Download;
 /// </summary>
 public class DownloadSpeedCalculator
 {
-    private readonly object _cleanupLock = new(); // 仅用于队列清理操作
+#if NET9_0_OR_GREATER
+    private readonly Lock _cleanupLock = new();
+#else
+    private readonly object _cleanupLock = new();
+#endif
+
     private readonly int _maxSamples;
     private readonly ConcurrentQueue<(DateTime Time, long Bytes)> _speedSamples = new();
     private readonly TimeSpan _windowDuration;
