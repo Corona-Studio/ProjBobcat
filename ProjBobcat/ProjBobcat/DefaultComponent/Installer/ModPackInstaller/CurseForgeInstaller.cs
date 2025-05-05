@@ -328,8 +328,8 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
                 return await curseForgeApiService.GetAddons(ids) ?? [];
 
             var mid = ids.Length / 2;
-            var leftTask = curseForgeApiService.GetAddons(ids[..mid]);
-            var rightTask = curseForgeApiService.GetAddons(ids[mid..]);
+            var leftTask = GetModProjectDetails(curseForgeApiService, ids[..mid]);
+            var rightTask = GetModProjectDetails(curseForgeApiService, ids[mid..]);
             var files = await Task.WhenAll(leftTask, rightTask);
 
             return [
@@ -359,8 +359,8 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
                 return await curseForgeApiService.GetFiles(ids) ?? [];
 
             var mid = ids.Length / 2;
-            var leftTask = curseForgeApiService.GetFiles(ids[..mid]);
-            var rightTask = curseForgeApiService.GetFiles(ids[mid..]);
+            var leftTask = GetModPackFiles(curseForgeApiService, ids[..mid]);
+            var rightTask = GetModPackFiles(curseForgeApiService, ids[mid..]);
             var files = await Task.WhenAll(leftTask, rightTask);
 
             return [
