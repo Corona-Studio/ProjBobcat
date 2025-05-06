@@ -201,7 +201,8 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
         this.InvokeStatusChangedEvent("安装完成", ProgressValue.Finished);
 
-        if (!this.FailedFiles.IsEmpty)
+        if (!this.FailedFiles.IsEmpty ||
+            TotalDownloaded != downloadFiles.Count)
         {
             var failedFileExList = new List<Exception>();
 
@@ -333,8 +334,8 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
             var files = await Task.WhenAll(leftTask, rightTask);
 
             return [
-                .. (files[0] ?? []),
-                .. (files[1] ?? [])
+                .. files[0],
+                .. files[1]
             ];
         }
     }
@@ -364,8 +365,8 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
             var files = await Task.WhenAll(leftTask, rightTask);
 
             return [
-                .. (files[0] ?? []),
-                .. (files[1] ?? [])
+                .. files[0],
+                .. files[1]
             ];
         }
     }
