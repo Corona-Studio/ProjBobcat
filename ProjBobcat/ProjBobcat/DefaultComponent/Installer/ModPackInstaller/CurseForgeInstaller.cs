@@ -201,8 +201,14 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
         this.InvokeStatusChangedEvent("安装完成", ProgressValue.Finished);
 
-        if (!this.FailedFiles.IsEmpty ||
-            TotalDownloaded != downloadFiles.Count)
+        if (this.FailedFiles.IsEmpty &&
+            TotalDownloaded == 0 &&
+            downloadFiles.Count != 0)
+        {
+            throw new Exception("我们无法下载这个整合包中的模组，这可能是因为您和 CurseForge 的网络连接不稳定导致的。尽管如此，我们还是完成了整合包安装的其他步骤。您可以稍后尝试重新安装或是手动下载整合包模组。");
+        }
+
+        if (!this.FailedFiles.IsEmpty)
         {
             var failedFileExList = new List<Exception>();
 
