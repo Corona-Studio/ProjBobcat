@@ -14,6 +14,8 @@ public interface IModrinthApiService
 
     Task<ModrinthProjectInfo?> GetProject(string projectId, CancellationToken ct);
 
+    Task<ModrinthProjectInfo[]?> GetProjects(string[] projectIds, CancellationToken ct);
+
     Task<ModrinthSearchResult?> GetFeaturedMods();
 
     Task<ModrinthSearchResult?> SearchMod(ModrinthSearchOptions searchOptions, CancellationToken ct);
@@ -25,6 +27,10 @@ public interface IModrinthApiService
     Task<ModrinthVersionInfo?> GetVersionInfo(string projectId, string versionId);
 
     Task<ModrinthVersionInfo?> GetVersionInfo(string versionId);
+
+    Task<IReadOnlyDictionary<string, ModrinthVersionInfo>?> TryGetVersionsFromHashes(
+        string[] hashes,
+        string algorithm);
 
     Task<IReadOnlyDictionary<string, ModrinthVersionInfo>?> TryMatchFile(
         string[] hashes,

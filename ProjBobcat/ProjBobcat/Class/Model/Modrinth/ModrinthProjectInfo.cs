@@ -30,7 +30,7 @@ public class ModrinthProjectInfo : ModrinthProjectInfoBase
     [JsonPropertyName("status")] public string? Status { get; set; }
 
     [JsonPropertyName("moderator_message")]
-    public string? ModeratorMessage { get; set; }
+    public JsonElement? ModeratorMessage { get; set; }
 
     [JsonPropertyName("license")] public LicenseInfo? License { get; set; }
 
@@ -47,5 +47,5 @@ public class ModrinthProjectInfo : ModrinthProjectInfoBase
     [JsonPropertyName("donation_urls")] public JsonElement[]? DonationUrls { get; set; }
 }
 
-[JsonSerializable(typeof(ModrinthProjectInfo))]
+[JsonSerializable(typeof(ModrinthProjectInfo[]))]
 partial class ModrinthProjectInfoContext : JsonSerializerContext;

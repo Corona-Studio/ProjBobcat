@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,6 +15,11 @@ namespace ProjBobcat.Services;
 
 #region Temp Models
 
+record VersionMatchByHashRequestModel(
+    [property: JsonPropertyName("hashes")] string[] Hashes,
+    [property: JsonPropertyName("algorithm")]
+    string Algorithm);
+
 record FileMatchRequestModel(
     [property: JsonPropertyName("hashes")] string[] Hashes,
     [property: JsonPropertyName("algorithm")]
@@ -23,7 +29,9 @@ record FileMatchRequestModel(
     [property: JsonPropertyName("game_versions")]
     string[] GameVersions);
 
+[JsonSerializable(typeof(string[]))]
 [JsonSerializable(typeof(FileMatchRequestModel))]
+[JsonSerializable(typeof(VersionMatchByHashRequestModel))]
 partial class ModrinthModelContext : JsonSerializerContext;
 
 #endregion
@@ -63,6 +71,17 @@ public class ModrinthApiService(
 
         using var res = await this.Get(reqUrl, ct);
         var resModel = await res.Content.ReadFromJsonAsync(ModrinthProjectInfoContext.Default.ModrinthProjectInfo, ct);
+
+        return resModel;
+    }
+
+    public async Task<ModrinthProjectInfo[]?> GetProjects(string[] projectIds, CancellationToken ct)
+    {
+        var ids = JsonSerializer.Serialize(projectIds, ModrinthProjectInfoContext.Default.StringArray);
+        var reqUrl = $"{this.GetApiRoot()}/projects?ids={Uri.EscapeDataString(ids)}";
+
+        using var res = await this.Get(reqUrl, ct);
+        var resModel = await res.Content.ReadFromJsonAsync(ModrinthProjectInfoContext.Default.ModrinthProjectInfoArray, ct);
 
         return resModel;
     }
@@ -137,6 +156,22 @@ public class ModrinthApiService(
         return resModel;
     }
 
+    public async Task<IReadOnlyDictionary<string, ModrinthVersionInfo>?> TryGetVersionsFromHashes(
+        string[] hashes,
+        string algorithm)
+    {
+        var reqUrl = $"{this.GetApiRoot()}/version_files";
+        var body = new VersionMatchByHashRequestModel(hashes, algorithm);
+        var content = JsonContent.Create(body, ModrinthModelContext.Default.VersionMatchByHashRequestModel);
+
+        using var res = await httpClient.PostAsync(reqUrl, content);
+
+        if (!res.IsSuccessStatusCode) return null;
+
+        return await res.Content.ReadFromJsonAsync(
+            ModrinthVersionInfoContext.Default.IReadOnlyDictionaryStringModrinthVersionInfo);
+    }
+
     public async Task<IReadOnlyDictionary<string, ModrinthVersionInfo>?> TryMatchFile(
         string[] hashes,
         string algorithm,
@@ -144,9 +179,7 @@ public class ModrinthApiService(
         string[] gameVersions)
     {
         var reqUrl = $"{this.GetApiRoot()}/version_files/update";
-
         var body = new FileMatchRequestModel(hashes, algorithm, loaders, gameVersions);
-
         var content = JsonContent.Create(body, ModrinthModelContext.Default.FileMatchRequestModel);
 
         using var res = await httpClient.PostAsync(reqUrl, content);

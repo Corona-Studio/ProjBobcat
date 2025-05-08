@@ -315,7 +315,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         
     }
 
-    private static async Task<CurseForgeAddonInfo[]> GetModProjectDetails(
+    public static async Task<CurseForgeAddonInfo[]> GetModProjectDetails(
         ICurseForgeApiService curseForgeApiService,
         long[] ids)
     {
@@ -346,7 +346,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         }
     }
 
-    private static async Task<CurseForgeLatestFileModel[]> GetModPackFiles(
+    public static async Task<CurseForgeLatestFileModel[]> GetModPackFiles(
         ICurseForgeApiService curseForgeApiService,
         long[] ids)
     {
