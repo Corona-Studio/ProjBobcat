@@ -50,9 +50,9 @@ public class CurseForgeLatestFileModel
     [JsonPropertyName("sortableGameVersion")]
     public CurseForgeSortableGameVersionModel[]? SortableGameVersion { get; set; }
 
-    [JsonPropertyName("installMetadata")] public JsonElement InstallMetadata { get; set; }
+    //[JsonPropertyName("installMetadata")] public JsonElement InstallMetadata { get; set; }
 
-    [JsonPropertyName("changelog")] public JsonElement Changelog { get; set; }
+    //[JsonPropertyName("changelog")] public JsonElement Changelog { get; set; }
 
     [JsonPropertyName("hasInstallScript")] public bool HasInstallScript { get; set; }
 
@@ -69,21 +69,21 @@ public class CurseForgeLatestFileModel
 
     [JsonPropertyName("renderCacheId")] public int RenderCacheId { get; set; }
 
-    [JsonPropertyName("fileLegacyMappingId")]
-    public JsonElement FileLegacyMappingId { get; set; }
+    //[JsonPropertyName("fileLegacyMappingId")]
+    //public JsonElement FileLegacyMappingId { get; set; }
 
     [JsonPropertyName("projectId")] public long ProjectId { get; set; }
 
-    [JsonPropertyName("parentProjectFileId")]
-    public JsonElement ParentProjectFileId { get; set; }
+    //[JsonPropertyName("parentProjectFileId")]
+    //public JsonElement ParentProjectFileId { get; set; }
 
-    [JsonPropertyName("parentFileLegacyMappingId")]
-    public JsonElement ParentFileLegacyMappingId { get; set; }
+    //[JsonPropertyName("parentFileLegacyMappingId")]
+    //public JsonElement ParentFileLegacyMappingId { get; set; }
 
-    [JsonPropertyName("fileTypeId")] public JsonElement FileTypeId { get; set; }
+    //[JsonPropertyName("fileTypeId")] public JsonElement FileTypeId { get; set; }
 
-    [JsonPropertyName("exposeAsAlternative")]
-    public JsonElement ExposeAsAlternative { get; set; }
+    //[JsonPropertyName("exposeAsAlternative")]
+    //public JsonElement ExposeAsAlternative { get; set; }
 
     [JsonPropertyName("packageFingerprintId")]
     public long PackageFingerprintId { get; set; }
@@ -100,8 +100,8 @@ public class CurseForgeLatestFileModel
 
     [JsonPropertyName("isServerPack")] public bool IsServerPack { get; set; }
 
-    [JsonPropertyName("serverPackFileId")] public JsonElement ServerPackFileId { get; set; }
+    //[JsonPropertyName("serverPackFileId")] public JsonElement ServerPackFileId { get; set; }
 
-    [JsonPropertyName("gameVersionFlavor")]
-    public JsonElement GameVersionFlavor { get; set; }
+    //[JsonPropertyName("gameVersionFlavor")]
+    //public JsonElement GameVersionFlavor { get; set; }
 }

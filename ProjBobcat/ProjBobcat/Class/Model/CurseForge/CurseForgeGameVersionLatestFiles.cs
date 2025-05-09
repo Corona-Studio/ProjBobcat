@@ -13,6 +13,6 @@ public class CurseForgeGameVersionLatestFiles
 
     [JsonPropertyName("fileType")] public int FileType { get; set; }
 
-    [JsonPropertyName("gameVersionFlavor")]
-    public JsonElement GameVersionFlavor { get; set; }
+    //[JsonPropertyName("gameVersionFlavor")]
+    //public JsonElement GameVersionFlavor { get; set; }
 }

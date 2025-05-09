@@ -18,8 +18,8 @@ public class CurseForgeCategorySectionInfo
     [JsonPropertyName("initialInclusionPattern")]
     public string? InitialInclusionPattern { get; set; }
 
-    [JsonPropertyName("extraIncludePattern")]
-    public JsonElement ExtraIncludePattern { get; set; }
+    //[JsonPropertyName("extraIncludePattern")]
+    //public JsonElement ExtraIncludePattern { get; set; }
 
     [JsonPropertyName("gameCategoryId")] public int GameCategoryId { get; set; }
 }

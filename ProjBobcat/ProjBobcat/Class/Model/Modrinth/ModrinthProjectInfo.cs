@@ -44,7 +44,7 @@ public class ModrinthProjectInfo : ModrinthProjectInfoBase
 
     [JsonPropertyName("discord_url")] public string? DiscordUrl { get; set; }
 
-    [JsonPropertyName("donation_urls")] public JsonElement[]? DonationUrls { get; set; }
+    //[JsonPropertyName("donation_urls")] public JsonElement[]? DonationUrls { get; set; }
 }
 
 [JsonSerializable(typeof(ModrinthProjectInfo[]))]
