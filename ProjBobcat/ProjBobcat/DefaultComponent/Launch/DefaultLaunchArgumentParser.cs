@@ -94,7 +94,7 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
     {
         var version = (VersionInfo)versionInfo;
         var versionNameFollowing = string.IsNullOrEmpty(version.RootVersion) ? string.Empty : $",{version.RootVersion}";
-        var versionName = $"{launchSettings.Version}{versionNameFollowing}".Replace(' ', '_');
+        var versionName = $"{launchSettings.Version}{versionNameFollowing}";
         var nativeRoot = Path.Combine(this.RootPath, nativePath);
 
         var sb = new StringBuilder();
@@ -117,7 +117,7 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
             { "${classpath}", $"\"{sb}\"" },
             { "${classpath_separator}", Path.PathSeparator.ToString() },
             { "${library_directory}", $"\"{Path.Combine(this.RootPath, GamePathHelper.GetLibraryRootPath())}\"" },
-            { "${version_name}", versionName },
+            { "${version_name}", $"\"{versionName}\"" },
             { "${primary_jar_name}", $"\"{version.Id}.jar\"" }
         };
 

@@ -698,10 +698,6 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             for (var i = inherits.Count - 1; i >= 0; i--)
                 if (result.JavaVersion == null && inherits[i].JavaVersion != null)
                     result.JavaVersion = inherits[i].JavaVersion;
-
-            this.ProcessProfile(result, id);
-
-            return result;
         }
 
         this.ProcessProfile(result, id);
