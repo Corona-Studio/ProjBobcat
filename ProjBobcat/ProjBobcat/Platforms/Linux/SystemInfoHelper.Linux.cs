@@ -10,7 +10,7 @@ using ProjBobcat.Class.Model;
 namespace ProjBobcat.Platforms.Linux;
 
 [SupportedOSPlatform(nameof(OSPlatform.Linux))]
-class SystemInfoHelper
+public static class SystemInfoHelper
 {
     /// <summary>
     ///     Get the system overall CPU usage percentage.

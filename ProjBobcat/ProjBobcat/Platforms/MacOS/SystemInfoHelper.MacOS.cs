@@ -11,7 +11,7 @@ using ProjBobcat.Class.Model;
 namespace ProjBobcat.Platforms.MacOS;
 
 [SupportedOSPlatform(nameof(OSPlatform.OSX))]
-static partial class SystemInfoHelper
+public static partial class SystemInfoHelper
 {
     [LibraryImport("libc", StringMarshalling = StringMarshalling.Utf8)]
     private static partial int sysctlbyname(string name, out int int_val, ref IntPtr length, IntPtr newp,
