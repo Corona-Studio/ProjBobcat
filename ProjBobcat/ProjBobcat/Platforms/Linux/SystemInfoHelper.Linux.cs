@@ -167,4 +167,33 @@ class SystemInfoHelper
             if (File.Exists(result)) yield return result;
         }
     }
+
+    /// <summary>
+    ///     Get the CPU model name
+    /// </summary>
+    /// <returns>The CPU model name</returns>
+    public static string GetCpuName()
+    {
+        try
+        {
+            var lines = File.ReadAllLines("/proc/cpuinfo");
+            foreach (var line in lines)
+            {
+                if (line.StartsWith("model name", StringComparison.OrdinalIgnoreCase))
+                {
+                    var parts = line.Split(':', 2);
+                    if (parts.Length == 2)
+                    {
+                        return parts[1].Trim();
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // ignored
+        }
+
+        return "Unknown CPU";
+    }
 }

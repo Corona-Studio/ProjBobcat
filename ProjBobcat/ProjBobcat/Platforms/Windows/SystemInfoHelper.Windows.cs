@@ -12,6 +12,7 @@ using Windows.Win32.Foundation;
 using Windows.Win32.System.SystemInformation;
 using Microsoft.Win32;
 using ProjBobcat.Class.Model;
+using System.Management;
 
 namespace ProjBobcat.Platforms.Windows;
 
@@ -37,7 +38,7 @@ public static class SystemInfoHelper
             "jdks"
         );
 #else
-        new []{
+        new[]{
             "java", "jdk", "env", "环境", "run", "软件", "jre", "mc", "soft", "cache", "temp", "corretto", "roaming",
             "users", "craft", "program", "世界", "net", "游戏", "oracle", "game", "file", "data", "jvm", "服务", "server", "客户",
             "client", "整合", "应用", "运行", "前置", "mojang", "官启", "新建文件夹", "eclipse", "microsoft", "hotspot", "runtime", "x86",
@@ -410,5 +411,27 @@ public static class SystemInfoHelper
         };
 
         return nativeArch != RuntimeInformation.OSArchitecture;
+    }
+
+    /// <summary>
+    ///     Get the CPU model name
+    /// </summary>
+    /// <returns>The CPU model name</returns>
+    public static string GetCpuName()
+    {
+        try
+        {
+            using var searcher = new ManagementObjectSearcher("SELECT Name FROM Win32_Processor");
+            foreach (var obj in searcher.Get())
+            {
+                return obj["Name"]?.ToString() ?? "Unknown CPU";
+            }
+        }
+        catch
+        {
+            // ignored
+        }
+
+        return "Unknown CPU";
     }
 }

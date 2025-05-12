@@ -151,4 +151,28 @@ static partial class SystemInfoHelper
 
     [GeneratedRegex("\\d+")]
     private static partial Regex NumberMatchRegex();
+
+    /// <summary>
+    ///     Get the CPU model name
+    /// </summary>
+    /// <returns>The CPU model name</returns>
+    public static string GetCpuName()
+    {
+        var info = new ProcessStartInfo
+        {
+            FileName = "/usr/sbin/sysctl",
+            Arguments = "-n machdep.cpu.brand_string",
+            RedirectStandardOutput = true
+        };
+
+        using var process = Process.Start(info);
+
+        if (process == null)
+            return "Unknown CPU";
+
+        var output = process.StandardOutput?.ReadToEnd();
+        process.WaitForExit();
+
+        return !string.IsNullOrEmpty(output) ? output.Trim() : "Unknown CPU";
+    }
 }
