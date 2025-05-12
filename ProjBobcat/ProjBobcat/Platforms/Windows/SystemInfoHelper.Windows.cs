@@ -414,24 +414,83 @@ public static class SystemInfoHelper
     }
 
     /// <summary>
-    ///     Get the CPU model name
+    ///     Get the CPU model name using multiple methods for better reliability
     /// </summary>
     /// <returns>The CPU model name</returns>
     public static string GetCpuName()
+    {
+        // Try each method in sequence until we get a valid result
+        var cpuName = TryGetCpuNameFromWmi() ??
+                     TryGetCpuNameFromRegistry() ??
+                     TryGetCpuNameFromEnvironment();
+
+        return cpuName ?? "Unknown CPU";
+    }
+
+    /// <summary>
+    ///     Try to get CPU name using Windows Management Instrumentation (WMI)
+    /// </summary>
+    /// <returns>CPU name if successful, null otherwise</returns>
+    private static string? TryGetCpuNameFromWmi()
     {
         try
         {
             using var searcher = new ManagementObjectSearcher("SELECT Name FROM Win32_Processor");
             foreach (var obj in searcher.Get())
             {
-                return obj["Name"]?.ToString() ?? "Unknown CPU";
+                var name = obj["Name"]?.ToString();
+                if (!string.IsNullOrWhiteSpace(name))
+                    return name;
             }
         }
         catch
         {
-            // ignored
+            // Ignore and return null
         }
 
-        return "Unknown CPU";
+        return null;
+    }
+
+    /// <summary>
+    ///     Try to get CPU name from Windows Registry
+    /// </summary>
+    /// <returns>CPU name if successful, null otherwise</returns>
+    private static string? TryGetCpuNameFromRegistry()
+    {
+        try
+        {
+            using var key = Registry.LocalMachine.OpenSubKey(@"HARDWARE\DESCRIPTION\System\CentralProcessor\0");
+            var processorName = key?.GetValue("ProcessorNameString")?.ToString();
+            if (!string.IsNullOrWhiteSpace(processorName))
+                return processorName;
+        }
+        catch
+        {
+            // Ignore and return null
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    ///     Try to get basic CPU information from Environment
+    /// </summary>
+    /// <returns>Basic CPU information if successful, null otherwise</returns>
+    private static string? TryGetCpuNameFromEnvironment()
+    {
+        try
+        {
+            var processorCount = Environment.ProcessorCount;
+            var is64Bit = Environment.Is64BitOperatingSystem;
+            var architecture = RuntimeInformation.ProcessArchitecture.ToString();
+
+            return $"CPU ({processorCount} cores, {architecture}, {(is64Bit ? "64-bit" : "32-bit")})";
+        }
+        catch
+        {
+            // Ignore and return null
+        }
+
+        return null;
     }
 }
