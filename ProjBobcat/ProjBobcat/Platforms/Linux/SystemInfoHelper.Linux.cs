@@ -42,7 +42,11 @@ class SystemInfoHelper
             .Select(arr => double.TryParse(arr[8], out var outCpu) ? outCpu : 0)
             .Sum();
 
-        return new CPUInfo(usage / 100, "Overrall");
+        // Get the number of CPU cores to normalize the usage
+        var processorCount = Environment.ProcessorCount;
+        var normalizedUsage = usage / processorCount;
+
+        return new CPUInfo(normalizedUsage / 100, "Overrall");
     }
 
     /// <summary>
