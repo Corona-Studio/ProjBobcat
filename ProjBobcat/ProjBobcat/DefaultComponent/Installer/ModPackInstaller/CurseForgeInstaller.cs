@@ -70,7 +70,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
         var files = await GetModPackFiles(this.CurseForgeApiService, fileIds);
         var projectIds = files.Select(file => file.ProjectId).ToArray();
-        var modProjectDetails = await GetModProjectDetails(this.CurseForgeApiService, projectIds) ?? [];
+        var modProjectDetails = await GetModProjectDetails(this.CurseForgeApiService, projectIds);
 
         ArgumentOutOfRangeException.ThrowIfNotEqual(fileIds.Length, files.Length);
 
