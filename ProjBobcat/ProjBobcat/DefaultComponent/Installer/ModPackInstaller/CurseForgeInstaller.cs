@@ -361,7 +361,8 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         catch (HttpRequestException e)
         {
             if (e.StatusCode != HttpStatusCode.BadRequest &&
-                e.StatusCode != HttpStatusCode.UnprocessableEntity)
+                e.StatusCode != HttpStatusCode.UnprocessableEntity &&
+                e.InnerException is not IOException)
                 throw;
 
             if (ids.Length <= 1)
