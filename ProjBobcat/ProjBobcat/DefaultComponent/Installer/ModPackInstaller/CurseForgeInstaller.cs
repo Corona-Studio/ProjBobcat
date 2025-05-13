@@ -68,10 +68,41 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
             ?.Select(file => file.FileId)
             .ToArray() ?? [];
 
-        var files = await GetModPackFiles(this.CurseForgeApiService, fileIds);
-        var projectIds = files.Select(file => file.ProjectId).ToArray();
-        var modProjectDetails = await GetModProjectDetails(this.CurseForgeApiService, projectIds);
+        CurseForgeLatestFileModel[]? files = null;
 
+        for (var i = 0; i < RetryCount; i++)
+        {
+            try
+            {
+                files = await GetModPackFiles(this.CurseForgeApiService, fileIds);
+                break;
+            }
+            catch (Exception)
+            {
+                // Ignore
+            }
+        }
+
+        ArgumentNullException.ThrowIfNull(files, "无法获取 CurseForge 的文件列表");
+
+        var projectIds = files.Select(file => file.ProjectId).ToArray();
+
+        CurseForgeAddonInfo[]? modProjectDetails = null;
+
+        for (var i = 0; i < RetryCount; i++)
+        {
+            try
+            {
+                modProjectDetails = await GetModProjectDetails(this.CurseForgeApiService, projectIds);
+                break;
+            }
+            catch (Exception)
+            {
+                // Ignore
+            }
+        }
+
+        ArgumentNullException.ThrowIfNull(modProjectDetails, "无法获取 CurseForge 的模组列表");
         ArgumentOutOfRangeException.ThrowIfNotEqual(fileIds.Length, files.Length);
 
         var fileDic = files.ToDictionary(k => k.Id, v => v);
