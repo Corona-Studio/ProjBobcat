@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
@@ -70,12 +71,18 @@ public class CurseForgeApiService(
             ?.Data;
     }
 
-    public async Task<CurseForgeAddonInfo[]?> GetAddons(IEnumerable<long> addonIds)
+    public async Task<CurseForgeAddonInfo[]?> GetAddons(
+        IEnumerable<long> addonIds,
+        bool useOfficialApi = false)
     {
-        var reqUrl = $"{this.GetApiRoot()}/mods";
+        var apiRoot = useOfficialApi
+            ? DefaultApiUrl
+            : this.GetApiRoot();
 
+        var reqUrl = $"{apiRoot}/mods";
+        var modIds = addonIds.ToList().ToHashSet();
         var content = JsonContent.Create(
-            new AddonInfoReqModel(addonIds),
+            new AddonInfoReqModel(modIds),
             CurseForgeModelContext.Default.AddonInfoReqModel);
 
         using var res = await httpClient.PostAsync(reqUrl, content);
@@ -101,12 +108,18 @@ public class CurseForgeApiService(
             .DataModelWithPaginationCurseForgeLatestFileModelArray);
     }
 
-    public async Task<CurseForgeLatestFileModel[]?> GetFiles(IEnumerable<long> fileIds)
+    public async Task<CurseForgeLatestFileModel[]?> GetFiles(
+        IEnumerable<long> fileIds,
+        bool useOfficialApi = false)
     {
-        var reqUrl = $"{this.GetApiRoot()}/mods/files";
+        var apiRoot = useOfficialApi
+            ? DefaultApiUrl
+            : this.GetApiRoot();
 
+        var reqUrl = $"{apiRoot}/mods/files";
+        var proceedFileIds = fileIds.ToList().ToHashSet();
         var content = JsonContent.Create(
-            new FileInfoReqModel(fileIds),
+            new FileInfoReqModel(proceedFileIds),
             CurseForgeModelContext.Default.FileInfoReqModel);
 
         using var res = await httpClient.PostAsync(reqUrl, content);

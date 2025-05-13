@@ -317,13 +317,14 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
     public static async Task<CurseForgeAddonInfo[]> GetModProjectDetails(
         ICurseForgeApiService curseForgeApiService,
-        long[] ids)
+        long[] ids,
+        bool useOfficialApi = false)
     {
         if (ids.Length == 0) return [];
 
         try
         {
-            return await curseForgeApiService.GetAddons(ids) ?? [];
+            return await curseForgeApiService.GetAddons(ids, useOfficialApi) ?? [];
         }
         catch (HttpRequestException e)
         {
@@ -332,11 +333,11 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
                 throw;
 
             if (ids.Length <= 1)
-                return await curseForgeApiService.GetAddons(ids) ?? [];
+                return await curseForgeApiService.GetAddons(ids, true) ?? [];
 
             var mid = ids.Length / 2;
-            var leftTask = GetModProjectDetails(curseForgeApiService, ids[..mid]);
-            var rightTask = GetModProjectDetails(curseForgeApiService, ids[mid..]);
+            var leftTask = GetModProjectDetails(curseForgeApiService, ids[..mid], true);
+            var rightTask = GetModProjectDetails(curseForgeApiService, ids[mid..], true);
             var files = await Task.WhenAll(leftTask, rightTask);
 
             return [
@@ -348,13 +349,14 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
     public static async Task<CurseForgeLatestFileModel[]> GetModPackFiles(
         ICurseForgeApiService curseForgeApiService,
-        long[] ids)
+        long[] ids,
+        bool useOfficialApi = false)
     {
         if (ids.Length == 0) return [];
 
         try
         {
-            return await curseForgeApiService.GetFiles(ids) ?? [];
+            return await curseForgeApiService.GetFiles(ids, useOfficialApi) ?? [];
         }
         catch (HttpRequestException e)
         {
@@ -366,8 +368,8 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
                 return await curseForgeApiService.GetFiles(ids) ?? [];
 
             var mid = ids.Length / 2;
-            var leftTask = GetModPackFiles(curseForgeApiService, ids[..mid]);
-            var rightTask = GetModPackFiles(curseForgeApiService, ids[mid..]);
+            var leftTask = GetModPackFiles(curseForgeApiService, ids[..mid], true);
+            var rightTask = GetModPackFiles(curseForgeApiService, ids[mid..], true);
             var files = await Task.WhenAll(leftTask, rightTask);
 
             return [

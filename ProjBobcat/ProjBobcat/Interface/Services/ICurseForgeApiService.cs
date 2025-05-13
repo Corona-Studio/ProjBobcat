@@ -12,14 +12,14 @@ public interface ICurseForgeApiService
 
     Task<CurseForgeAddonInfo?> GetAddon(long addonId);
 
-    Task<CurseForgeAddonInfo[]?> GetAddons(IEnumerable<long> addonIds);
+    Task<CurseForgeAddonInfo[]?> GetAddons(IEnumerable<long> addonIds, bool useOfficialApi = false);
 
     Task<DataModelWithPagination<CurseForgeLatestFileModel[]>?> GetAddonFiles(
         long addonId,
         int index = 0,
         int pageSize = 50);
 
-    Task<CurseForgeLatestFileModel[]?> GetFiles(IEnumerable<long> fileIds);
+    Task<CurseForgeLatestFileModel[]?> GetFiles(IEnumerable<long> fileIds, bool useOfficialApi = false);
 
     Task<CurseForgeSearchCategoryModel[]?> GetCategories(int gameId = 432);
 
