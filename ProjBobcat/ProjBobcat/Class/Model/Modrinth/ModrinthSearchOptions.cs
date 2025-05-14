@@ -7,6 +7,7 @@ public class ModrinthSearchOptions
 {
     public string? Name { get; init; }
     public string? Category { get; init; }
+    public string? GameVersion { get; init; }
     public string Index { get; init; } = "relevance";
     public string? ProjectType { get; init; }
     public int? Offset { get; init; }
@@ -18,6 +19,8 @@ public class ModrinthSearchOptions
 
         var facets = new List<string>();
 
+        if (!string.IsNullOrEmpty(this.GameVersion))
+            facets.Add($"[\"versions:{this.GameVersion}\"]");
         if (!string.IsNullOrEmpty(this.Category))
             facets.Add($"[\"categories:{this.Category}\"]");
         if (!string.IsNullOrEmpty(this.ProjectType))

@@ -11,6 +11,7 @@ public class SearchOptions
     public int? PageSize { get; init; }
     public string? SearchFilter { get; init; }
     public int? Sort { get; init; }
+    public string? SortOrder { get; set; }
     public int? ModLoaderFilter { get; init; }
 
 
@@ -23,7 +24,7 @@ public class SearchOptions
         if (this.Index != null)
             result += $"&index={this.Index ?? 0}";
         if (this.Sort != null)
-            result += $"&sortOrder={this.Sort ?? 1}";
+            result += $"&sortField={this.Sort ?? 1}";
         if (this.PageSize != null)
             result += $"&pageSize={this.PageSize}";
         if (!string.IsNullOrEmpty(this.GameVersion))
@@ -36,6 +37,8 @@ public class SearchOptions
             result += $"&categoryId={this.CategoryId}";
         if (this.ModLoaderFilter != null)
             result += $"&modLoaderType={this.ModLoaderFilter}";
+
+        result += $"&sortOrder={this.SortOrder ?? "desc"}";
 
         return result;
     }
