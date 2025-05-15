@@ -356,14 +356,14 @@ public class MicrosoftAuthenticator : IAuthenticator
                 }
             };
 
-        var sPUuid = new PlayerUUID(profile.Id);
+        var sPUuid = new Guid(profile.Id);
         var sP = new ProfileInfoModel
         {
             Name = profile.Name,
-            UUID = sPUuid
+            Id = sPUuid
         };
 
-        accountModel.Id = sPUuid.ToGuid();
+        accountModel.Id = sPUuid;
 
         if (!string.IsNullOrEmpty(idToken))
         {
@@ -396,7 +396,7 @@ public class MicrosoftAuthenticator : IAuthenticator
             SelectedProfile = sP,
             User = new UserInfoModel
             {
-                UUID = sPUuid,
+                Id = sPUuid,
                 UserName = profile.Name
             },
             Email = this.Email,
@@ -418,7 +418,7 @@ public class MicrosoftAuthenticator : IAuthenticator
         var sP = new ProfileInfoModel
         {
             Name = value.MinecraftProfile?.Name ?? this.Email ?? string.Empty,
-            UUID = new PlayerUUID(value.MinecraftProfile?.Id ?? this.Email ?? string.Empty)
+            Id = new Guid(value.MinecraftProfile?.Id ?? this.Email ?? string.Empty)
         };
 
         return new MicrosoftAuthResult
@@ -431,7 +431,7 @@ public class MicrosoftAuthenticator : IAuthenticator
             SelectedProfile = sP,
             User = new UserInfoModel
             {
-                UUID = sP.UUID,
+                Id = sP.Id,
                 UserName = sP.Name
             }
         };

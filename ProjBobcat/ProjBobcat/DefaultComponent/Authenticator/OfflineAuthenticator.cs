@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Auth;
 using ProjBobcat.Class.Model.LauncherAccount;
@@ -35,16 +36,15 @@ public class OfflineAuthenticator : IAuthenticator
         {
             Name = "preferredLanguage",
             ProfileId = string.Empty,
-            UserId = PlayerUUID.Random(),
+            UserId = Guid.NewGuid(),
             Value = "zh-cn"
         };
 
-        var uuid = PlayerUUID.FromOfflinePlayerName(this.Username);
-
+        var uuid = this.Username.ToGuidHashAsName();
         var localUuid = Guid.NewGuid().ToString("N");
         var accountModel = new AccountModel
         {
-            Id = uuid.ToGuid(),
+            Id = uuid,
             AccessToken = Guid.NewGuid().ToString("N"),
             AccessTokenExpiresAt = DateTime.Now,
             EligibleForMigration = false,
@@ -53,7 +53,7 @@ public class OfflineAuthenticator : IAuthenticator
             LocalId = localUuid,
             MinecraftProfile = new AccountProfileModel
             {
-                Id = uuid.ToString(),
+                Id = uuid.ToString("N"),
                 Name = this.Username
             },
             Persistent = true,
@@ -83,11 +83,11 @@ public class OfflineAuthenticator : IAuthenticator
             SelectedProfile = new ProfileInfoModel
             {
                 Name = this.Username,
-                UUID = uuid
+                Id = uuid
             },
             User = new UserInfoModel
             {
-                UUID = uuid,
+                Id = uuid,
                 Properties =
                 [
                     new PropertyModel

@@ -5,7 +5,6 @@ using System.Text;
 using System.Text.Json;
 using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
-using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Exceptions;
 using ProjBobcat.Interface;
@@ -170,7 +169,7 @@ public sealed class DefaultLauncherProfileParser : LauncherParserBase, ILauncher
         this.SaveProfile();
     }
 
-    public void SelectUser(PlayerUUID uuid)
+    public void SelectUser(Guid uuid)
     {
         this.LauncherProfile.SelectedUser ??= new SelectedUserModel();
         this.LauncherProfile.SelectedUser.Account = uuid.ToString();

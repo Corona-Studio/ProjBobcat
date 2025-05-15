@@ -178,7 +178,7 @@ public class YggdrasilAuthenticator : IAuthenticator
 
         var profiles =
             result.AvailableProfiles
-                .ToDictionary(profile => profile.UUID,
+                .ToDictionary(profile => profile.Id,
                     profile => new AuthProfileModel { DisplayName = profile.Name })
                 .AsReadOnly();
 
@@ -204,7 +204,7 @@ public class YggdrasilAuthenticator : IAuthenticator
             Legacy = false,
             LocalId = rUuid,
             Persistent = true,
-            RemoteId = result.User?.UUID.ToString() ?? Guid.Empty.ToString(),
+            RemoteId = result.User?.Id.ToString() ?? Guid.Empty.ToString(),
             Type = "Mojang",
             UserProperites = result.User?.Properties?.ToAuthProperties(profiles).ToArray() ?? [],
             Username = this.Email
@@ -212,10 +212,10 @@ public class YggdrasilAuthenticator : IAuthenticator
 
         if (result.SelectedProfile != null)
         {
-            profile.Id = result.SelectedProfile.UUID.ToGuid();
+            profile.Id = result.SelectedProfile.Id;
             profile.MinecraftProfile = new AccountProfileModel
             {
-                Id = result.SelectedProfile.UUID.ToString(),
+                Id = result.SelectedProfile.Id.ToString(),
                 Name = result.SelectedProfile.Name
             };
         }
@@ -300,13 +300,13 @@ public class YggdrasilAuthenticator : IAuthenticator
                             Name = x.Name,
                             Value = x.Value
                         }).ToArray(),
-                        UUID = new PlayerUUID(profile.RemoteId)
+                        Id = new Guid(profile.RemoteId)
                     }
                 ],
                 SelectedProfile = new ProfileInfoModel
                 {
                     Name = profile.MinecraftProfile?.Name ?? this.Email,
-                    UUID = new PlayerUUID()
+                    Id = Guid.Empty
                 }
             };
 
@@ -384,11 +384,11 @@ public class YggdrasilAuthenticator : IAuthenticator
                 var profiles =
                     authResponse.AvailableProfiles
                         .ToDictionary(
-                            profile => profile.UUID,
+                            profile => profile.Id,
                             profile => new AuthProfileModel { DisplayName = profile.Name })
                         .AsReadOnly();
 
-                var uuid = authResponse.User.UUID.ToString();
+                var uuid = authResponse.User.Id.ToString();
                 var (_, value) = this.LauncherAccountParser.LauncherAccount.Accounts!.FirstOrDefault(a =>
                     (a.Value.MinecraftProfile?.Name.Equals(authResponse.User.UserName,
                         StringComparison.OrdinalIgnoreCase) ?? false) &&
@@ -406,7 +406,7 @@ public class YggdrasilAuthenticator : IAuthenticator
                     Legacy = false,
                     LocalId = rUuid,
                     Persistent = true,
-                    RemoteId = authResponse.User?.UUID.ToString() ?? Guid.Empty.ToString(),
+                    RemoteId = authResponse.User?.Id.ToString() ?? Guid.Empty.ToString(),
                     Type = "Mojang",
                     UserProperites = authResponse.User?.Properties?.ToAuthProperties(profiles).ToArray() ?? [],
                     Username = this.Email
@@ -414,10 +414,10 @@ public class YggdrasilAuthenticator : IAuthenticator
 
                 if (authResponse.SelectedProfile != null)
                 {
-                    profile.Id = authResponse.SelectedProfile.UUID.ToGuid();
+                    profile.Id = authResponse.SelectedProfile.Id;
                     profile.MinecraftProfile = new AccountProfileModel
                     {
-                        Id = authResponse.SelectedProfile.UUID.ToString(),
+                        Id = authResponse.SelectedProfile.Id.ToString(),
                         Name = authResponse.SelectedProfile.Name
                     };
                 }

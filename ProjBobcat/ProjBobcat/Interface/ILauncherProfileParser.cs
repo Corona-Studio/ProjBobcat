@@ -1,5 +1,5 @@
-﻿using ProjBobcat.Class.Model;
-using ProjBobcat.Class.Model.LauncherProfile;
+﻿using ProjBobcat.Class.Model.LauncherProfile;
+using System;
 
 namespace ProjBobcat.Interface;
 
@@ -30,7 +30,7 @@ public interface ILauncherProfileParser
     ///     选择一个用户信息作为默认用户
     /// </summary>
     /// <param name="uuid"></param>
-    void SelectUser(PlayerUUID uuid);
+    void SelectUser(Guid uuid);
 
     /// <summary>
     ///     选择某个游戏信息作为默认游戏

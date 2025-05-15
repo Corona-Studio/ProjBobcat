@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.YggdrasilAuth;
 
@@ -42,7 +42,7 @@ public static class AuthPropertyHelper
     /// <returns>转换好的UserProperty</returns>
     public static AuthPropertyModel? ToAuthProperty(
         this PropertyModel? model,
-        IReadOnlyDictionary<PlayerUUID, AuthProfileModel> profiles)
+        IReadOnlyDictionary<Guid, AuthProfileModel> profiles)
     {
         return model is null
             ? null
@@ -62,7 +62,7 @@ public static class AuthPropertyHelper
     /// <returns>转换好的UserProperty</returns>
     public static IEnumerable<AuthPropertyModel> ToAuthProperties(
         this IEnumerable<PropertyModel>? models,
-        IReadOnlyDictionary<PlayerUUID, AuthProfileModel> profiles)
+        IReadOnlyDictionary<Guid, AuthProfileModel> profiles)
     {
         return models == null
             ? []

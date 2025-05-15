@@ -1,10 +1,11 @@
-﻿using System.Text.Json.Serialization;
+﻿using System;
+using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.YggdrasilAuth;
 
 public class UserInfoModel
 {
-    [JsonPropertyName("id")] public PlayerUUID UUID { get; set; }
+    [JsonPropertyName("id")] public Guid Id { get; set; }
 
     [JsonPropertyName("username")] public string? UserName { get; set; }
 

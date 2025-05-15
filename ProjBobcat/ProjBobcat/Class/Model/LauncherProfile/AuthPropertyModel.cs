@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using System;
+using System.Text.Json.Serialization;
 
 namespace ProjBobcat.Class.Model.LauncherProfile;
 
@@ -23,7 +24,7 @@ public class AuthPropertyModel
     ///     用户Id
     /// </summary>
     [JsonPropertyName("userId")]
-    public PlayerUUID UserId { get; set; }
+    public Guid UserId { get; set; }
 
     /// <summary>
     ///     值

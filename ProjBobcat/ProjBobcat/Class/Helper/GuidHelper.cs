@@ -131,7 +131,6 @@ public static class GuidHelper
         [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
         private void FormatN(char* dest)
         {
-            // dddddddddddddddddddddddddddddddd
             if (Avx2.IsSupported)
             {
                 fixed (Uuid* thisPtr = &this)

@@ -209,7 +209,7 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
             },
             { "${game_directory}", $"\"{gameDir}\"" },
             { "${auth_player_name}", authResult.SelectedProfile.Name },
-            { "${auth_uuid}", authResult.SelectedProfile.UUID.ToString() },
+            { "${auth_uuid}", authResult.SelectedProfile.Id.ToString("N") },
             { "${auth_access_token}", authResult.AccessToken },
             { "${user_properties}", "{}" }, //authResult?.User?.Properties.ResolveUserProperties() },
             { "${user_type}", userType }, // use default value as placeholder
