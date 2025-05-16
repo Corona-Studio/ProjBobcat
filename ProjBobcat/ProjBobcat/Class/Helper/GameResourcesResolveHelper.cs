@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -15,11 +16,20 @@ using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Fabric;
 using ProjBobcat.Class.Model.GameResource;
 using ProjBobcat.Class.Model.GameResource.ResolvedInfo;
+using FileInfo = System.IO.FileInfo;
 
 namespace ProjBobcat.Class.Helper;
 
 public static class GameResourcesResolveHelper
 {
+    static string? TryGetVersion(string path, string? rawVersion)
+    {
+        if (rawVersion != "${file.jarVersion}")
+            return rawVersion;
+
+        return FileVersionInfo.GetVersionInfo(path).FileVersion ?? "-";
+    }
+    
     static async Task<GameModResolvedInfo?> GetTomlModInfo(
         ZipArchiveEntry entry,
         string file,
@@ -77,7 +87,7 @@ public static class GameResourcesResolveHelper
             file,
             modList.Select(m => m.Trim()).Where(m => !string.IsNullOrWhiteSpace(m)).ToImmutableList(),
             title,
-            version?.Value,
+            TryGetVersion(file, version?.Value),
             isNeoForge ? "NeoForge" : "Forge",
             isEnabled);
     }
@@ -139,7 +149,12 @@ public static class GameResourcesResolveHelper
                 .ToImmutableList();
             var titleResult = string.IsNullOrEmpty(baseMod.Name) ? Path.GetFileName(file) : baseMod.Name;
 
-            var displayModel = new GameModResolvedInfo(authorResult, file, modList, titleResult, baseMod.Version,
+            var displayModel = new GameModResolvedInfo(
+                authorResult,
+                file, 
+                modList, 
+                titleResult, 
+                TryGetVersion(file, baseMod.Version),
                 "Forge *", isEnabled);
 
             return displayModel;
@@ -171,7 +186,9 @@ public static class GameResourcesResolveHelper
                 : null;
             var modList = tempModel?.Depends?.Select(d => d.Key)?.ToImmutableList();
             var titleResult = string.IsNullOrEmpty(tempModel?.Id) ? Path.GetFileName(file) : tempModel.Id;
-            var versionResult = string.IsNullOrEmpty(tempModel?.Version) ? null : tempModel.Version;
+            var versionResult = string.IsNullOrEmpty(tempModel?.Version)
+                ? null
+                : TryGetVersion(file, tempModel.Version);
 
             return new GameModResolvedInfo(author, file, modList, titleResult, versionResult, "Fabric", isEnabled);
         }
