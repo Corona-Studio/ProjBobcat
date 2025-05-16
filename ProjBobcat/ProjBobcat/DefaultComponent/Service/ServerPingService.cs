@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
@@ -31,9 +32,31 @@ public class ServerPingService : ProgressReportBase
     {
         return this.RunAsync().Result;
     }
+    
+    private static async Task<(string Host, ushort Port)> ResolveMinecraftSrvAsync(string domain)
+    {
+        var lookup = new DnsClient.LookupClient();
+        var result = await lookup.QueryAsync($"_minecraft._tcp.{domain}", DnsClient.QueryType.SRV);
+
+        var srvRecord = result.Answers.SrvRecords().FirstOrDefault();
+        if (srvRecord != null)
+        {
+            return (srvRecord.Target.Value.TrimEnd('.'), (ushort)srvRecord.Port);
+        }
+
+        return (domain, 25565); // default port
+    }
 
     public async Task<ServerPingResult?> RunAsync()
     {
+        var resolvedHost = this.Address;
+        var resolvedPort = this.Port;
+
+        if (resolvedPort == 0)
+        {
+            (resolvedHost, resolvedPort) = await ResolveMinecraftSrvAsync(this.Address);
+        }
+        
         using var client = new TcpClient();
 
         client.SendTimeout = 5000;
@@ -47,7 +70,7 @@ public class ServerPingService : ProgressReportBase
 
         try
         {
-            await client.ConnectAsync(this.Address, this.Port, cts.Token);
+            await client.ConnectAsync(resolvedHost, resolvedPort, cts.Token);
         }
         catch (TaskCanceledException)
         {

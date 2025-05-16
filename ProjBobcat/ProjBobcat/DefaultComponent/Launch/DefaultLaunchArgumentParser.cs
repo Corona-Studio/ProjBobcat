@@ -335,15 +335,21 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
 
             if (shouldUseNewCommand)
             {
-                yield return $"--quickPlayMultiplayer \"{serverSettings.Address}:{serverSettings.Port}\"";
+                if (serverSettings.Port != 0)
+                    yield return $"--quickPlayMultiplayer \"{serverSettings.Address}:{serverSettings.Port}\"";
+                else
+                    yield return $"--quickPlayMultiplayer \"{serverSettings.Address}\"";
             }
             else
             {
                 yield return "--server";
                 yield return serverSettings.Address;
 
-                yield return "--port";
-                yield return serverSettings.Port.ToString();
+                if (serverSettings.Port != 0)
+                {
+                    yield return "--port";
+                    yield return serverSettings.Port.ToString();
+                }
             }
         }
         else if (!string.IsNullOrEmpty(joinWorldName) && shouldUseNewCommand)
