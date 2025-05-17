@@ -520,7 +520,24 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             if (gameArguments.Count != 0)
                 gameArgList.AddRange(gameArguments);
 
-            gameArguments = gameArgList
+            var deduplicatedArgs = new HashSet<string>();
+            var preprocessArgs = gameArgList
+                .Where(p => !string.IsNullOrWhiteSpace(p))
+                .Select(p => p.Split(' '))
+                .SelectMany(p => p);
+
+            foreach (var argPair in preprocessArgs.Chunk(2))
+            {
+                if (argPair.Length == 1)
+                {
+                    deduplicatedArgs.Add(argPair[0]);
+                    continue;
+                }
+
+                deduplicatedArgs.Add($"{argPair[0]} {argPair[1]}");
+            }
+
+            gameArguments = deduplicatedArgs
                 .Where(p => !string.IsNullOrWhiteSpace(p))
                 .Select(p => p.Split(' '))
                 .SelectMany(p => p)
