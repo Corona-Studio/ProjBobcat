@@ -521,10 +521,32 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                 gameArgList.AddRange(gameArguments);
 
             gameArguments = gameArgList
-                .Select(arg => arg.Split(' '))
-                .SelectMany(a => a)
-                .ToHashSet()
+                .Where(p => !string.IsNullOrWhiteSpace(p))
+                .Select(p => p.Split(' '))
+                .SelectMany(p => p)
                 .ToList();
+
+            // Fix for optifine.OptiFineForgeTweaker 
+            // --tweakClass optifine.OptiFineForgeTweaker
+            // must be placed at the end of the game arguments.
+            var optifineTweakClass = gameArguments.IndexOf("optifine.OptiFineForgeTweaker");
+
+            if (optifineTweakClass != -1)
+            {
+                gameArguments.RemoveAt(optifineTweakClass);
+                gameArguments.RemoveAt(optifineTweakClass - 1);
+                gameArguments.Add("--tweakClass");
+                gameArguments.Add("optifine.OptiFineForgeTweaker");
+            }
+
+            // Fix for Optifine Class Path
+            var optifineLib = libraries.FirstOrDefault(l => l.Name?.StartsWith("optifine", StringComparison.OrdinalIgnoreCase) ?? false);
+
+            if (optifineLib != null)
+            {
+                libraries.Remove(optifineLib);
+                libraries.Insert(libraries.Count - 2, optifineLib);
+            }
 
             if (string.IsNullOrEmpty(mainClass))
                 return null;
