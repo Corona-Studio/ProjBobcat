@@ -8,6 +8,7 @@ using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Auth;
 using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.Version;
+using ProjBobcat.DefaultComponent.Authenticator;
 using ProjBobcat.Interface;
 
 namespace ProjBobcat.DefaultComponent.Launch;
@@ -185,18 +186,21 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
                              Guid.Empty.ToString("D"))
             .Replace("-", string.Empty).ToUpper();
         var clientIdBytes = Encoding.ASCII.GetBytes(clientIdUpper);
-        var clientId = Convert.ToBase64String(clientIdBytes);
+        var clientId = Convert.ToBase64String(clientIdBytes); 
+        
+        var castVersionInfo = (VersionInfo)versionInfo;
 
         var userType = authResult switch
         {
             MicrosoftAuthResult => "msa",
+            YggdrasilAuthResult when new ComparableVersion(castVersionInfo.GameBaseVersion) > new ComparableVersion("1.18.2") => "msa",
             _ => "Mojang"
         };
         var xuid = authResult is MicrosoftAuthResult microsoftAuthResult
             ? microsoftAuthResult.XBoxUid ?? Guid.Empty.ToString("N")
             : Guid.Empty.ToString("N");
 
-        var castVersionInfo = (VersionInfo)versionInfo;
+        
         var assetRoot = Path.Combine(this.RootPath, GamePathHelper.GetAssetsRoot());
         var mcArgumentsDic = new Dictionary<string, string>
         {
