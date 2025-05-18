@@ -565,6 +565,43 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                 libraries.Insert(libraries.Count - 2, optifineLib);
             }
 
+            // Fix for third-party consolidated game with duplicate libraries
+            var libDic = new Dictionary<string, FileInfo>();
+            var clearedLibs = new List<FileInfo>();
+
+            foreach (var lib in libraries)
+            {
+                if (string.IsNullOrEmpty(lib.Name))
+                {
+                    clearedLibs.Add(lib);
+                    continue;
+                }
+
+                var lMaven = lib.Name.ResolveMavenString()!;
+                var libId = $"{lMaven.OrganizationName}{lMaven.ArtifactId}{lMaven.Classifier}{lMaven.Type}";
+
+                if (libDic.TryGetValue(libId, out var oldLib))
+                {
+                    var v1 = new ComparableVersion(oldLib.Name!.ResolveMavenString()!.Version);
+                    var v2 = new ComparableVersion(lMaven.Version);
+
+                    if (v2 > v1)
+                    {
+                        libDic[libId] = lib;
+
+                        var oldLibIndex = clearedLibs.IndexOf(oldLib);
+
+                        if (oldLibIndex != -1)
+                            clearedLibs[oldLibIndex] = lib;
+                    }
+
+                    continue;
+                }
+
+                libDic.Add(libId, lib);
+                clearedLibs.Add(lib);
+            }
+
             if (string.IsNullOrEmpty(mainClass))
                 return null;
 
@@ -575,7 +612,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                 assets,
                 assetInfo,
                 logging,
-                libraries,
+                clearedLibs,
                 natives,
                 jvmArguments,
                 gameArguments,
