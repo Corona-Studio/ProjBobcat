@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Frozen;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
@@ -11,7 +9,6 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Helper.Download;
@@ -24,15 +21,9 @@ using ProjBobcat.Interface.Services;
 
 namespace ProjBobcat.DefaultComponent.Installer.ModPackInstaller;
 
-public record ResolvedUrlRecord(long ProjectId, long FileId, string Url);
-
-[JsonSerializable(typeof(IReadOnlyDictionary<string, ResolvedUrlRecord>))]
-public partial class CurseForgeCacheJsonContext : JsonSerializerContext;
-
 public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInstaller
 {
     public required int RetryCount { get; init; } = 6;
-    public required bool FreshInstall { get; init; }
     public required ICurseForgeApiService CurseForgeApiService { get; init; }
     public override string RootPath { get; init; } = string.Empty;
     public required string ModPackPath { get; init; }
@@ -55,15 +46,8 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         ArgumentNullException.ThrowIfNull(manifest, "无法读取到 CurseForge 的 manifest 文件");
 
         var idPath = Path.Combine(this.RootPath, GamePathHelper.GetGamePath(this.GameId));
-        var resolveUrlPath = Path.Combine(this.RootPath, GamePathHelper.GetGamePath(this.GameId), ".resolved");
         
-        if (this.FreshInstall) FileHelper.DeleteFileWithRetry(resolveUrlPath);
-        
-
         this.NeedToDownload = manifest.Files?.Length ?? 0;
-
-        var tempResolvedUrl = await TryReadUrlCacheAsync(resolveUrlPath);
-        var resolvedUrl = new ConcurrentDictionary<string, ResolvedUrlRecord>(tempResolvedUrl);
 
         var fileIds = manifest.Files
             ?.Select(file => file.FileId)
@@ -162,17 +146,6 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         }
 
         this.InvokeStatusChangedEvent("成功解析整合包模组的下载地址", ProgressValue.Finished);
-
-        try
-        {
-            await using var fs = File.Create(resolveUrlPath);
-            await JsonSerializer.SerializeAsync(fs, resolvedUrl,
-                CurseForgeCacheJsonContext.Default.IReadOnlyDictionaryStringResolvedUrlRecord);
-        }
-        catch
-        {
-            // Ignore
-        }
 
         this.TotalDownloaded = 0;
         await DownloadHelper.AdvancedDownloadListFile(downloadFiles, new DownloadSettings
@@ -327,24 +300,6 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
                 CurseForgeManifestModelContext.Default.CurseForgeManifestModel);
 
         return manifestModel;
-    }
-
-    private static async Task<IReadOnlyDictionary<string, ResolvedUrlRecord>> TryReadUrlCacheAsync(string path)
-    {
-        try
-        {
-            await using var fs = File.OpenRead(path);
-            var result = await JsonSerializer.DeserializeAsync(
-                fs,
-                CurseForgeCacheJsonContext.Default.IReadOnlyDictionaryStringResolvedUrlRecord);
-
-            return result ?? ImmutableDictionary<string, ResolvedUrlRecord>.Empty;
-        }
-        catch (Exception)
-        {
-            return ImmutableDictionary<string, ResolvedUrlRecord>.Empty;
-        }
-        
     }
 
     public static async Task<CurseForgeAddonInfo[]> GetModProjectDetails(
