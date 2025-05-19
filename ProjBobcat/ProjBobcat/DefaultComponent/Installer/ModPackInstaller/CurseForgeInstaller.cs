@@ -319,27 +319,23 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
                 e.StatusCode != HttpStatusCode.UnprocessableEntity)
                 throw;
 
+            return await RetryLogicAsync();
+        }
+        catch (CurseForgeAddonResolveException)
+        {
+            return await RetryLogicAsync();
+        }
+
+        async Task<CurseForgeAddonInfo[]> RetryLogicAsync()
+        {
             if (ids.Length <= 1)
             {
                 await Task.Delay(Random.Shared.Next(300, 600));
                 return await curseForgeApiService.GetAddons(ids, true) ?? [];
             }
-            
+
             await Task.Delay(2000);
 
-            var mid = ids.Length / 2;
-            var leftTask = GetModProjectDetails(curseForgeApiService, ids[..mid], true);
-            var rightTask = GetModProjectDetails(curseForgeApiService, ids[mid..], true);
-            var files = await Task.WhenAll(leftTask, rightTask);
-
-            return
-            [
-                .. files[0],
-                .. files[1]
-            ];
-        }
-        catch (CurseForgeAddonResolveException)
-        {
             var mid = ids.Length / 2;
             var leftTask = GetModProjectDetails(curseForgeApiService, ids[..mid], true);
             var rightTask = GetModProjectDetails(curseForgeApiService, ids[mid..], true);
@@ -370,27 +366,23 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
                 e.InnerException is not IOException)
                 throw;
 
+            return await RetryLogicAsync();
+        }
+        catch (CurseForgeFileResolveException)
+        {
+            return await RetryLogicAsync();
+        }
+
+        async Task<CurseForgeLatestFileModel[]> RetryLogicAsync()
+        {
             if (ids.Length <= 1)
             {
                 await Task.Delay(Random.Shared.Next(300, 600));
                 return await curseForgeApiService.GetFiles(ids) ?? [];
             }
-            
+
             await Task.Delay(2000);
 
-            var mid = ids.Length / 2;
-            var leftTask = GetModPackFiles(curseForgeApiService, ids[..mid], true);
-            var rightTask = GetModPackFiles(curseForgeApiService, ids[mid..], true);
-            var files = await Task.WhenAll(leftTask, rightTask);
-
-            return
-            [
-                .. files[0],
-                .. files[1]
-            ];
-        }
-        catch (CurseForgeFileResolveException)
-        {
             var mid = ids.Length / 2;
             var leftTask = GetModPackFiles(curseForgeApiService, ids[..mid], true);
             var rightTask = GetModPackFiles(curseForgeApiService, ids[mid..], true);
