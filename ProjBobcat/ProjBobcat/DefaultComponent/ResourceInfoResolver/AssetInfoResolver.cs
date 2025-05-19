@@ -22,11 +22,11 @@ public sealed class AssetInfoResolver : ResolverBase
 {
     const string DefaultVersionManifestUrl = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
 
-    public string? AssetIndexUriRoot { get; init; }
-
+    public string? VersionManifestUrl { get; init; }
+    public IReadOnlyList<string>? AssetIndexUriRoots { get; init; }
     public IReadOnlyList<string> AssetUriRoots { get; init; } = ["https://resources.download.minecraft.net/"];
-
     public IReadOnlyList<VersionManifestVersionsModel>? Versions { get; init; }
+
     public required IHttpClientFactory HttpClientFactory { get; init; }
 
     public override async IAsyncEnumerable<IGameResource> ResolveResourceAsync(
@@ -47,7 +47,7 @@ public sealed class AssetInfoResolver : ResolverBase
         {
             this.OnResolve("没有提供 Version Manifest， 开始下载", ProgressValue.Start);
 
-            using var vmJsonReq = new HttpRequestMessage(HttpMethod.Get, DefaultVersionManifestUrl);
+            using var vmJsonReq = new HttpRequestMessage(HttpMethod.Get, VersionManifestUrl ?? DefaultVersionManifestUrl);
             using var vmJsonRes = await client.SendAsync(vmJsonReq);
 
             var vm = await vmJsonRes.Content.ReadFromJsonAsync(VersionManifestContext.Default.VersionManifest);
@@ -87,36 +87,80 @@ public sealed class AssetInfoResolver : ResolverBase
 
                 if (versionObject == null) yield break;
 
-                using var jsonReq = new HttpRequestMessage(HttpMethod.Get, DefaultVersionManifestUrl);
-                using var jsonRes = await client.SendAsync(jsonReq);
+                var fallbackUrls = new List<string> { versionObject.Url };
+                if (AssetIndexUriRoots is { Count: > 0 })
+                {
+                    var initUrl = fallbackUrls[0];
+                    fallbackUrls.Clear();
 
-                var versionModel =
-                    await jsonRes.Content.ReadFromJsonAsync(RawVersionModelContext.Default.RawVersionModel);
+                    foreach (var uriRoot in AssetIndexUriRoots)
+                    {
+                        var replacedUrl = initUrl
+                            .Replace("https://piston-meta.mojang.com", uriRoot)
+                            .Replace("https://launchermeta.mojang.com", uriRoot)
+                            .Replace("https://launcher.mojang.com", uriRoot);
 
-                if (versionModel == null) yield break;
+                        fallbackUrls.Add(replacedUrl);
+                    }
+                }
 
-                assetIndexDownloadUri = versionModel.AssetIndex?.Url;
+                foreach (var url in fallbackUrls)
+                {
+                    try
+                    {
+                        using var jsonRes = await client.GetAsync(url);
+                        var versionModel =
+                            await jsonRes.Content.ReadFromJsonAsync(RawVersionModelContext.Default.RawVersionModel);
+
+                        if (versionModel == null) yield break;
+
+                        assetIndexDownloadUri = versionModel.AssetIndex?.Url;
+                        break;
+                    }
+                    catch (HttpRequestException)
+                    {
+                        // Ignore
+                    }
+                }
             }
 
             if (string.IsNullOrEmpty(assetIndexDownloadUri)) yield break;
 
-            if (!string.IsNullOrEmpty(this.AssetIndexUriRoot))
+            var urls = new List<string> { assetIndexDownloadUri };
+
+            if (AssetIndexUriRoots is { Count: > 0 })
             {
-                var assetIndexUriRoot = HttpHelper.RegexMatchUri(assetIndexDownloadUri);
-                assetIndexDownloadUri =
-                    $"{this.AssetIndexUriRoot.TrimEnd('/')}{assetIndexDownloadUri[assetIndexUriRoot.Length..]}";
+                var initUrl = urls[0];
+                urls.Clear();
+
+                foreach (var uriRoot in AssetIndexUriRoots)
+                {
+                    var replacedUrl = initUrl
+                        .Replace("https://piston-meta.mojang.com", uriRoot)
+                        .Replace("https://launchermeta.mojang.com", uriRoot)
+                        .Replace("https://launcher.mojang.com", uriRoot);
+
+                    urls.Add(replacedUrl);
+                }
             }
 
-            var dp = new SimpleDownloadFile
+            var dp = new MultiSourceDownloadFile
             {
                 DownloadPath = assetIndexesDi.FullName,
                 FileName = $"{id}.json",
-                DownloadUri = assetIndexDownloadUri
+                DownloadUris = urls
             };
 
             try
             {
-                await DownloadHelper.DownloadData(dp, DownloadSettings.FromDefault(this.HttpClientFactory));
+                await DownloadHelper.DownloadData(dp, new DownloadSettings
+                {
+                    RetryCount = 6,
+                    CheckFile = false,
+                    Timeout = TimeSpan.FromMinutes(1),
+                    DownloadParts = 1,
+                    HttpClientFactory = HttpClientFactory
+                });
             }
             catch (Exception e)
             {
