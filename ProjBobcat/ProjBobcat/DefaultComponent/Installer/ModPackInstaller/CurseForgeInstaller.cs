@@ -18,6 +18,7 @@ using ProjBobcat.Class.Helper.Download;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.CurseForge;
 using ProjBobcat.Class.Model.Downloading;
+using ProjBobcat.Exceptions;
 using ProjBobcat.Interface;
 using ProjBobcat.Interface.Services;
 
@@ -371,6 +372,19 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
             var rightTask = GetModProjectDetails(curseForgeApiService, ids[mid..], true);
             var files = await Task.WhenAll(leftTask, rightTask);
 
+            return
+            [
+                .. files[0],
+                .. files[1]
+            ];
+        }
+        catch (CurseForgeAddonResolveException)
+        {
+            var mid = ids.Length / 2;
+            var leftTask = GetModProjectDetails(curseForgeApiService, ids[..mid], true);
+            var rightTask = GetModProjectDetails(curseForgeApiService, ids[mid..], true);
+            var files = await Task.WhenAll(leftTask, rightTask);
+
             return [
                 .. files[0],
                 .. files[1]
@@ -404,7 +418,21 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
             var rightTask = GetModPackFiles(curseForgeApiService, ids[mid..], true);
             var files = await Task.WhenAll(leftTask, rightTask);
 
-            return [
+            return
+            [
+                .. files[0],
+                .. files[1]
+            ];
+        }
+        catch (CurseForgeFileResolveException)
+        {
+            var mid = ids.Length / 2;
+            var leftTask = GetModPackFiles(curseForgeApiService, ids[..mid], true);
+            var rightTask = GetModPackFiles(curseForgeApiService, ids[mid..], true);
+            var files = await Task.WhenAll(leftTask, rightTask);
+
+            return
+            [
                 .. files[0],
                 .. files[1]
             ];

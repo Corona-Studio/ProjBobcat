@@ -87,7 +87,16 @@ public class CurseForgeApiService(
 
         using var res = await httpClient.PostAsync(reqUrl, content);
 
-        res.EnsureSuccessStatusCode();
+        if (!res.IsSuccessStatusCode)
+        {
+            var error = await res.Content.ReadAsStringAsync();
+            var message = $"""
+                           Failed to get CurseForge addon info.
+                           {error}
+                           """;
+
+            throw new CurseForgeAddonResolveException(message);
+        }
 
         return (await res.Content.ReadFromJsonAsync(CurseForgeModelContext.Default
             .DataModelCurseForgeAddonInfoArray))?.Data;
@@ -124,7 +133,16 @@ public class CurseForgeApiService(
 
         using var res = await httpClient.PostAsync(reqUrl, content);
 
-        res.EnsureSuccessStatusCode();
+        if (!res.IsSuccessStatusCode)
+        {
+            var error = await res.Content.ReadAsStringAsync();
+            var message = $"""
+                           Failed to get CurseForge file info.
+                           {error}
+                           """;
+
+            throw new CurseForgeFileResolveException(message);
+        }
 
         return (await res.Content.ReadFromJsonAsync(CurseForgeModelContext.Default
             .DataModelCurseForgeLatestFileModelArray))?.Data;
