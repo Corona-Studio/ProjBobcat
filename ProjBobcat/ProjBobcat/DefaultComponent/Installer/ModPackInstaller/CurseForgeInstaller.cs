@@ -365,7 +365,12 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
                 throw;
 
             if (ids.Length <= 1)
+            {
+                await Task.Delay(Random.Shared.Next(300, 600));
                 return await curseForgeApiService.GetAddons(ids, true) ?? [];
+            }
+            
+            await Task.Delay(2000);
 
             var mid = ids.Length / 2;
             var leftTask = GetModProjectDetails(curseForgeApiService, ids[..mid], true);
@@ -411,7 +416,12 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
                 throw;
 
             if (ids.Length <= 1)
+            {
+                await Task.Delay(Random.Shared.Next(300, 600));
                 return await curseForgeApiService.GetFiles(ids) ?? [];
+            }
+            
+            await Task.Delay(2000);
 
             var mid = ids.Length / 2;
             var leftTask = GetModPackFiles(curseForgeApiService, ids[..mid], true);
