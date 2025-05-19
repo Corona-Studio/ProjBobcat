@@ -88,7 +88,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         }
 
         ArgumentNullException.ThrowIfNull(modProjectDetails, "无法获取 CurseForge 的模组列表");
-        ArgumentOutOfRangeException.ThrowIfNotEqual(fileIds.Length, files.Length);
+        ArgumentOutOfRangeException.ThrowIfLessThan(files.Length, fileIds.Length);
 
         var fileDic = files.ToDictionary(k => k.Id, v => v);
         var projectDic = modProjectDetails.ToDictionary(k => k.Id, v => v);
