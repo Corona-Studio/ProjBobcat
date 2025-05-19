@@ -15,15 +15,17 @@ namespace ProjBobcat.Services;
 
 #region Temp Models
 
-record AddonInfoReqModel([property: JsonPropertyName("modIds")] IEnumerable<long> ModIds);
+record AddonInfoReqModel(
+    [property: JsonPropertyName("modIds")]
+    IReadOnlyList<long> ModIds);
 
 record FileInfoReqModel(
     [property: JsonPropertyName("fileIds")]
-    IEnumerable<long> FileIds);
+    IReadOnlyList<long> FileIds);
 
 record FuzzyFingerPrintReqModel(
     [property: JsonPropertyName("fingerprints")]
-    IEnumerable<long> Fingerprints);
+    IReadOnlyList<long> Fingerprints);
 
 [JsonSerializable(typeof(AddonInfoReqModel))]
 [JsonSerializable(typeof(FileInfoReqModel))]
@@ -72,7 +74,7 @@ public class CurseForgeApiService(
     }
 
     public async Task<CurseForgeAddonInfo[]?> GetAddons(
-        IEnumerable<long> addonIds,
+        IReadOnlyList<long> addonIds,
         bool useOfficialApi = false)
     {
         var apiRoot = useOfficialApi
@@ -80,9 +82,8 @@ public class CurseForgeApiService(
             : this.GetApiRoot();
 
         var reqUrl = $"{apiRoot}/mods";
-        var modIds = addonIds.ToList().ToHashSet();
         var content = JsonContent.Create(
-            new AddonInfoReqModel(modIds),
+            new AddonInfoReqModel(addonIds),
             CurseForgeModelContext.Default.AddonInfoReqModel);
 
         using var res = await httpClient.PostAsync(reqUrl, content);
@@ -118,7 +119,7 @@ public class CurseForgeApiService(
     }
 
     public async Task<CurseForgeLatestFileModel[]?> GetFiles(
-        IEnumerable<long> fileIds,
+        IReadOnlyList<long> fileIds,
         bool useOfficialApi = false)
     {
         var apiRoot = useOfficialApi
@@ -126,9 +127,8 @@ public class CurseForgeApiService(
             : this.GetApiRoot();
 
         var reqUrl = $"{apiRoot}/mods/files";
-        var proceedFileIds = fileIds.ToList().ToHashSet();
         var content = JsonContent.Create(
-            new FileInfoReqModel(proceedFileIds),
+            new FileInfoReqModel(fileIds),
             CurseForgeModelContext.Default.FileInfoReqModel);
 
         using var res = await httpClient.PostAsync(reqUrl, content);
