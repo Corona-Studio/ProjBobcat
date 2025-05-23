@@ -12,6 +12,8 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver;
 
 public sealed class VersionInfoResolver : ResolverBase
 {
+    public IReadOnlyList<string>? VersionUriRoots { get; init; }
+
     public override async IAsyncEnumerable<IGameResource> ResolveResourceAsync(
         string basePath,
         bool checkLocalFiles,
@@ -47,6 +49,23 @@ public sealed class VersionInfoResolver : ResolverBase
         if (string.IsNullOrEmpty(clientDownload.Url))
             yield break;
 
+        var fallbackUrls = new List<string> { clientDownload.Url };
+        if (VersionUriRoots is { Count: > 0 })
+        {
+            var initUrl = fallbackUrls[0];
+            fallbackUrls.Clear();
+
+            foreach (var uriRoot in VersionUriRoots)
+            {
+                var replacedUrl = initUrl
+                    .Replace("https://piston-meta.mojang.com", uriRoot)
+                    .Replace("https://launchermeta.mojang.com", uriRoot)
+                    .Replace("https://launcher.mojang.com", uriRoot);
+
+                fallbackUrls.Add(replacedUrl);
+            }
+        }
+
         yield return new VersionJarDownloadInfo
         {
             CheckSum = clientDownload.Sha1 ?? string.Empty,
@@ -55,7 +74,7 @@ public sealed class VersionInfoResolver : ResolverBase
             Path = Path.Combine(basePath, GamePathHelper.GetGamePath(id)),
             Title = $"{id}.jar",
             Type = ResourceType.GameJar,
-            Urls = [clientDownload.Url]
+            Urls = fallbackUrls
         };
     }
 }
