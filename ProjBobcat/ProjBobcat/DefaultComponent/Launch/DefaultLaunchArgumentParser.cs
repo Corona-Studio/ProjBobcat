@@ -8,7 +8,6 @@ using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Auth;
 using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.Version;
-using ProjBobcat.DefaultComponent.Authenticator;
 using ProjBobcat.Interface;
 
 namespace ProjBobcat.DefaultComponent.Launch;
@@ -46,7 +45,7 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
             ? launchSettings.FallBackGameArguments?.MinMemory ?? 0
             : launchSettings.GameArguments.MinMemory;
 
-        var maxMemory = gameProfile?.MaxMemory ??
+        var maxMemory = gameProfile.MaxMemory ??
                         (launchSettings.GameArguments.MaxMemory == 0
                             ? launchSettings.FallBackGameArguments?.MaxMemory ?? 0
                             : launchSettings.GameArguments.MaxMemory);
@@ -83,7 +82,7 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
             yield return gcArg;
         }
 
-        if (!string.IsNullOrEmpty(gameProfile?.JavaArgs))
+        if (!string.IsNullOrEmpty(gameProfile.JavaArgs))
             yield return gameProfile.JavaArgs;
     }
 
@@ -149,8 +148,7 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
                 var arg = jvmArg;
 
                 // Patch for PCL2
-                if (jvmArg?.Equals("-DFabricMcEmu= net.minecraft.client.main.Main ",
-                        StringComparison.OrdinalIgnoreCase) ?? false)
+                if (jvmArg.Equals("-DFabricMcEmu= net.minecraft.client.main.Main ", StringComparison.OrdinalIgnoreCase))
                     arg = "-DFabricMcEmu=net.minecraft.client.main.Main";
 
                 yield return StringHelper.ReplaceByDic(arg, jvmArgumentsDic);
@@ -182,7 +180,7 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
         var gameDir = launchSettings.VersionInsulation
             ? Path.Combine(this.RootPath, GamePathHelper.GetGamePath(launchSettings.Version))
             : this.RootPath;
-        var clientIdUpper = (this.VersionLocator?.LauncherProfileParser?.LauncherProfile?.ClientToken ??
+        var clientIdUpper = (this.VersionLocator.LauncherProfileParser?.LauncherProfile.ClientToken ??
                              Guid.Empty.ToString("D"))
             .Replace("-", string.Empty).ToUpper();
         var clientIdBytes = Encoding.ASCII.GetBytes(clientIdUpper);
@@ -244,7 +242,7 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
         if (launchSettings.EnableXmlLoggingOutput)
             arguments.AddRange(this.ParseGameLoggingArguments(resolvedVersion));
 
-        arguments.Add(resolvedVersion!.MainClass);
+        arguments.Add(resolvedVersion.MainClass);
 
         arguments.AddRange(this.ParseGameArguments(versionInfo, resolvedVersion, gameProfile, launchSettings,
             authResult));
