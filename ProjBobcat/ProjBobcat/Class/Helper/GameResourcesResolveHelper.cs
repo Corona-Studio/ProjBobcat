@@ -212,7 +212,7 @@ public static class GameResourcesResolveHelper
         if (fabricEntry) return ModLoaderType.Fabric;
 
         var neoforgeEntry = archive.Entries.Any(e =>
-            e.FullName.EndsWith("_neoforge.mixins.json", StringComparison.OrdinalIgnoreCase));
+            e.FullName.Contains("neoforge", StringComparison.OrdinalIgnoreCase));
 
         if (neoforgeEntry) return ModLoaderType.NeoForge;
 
