@@ -85,18 +85,17 @@ public static class SystemInfoHelper
     /// <returns>GetAppxPackage</returns>
     public static AppxPackageInfo GetAppxPackage(string appName)
     {
-        using var process = new Process
+        var psi = new ProcessStartInfo(@"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe")
         {
-            StartInfo = new ProcessStartInfo(@"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe")
-            {
-                WorkingDirectory = Environment.CurrentDirectory,
-                RedirectStandardOutput = true,
-                CreateNoWindow = true,
-                Arguments = $"Get-AppxPackage -Name \"{appName}\""
-            }
+            WorkingDirectory = Environment.CurrentDirectory,
+            RedirectStandardOutput = true,
+            CreateNoWindow = true,
+            Arguments = $"Get-AppxPackage -Name \"{appName}\""
         };
 
-        process.Start();
+        using var process = Process.Start(psi);
+        
+        ArgumentNullException.ThrowIfNull(process);
 
         var reader = process.StandardOutput;
         var values = ParseAppxPackageOutput(reader.ReadToEnd());
