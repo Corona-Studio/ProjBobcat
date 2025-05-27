@@ -424,11 +424,11 @@ public static class SystemInfoHelper
                      TryGetCpuNameFromRegistry() ??
                      TryGetCpuNameFromEnvironment();
 
-        return cpuName ?? "Unknown CPU";
+        return cpuName?.Trim() ?? "Unknown CPU";
     }
 
     /// <summary>
-    ///     Try to get CPU name using Windows Management Instrumentation (WMI)
+    ///     Try to get the CPU name using Windows Management Instrumentation (WMI)
     /// </summary>
     /// <returns>CPU name if successful, null otherwise</returns>
     private static string? TryGetCpuNameFromWmi()
@@ -452,7 +452,7 @@ public static class SystemInfoHelper
     }
 
     /// <summary>
-    ///     Try to get CPU name from Windows Registry
+    ///     Try to get the CPU name from Windows Registry
     /// </summary>
     /// <returns>CPU name if successful, null otherwise</returns>
     private static string? TryGetCpuNameFromRegistry()
