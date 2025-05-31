@@ -50,7 +50,8 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         this.NeedToDownload = manifest.Files?.Length ?? 0;
 
         var fileIds = manifest.Files
-            ?.Select(file => file.FileId)
+            ?.Where(file => file.ProjectId != 0 && file.FileId != 0)
+            .Select(file => file.FileId)
             .ToArray() ?? [];
 
         CurseForgeLatestFileModel[]? files = null;
@@ -304,10 +305,10 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
     public static async Task<CurseForgeAddonInfo[]> GetModProjectDetails(
         ICurseForgeApiService curseForgeApiService,
-        long[] ids,
+        ArraySegment<long> ids,
         bool useOfficialApi = false)
     {
-        if (ids.Length == 0) return [];
+        if (ids.Count == 0) return [];
 
         try
         {
@@ -328,7 +329,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
         async Task<CurseForgeAddonInfo[]> RetryLogicAsync()
         {
-            if (ids.Length <= 1)
+            if (ids.Count <= 1)
             {
                 await Task.Delay(Random.Shared.Next(300, 600));
                 return await curseForgeApiService.GetAddons(ids, true) ?? [];
@@ -336,7 +337,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
             await Task.Delay(2000);
 
-            var mid = ids.Length / 2;
+            var mid = ids.Count / 2;
             var leftTask = GetModProjectDetails(curseForgeApiService, ids[..mid], true);
             var rightTask = GetModProjectDetails(curseForgeApiService, ids[mid..], true);
             var files = await Task.WhenAll(leftTask, rightTask);
@@ -350,10 +351,10 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
     public static async Task<CurseForgeLatestFileModel[]> GetModPackFiles(
         ICurseForgeApiService curseForgeApiService,
-        long[] ids,
+        ArraySegment<long> ids,
         bool useOfficialApi = false)
     {
-        if (ids.Length == 0) return [];
+        if (ids.Count == 0) return [];
 
         try
         {
@@ -375,7 +376,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
         async Task<CurseForgeLatestFileModel[]> RetryLogicAsync()
         {
-            if (ids.Length <= 1)
+            if (ids.Count <= 1)
             {
                 await Task.Delay(Random.Shared.Next(300, 600));
                 return await curseForgeApiService.GetFiles(ids) ?? [];
@@ -383,7 +384,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
             await Task.Delay(2000);
 
-            var mid = ids.Length / 2;
+            var mid = ids.Count / 2;
             var leftTask = GetModPackFiles(curseForgeApiService, ids[..mid], true);
             var rightTask = GetModPackFiles(curseForgeApiService, ids[mid..], true);
             var files = await Task.WhenAll(leftTask, rightTask);
