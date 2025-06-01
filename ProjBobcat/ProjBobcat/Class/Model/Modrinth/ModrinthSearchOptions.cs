@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace ProjBobcat.Class.Model.Modrinth;
@@ -6,7 +7,7 @@ namespace ProjBobcat.Class.Model.Modrinth;
 public class ModrinthSearchOptions
 {
     public string? Name { get; init; }
-    public string? Category { get; init; }
+    public string[]? Categories { get; init; }
     public string? GameVersion { get; init; }
     public string Index { get; init; } = "relevance";
     public string? ProjectType { get; init; }
@@ -21,8 +22,15 @@ public class ModrinthSearchOptions
 
         if (!string.IsNullOrEmpty(this.GameVersion))
             facets.Add($"[\"versions:{this.GameVersion}\"]");
-        if (!string.IsNullOrEmpty(this.Category))
-            facets.Add($"[\"categories:{this.Category}\"]");
+        if (Categories != null)
+        {
+            var filteredCategories = Categories
+                .Distinct()
+                .Where(c => !string.IsNullOrEmpty(c))
+                .Select(c => $"\"categories:{c}\"");
+
+            facets.Add($"[{string.Join(',', filteredCategories)}]");
+        }
         if (!string.IsNullOrEmpty(this.ProjectType))
             facets.Add($"[\"project_type:{this.ProjectType}\"]");
 
