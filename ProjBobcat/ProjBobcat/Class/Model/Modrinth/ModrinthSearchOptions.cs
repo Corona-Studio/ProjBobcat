@@ -16,8 +16,17 @@ public class ModrinthSearchOptions
 
     public override string ToString()
     {
-        var sb = new StringBuilder($"?query={this.Name ?? "any"}&index={this.Index}");
+        var query = string.IsNullOrEmpty(this.Name)
+            ? string.Empty
+            : $"query={this.Name}";
 
+        string[] initQueries =
+        [
+            query,
+            $"index={this.Index}"
+        ];
+
+        var sb = new StringBuilder($"?{string.Join('&', initQueries.Where(q => !string.IsNullOrEmpty(q)))}");
         var facets = new List<string>();
 
         if (!string.IsNullOrEmpty(this.GameVersion))
