@@ -22,15 +22,15 @@ public class ModrinthSearchOptions
 
         if (!string.IsNullOrEmpty(this.GameVersion))
             facets.Add($"[\"versions:{this.GameVersion}\"]");
-        if (Categories != null)
-        {
-            var filteredCategories = Categories
-                .Distinct()
-                .Where(c => !string.IsNullOrEmpty(c))
-                .Select(c => $"\"categories:{c}\"");
 
+        var filteredCategories = Categories?
+            .Distinct()
+            .Where(c => !string.IsNullOrEmpty(c))
+            .Select(c => $"\"categories:{c}\"")
+            .ToArray();
+
+        if (filteredCategories is { Length: > 0 })
             facets.Add($"[{string.Join(',', filteredCategories)}]");
-        }
         if (!string.IsNullOrEmpty(this.ProjectType))
             facets.Add($"[\"project_type:{this.ProjectType}\"]");
 
