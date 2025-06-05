@@ -19,9 +19,9 @@ namespace ProjBobcat.Platforms.Windows;
 [SupportedOSPlatform(nameof(OSPlatform.Windows))]
 public static class SystemInfoHelper
 {
-    static readonly PerformanceCounter? FreeMemCounter;
-    static readonly PerformanceCounter? MemUsagePercentageCounter;
-    static readonly PerformanceCounter? CpuCounter;
+    static PerformanceCounter? _freeMemCounter;
+    static PerformanceCounter? _memUsagePercentageCounter;
+    static PerformanceCounter? _cpuCounter;
 
     static readonly string[] LineChArr = ["\r\n", "\r", "\n"];
     static readonly char[] SepArr = [':'];
@@ -48,26 +48,6 @@ public static class SystemInfoHelper
             "jdks"
         }.ToFrozenSet();
 #endif
-
-
-    static SystemInfoHelper()
-    {
-        try
-        {
-            FreeMemCounter = new PerformanceCounter("Memory", "Available MBytes", true);
-            MemUsagePercentageCounter = new PerformanceCounter("Memory", "% Committed Bytes In Use", true);
-            CpuCounter = new PerformanceCounter("Processor Information", "% Processor Utility", "_Total", true);
-
-            // Performance Counter Pre-Heat
-            FreeMemCounter.NextValue();
-            MemUsagePercentageCounter.NextValue();
-            CpuCounter.NextValue();
-        }
-        catch (Exception)
-        {
-            // ignored
-        }
-    }
 
     /// <summary>
     ///     判断是否安装了 UWP 版本的 MineCraft 。
@@ -313,15 +293,38 @@ public static class SystemInfoHelper
     /// <returns></returns>
     public static MemoryInfo GetWindowsMemoryStatus()
     {
-        if (FreeMemCounter == null) return new MemoryInfo(0, 0, 0, 0);
-        if (MemUsagePercentageCounter == null) return new MemoryInfo(0, 0, 0, 0);
+        if (_freeMemCounter == null)
+        {
+            try
+            {
+                _freeMemCounter = new PerformanceCounter("Memory", "Available MBytes", true);
+                _freeMemCounter.NextValue(); // Pre-heat
+            }
+            catch (Exception)
+            {
+                return new MemoryInfo(0, 0, 0, 0);
+            }
+        }
+
+        if (_memUsagePercentageCounter == null)
+        {
+            try
+            {
+                _memUsagePercentageCounter = new PerformanceCounter("Memory", "% Committed Bytes In Use", true);
+                _memUsagePercentageCounter.NextValue(); // Pre-heat
+            }
+            catch (Exception)
+            {
+                return new MemoryInfo(0, 0, 0, 0);
+            }
+        }
 
         try
         {
-            var free = FreeMemCounter.NextValue();
+            var free = _freeMemCounter.NextValue();
             var total = GC.GetGCMemoryInfo().TotalAvailableMemoryBytes / Math.Pow(1024, 2);
             var used = total - free;
-            var percentage = MemUsagePercentageCounter.NextValue();
+            var percentage = _memUsagePercentageCounter.NextValue();
 
             return new MemoryInfo(total, used, free, percentage);
         }
@@ -339,11 +342,22 @@ public static class SystemInfoHelper
     {
         const string name = "Total %";
 
-        if (CpuCounter == null) return new CPUInfo(0, name);
+        if (_cpuCounter == null)
+        {
+            try
+            {
+                _cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total", true);
+                _cpuCounter.NextValue(); // Pre-heat
+            }
+            catch (Exception)
+            {
+                return new CPUInfo(0, name);
+            }
+        }
 
         try
         {
-            var percentage = CpuCounter.NextValue();
+            var percentage = _cpuCounter.NextValue();
             var val = percentage > 100 ? 100 : percentage;
 
             return new CPUInfo(val, name);
