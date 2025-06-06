@@ -111,11 +111,12 @@ public sealed class LibraryInfoResolver : ResolverBase
             LibraryType.Fabric => this.FabricMavenUriRoots.Select(r => $"{r}{lL.Path}").ToImmutableList(),
             LibraryType.Quilt when !string.IsNullOrEmpty(lL.Url)
                 => this.QuiltMavenUriRoots.Select(r => $"{r}{lL.Path}").ToImmutableList(),
-            LibraryType.Other when (lL.Name?.Contains("hmcl", StringComparison.OrdinalIgnoreCase) ?? false) && !string.IsNullOrEmpty(lL.Url)
+            LibraryType.Other when (lL.Name?.Contains("hmcl", StringComparison.OrdinalIgnoreCase) ?? false) &&
+                                   !string.IsNullOrEmpty(lL.Url)
                 => [lL.Url],
             LibraryType.Other => this.LibraryUriRoots.Select(r => $"{r}{lL.Path}").ToImmutableList(),
             _ => [string.Empty]
-        }; 
+        };
 
         var symbolIndex = lL.Path!.LastIndexOf('/');
         var fileName = lL.Path[(symbolIndex + 1)..];
