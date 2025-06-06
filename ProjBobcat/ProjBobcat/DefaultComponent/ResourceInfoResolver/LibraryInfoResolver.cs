@@ -101,20 +101,13 @@ public sealed class LibraryInfoResolver : ResolverBase
         var libType = GetLibType(lL);
         var uris = libType switch
         {
-            LibraryType.Forge when lL.Url?.StartsWith("https://maven.minecraftforge.net",
-                                       StringComparison.OrdinalIgnoreCase) ??
-                                   false => this.ForgeMavenUriRoots.Select(r => $"{r}{lL.Path}").ToImmutableList(),
-            LibraryType.Forge when lL.Url?.StartsWith("https://files.minecraftforge.net/maven/",
-                                       StringComparison.OrdinalIgnoreCase) ??
-                                   false => this.ForgeMavenOldUriRoots.Select(r => $"{r}{lL.Path}").ToImmutableList(),
-            LibraryType.Forge => this.ForgeUriRoots.Select(r => $"{r}{lL.Path}").ToImmutableList(),
-            LibraryType.Fabric => this.FabricMavenUriRoots.Select(r => $"{r}{lL.Path}").ToImmutableList(),
-            LibraryType.Quilt when !string.IsNullOrEmpty(lL.Url)
-                => this.QuiltMavenUriRoots.Select(r => $"{r}{lL.Path}").ToImmutableList(),
-            LibraryType.Other when (lL.Name?.Contains("hmcl", StringComparison.OrdinalIgnoreCase) ?? false) &&
-                                   !string.IsNullOrEmpty(lL.Url)
-                => [lL.Url],
-            LibraryType.Other => this.LibraryUriRoots.Select(r => $"{r}{lL.Path}").ToImmutableList(),
+            LibraryType.ForgeMaven => this.ForgeMavenUriRoots.Select(r => $"{r}{lL.Path}"),
+            LibraryType.ForgeMavenOld => this.ForgeMavenOldUriRoots.Select(r => $"{r}{lL.Path}"),
+            LibraryType.Forge => this.ForgeUriRoots.Select(r => $"{r}{lL.Path}"),
+            LibraryType.Fabric => this.FabricMavenUriRoots.Select(r => $"{r}{lL.Path}"),
+            LibraryType.Quilt => this.QuiltMavenUriRoots.Select(r => $"{r}{lL.Path}"),
+            LibraryType.ReplacementNative => [lL.Url!],
+            LibraryType.Other => this.LibraryUriRoots.Select(r => $"{r}{lL.Path}"),
             _ => [string.Empty]
         };
 
@@ -128,7 +121,7 @@ public sealed class LibraryInfoResolver : ResolverBase
             Path = path,
             Title = lL.Name?.Split(':')[1] ?? fileName,
             Type = ResourceType.LibraryOrNative,
-            Urls = uris,
+            Urls = uris.ToHashSet().ToImmutableList(),
             FileSize = lL.Size,
             CheckSum = lL.Sha1,
             FileName = fileName
@@ -137,9 +130,23 @@ public sealed class LibraryInfoResolver : ResolverBase
 
     static LibraryType GetLibType(FileInfo fi)
     {
+        if (IsForgeLib(fi) &&
+            !string.IsNullOrEmpty(fi.Url) &&
+            fi.Url.StartsWith("https://maven.minecraftforge.net", StringComparison.OrdinalIgnoreCase))
+            return LibraryType.ForgeMaven;
+        
+        if (IsForgeLib(fi) &&
+            !string.IsNullOrEmpty(fi.Url) &&
+            fi.Url.StartsWith("https://files.minecraftforge.net/maven/", StringComparison.OrdinalIgnoreCase))
+            return LibraryType.ForgeMavenOld;
+        
         if (IsForgeLib(fi)) return LibraryType.Forge;
         if (IsFabricLib(fi)) return LibraryType.Fabric;
-        if (IsQuiltLib(fi)) return LibraryType.Quilt;
+        if (IsQuiltLib(fi) && !string.IsNullOrEmpty(fi.Url)) return LibraryType.Quilt;
+
+        if (!string.IsNullOrEmpty(fi.Url) &&
+            fi.Url.Contains("hmcl", StringComparison.OrdinalIgnoreCase))
+            return LibraryType.ReplacementNative;
 
         return LibraryType.Other;
     }
