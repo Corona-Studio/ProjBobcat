@@ -162,6 +162,7 @@ public static partial class DownloadHelper
         var filePath = Path.Combine(downloadFile.DownloadPath, downloadFile.FileName);
         var timeout = downloadSettings.Timeout;
         var trials = downloadSettings.RetryCount <= 0 ? 1 : downloadSettings.RetryCount;
+        var threshold = (int)Math.Ceiling(downloadSettings.DownloadParts * DefaultChunkSplitThreshold);
         var subChunkSplitCount = 0;
 
         // 创建全局速度计算器，用于汇总所有分片下载速度
@@ -296,13 +297,12 @@ public static partial class DownloadHelper
                             CancellationToken = cts.Token
                         });
 
-                var threshold = (int)Math.Ceiling(downloadSettings.DownloadParts * DefaultChunkSplitThreshold);
                 var downloadActionBlock = new ActionBlock<ChunkInfo?>(async chunkInfo =>
                 {
                     if (chunkInfo == null) return;
 
                     var chunkCts = chunkInfo.CurrentChunkSplitCount < threshold
-                        ? new CancellationTokenSource(timeout)
+                        ? new CancellationTokenSource(timeout / (threshold * 2))
                         : chunkInfo.Cts;
 
                     using var res = chunkInfo.Response;
@@ -363,7 +363,7 @@ public static partial class DownloadHelper
 
                         // If we already used all split trails, we just throw directly.
                         if (chunkInfo.CurrentChunkSplitCount >= threshold)
-                            throw;
+                            throw new ChunkSplitExhaustException(e);
 
                         // If the chunk is small enough, we don't need to split it
                         if (chunkInfo.Range.End - chunkInfo.Range.Start <= MinimumChunkSize)
@@ -552,6 +552,27 @@ public static partial class DownloadHelper
                 downloadFile.PartialDownloadRetryCount++;
                 downloadFile.UrlInfo = null;
                 downloadFile.Ranges = null;
+            }
+            catch (ChunkSplitExhaustException ex)
+            {
+                if (downloadFile.RetryCount + 1 != trials)
+                {
+                    exceptions.Add(ex.InnerException!);
+
+                    var delay = Math.Min(1000 * Math.Pow(2, downloadFile.RetryCount - 1), 10000);
+                    await Task.Delay((int)delay, CancellationToken.None);
+
+                    continue;
+                }
+
+                // If we only have last trial, and we can not further split chunk, we fall back to normal download
+                downloadFile.RetryCount = 0;
+                downloadFile.PartialDownloadRetryCount = 0;
+                downloadFile.UrlInfo = null;
+                downloadFile.Ranges = null;
+
+                await DownloadData(downloadFile, downloadSettings);
+                return;
             }
             catch (DownloadChunkSplitException ex)
             {
