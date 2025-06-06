@@ -539,11 +539,14 @@ public static partial class DownloadHelper
             {
                 // Here we are handling the exception thrown by the size check
                 // We don't want to increase the retry count here
-                downloadFile.RetryCount--;
-
-                downloadFile.FinishedRangeStreams.Clear();
+                // Just fall back to normal download
+                downloadFile.RetryCount = 0;
+                downloadFile.PartialDownloadRetryCount = 0;
                 downloadFile.UrlInfo = null;
                 downloadFile.Ranges = null;
+
+                await DownloadData(downloadFile, downloadSettings);
+                return;
             }
             catch (TaskCanceledException)
             {
