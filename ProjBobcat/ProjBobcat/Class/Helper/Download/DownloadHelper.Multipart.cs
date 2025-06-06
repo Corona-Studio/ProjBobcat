@@ -394,6 +394,9 @@ public static partial class DownloadHelper
                     // 更新总下载字节数
                     var addedBytesReceived = Interlocked.Add(ref bytesReceived, receivedBytes);
 
+                    // 如果这里下载的字节数大于我们获取到的文件长度，说明下载过程中发生了错误
+                    ArgumentOutOfRangeException.ThrowIfGreaterThan(addedBytesReceived, downloadFile.UrlInfo.FileLength);
+
                     // 限制进度更新频率，避免UI过载
                     var now = DateTime.UtcNow;
                     if (downloadSettings.ShowDownloadProgress &&
@@ -532,9 +535,20 @@ public static partial class DownloadHelper
                                                      ).TotalSeconds);
                 return;
             }
+            catch (ArgumentOutOfRangeException)
+            {
+                // Here we are handling the exception thrown by the size check
+                // We don't want to increase the retry count here
+                downloadFile.RetryCount--;
+
+                downloadFile.FinishedRangeStreams.Clear();
+                downloadFile.UrlInfo = null;
+                downloadFile.Ranges = null;
+            }
             catch (TaskCanceledException)
             {
                 // We don't want to increase the retry count here
+                downloadFile.RetryCount--;
                 downloadFile.PartialDownloadRetryCount++;
                 downloadFile.UrlInfo = null;
                 downloadFile.Ranges = null;
@@ -543,6 +557,7 @@ public static partial class DownloadHelper
             {
                 // Here we are handling the exception thrown by the sub chunk split
                 // We don't want to increase the retry count here
+                downloadFile.RetryCount--;
 
                 if (ex.Split)
                     subChunkSplitCount++;
