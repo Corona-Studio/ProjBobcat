@@ -128,7 +128,7 @@ public sealed class LibraryInfoResolver : ResolverBase
         };
     }
 
-    static LibraryType GetLibType(FileInfo fi)
+    public static LibraryType GetLibType(FileInfo fi)
     {
         if (IsForgeLib(fi) &&
             !string.IsNullOrEmpty(fi.Url) &&
@@ -151,7 +151,7 @@ public sealed class LibraryInfoResolver : ResolverBase
         return LibraryType.Other;
     }
 
-    static bool IsQuiltLib(FileInfo fi)
+    public static bool IsQuiltLib(FileInfo fi)
     {
         if (fi.Name?.Contains("quiltmc", StringComparison.OrdinalIgnoreCase) ?? false) return true;
         if (fi.Url?.Contains("quiltmc", StringComparison.OrdinalIgnoreCase) ?? false) return true;
@@ -159,7 +159,7 @@ public sealed class LibraryInfoResolver : ResolverBase
         return false;
     }
 
-    static bool IsFabricLib(FileInfo fi)
+    public static bool IsFabricLib(FileInfo fi)
     {
         if (fi.Name?.Contains("fabricmc", StringComparison.OrdinalIgnoreCase) ?? false) return true;
         if (fi.Url?.Contains("fabricmc", StringComparison.OrdinalIgnoreCase) ?? false) return true;
@@ -167,7 +167,7 @@ public sealed class LibraryInfoResolver : ResolverBase
         return false;
     }
 
-    static bool IsForgeLib(FileInfo fi)
+    public static bool IsForgeLib(FileInfo fi)
     {
         if (fi.Name?.StartsWith("forge", StringComparison.Ordinal) ?? false) return true;
         if (fi.Name?.StartsWith("net.minecraftforge", StringComparison.Ordinal) ?? false) return true;
