@@ -106,7 +106,7 @@ public static partial class DownloadHelper
                     if (hashCheckFile && destStream is CryptoStream cStream)
                         await cStream.FlushFinalBlockAsync(cts.Token);
 
-                    if (hashCheckFile)
+                    if (hashCheckFile && !string.IsNullOrEmpty(downloadFile.CheckSum))
                     {
                         var checkSum = Convert.ToHexString(hashProvider.Hash!.AsSpan());
 

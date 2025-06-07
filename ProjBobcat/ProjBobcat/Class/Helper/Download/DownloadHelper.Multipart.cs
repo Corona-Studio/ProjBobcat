@@ -479,17 +479,17 @@ public static partial class DownloadHelper
                     if (hashCheckFile && destStream is CryptoStream cStream)
                         await cStream.FlushFinalBlockAsync(cts.Token);
 
-                    if (hashCheckFile)
+                    if (hashCheckFile && !string.IsNullOrEmpty(downloadFile.CheckSum))
                     {
                         var checkSum = Convert.ToHexString(hashProvider.Hash.AsSpan());
 
-                        if (!checkSum.Equals(downloadFile.CheckSum!, StringComparison.OrdinalIgnoreCase))
+                        if (!checkSum.Equals(downloadFile.CheckSum, StringComparison.OrdinalIgnoreCase))
                         {
                             downloadFile.FinishedRangeStreams.Clear();
                             downloadFile.UrlInfo = null;
                             downloadFile.Ranges = null;
 
-                            exceptions.Add(new HashMismatchException(filePath, downloadFile.CheckSum!, checkSum,
+                            exceptions.Add(new HashMismatchException(filePath, downloadFile.CheckSum, checkSum,
                                 downloadFile));
 
                             await RecycleDownloadFile(downloadFile);
