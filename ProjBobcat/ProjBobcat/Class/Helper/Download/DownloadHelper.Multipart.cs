@@ -113,24 +113,24 @@ public static partial class DownloadHelper
         DownloadSettings downloadSettings)
     {
         var partSize = fileLength / downloadSettings.DownloadParts;
-        var totalSize = fileLength;
+        var remainder = fileLength % downloadSettings.DownloadParts;
 
-        while (totalSize > 0)
+        long currentStart = 0;
+
+        for (var i = 0; i < downloadSettings.DownloadParts; i++)
         {
-            //计算分片
-            var to = totalSize;
-            var from = totalSize - partSize;
-
-            if (from < 0) from = 0;
-
-            totalSize -= partSize;
+            var currentPartSize = partSize + (i == downloadSettings.DownloadParts - 1 ? remainder : 0);
+            var start = currentStart;
+            var end = start + currentPartSize - 1;
 
             yield return new DownloadRange
             {
-                Start = from + offset,
-                End = to + offset,
+                Start = start + offset,
+                End = end + offset,
                 TempFileName = GetTempFilePath()
             };
+
+            currentStart += currentPartSize;
         }
     }
 
@@ -467,23 +467,11 @@ public static partial class DownloadHelper
 
                 await using (var destStream = hashCheckFile ? hashStream : ms)
                 {
-                    var index = 0;
-
                     foreach (var inputFileStream in downloadFile.GetFinishedStreamsInorder())
                     {
                         // Reset the stream position
                         inputFileStream.Seek(0, SeekOrigin.Begin);
-
-                        // Because the feature of HTTP range response,
-                        // the first byte of the first range is the last byte of the file.
-                        // So we need to skip the first byte of the first range.
-                        // (Expect the first part)
-                        if (index != 0)
-                            inputFileStream.Seek(1, SeekOrigin.Begin);
-
                         await inputFileStream.CopyToAsync(destStream, cts.Token);
-
-                        index++;
                     }
 
                     await destStream.FlushAsync(cts.Token);
