@@ -19,6 +19,7 @@ namespace ProjBobcat.Class.Helper.Download;
 
 public static partial class DownloadHelper
 {
+    private const int DefaultChunkSplitTimeout = 5000;
     private const double DefaultChunkSplitThreshold = 1.8;
     private const int MinimumChunkSize = 8192;
 
@@ -301,8 +302,10 @@ public static partial class DownloadHelper
                 {
                     if (chunkInfo == null) return;
 
+                    // If the chunk split count is less than the threshold, we will further split the chunk
+                    // if file does not finish download in 5 seconds
                     var chunkCts = chunkInfo.CurrentChunkSplitCount < threshold
-                        ? new CancellationTokenSource(timeout / (threshold * 2))
+                        ? new CancellationTokenSource(DefaultChunkSplitTimeout)
                         : chunkInfo.Cts;
 
                     using var res = chunkInfo.Response;
