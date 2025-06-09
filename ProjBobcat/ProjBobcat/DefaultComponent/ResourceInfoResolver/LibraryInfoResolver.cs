@@ -17,7 +17,7 @@ public sealed class LibraryInfoResolver : ResolverBase
 {
     public IReadOnlyList<string> LibraryUriRoots { get; init; } = ["https://libraries.minecraft.net/"];
     public IReadOnlyList<string> ForgeUriRoots { get; init; } = ["https://files.minecraftforge.net/"];
-    public IReadOnlyList<string> FabricMavenUriRoots { get; init; } = ["https://maven.fabricmc.net"];
+    public IReadOnlyList<string> FabricMavenUriRoots { get; init; } = ["https://maven.fabricmc.net/"];
     public IReadOnlyList<string> ForgeMavenUriRoots { get; init; } = ["https://maven.minecraftforge.net/"];
     public IReadOnlyList<string> ForgeMavenOldUriRoots { get; init; } = ["https://files.minecraftforge.net/maven/"];
     public IReadOnlyList<string> QuiltMavenUriRoots { get; init; } = ["https://maven.quiltmc.org/repository/release/"];
