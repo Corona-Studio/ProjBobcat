@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Buffers;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -19,41 +20,13 @@ namespace ProjBobcat.Class.Helper.Download;
 
 public static partial class DownloadHelper
 {
-    private const int DefaultChunkSplitTimeout = 5000;
-    private const double DefaultChunkSplitThreshold = 1.8;
-    private const int MinimumChunkSize = 8192;
+    private record UrlInfo(long FileLength);
 
-    /// <summary>
-    ///     Receive data from remote stream (only for partial download)
-    /// </summary>
-    /// <returns>Elapsed time in seconds</returns>
-    private static async Task<(double Speed, long BytesReceived)> ReceiveFromRemoteStreamAsync(
-        Stream remoteStream,
-        Stream destStream,
-        DownloadSpeedCalculator speedCalculator,
-        CancellationToken ct)
-    {
-        using var buffer = MemoryPool<byte>.Shared.Rent(MinimumChunkSize);
-        var finalSpeed = 0d;
-        var totalBytesReceived = 0L;
+    // 1 MB
+    private const int MinimumChunkSize = 1_000_000; 
 
-        while (true)
-        {
-            ct.ThrowIfCancellationRequested();
-
-            var bytesRead = await remoteStream.ReadAsync(buffer.Memory, ct);
-
-            if (bytesRead == 0) break;
-
-            totalBytesReceived += bytesRead;
-            await destStream.WriteAsync(buffer.Memory[..bytesRead], ct);
-
-            // 计算速度
-            finalSpeed = speedCalculator.AddSample(bytesRead);
-        }
-
-        return (finalSpeed, totalBytesReceived);
-    }
+    // If the downloaded bytes is greater than 50% of the expected size, we will ignore the chunk cancellation and keep download
+    private const double DefaultChunkGiveUpThreshold = 0.85;
 
     private static async Task<(long FileLength, bool CanPartialDownload)?> CanUsePartialDownload(
         string url,
@@ -127,11 +100,18 @@ public static partial class DownloadHelper
             yield return new DownloadRange
             {
                 Start = start + offset,
-                End = end + offset,
-                TempFileName = GetTempFilePath()
+                End = end + offset
             };
 
             currentStart += currentPartSize;
+        }
+    }
+
+    private static IEnumerable<FileStream> GetFinishedStreamsInorder(ConcurrentDictionary<DownloadRange, FileStream> finishedRanges)
+    {
+        foreach (var (_, stream) in finishedRanges.OrderBy(p => p.Key.Start))
+        {
+            yield return stream;
         }
     }
 
@@ -161,90 +141,76 @@ public static partial class DownloadHelper
 
         var exceptions = new List<Exception>();
         var filePath = Path.Combine(downloadFile.DownloadPath, downloadFile.FileName);
-        var timeout = downloadSettings.Timeout;
         var trials = downloadSettings.RetryCount <= 0 ? 1 : downloadSettings.RetryCount;
-        var threshold = (int)Math.Ceiling(downloadSettings.DownloadParts * DefaultChunkSplitThreshold);
-        var subChunkSplitCount = 0;
-
+        
         // 创建全局速度计算器，用于汇总所有分片下载速度
         var globalSpeedCalculator = new DownloadSpeedCalculator();
         var bytesReceived = 0L;
         var lastProgressUpdateTime = DateTime.UtcNow;
         var progressUpdateInterval = TimeSpan.FromMilliseconds(200); // 限制更新频率
+        var finishedRangeStreams = new ConcurrentDictionary<DownloadRange, FileStream>();
 
-        while (downloadFile.RetryCount++ < trials)
+        using var cts = new CancellationTokenSource(downloadSettings.Timeout);
+
+        while (downloadFile.RetryCount < trials)
         {
-            var timeoutMs = timeout.TotalMilliseconds;
-            using var cts = new CancellationTokenSource((int)Math.Min(timeoutMs * 5, timeoutMs * downloadFile.RetryCount));
-
             try
             {
-                if (downloadFile.Ranges == null ||
-                    downloadFile.Ranges.IsEmpty ||
-                    downloadFile.UrlInfo == null ||
-                    downloadFile.UrlInfo.FileLength == 0)
+                #region Calculate Download Ranges
+
+                #region Get file size
+
+                using var tempCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                using var partialDownloadCheckCts =
+                    CancellationTokenSource.CreateLinkedTokenSource(cts.Token, tempCts.Token);
+
+                (long FileLength, bool CanPartialDownload)? rawUrlInfo;
+
+                try
                 {
-                    downloadFile.FinishedRangeStreams.Clear();
-
-                    #region Get file size
-
-                    using var partialDownloadCheckCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-                    (long FileLength, bool CanPartialDownload)? rawUrlInfo = null;
-
-                    try
-                    {
-                        rawUrlInfo = await CanUsePartialDownload(
-                            downloadFile.GetDownloadUrl(),
-                            downloadSettings,
-                            partialDownloadCheckCts.Token);
-                    }
-                    catch (TaskCanceledException)
-                    {
-                        // Do nothing
-                    }
-
-                    // If rawUrlInfo == null, means the request is timeout and canceled
-                    // If PartialDownloadRetryCount is greater than half of the total reties, fallback to slow download
-                    if (!rawUrlInfo.HasValue)
-                    {
-                        downloadFile.PartialDownloadRetryCount++;
-
-                        // If the retry count is 1 or condition met, we will fall back to normal download
-                        if (downloadSettings.RetryCount == 0 ||
-                            downloadFile.PartialDownloadRetryCount >= downloadSettings.RetryCount / 2)
-                        {
-                            // Reset the retry count
-                            downloadFile.RetryCount = 0;
-
-                            await DownloadData(downloadFile, downloadSettings);
-                            return;
-                        }
-
-                        // Otherwise, we will retry the partial download
-                        continue;
-                    }
-
-                    var urlInfo = rawUrlInfo.Value;
-
-                    if (!urlInfo.CanPartialDownload)
-                    {
-                        // Reset the retry count
-                        downloadFile.RetryCount = 0;
-
-                        await DownloadData(downloadFile, downloadSettings);
-                        return;
-                    }
-
-                    #endregion
-
-                    var ranges = CalculateDownloadRanges(urlInfo.FileLength, 0, downloadSettings);
-
-                    downloadFile.UrlInfo = new UrlInfo(urlInfo.FileLength, urlInfo.CanPartialDownload);
-                    downloadFile.Ranges = [];
-
-                    foreach (var range in ranges)
-                        downloadFile.Ranges.TryAdd(range, null);
+                    rawUrlInfo = await CanUsePartialDownload(
+                        downloadFile.GetDownloadUrl(),
+                        downloadSettings,
+                        partialDownloadCheckCts.Token);
                 }
+                catch (Exception)
+                {
+                    // Fallback to normal download if we can't get the file size
+                    // or the request is timeout
+                    await DownloadData(downloadFile, downloadSettings);
+                    return;
+                }
+
+                // If rawUrlInfo == null, means the request is timeout and canceled
+                // If file length is 0 or less than the minimum chunk size, we also fall back to normal download
+                if (rawUrlInfo is not { FileLength: > MinimumChunkSize })
+                {
+                    // Reset the retry count
+                    downloadFile.RetryCount = 0;
+
+                    await DownloadData(downloadFile, downloadSettings);
+                    return;
+                }
+
+                var urlInfo = rawUrlInfo.Value;
+
+                if (!urlInfo.CanPartialDownload)
+                {
+                    // Reset the retry count
+                    downloadFile.RetryCount = 0;
+
+                    await DownloadData(downloadFile, downloadSettings);
+                    return;
+                }
+
+                #endregion
+
+                var calculatedUrlInfo = new UrlInfo(urlInfo.FileLength);
+                var calculatedRanges = CalculateDownloadRanges(urlInfo.FileLength, 0, downloadSettings)
+                    .ToList()
+                    .AsReadOnly();
+
+                #endregion
 
                 if (!Directory.Exists(downloadFile.DownloadPath))
                     Directory.CreateDirectory(downloadFile.DownloadPath);
@@ -252,45 +218,40 @@ public static partial class DownloadHelper
                 #region Parallel download
 
                 var requestCreationBlock =
-                    new TransformBlock<PreChunkInfo, ChunkInfo?>(
+                    new TransformBlock<PreChunkInfo, ChunkInfo>(
                         async preChunkInfo =>
                         {
+                            var range = new RangeHeaderValue(preChunkInfo.Range.Start, preChunkInfo.Range.End);
                             using var request = new HttpRequestMessage(HttpMethod.Get, preChunkInfo.DownloadUrl);
+
+                            request.Headers.Range = range;
 
                             if (downloadSettings.Authentication != null)
                                 request.Headers.Authorization = downloadSettings.Authentication;
                             if (!string.IsNullOrEmpty(downloadSettings.Host))
                                 request.Headers.Host = downloadSettings.Host;
 
-                            request.Headers.Range =
-                                new RangeHeaderValue(preChunkInfo.Range.Start, preChunkInfo.Range.End);
+                            var res = await preChunkInfo.Client.SendAsync(
+                                request,
+                                HttpCompletionOption.ResponseHeadersRead,
+                                preChunkInfo.MasterCts.Token);
 
-                            try
-                            {
-                                var downloadTask = await preChunkInfo.Client.SendAsync(
-                                    request,
-                                    HttpCompletionOption.ResponseHeadersRead,
-                                    preChunkInfo.Cts.Token);
+                            if (!res.IsSuccessStatusCode ||
+                                !res.Content.Headers.ContentLength.HasValue ||
+                                res.Content.Headers.ContentLength == 0)
+                                // Some mirror will return non-200 code during the high load
+                                throw new HttpRequestException(
+                                    $"Failed to download part {preChunkInfo.Range.Start}-{preChunkInfo.Range.End}, status code: {res.StatusCode}");
 
-                                if (!downloadTask.IsSuccessStatusCode ||
-                                    !downloadTask.Content.Headers.ContentLength.HasValue ||
-                                    downloadTask.Content.Headers.ContentLength == 0)
-                                    // Some mirror will return non-200 code during the high load
-                                    throw new HttpRequestException(
-                                        $"Failed to download part {preChunkInfo.Range.Start}-{preChunkInfo.Range.End}, status code: {downloadTask.StatusCode}");
-
-                                return new ChunkInfo(
-                                    preChunkInfo.CurrentChunkSplitCount,
-                                    downloadTask,
-                                    preChunkInfo.Range,
-                                    preChunkInfo.Cts);
-                            }
-                            catch (HttpRequestException e)
-                            {
-                                Debug.WriteLine(e);
-
-                                throw;
-                            }
+                            return new ChunkInfo(
+                                preChunkInfo.Client,
+                                preChunkInfo.DownloadUrl,
+                                res,
+                                preChunkInfo.Range,
+                                preChunkInfo.UrlInfo,
+                                preChunkInfo.BufferBlock,
+                                preChunkInfo.PartialDownloadCts,
+                                preChunkInfo.MasterCts);
                         }, new ExecutionDataflowBlockOptions
                         {
                             EnsureOrdered = false,
@@ -298,107 +259,111 @@ public static partial class DownloadHelper
                             CancellationToken = cts.Token
                         });
 
-                var downloadActionBlock = new ActionBlock<ChunkInfo?>(async chunkInfo =>
+                var downloadActionBlock = new ActionBlock<ChunkInfo>(async chunkInfo =>
                 {
-                    if (chunkInfo == null) return;
-
-                    // If the chunk split count is less than the threshold, we will further split the chunk
-                    // if file does not finish download in 5 seconds
-                    var chunkCts = chunkInfo.CurrentChunkSplitCount < threshold
-                        ? new CancellationTokenSource(DefaultChunkSplitTimeout)
-                        : chunkInfo.Cts;
-
                     using var res = chunkInfo.Response;
+                    using var buffer = MemoryPool<byte>.Shared.Rent(MinimumChunkSize);
 
                     // We'll store the written file to a temp file stream, and keep its ref for the future use.
-                    var fileToWriteTo = File.Create(chunkInfo.Range.TempFileName);
-                    double speed;
-                    long receivedBytes;
+                    var fileToWriteTo = File.Create(GetTempFilePath());
+                    var receivedBytes = 0L;
+                    var speed = 0d;
 
-                    try
+                    await using var stream = await res.Content.ReadAsStreamAsync(chunkInfo.MasterCts.Token);
+
+                    while (true)
                     {
-                        await using var stream = await res.Content.ReadAsStreamAsync(chunkInfo.Cts.Token);
-
-                        // Here we are using chunkCts instead of the main cts
-                        (speed, receivedBytes) = await ReceiveFromRemoteStreamAsync(
-                            stream,
-                            fileToWriteTo,
-                            globalSpeedCalculator, // 使用全局速度计算器
-                            chunkCts.Token);
-
-                        ArgumentOutOfRangeException.ThrowIfNotEqual(fileToWriteTo.Length,
-                            chunkInfo.Response.Content.Headers.ContentLength ?? 0);
-
-                        downloadFile.FinishedRangeStreams.AddOrUpdate(chunkInfo.Range, fileToWriteTo, (_, oldStream) =>
+                        // If PartialDownloadCts is canceled, it means for the batch of sub-chunks, one of the chunk finished downloading
+                        if (chunkInfo.PartialDownloadCts.IsCancellationRequested)
                         {
-                            try
+                            var downloadedPercentage = (double)receivedBytes / chunkInfo.Range.Length;
+
+                            if (downloadedPercentage < DefaultChunkGiveUpThreshold)
                             {
-                                oldStream.Dispose();
+                                // If the downloaded bytes is less than the threshold, we will cancel the download
+                                // and further split the chunk if possible
+                                break;
                             }
-                            catch (Exception e)
+                        }
+
+                        var bytesRead = await stream.ReadAsync(buffer.Memory, chunkInfo.MasterCts.Token);
+
+                        if (bytesRead == 0) break;
+
+                        receivedBytes += bytesRead;
+                        await fileToWriteTo.WriteAsync(buffer.Memory[..bytesRead], chunkInfo.MasterCts.Token);
+
+                        // 计算速度
+                        speed = globalSpeedCalculator.AddSample(bytesRead);
+                    }
+
+                    // Check if the actual range is finished
+                    if (chunkInfo.Range.Length != receivedBytes)
+                    {
+                        var undoneRange = chunkInfo.Range with
+                        {
+                            Start = chunkInfo.Range.Start + receivedBytes
+                        };
+
+                        // Enqueue the rest of the range to the buffer block
+                        if (undoneRange.Length - receivedBytes < DefaultChunkGiveUpThreshold)
+                        {
+                            // If the remaining range is too small, we will not split it further
+                            // Just post the remaining range to the buffer block
+                            ArgumentOutOfRangeException.ThrowIfEqual(
+                                chunkInfo.BufferBlock.Post(new PreChunkInfo(
+                                    chunkInfo.Client,
+                                    chunkInfo.DownloadUrl,
+                                    undoneRange,
+                                    chunkInfo.UrlInfo,
+                                    chunkInfo.BufferBlock,
+                                    new CancellationTokenSource(),
+                                    chunkInfo.MasterCts)),
+                                false);
+                        }
+                        else
+                        {
+                            var splitRanges = CalculateDownloadRanges(undoneRange.Length, undoneRange.Start, downloadSettings)
+                                .ToList()
+                                .AsReadOnly();
+
+                            foreach (var range in splitRanges)
                             {
-                                // Do nothing because we don't care about the exception
-                                Debug.WriteLine(e);
+                                // Add the split range to the buffer block
+                                ArgumentOutOfRangeException.ThrowIfEqual(
+                                    chunkInfo.BufferBlock.Post(new PreChunkInfo(
+                                        chunkInfo.Client,
+                                        chunkInfo.DownloadUrl,
+                                        range,
+                                        chunkInfo.UrlInfo,
+                                        chunkInfo.BufferBlock,
+                                        new CancellationTokenSource(),
+                                        chunkInfo.MasterCts)),
+                                    false);
                             }
-
-                            return fileToWriteTo;
-                        });
+                        }
                     }
-                    catch (ArgumentOutOfRangeException)
+
+                    var finishedRange = chunkInfo.Range with { End = chunkInfo.Range.Start + receivedBytes - 1 };
+
+                    finishedRangeStreams.AddOrUpdate(finishedRange, fileToWriteTo, (_, oldStream) =>
                     {
-                        // Size check failed, fast retry now
-                        // Dispose the file stream, and assign a new temp file path
-                        await fileToWriteTo.DisposeAsync();
+                        try
+                        {
+                            oldStream.Dispose();
+                        }
+                        catch (Exception e)
+                        {
+                            // Do nothing because we don't care about the exception
+                            Debug.WriteLine(e);
+                        }
 
-                        var regeneratedTempFileInfo = chunkInfo.Range with { TempFileName = GetTempFilePath() };
-
-                        ArgumentOutOfRangeException.ThrowIfEqual(downloadFile.Ranges.TryRemove(chunkInfo.Range, out _),
-                            false);
-                        ArgumentOutOfRangeException.ThrowIfEqual(
-                            downloadFile.Ranges.TryAdd(regeneratedTempFileInfo, null), false);
-
-                        throw;
-                    }
-                    catch (Exception e)
-                    {
-                        // If we end up to here, which means either the chunk is too large or the download speed is too slow
-                        // So we need to further split the chunk into smaller parts
-
-                        // If we already used all split trails, we just throw directly.
-                        if (chunkInfo.CurrentChunkSplitCount >= threshold)
-                            throw new ChunkSplitExhaustException(e);
-
-                        // If the chunk is small enough, we don't need to split it
-                        if (chunkInfo.Range.End - chunkInfo.Range.Start <= MinimumChunkSize)
-                            throw new DownloadChunkSplitException(false, e);
-
-                        // Remove the current range from the download queue
-                        ArgumentOutOfRangeException.ThrowIfEqual(downloadFile.Ranges.TryRemove(chunkInfo.Range, out _),
-                            false);
-
-                        var chunkLength = chunkInfo.Range.End - chunkInfo.Range.Start;
-                        var subChunkRanges =
-                            CalculateDownloadRanges(chunkLength, chunkInfo.Range.Start, downloadSettings);
-
-                        // We add the sub chunks to the download queue
-                        foreach (var range in subChunkRanges)
-                            // Update the original range list
-                            ArgumentOutOfRangeException.ThrowIfEqual(downloadFile.Ranges.TryAdd(range, null), false);
-
-                        throw new DownloadChunkSplitException(true, e);
-                    }
-                    finally
-                    {
-                        if (chunkInfo.CurrentChunkSplitCount < threshold)
-                            // If the sub chunk split count is greater than the max split count, we need to cancel the main cts
-                            chunkCts.Dispose();
-                    }
+                        return fileToWriteTo;
+                    });
 
                     // 更新总下载字节数
                     var addedBytesReceived = Interlocked.Add(ref bytesReceived, receivedBytes);
-
-                    // 如果这里下载的字节数大于我们获取到的文件长度，说明下载过程中发生了错误
-                    ArgumentOutOfRangeException.ThrowIfGreaterThan(addedBytesReceived, downloadFile.UrlInfo.FileLength);
+                    var actualFileLength = chunkInfo.UrlInfo.FileLength;
 
                     // 限制进度更新频率，避免UI过载
                     var now = DateTime.UtcNow;
@@ -413,9 +378,18 @@ public static partial class DownloadHelper
 
                         downloadFile.OnChanged(
                             currentGlobalSpeed,
-                            ProgressValue.Create(addedBytesReceived, downloadFile.UrlInfo.FileLength),
+                            ProgressValue.Create(addedBytesReceived, actualFileLength),
                             addedBytesReceived,
-                            downloadFile.UrlInfo.FileLength);
+                            actualFileLength);
+                    }
+
+                    await chunkInfo.PartialDownloadCts.CancelAsync();
+
+                    if (actualFileLength == addedBytesReceived)
+                    {
+                        // If the file length is equal to the downloaded bytes, we can complete the download
+                        chunkInfo.BufferBlock.Complete();
+                        chunkInfo.PartialDownloadCts.Dispose();
                     }
                 }, new ExecutionDataflowBlockOptions
                 {
@@ -433,24 +407,25 @@ public static partial class DownloadHelper
 
                 // Acquire the download URL
                 var downloadUrl = downloadFile.GetDownloadUrl();
+                var partialDownloadCts = new CancellationTokenSource();
 
-                foreach (var range in downloadFile.GetUndoneRanges())
+                foreach (var range in calculatedRanges)
                 {
                     var chunkInfo = new PreChunkInfo(
                         downloadSettings.HttpClientFactory.CreateClient(DefaultDownloadClientName),
-                        subChunkSplitCount,
                         downloadUrl,
                         range,
+                        calculatedUrlInfo,
+                        bufferBlock,
+                        partialDownloadCts,
                         cts);
 
                     await bufferBlock.SendAsync(chunkInfo, cts.Token);
                 }
 
-                bufferBlock.Complete();
-                await downloadActionBlock.Completion;
+                var startTime = Stopwatch.GetTimestamp();
 
-                if (!downloadFile.IsDownloadFinished())
-                    continue;
+                await downloadActionBlock.Completion;
 
                 var hashCheckFile = downloadSettings.CheckFile && !string.IsNullOrEmpty(downloadFile.CheckSum);
 
@@ -464,13 +439,13 @@ public static partial class DownloadHelper
                         Guid.NewGuid(),
 #endif
                         null,
-                        downloadFile.FinishedRangeStreams.Sum(p => p.Value.Length))
+                        finishedRangeStreams.Sum(p => p.Value.Length))
                     : File.Create(filePath);
                 var hashStream = new CryptoStream(ms, hashProvider, CryptoStreamMode.Write);
 
                 await using (var destStream = hashCheckFile ? hashStream : ms)
                 {
-                    foreach (var inputFileStream in downloadFile.GetFinishedStreamsInorder())
+                    foreach (var inputFileStream in GetFinishedStreamsInorder(finishedRangeStreams))
                     {
                         // Reset the stream position
                         inputFileStream.Seek(0, SeekOrigin.Begin);
@@ -488,14 +463,9 @@ public static partial class DownloadHelper
 
                         if (!checkSum.Equals(downloadFile.CheckSum, StringComparison.OrdinalIgnoreCase))
                         {
-                            downloadFile.FinishedRangeStreams.Clear();
-                            downloadFile.UrlInfo = null;
-                            downloadFile.Ranges = null;
+                            finishedRangeStreams.Clear();
 
-                            exceptions.Add(new HashMismatchException(filePath, downloadFile.CheckSum, checkSum,
-                                downloadFile));
-
-                            await RecycleDownloadFile(downloadFile);
+                            exceptions.Add(new HashMismatchException(filePath, downloadFile.CheckSum, checkSum));
 
                             continue;
                         }
@@ -516,14 +486,11 @@ public static partial class DownloadHelper
 
                 #endregion
 
-                await RecycleDownloadFile(downloadFile);
+                downloadFile.OnCompleted(
+                    true,
+                    null,
+                    globalSpeedCalculator.TotalBytes / Stopwatch.GetElapsedTime(startTime).TotalSeconds);
 
-                downloadFile.RetryCount--;
-                downloadFile.OnCompleted(true, null, globalSpeedCalculator.TotalBytes /
-                                                     Stopwatch.GetElapsedTime(
-                                                         Stopwatch.GetTimestamp() -
-                                                         (long)(timeout.TotalSeconds * Stopwatch.Frequency)
-                                                     ).TotalSeconds);
                 return;
             }
             catch (ArgumentOutOfRangeException)
@@ -532,69 +499,30 @@ public static partial class DownloadHelper
                 // We don't want to increase the retry count here
                 // Just fall back to normal download
                 downloadFile.RetryCount = 0;
-                downloadFile.PartialDownloadRetryCount = 0;
-                downloadFile.UrlInfo = null;
-                downloadFile.Ranges = null;
+                downloadFile.OnChanged(
+                    0,
+                    ProgressValue.Start,
+                    0,
+                    0);
 
                 await DownloadData(downloadFile, downloadSettings);
                 return;
-            }
-            catch (TaskCanceledException)
-            {
-                // We don't want to increase the retry count here
-                downloadFile.RetryCount--;
-                downloadFile.PartialDownloadRetryCount++;
-                downloadFile.UrlInfo = null;
-                downloadFile.Ranges = null;
-            }
-            catch (ChunkSplitExhaustException ex)
-            {
-                if (downloadFile.RetryCount + 1 != trials)
-                {
-                    exceptions.Add(ex.InnerException!);
-
-                    var delay = Math.Min(1000 * Math.Pow(2, downloadFile.RetryCount - 1), 10000);
-                    await Task.Delay((int)delay, CancellationToken.None);
-
-                    continue;
-                }
-
-                // If we only have last trial, and we can not further split chunk, we fall back to normal download
-                downloadFile.RetryCount = 0;
-                downloadFile.PartialDownloadRetryCount = 0;
-                downloadFile.UrlInfo = null;
-                downloadFile.Ranges = null;
-
-                await DownloadData(downloadFile, downloadSettings);
-                return;
-            }
-            catch (DownloadChunkSplitException ex)
-            {
-                // Here we are handling the exception thrown by the sub chunk split
-                // We don't want to increase the retry count here
-                downloadFile.RetryCount--;
-
-                if (ex.Split)
-                    subChunkSplitCount++;
-
-                if (ex.InnerException != null)
-                    exceptions.Add(ex.InnerException);
             }
             catch (Exception ex)
             {
-                downloadFile.PartialDownloadRetryCount++;
-                downloadFile.FinishedRangeStreams.Clear();
-                downloadFile.UrlInfo = null;
-                downloadFile.Ranges = null;
+                finishedRangeStreams.Clear();
                 exceptions.Add(ex);
+
+                downloadFile.OnChanged(
+                    0,
+                    ProgressValue.Start,
+                    0,
+                    0);
 
                 var delay = Math.Min(1000 * Math.Pow(2, downloadFile.RetryCount - 1), 10000);
                 await Task.Delay((int)delay, CancellationToken.None);
             }
         }
-
-        // We failed to download file
-        await RecycleDownloadFile(downloadFile);
 
         // We need to deduct 1 from the retry count because the last retry will not be counted
         downloadFile.RetryCount--;
@@ -603,14 +531,20 @@ public static partial class DownloadHelper
 
     record PreChunkInfo(
         HttpClient Client,
-        int CurrentChunkSplitCount,
         string DownloadUrl,
         DownloadRange Range,
-        CancellationTokenSource Cts);
+        UrlInfo UrlInfo,
+        BufferBlock<PreChunkInfo> BufferBlock,
+        CancellationTokenSource PartialDownloadCts,
+        CancellationTokenSource MasterCts);
 
     record ChunkInfo(
-        int CurrentChunkSplitCount,
+        HttpClient Client,
+        string DownloadUrl,
         HttpResponseMessage Response,
         DownloadRange Range,
-        CancellationTokenSource Cts);
+        UrlInfo UrlInfo,
+        BufferBlock<PreChunkInfo> BufferBlock,
+        CancellationTokenSource PartialDownloadCts,
+        CancellationTokenSource MasterCts);
 }

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
@@ -34,23 +32,6 @@ public static partial class DownloadHelper
     public static string GetTempFilePath()
     {
         return Path.Combine(GetTempDownloadPath(), Path.GetRandomFileName());
-    }
-
-    private static async Task RecycleDownloadFile(AbstractDownloadBase download)
-    {
-        // Once we finished the download, we need to dispose the kept file stream
-        foreach (var (_, stream) in download.FinishedRangeStreams)
-            try
-            {
-                await stream.DisposeAsync();
-            }
-            catch (Exception e)
-            {
-                // Do nothing because we don't care about the exception
-                Debug.WriteLine(e);
-            }
-
-        download.FinishedRangeStreams.Clear();
     }
 
     public static string AutoFormatSpeedString(double speedInBytePerSecond)

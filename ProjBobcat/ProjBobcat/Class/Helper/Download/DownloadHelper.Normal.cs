@@ -127,8 +127,6 @@ public static partial class DownloadHelper
                     }
                 }
 
-                await RecycleDownloadFile(downloadFile);
-
                 // 使用最终速度作为完成回调的参数
                 var finalSpeed = speedCalculator.TotalBytes / Stopwatch.GetElapsedTime(
                     Stopwatch.GetTimestamp() - (long)(timeout.TotalSeconds * Stopwatch.Frequency)
@@ -146,9 +144,6 @@ public static partial class DownloadHelper
                 exceptions.Add(e);
             }
         }
-
-        // We failed to download the file
-        await RecycleDownloadFile(downloadFile);
 
         // We need to deduct 1 from the retry count because the last retry will not be counted
         downloadFile.RetryCount--;

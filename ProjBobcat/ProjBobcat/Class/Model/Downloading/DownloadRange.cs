@@ -20,19 +20,16 @@ public readonly struct DownloadRange : IComparable<DownloadRange>, IEquatable<Do
     /// </summary>
     public required long End { get; init; }
 
-    /// <summary>
-    ///     临时文件名称
-    /// </summary>
-    public required string TempFileName { get; init; }
+    public long Length => this.End - this.Start + 1;
 
     public override string ToString()
     {
-        return $"[{this.Start}-{this.End}] {this.TempFileName}";
+        return $"{this.Start}-{this.End}";
     }
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(this.Start, this.End, this.TempFileName);
+        return HashCode.Combine(this.Start, this.End);
     }
 
     public int CompareTo(DownloadRange other)
@@ -41,9 +38,7 @@ public readonly struct DownloadRange : IComparable<DownloadRange>, IEquatable<Do
         if (startComparison != 0) return startComparison;
 
         var endComparison = this.End.CompareTo(other.End);
-        if (endComparison != 0) return endComparison;
-
-        return string.Compare(this.TempFileName, other.TempFileName, StringComparison.Ordinal);
+        return endComparison;
     }
 
     public override bool Equals([NotNullWhen(true)] object? obj)
@@ -53,6 +48,35 @@ public readonly struct DownloadRange : IComparable<DownloadRange>, IEquatable<Do
 
     public bool Equals(DownloadRange other)
     {
-        return this.Start == other.Start && this.End == other.End && this.TempFileName == other.TempFileName;
+        return this.Start == other.Start && this.End == other.End;
+    }
+    public static bool operator ==(DownloadRange left, DownloadRange right)
+    {
+        return left.Equals(right);
+    }
+
+    public static bool operator !=(DownloadRange left, DownloadRange right)
+    {
+        return !(left == right);
+    }
+
+    public static bool operator <(DownloadRange left, DownloadRange right)
+    {
+        return left.CompareTo(right) < 0;
+    }
+
+    public static bool operator <=(DownloadRange left, DownloadRange right)
+    {
+        return left.CompareTo(right) <= 0;
+    }
+
+    public static bool operator >(DownloadRange left, DownloadRange right)
+    {
+        return left.CompareTo(right) > 0;
+    }
+
+    public static bool operator >=(DownloadRange left, DownloadRange right)
+    {
+        return left.CompareTo(right) >= 0;
     }
 }

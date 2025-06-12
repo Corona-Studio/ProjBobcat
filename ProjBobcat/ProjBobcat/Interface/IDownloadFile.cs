@@ -6,8 +6,6 @@ namespace ProjBobcat.Interface;
 
 public interface IDownloadFile
 {
-    int PartialDownloadRetryCount { get; }
-
     /// <summary>
     ///     下载路径
     /// </summary>
