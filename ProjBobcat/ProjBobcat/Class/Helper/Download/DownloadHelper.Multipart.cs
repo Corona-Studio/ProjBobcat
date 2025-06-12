@@ -38,38 +38,29 @@ public static partial class DownloadHelper
         try
         {
             using var headReq = new HttpRequestMessage(HttpMethod.Head, url);
+            headReq.Headers.Range = new RangeHeaderValue(0, 0);
 
             if (downloadSettings.Authentication != null)
                 headReq.Headers.Authorization = downloadSettings.Authentication;
             if (!string.IsNullOrEmpty(downloadSettings.Host))
                 headReq.Headers.Host = downloadSettings.Host;
 
-            using var headRes = await client.SendAsync(headReq, HttpCompletionOption.ResponseHeadersRead, ct);
+            using var headRes = await client
+                .SendAsync(headReq, HttpCompletionOption.ResponseHeadersRead, ct)
+                .ConfigureAwait(false);
 
             headRes.EnsureSuccessStatusCode();
 
-            var responseLength = headRes.Content.Headers.ContentLength ?? 0;
-            var hasAcceptRanges = headRes.Headers.AcceptRanges.Count != 0;
-
-            using var rangeGetMessage = new HttpRequestMessage(HttpMethod.Get, url);
-            rangeGetMessage.Headers.Range = new RangeHeaderValue(0, 0);
-
-            if (downloadSettings.Authentication != null)
-                rangeGetMessage.Headers.Authorization = downloadSettings.Authentication;
-            if (!string.IsNullOrEmpty(downloadSettings.Host))
-                rangeGetMessage.Headers.Host = downloadSettings.Host;
-
-            using var rangeGetRes =
-                await client.SendAsync(rangeGetMessage, HttpCompletionOption.ResponseHeadersRead, ct);
-
             var parallelDownloadSupported =
-                responseLength != 0 &&
-                hasAcceptRanges &&
-                rangeGetRes.StatusCode == HttpStatusCode.PartialContent &&
-                (rangeGetRes.Content.Headers.ContentRange?.HasRange ?? false) &&
-                rangeGetRes.Content.Headers.ContentLength == 1;
+                headRes.Content.Headers.ContentLength == 1 &&
+                headRes.StatusCode == HttpStatusCode.PartialContent &&
+                (headRes.Content.Headers.ContentRange?.HasRange ?? false);
 
-            return (responseLength, parallelDownloadSupported);
+            var fullLength = parallelDownloadSupported
+                ? headRes.Content.Headers.ContentRange?.Length ?? 0
+                : headRes.Content.Headers.ContentLength ?? 0;
+
+            return (fullLength, parallelDownloadSupported);
         }
         catch (HttpRequestException)
         {
@@ -154,32 +145,23 @@ public static partial class DownloadHelper
 
         while (downloadFile.RetryCount < trials)
         {
+            // Acquire the download URL
+            var downloadUrl = downloadFile.GetDownloadUrl();
+
             try
             {
                 #region Calculate Download Ranges
 
                 #region Get file size
 
-                using var tempCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                using var tempCts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
                 using var partialDownloadCheckCts =
                     CancellationTokenSource.CreateLinkedTokenSource(cts.Token, tempCts.Token);
 
-                (long FileLength, bool CanPartialDownload)? rawUrlInfo;
-
-                try
-                {
-                    rawUrlInfo = await CanUsePartialDownload(
-                        downloadFile.GetDownloadUrl(),
-                        downloadSettings,
-                        partialDownloadCheckCts.Token);
-                }
-                catch (Exception)
-                {
-                    // Fallback to normal download if we can't get the file size
-                    // or the request is timeout
-                    await DownloadData(downloadFile, downloadSettings);
-                    return;
-                }
+                var rawUrlInfo = await CanUsePartialDownload(
+                    downloadUrl,
+                    downloadSettings,
+                    partialDownloadCheckCts.Token).ConfigureAwait(false);
 
                 // If rawUrlInfo == null, means the request is timeout and canceled
                 // If file length is 0 or less than the minimum chunk size, we also fall back to normal download
@@ -405,8 +387,6 @@ public static partial class DownloadHelper
                 bufferBlock.LinkTo(requestCreationBlock, linkOptions);
                 requestCreationBlock.LinkTo(downloadActionBlock, linkOptions);
 
-                // Acquire the download URL
-                var downloadUrl = downloadFile.GetDownloadUrl();
                 var partialDownloadCts = new CancellationTokenSource();
 
                 foreach (var range in calculatedRanges)
@@ -510,6 +490,8 @@ public static partial class DownloadHelper
             }
             catch (Exception ex)
             {
+                downloadFile.RetryCount++;
+
                 finishedRangeStreams.Clear();
                 exceptions.Add(ex);
 
@@ -524,8 +506,6 @@ public static partial class DownloadHelper
             }
         }
 
-        // We need to deduct 1 from the retry count because the last retry will not be counted
-        downloadFile.RetryCount--;
         downloadFile.OnCompleted(false, new AggregateException(exceptions), -1);
     }
 
