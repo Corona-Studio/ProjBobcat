@@ -112,7 +112,8 @@ public static partial class DownloadHelper
             async d => await AdvancedDownloadFile(d, downloadSettings),
             new ExecutionDataflowBlockOptions
             {
-                MaxDegreeOfParallelism = DownloadThread
+                MaxDegreeOfParallelism = DownloadThread,
+                EnsureOrdered = false
             });
 
         return actionBlock;

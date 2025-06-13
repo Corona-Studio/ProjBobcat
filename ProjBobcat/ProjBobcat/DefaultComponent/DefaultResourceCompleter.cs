@@ -81,7 +81,8 @@ public class DefaultResourceCompleter : IResourceCompleter
         var downloadBlock = DownloadHelper.BuildAdvancedDownloadTplBlock(downloadSettings);
         var checkBlock = new TransformManyBlock<CheckFileInfo, AbstractDownloadBase>(TransformCheckFiles, new ExecutionDataflowBlockOptions
         {
-            MaxDegreeOfParallelism = numBatches
+            MaxDegreeOfParallelism = numBatches,
+            EnsureOrdered = false
         });
 
         checkBlock.LinkTo(downloadBlock, linkOption);
