@@ -28,7 +28,17 @@ public static partial class DownloadHelper
     // If the downloaded bytes is greater than 50% of the expected size, we will ignore the chunk cancellation and keep download
     private const double DefaultChunkGiveUpThreshold = 0.85;
 
-    private static async Task<(long FileLength, bool CanPartialDownload)?> CanUsePartialDownload(
+    private static bool CanUsePartialDownload(HttpResponseMessage res, long from, long to)
+    {
+        var parallelDownloadSupported =
+            res.Content.Headers.ContentLength == to - from + 1 &&
+            res.StatusCode == HttpStatusCode.PartialContent &&
+            (res.Content.Headers.ContentRange?.HasRange ?? false);
+
+        return parallelDownloadSupported;
+    }
+
+    private static async Task<(long FileLength, bool CanPartialDownload)?> CanUsePartialDownloadAsync(
         string url,
         DownloadSettings downloadSettings,
         CancellationToken ct)
@@ -51,11 +61,7 @@ public static partial class DownloadHelper
 
             headRes.EnsureSuccessStatusCode();
 
-            var parallelDownloadSupported =
-                headRes.Content.Headers.ContentLength == 1 &&
-                headRes.StatusCode == HttpStatusCode.PartialContent &&
-                (headRes.Content.Headers.ContentRange?.HasRange ?? false);
-
+            var parallelDownloadSupported = CanUsePartialDownload(headRes, 0, 0);
             var fullLength = parallelDownloadSupported
                 ? headRes.Content.Headers.ContentRange?.Length ?? 0
                 : headRes.Content.Headers.ContentLength ?? 0;
@@ -158,7 +164,7 @@ public static partial class DownloadHelper
                 using var partialDownloadCheckCts =
                     CancellationTokenSource.CreateLinkedTokenSource(cts.Token, tempCts.Token);
 
-                var rawUrlInfo = await CanUsePartialDownload(
+                var rawUrlInfo = await CanUsePartialDownloadAsync(
                     downloadUrl,
                     downloadSettings,
                     partialDownloadCheckCts.Token).ConfigureAwait(false);
@@ -200,10 +206,12 @@ public static partial class DownloadHelper
                 #region Parallel download
 
                 var requestCreationBlock =
-                    new TransformBlock<PreChunkInfo, ChunkInfo>(
+                    new TransformBlock<PreChunkInfo, ChunkInfo?>(
                         async preChunkInfo =>
                         {
-                            var range = new RangeHeaderValue(preChunkInfo.Range.Start, preChunkInfo.Range.End);
+                            var from = preChunkInfo.Range.Start;
+                            var to = preChunkInfo.Range.End;
+                            var range = new RangeHeaderValue(from, to);
                             using var request = new HttpRequestMessage(HttpMethod.Get, preChunkInfo.DownloadUrl);
 
                             request.Headers.Range = range;
@@ -218,12 +226,13 @@ public static partial class DownloadHelper
                                 HttpCompletionOption.ResponseHeadersRead,
                                 preChunkInfo.MasterCts.Token);
 
-                            if (!res.IsSuccessStatusCode ||
-                                !res.Content.Headers.ContentLength.HasValue ||
-                                res.Content.Headers.ContentLength == 0)
-                                // Some mirror will return non-200 code during the high load
-                                throw new HttpRequestException(
-                                    $"Failed to download part {preChunkInfo.Range.Start}-{preChunkInfo.Range.End}, status code: {res.StatusCode}");
+                            if (!res.IsSuccessStatusCode || !CanUsePartialDownload(res, from, to))
+                            {
+                                // If the response is not successful or the server does not support partial download,
+                                // we will not download this chunk and re-enqueue it to the buffer block
+                                preChunkInfo.BufferBlock.Post(preChunkInfo);
+                                return null;
+                            }
 
                             return new ChunkInfo(
                                 preChunkInfo.Client,
@@ -241,8 +250,10 @@ public static partial class DownloadHelper
                             CancellationToken = cts.Token
                         });
 
-                var downloadActionBlock = new ActionBlock<ChunkInfo>(async chunkInfo =>
+                var downloadActionBlock = new ActionBlock<ChunkInfo?>(async chunkInfo =>
                 {
+                    if (chunkInfo == null) return;
+
                     using var res = chunkInfo.Response;
                     using var buffer = MemoryPool<byte>.Shared.Rent(MinimumChunkSize);
 
