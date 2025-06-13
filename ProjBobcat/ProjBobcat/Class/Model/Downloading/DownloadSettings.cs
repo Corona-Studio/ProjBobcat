@@ -22,6 +22,7 @@ public class DownloadSettings
     public bool CheckFile { get; init; }
     public TimeSpan Timeout { get; init; } = TimeSpan.FromSeconds(30);
     public int DownloadParts { get; init; }
+    public int DownloadThread { get; init; } = Environment.ProcessorCount;
     public HashType HashType { get; init; }
     public bool ShowDownloadProgress { get; init; }
     public required IHttpClientFactory HttpClientFactory { get; init; }

@@ -43,7 +43,23 @@ public sealed class AssetInfoResolver : ResolverBase
         var client = this.HttpClientFactory.CreateClient();
         var versions = this.Versions;
 
-        if ((this.Versions?.Count ?? 0) == 0)
+        var isAssetInfoNotExists =
+            string.IsNullOrEmpty(resolvedGame.AssetInfo?.Url) &&
+            string.IsNullOrEmpty(resolvedGame.AssetInfo?.Id);
+
+        var id = resolvedGame.AssetInfo?.Id ?? resolvedGame.Assets;
+        var assetIndexesDi =
+            new DirectoryInfo(Path.Combine(basePath, GamePathHelper.GetAssetsRoot(), "indexes"));
+        var assetObjectsDi =
+            new DirectoryInfo(Path.Combine(basePath, GamePathHelper.GetAssetsRoot(), "objects"));
+
+        if (!assetIndexesDi.Exists) assetIndexesDi.Create();
+        if (!assetObjectsDi.Exists) assetObjectsDi.Create();
+
+        var assetIndexesPath = Path.Combine(assetIndexesDi.FullName, $"{id}.json");
+        var isAssetsIndexExists = File.Exists(assetIndexesPath);
+
+        if ((this.Versions?.Count ?? 0) == 0 && !isAssetsIndexExists)
         {
             this.OnResolve("没有提供 Version Manifest， 开始下载", ProgressValue.Start);
 
@@ -53,28 +69,15 @@ public sealed class AssetInfoResolver : ResolverBase
             var vm = await vmJsonRes.Content.ReadFromJsonAsync(VersionManifestContext.Default.VersionManifest);
 
             versions = vm?.Versions?.ToList();
+
+            if ((versions?.Count ?? 0) == 0) yield break;
         }
 
-        if ((versions?.Count ?? 0) == 0) yield break;
-
-        var isAssetInfoNotExists =
-            string.IsNullOrEmpty(resolvedGame.AssetInfo?.Url) &&
-            string.IsNullOrEmpty(resolvedGame.AssetInfo?.Id);
         if (isAssetInfoNotExists &&
             string.IsNullOrEmpty(resolvedGame.Assets))
             yield break;
-
-        var assetIndexesDi =
-            new DirectoryInfo(Path.Combine(basePath, GamePathHelper.GetAssetsRoot(), "indexes"));
-        var assetObjectsDi =
-            new DirectoryInfo(Path.Combine(basePath, GamePathHelper.GetAssetsRoot(), "objects"));
-
-        if (!assetIndexesDi.Exists) assetIndexesDi.Create();
-        if (!assetObjectsDi.Exists) assetObjectsDi.Create();
-
-        var id = resolvedGame.AssetInfo?.Id ?? resolvedGame.Assets;
-        var assetIndexesPath = Path.Combine(assetIndexesDi.FullName, $"{id}.json");
-        if (!File.Exists(assetIndexesPath))
+        
+        if (!isAssetsIndexExists)
         {
             this.OnResolve("没有发现 Asset Indexes 文件， 开始下载", ProgressValue.Start);
 
@@ -215,7 +218,10 @@ public sealed class AssetInfoResolver : ResolverBase
 
         this.OnResolve("检索并验证 Asset 资源", ProgressValue.Start);
 
-        foreach (var (key, fi) in assetObject.Objects)
+        var shuffled = assetObject.Objects.ToArray();
+        Random.Shared.Shuffle(shuffled);
+
+        foreach (var (key, fi) in shuffled)
         {
             var hash = fi.Hash;
             var twoDigitsHash = hash[..2];
@@ -230,7 +236,7 @@ public sealed class AssetInfoResolver : ResolverBase
             if (File.Exists(filePath))
             {
                 await using var fs = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-                var computedHash = Convert.ToHexString(await SHA1.HashDataAsync(fs));
+                var computedHash = Convert.ToHexString(await SHA1.HashDataAsync(fs).ConfigureAwait(false));
 
                 if (computedHash.Equals(fi.Hash, StringComparison.OrdinalIgnoreCase)) continue;
             }

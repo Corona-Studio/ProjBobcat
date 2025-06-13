@@ -78,7 +78,9 @@ public class DefaultResourceCompleter : IResourceCompleter
         });
 
         var linkOption = new DataflowLinkOptions { PropagateCompletion = true };
+
         var downloadBlock = DownloadHelper.BuildAdvancedDownloadTplBlock(downloadSettings);
+
         var checkBlock = new TransformManyBlock<CheckFileInfo, AbstractDownloadBase>(TransformCheckFiles, new ExecutionDataflowBlockOptions
         {
             MaxDegreeOfParallelism = numBatches,
@@ -88,7 +90,7 @@ public class DefaultResourceCompleter : IResourceCompleter
         checkBlock.LinkTo(downloadBlock, linkOption);
 
         foreach (var r in this.ResourceInfoResolvers!)
-            await checkBlock.SendAsync(new CheckFileInfo(r, basePath, checkLocalFiles, resolvedGame));
+            checkBlock.Post(new CheckFileInfo(r, basePath, checkLocalFiles, resolvedGame));
 
         checkBlock.Complete();
         await downloadBlock.Completion;

@@ -40,7 +40,7 @@ public sealed class VersionInfoResolver : ResolverBase
             if (string.IsNullOrEmpty(clientDownload.Sha1)) yield break;
 
             await using var jarFs = File.Open(jarPath, FileMode.Open, FileAccess.Read, FileShare.Read);
-            var computedHash = Convert.ToHexString(await SHA1.HashDataAsync(jarFs));
+            var computedHash = Convert.ToHexString(await SHA1.HashDataAsync(jarFs).ConfigureAwait(false));
 
             if (computedHash.Equals(clientDownload.Sha1, StringComparison.OrdinalIgnoreCase))
                 yield break;

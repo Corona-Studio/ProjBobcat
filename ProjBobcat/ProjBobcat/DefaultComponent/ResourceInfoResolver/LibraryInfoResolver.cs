@@ -41,7 +41,11 @@ public sealed class LibraryInfoResolver : ResolverBase
         var libCount = resolvedGame.Libraries.Count;
 
         if (libCount > 0)
-            foreach (var lib in resolvedGame.Libraries)
+        {
+            var shuffled = resolvedGame.Libraries.ToArray();
+            Random.Shared.Shuffle(shuffled);
+
+            foreach (var lib in shuffled)
             {
                 var libPath = GamePathHelper.GetLibraryPath(lib.Path!);
                 var filePath = Path.Combine(basePath, libPath);
@@ -56,13 +60,14 @@ public sealed class LibraryInfoResolver : ResolverBase
                     if (string.IsNullOrEmpty(lib.Sha1)) continue;
 
                     await using var fs = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-                    var computedHash = Convert.ToHexString(await SHA1.HashDataAsync(fs));
+                    var computedHash = Convert.ToHexString(await SHA1.HashDataAsync(fs).ConfigureAwait(false));
 
                     if (computedHash.Equals(lib.Sha1, StringComparison.OrdinalIgnoreCase)) continue;
                 }
 
                 yield return this.GetDownloadFile(basePath, lib);
             }
+        }
 
         this.OnResolve("检索并验证 Library", ProgressValue.Start);
 
@@ -70,7 +75,11 @@ public sealed class LibraryInfoResolver : ResolverBase
         libCount = resolvedGame.Natives.Count;
 
         if (libCount > 0)
-            foreach (var native in resolvedGame.Natives)
+        {
+            var shuffled = resolvedGame.Natives.ToArray();
+            Random.Shared.Shuffle(shuffled);
+
+            foreach (var native in shuffled)
             {
                 var nativePath = GamePathHelper.GetLibraryPath(native.FileInfo.Path!);
                 var filePath = Path.Combine(basePath, nativePath);
@@ -85,13 +94,14 @@ public sealed class LibraryInfoResolver : ResolverBase
                     this.OnResolve(string.Empty, progress);
 
                     await using var fs = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-                    var computedHash = Convert.ToHexString(await SHA1.HashDataAsync(fs));
+                    var computedHash = Convert.ToHexString(await SHA1.HashDataAsync(fs).ConfigureAwait(false));
 
                     if (computedHash.Equals(native.FileInfo.Sha1, StringComparison.OrdinalIgnoreCase)) continue;
                 }
 
                 yield return this.GetDownloadFile(basePath, native.FileInfo);
             }
+        }
 
         this.OnResolve("检查Library完成", ProgressValue.Finished);
     }

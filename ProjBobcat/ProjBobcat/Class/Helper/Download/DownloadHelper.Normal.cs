@@ -34,10 +34,9 @@ public static partial class DownloadHelper
         var exceptions = new List<Exception>();
         var speedCalculator = new DownloadSpeedCalculator();
 
-        while (downloadFile.RetryCount++ < trials)
+        while (downloadFile.RetryCount < trials)
         {
-            var timeoutMs = timeout.TotalMilliseconds;
-            using var cts = new CancellationTokenSource((int)Math.Min(timeoutMs * 5, timeoutMs * downloadFile.RetryCount));
+            using var cts = new CancellationTokenSource(timeout);
 
             try
             {
@@ -139,14 +138,14 @@ public static partial class DownloadHelper
             }
             catch (Exception e)
             {
-                var delay = Math.Min(1000 * Math.Pow(2, downloadFile.RetryCount - 1), 10000);
+                downloadFile.RetryCount++;
+
+                var delay = Math.Min(1000 * Math.Pow(2, downloadFile.RetryCount), 10000);
                 await Task.Delay((int)delay, CancellationToken.None);
                 exceptions.Add(e);
             }
         }
 
-        // We need to deduct 1 from the retry count because the last retry will not be counted
-        downloadFile.RetryCount--;
         downloadFile.OnCompleted(false, new AggregateException(exceptions), -1);
     }
 }

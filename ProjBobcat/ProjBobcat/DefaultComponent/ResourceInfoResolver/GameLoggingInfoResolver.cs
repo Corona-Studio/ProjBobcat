@@ -32,7 +32,7 @@ public sealed class GameLoggingInfoResolver : ResolverBase
             if (string.IsNullOrEmpty(resolvedGame.Logging?.Client?.File?.Sha1)) yield break;
 
             await using var fs = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-            var computedHash = Convert.ToHexString(await SHA1.HashDataAsync(fs));
+            var computedHash = Convert.ToHexString(await SHA1.HashDataAsync(fs).ConfigureAwait(false));
 
             if (computedHash.Equals(resolvedGame.Logging?.Client?.File?.Sha1, StringComparison.OrdinalIgnoreCase))
                 yield break;

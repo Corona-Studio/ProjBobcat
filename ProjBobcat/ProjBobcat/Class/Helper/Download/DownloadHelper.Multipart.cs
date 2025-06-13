@@ -146,6 +146,7 @@ public static partial class DownloadHelper
         var lastProgressUpdateTime = DateTime.UtcNow;
         var progressUpdateInterval = TimeSpan.FromMilliseconds(200); // 限制更新频率
         var finishedRangeStreams = new ConcurrentDictionary<DownloadRange, FileStream>();
+        UrlInfo? calculatedUrlInfo = null;
 
         using var cts = new CancellationTokenSource(downloadSettings.Timeout);
 
@@ -158,43 +159,47 @@ public static partial class DownloadHelper
             {
                 #region Calculate Download Ranges
 
-                #region Get file size
-
-                using var tempCts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-                using var partialDownloadCheckCts =
-                    CancellationTokenSource.CreateLinkedTokenSource(cts.Token, tempCts.Token);
-
-                var rawUrlInfo = await CanUsePartialDownloadAsync(
-                    downloadUrl,
-                    downloadSettings,
-                    partialDownloadCheckCts.Token).ConfigureAwait(false);
-
-                // If rawUrlInfo == null, means the request is timeout and canceled
-                // If file length is 0 or less than the minimum chunk size, we also fall back to normal download
-                if (rawUrlInfo is not { FileLength: > MinimumChunkSize })
+                if (calculatedUrlInfo == null)
                 {
-                    // Reset the retry count
-                    downloadFile.RetryCount = 0;
+                    #region Get file size
 
-                    await DownloadData(downloadFile, downloadSettings);
-                    return;
+                    using var tempCts = new CancellationTokenSource(TimeSpan.FromSeconds(8));
+                    using var partialDownloadCheckCts =
+                        CancellationTokenSource.CreateLinkedTokenSource(cts.Token, tempCts.Token);
+
+                    var rawUrlInfo = await CanUsePartialDownloadAsync(
+                        downloadUrl,
+                        downloadSettings,
+                        partialDownloadCheckCts.Token).ConfigureAwait(false);
+
+                    // If rawUrlInfo == null, means the request is timeout and canceled
+                    // If file length is 0 or less than the minimum chunk size, we also fall back to normal download
+                    if (rawUrlInfo is not { FileLength: > MinimumChunkSize })
+                    {
+                        // Reset the retry count
+                        downloadFile.RetryCount = 0;
+
+                        await DownloadData(downloadFile, downloadSettings);
+                        return;
+                    }
+
+                    var urlInfo = rawUrlInfo.Value;
+
+                    if (!urlInfo.CanPartialDownload)
+                    {
+                        // Reset the retry count
+                        downloadFile.RetryCount = 0;
+
+                        await DownloadData(downloadFile, downloadSettings);
+                        return;
+                    }
+
+                    #endregion
+
+                    calculatedUrlInfo = new UrlInfo(urlInfo.FileLength);
                 }
 
-                var urlInfo = rawUrlInfo.Value;
-
-                if (!urlInfo.CanPartialDownload)
-                {
-                    // Reset the retry count
-                    downloadFile.RetryCount = 0;
-
-                    await DownloadData(downloadFile, downloadSettings);
-                    return;
-                }
-
-                #endregion
-
-                var calculatedUrlInfo = new UrlInfo(urlInfo.FileLength);
-                var calculatedRanges = CalculateDownloadRanges(urlInfo.FileLength, 0, downloadSettings)
+                var calculatedRanges = CalculateDownloadRanges(calculatedUrlInfo.FileLength, 0, downloadSettings)
                     .ToList()
                     .AsReadOnly();
 
@@ -246,7 +251,7 @@ public static partial class DownloadHelper
                         }, new ExecutionDataflowBlockOptions
                         {
                             EnsureOrdered = false,
-                            MaxDegreeOfParallelism = downloadSettings.DownloadParts,
+                            MaxDegreeOfParallelism = downloadSettings.DownloadThread,
                             CancellationToken = cts.Token
                         });
 
@@ -387,7 +392,7 @@ public static partial class DownloadHelper
                 }, new ExecutionDataflowBlockOptions
                 {
                     EnsureOrdered = false,
-                    MaxDegreeOfParallelism = downloadSettings.DownloadParts,
+                    MaxDegreeOfParallelism = downloadSettings.DownloadThread,
                     CancellationToken = cts.Token
                 });
 

@@ -15,11 +15,6 @@ public static partial class DownloadHelper
 
     private static readonly RecyclableMemoryStreamManager MemoryStreamManager = new();
 
-    /// <summary>
-    ///     Download thread count
-    /// </summary>
-    public static int DownloadThread { get; set; } = 8;
-
     internal static string DefaultUserAgent => $"ProjBobcat {typeof(DownloadHelper).Assembly.GetName().Version}";
 
     public static string GetTempDownloadPath()
@@ -96,7 +91,7 @@ public static partial class DownloadHelper
         if (!Directory.Exists(df.DownloadPath))
             Directory.CreateDirectory(df.DownloadPath);
 
-        return df.FileSize is >= 1048576 or 0
+        return df.FileSize is >= MinimumChunkSize or 0
             ? MultiPartDownloadTaskAsync(df, downloadSettings)
             : DownloadData(df, downloadSettings);
     }
@@ -109,10 +104,10 @@ public static partial class DownloadHelper
             Directory.CreateDirectory(lxTempPath);
 
         var actionBlock = new ActionBlock<AbstractDownloadBase>(
-            async d => await AdvancedDownloadFile(d, downloadSettings),
+            async d => await AdvancedDownloadFile(d, downloadSettings).ConfigureAwait(false),
             new ExecutionDataflowBlockOptions
             {
-                MaxDegreeOfParallelism = DownloadThread,
+                MaxDegreeOfParallelism = downloadSettings.DownloadThread,
                 EnsureOrdered = false
             });
 
