@@ -71,6 +71,26 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
         ArgumentNullException.ThrowIfNull(files, "无法获取 CurseForge 的文件列表");
 
+        var missingFileIds = fileIds.Except(files.Select(file => file.Id)).ToArray();
+
+        // Fetch missing files if any
+        for (var i = 0; i < RetryCount; i++)
+        {
+            try
+            {
+                files =
+                [
+                    ..files,
+                    .. await GetModPackFiles(this.CurseForgeApiService, missingFileIds, true)
+                ];
+                break;
+            }
+            catch (Exception)
+            {
+                // Ignore
+            }
+        }
+
         var projectIds = files.Select(file => file.ProjectId).ToArray();
 
         CurseForgeAddonInfo[]? modProjectDetails = null;
@@ -90,6 +110,26 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
         ArgumentNullException.ThrowIfNull(modProjectDetails, "无法获取 CurseForge 的模组列表");
         ArgumentOutOfRangeException.ThrowIfLessThan(fileIds.Length, files.Length);
+
+        var missingProjectIds = projectIds.Except(modProjectDetails.Select(mod => mod.Id)).ToArray();
+
+        // Fetch missing projects if any
+        for (var i = 0; i < RetryCount; i++)
+        {
+            try
+            {
+                modProjectDetails =
+                [
+                    ..modProjectDetails,
+                    .. await GetModProjectDetails(this.CurseForgeApiService, missingProjectIds, true)
+                ];
+                break;
+            }
+            catch (Exception)
+            {
+                // Ignore
+            }
+        }
 
         var fileDic = files.ToDictionary(k => k.Id, v => v);
         var projectDic = modProjectDetails.ToDictionary(k => k.Id, v => v);
