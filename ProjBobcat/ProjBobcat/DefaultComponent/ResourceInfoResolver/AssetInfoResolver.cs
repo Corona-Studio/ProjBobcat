@@ -218,10 +218,7 @@ public sealed class AssetInfoResolver : ResolverBase
 
         this.OnResolve("检索并验证 Asset 资源", ProgressValue.Start);
 
-        var shuffled = assetObject.Objects.ToArray();
-        Random.Shared.Shuffle(shuffled);
-
-        foreach (var (key, fi) in shuffled)
+        foreach (var (key, fi) in assetObject.Objects)
         {
             var hash = fi.Hash;
             var twoDigitsHash = hash[..2];
