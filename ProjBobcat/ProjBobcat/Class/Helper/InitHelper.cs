@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Net;
-using System.Net.Http;
 using Microsoft.Extensions.DependencyInjection;
 using ProjBobcat.Class.Helper.Download;
 using ProjBobcat.Interface;
@@ -23,22 +21,16 @@ public static class InitHelper
         services.AddHttpClient(DownloadHelper.DefaultDownloadClientName,
             client =>
             {
-                client.DefaultRequestVersion = HttpVersion.Version20;
-                client.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrLower;
                 client.DefaultRequestHeaders.Add("User-Agent", userAgent);
             });
 
         services.AddHttpClient<IModrinthApiService, ModrinthApiService>(client =>
         {
-            client.DefaultRequestVersion = HttpVersion.Version20;
-            client.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrLower;
             client.DefaultRequestHeaders.Add("User-Agent", userAgent);
         });
 
         services.AddHttpClient<ICurseForgeApiService, CurseForgeApiService>(client =>
         {
-            client.DefaultRequestVersion = HttpVersion.Version20;
-            client.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrLower;
             client.DefaultRequestHeaders.Add("x-api-key", coreSettings.CurseForgeApiKey);
             client.DefaultRequestHeaders.Add("User-Agent", userAgent);
         });

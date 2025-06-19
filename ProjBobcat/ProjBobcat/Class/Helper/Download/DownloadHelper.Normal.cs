@@ -3,6 +3,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Threading;
@@ -131,10 +132,20 @@ public static partial class DownloadHelper
                     Stopwatch.GetTimestamp() - (long)(timeout.TotalSeconds * Stopwatch.Frequency)
                 ).TotalSeconds;
 
-                downloadFile.RetryCount--;
                 downloadFile.OnCompleted(true, null, finalSpeed);
 
                 return;
+            }
+            catch (HttpRequestException e)
+            {
+                downloadFile.RetryCount++;
+                exceptions.Add(e);
+
+                if (e.StatusCode != HttpStatusCode.NotFound)
+                {
+                    var delay = Math.Min(1000 * Math.Pow(2, downloadFile.RetryCount), 10000);
+                    await Task.Delay((int)delay, CancellationToken.None);
+                }
             }
             catch (Exception e)
             {

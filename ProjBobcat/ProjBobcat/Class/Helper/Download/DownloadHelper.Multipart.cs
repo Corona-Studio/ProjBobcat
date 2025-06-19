@@ -56,8 +56,7 @@ public static partial class DownloadHelper
                 headReq.Headers.Host = downloadSettings.Host;
 
             using var headRes = await client
-                .SendAsync(headReq, HttpCompletionOption.ResponseHeadersRead, ct)
-                .ConfigureAwait(false);
+                .SendAsync(headReq, HttpCompletionOption.ResponseHeadersRead, ct);
 
             headRes.EnsureSuccessStatusCode();
 
@@ -170,7 +169,7 @@ public static partial class DownloadHelper
                     var rawUrlInfo = await CanUsePartialDownloadAsync(
                         downloadUrl,
                         downloadSettings,
-                        partialDownloadCheckCts.Token).ConfigureAwait(false);
+                        partialDownloadCheckCts.Token);
 
                     // If rawUrlInfo == null, means the request is timeout and canceled
                     // If file length is 0 or less than the minimum chunk size, we also fall back to normal download
@@ -226,7 +225,8 @@ public static partial class DownloadHelper
                             if (!string.IsNullOrEmpty(downloadSettings.Host))
                                 request.Headers.Host = downloadSettings.Host;
 
-                            var res = await preChunkInfo.Client.SendAsync(
+                            var client = preChunkInfo.ClientFactory.CreateClient(DefaultDownloadClientName);
+                            var res = await client.SendAsync(
                                 request,
                                 HttpCompletionOption.ResponseHeadersRead,
                                 preChunkInfo.MasterCts.Token);
@@ -240,7 +240,7 @@ public static partial class DownloadHelper
                             }
 
                             return new ChunkInfo(
-                                preChunkInfo.Client,
+                                preChunkInfo.ClientFactory,
                                 preChunkInfo.DownloadUrl,
                                 res,
                                 preChunkInfo.Range,
@@ -310,7 +310,7 @@ public static partial class DownloadHelper
                             // Just post the remaining range to the buffer block
                             ArgumentOutOfRangeException.ThrowIfEqual(
                                 chunkInfo.BufferBlock.Post(new PreChunkInfo(
-                                    chunkInfo.Client,
+                                    chunkInfo.ClientFactory,
                                     chunkInfo.DownloadUrl,
                                     undoneRange,
                                     chunkInfo.UrlInfo,
@@ -330,7 +330,7 @@ public static partial class DownloadHelper
                                 // Add the split range to the buffer block
                                 ArgumentOutOfRangeException.ThrowIfEqual(
                                     chunkInfo.BufferBlock.Post(new PreChunkInfo(
-                                        chunkInfo.Client,
+                                        chunkInfo.ClientFactory,
                                         chunkInfo.DownloadUrl,
                                         range,
                                         chunkInfo.UrlInfo,
@@ -408,7 +408,7 @@ public static partial class DownloadHelper
                 foreach (var range in calculatedRanges)
                 {
                     var chunkInfo = new PreChunkInfo(
-                        downloadSettings.HttpClientFactory.CreateClient(DefaultDownloadClientName),
+                        downloadSettings.HttpClientFactory,
                         downloadUrl,
                         range,
                         calculatedUrlInfo,
@@ -504,6 +504,17 @@ public static partial class DownloadHelper
                 await DownloadData(downloadFile, downloadSettings);
                 return;
             }
+            catch (HttpRequestException e)
+            {
+                downloadFile.RetryCount++;
+                exceptions.Add(e);
+
+                if (e.StatusCode != HttpStatusCode.NotFound)
+                {
+                    var delay = Math.Min(1000 * Math.Pow(2, downloadFile.RetryCount), 10000);
+                    await Task.Delay((int)delay, CancellationToken.None);
+                }
+            }
             catch (Exception ex)
             {
                 downloadFile.RetryCount++;
@@ -526,7 +537,7 @@ public static partial class DownloadHelper
     }
 
     record PreChunkInfo(
-        HttpClient Client,
+        IHttpClientFactory ClientFactory,
         string DownloadUrl,
         DownloadRange Range,
         UrlInfo UrlInfo,
@@ -535,7 +546,7 @@ public static partial class DownloadHelper
         CancellationTokenSource MasterCts);
 
     record ChunkInfo(
-        HttpClient Client,
+        IHttpClientFactory ClientFactory,
         string DownloadUrl,
         HttpResponseMessage Response,
         DownloadRange Range,
