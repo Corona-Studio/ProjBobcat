@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace ProjBobcat.Class.Model.Downloading;
 
@@ -9,14 +10,15 @@ public sealed class MultiSourceDownloadFile : AbstractDownloadBase
 {
     public required IReadOnlyList<DownloadUriInfo> DownloadUris { get; init; }
 
-    private Lazy<List<string>> WeightedUriPool => new(() =>
+    private Lazy<string[]> WeightedUriPool => new(() =>
     {
-        var list = new List<string>();
+        var list = new string[this.DownloadUris.Sum(i => i.Weight)];
+        var index = 0;
 
         foreach (var t in this.DownloadUris)
         {
             for (var w = 0; w < t.Weight; w++)
-                list.Add(t.DownloadUri);
+                list[index++] = t.DownloadUri;
         }
 
         return list;
