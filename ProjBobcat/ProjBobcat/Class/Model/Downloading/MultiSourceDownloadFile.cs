@@ -27,6 +27,6 @@ public sealed class MultiSourceDownloadFile : AbstractDownloadBase
     public override string GetDownloadUrl()
     {
         var weightedList = WeightedUriPool.Value;
-        return weightedList[RetryCount % weightedList.Count];
+        return weightedList[RetryCount % weightedList.Length];
     }
 }
