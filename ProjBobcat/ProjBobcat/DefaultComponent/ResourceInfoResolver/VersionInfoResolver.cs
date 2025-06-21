@@ -5,6 +5,7 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
+using ProjBobcat.Class.Model.Downloading;
 using ProjBobcat.Class.Model.GameResource;
 using ProjBobcat.Interface;
 
@@ -12,7 +13,7 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver;
 
 public sealed class VersionInfoResolver : ResolverBase
 {
-    public IReadOnlyList<string>? VersionUriRoots { get; init; }
+    public IReadOnlyList<DownloadUriInfo>? VersionUriRoots { get; init; }
 
     public override async IAsyncEnumerable<IGameResource> ResolveResourceAsync(
         string basePath,
@@ -49,7 +50,7 @@ public sealed class VersionInfoResolver : ResolverBase
         if (string.IsNullOrEmpty(clientDownload.Url))
             yield break;
 
-        var fallbackUrls = new List<string> { clientDownload.Url };
+        var fallbackUrls = new List<DownloadUriInfo> { new (clientDownload.Url, 1) };
         if (VersionUriRoots is { Count: > 0 })
         {
             var initUrl = fallbackUrls[0];
@@ -57,10 +58,13 @@ public sealed class VersionInfoResolver : ResolverBase
 
             foreach (var uriRoot in VersionUriRoots)
             {
-                var replacedUrl = initUrl
-                    .Replace("https://piston-meta.mojang.com", uriRoot)
-                    .Replace("https://launchermeta.mojang.com", uriRoot)
-                    .Replace("https://launcher.mojang.com", uriRoot);
+                var replacedUrl = initUrl with
+                {
+                    DownloadUri = initUrl.DownloadUri
+                        .Replace("https://piston-meta.mojang.com", uriRoot.DownloadUri)
+                        .Replace("https://launchermeta.mojang.com", uriRoot.DownloadUri)
+                        .Replace("https://launcher.mojang.com", uriRoot.DownloadUri)
+                };
 
                 fallbackUrls.Add(replacedUrl);
             }

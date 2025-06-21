@@ -263,7 +263,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
                 var urls = failedFile switch
                 {
                     SimpleDownloadFile sd => [sd.DownloadUri],
-                    MultiSourceDownloadFile msd => msd.DownloadUris,
+                    MultiSourceDownloadFile msd => msd.DownloadUris.Select(d => d.DownloadUri).ToArray(),
                     _ => throw new ArgumentOutOfRangeException(nameof(failedFile))
                 };
 
@@ -437,13 +437,13 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         }
     }
 
-    private static string[] GeneratePossibleDownloadUrls(long fileId, string fileName)
+    private static DownloadUriInfo[] GeneratePossibleDownloadUrls(long fileId, string fileName)
     {
         var fileIdStr = fileId.ToString();
         
         return [
-            $"https://edge.forgecdn.net/files/{fileIdStr[..4]}/{fileIdStr[4..]}/{fileName}",
-            $"https://mediafiles.forgecdn.net/files/{fileIdStr[..4]}/{fileIdStr[4..]}/{fileName}"
+            new DownloadUriInfo($"https://edge.forgecdn.net/files/{fileIdStr[..4]}/{fileIdStr[4..]}/{fileName}", 1),
+            new DownloadUriInfo($"https://mediafiles.forgecdn.net/files/{fileIdStr[..4]}/{fileIdStr[4..]}/{fileName}", 1)
         ];
     }
 
@@ -468,12 +468,12 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
             foreach (var url in pendingCheckUrls)
             {
-                using var checkReq = new HttpRequestMessage(HttpMethod.Head, url);
+                using var checkReq = new HttpRequestMessage(HttpMethod.Head, url.DownloadUri);
                 using var checkRes = await client.SendAsync(checkReq);
 
                 if (!checkRes.IsSuccessStatusCode) continue;
 
-                return (fileName, url);
+                return (fileName, url.DownloadUri);
             }
 
             return default;

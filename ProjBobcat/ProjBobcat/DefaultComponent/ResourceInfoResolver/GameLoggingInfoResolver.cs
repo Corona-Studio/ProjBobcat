@@ -4,6 +4,7 @@ using System.IO;
 using System.Security.Cryptography;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
+using ProjBobcat.Class.Model.Downloading;
 using ProjBobcat.Class.Model.GameResource;
 using ProjBobcat.Interface;
 
@@ -49,7 +50,7 @@ public sealed class GameLoggingInfoResolver : ResolverBase
             Path = loggingPath,
             Title = fileName,
             Type = ResourceType.Logging,
-            Urls = [resolvedGame.Logging!.Client!.File!.Url!]
+            Urls = [new DownloadUriInfo(resolvedGame.Logging!.Client!.File!.Url!, 1)]
         };
     }
 }

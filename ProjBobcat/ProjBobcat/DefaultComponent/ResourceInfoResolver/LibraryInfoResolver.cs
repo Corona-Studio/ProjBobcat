@@ -7,6 +7,7 @@ using System.Security.Cryptography;
 using System.Threading;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
+using ProjBobcat.Class.Model.Downloading;
 using ProjBobcat.Class.Model.GameResource;
 using ProjBobcat.Interface;
 using FileInfo = ProjBobcat.Class.Model.FileInfo;
@@ -15,12 +16,12 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver;
 
 public sealed class LibraryInfoResolver : ResolverBase
 {
-    public IReadOnlyList<string> LibraryUriRoots { get; init; } = ["https://libraries.minecraft.net/"];
-    public IReadOnlyList<string> ForgeUriRoots { get; init; } = ["https://files.minecraftforge.net/"];
-    public IReadOnlyList<string> FabricMavenUriRoots { get; init; } = ["https://maven.fabricmc.net/"];
-    public IReadOnlyList<string> ForgeMavenUriRoots { get; init; } = ["https://maven.minecraftforge.net/"];
-    public IReadOnlyList<string> ForgeMavenOldUriRoots { get; init; } = ["https://files.minecraftforge.net/maven/"];
-    public IReadOnlyList<string> QuiltMavenUriRoots { get; init; } = ["https://maven.quiltmc.org/repository/release/"];
+    public IReadOnlyList<DownloadUriInfo> LibraryUriRoots { get; init; } = [ new ("https://libraries.minecraft.net/", 1) ];
+    public IReadOnlyList<DownloadUriInfo> ForgeUriRoots { get; init; } = [ new ("https://files.minecraftforge.net/", 1) ];
+    public IReadOnlyList<DownloadUriInfo> FabricMavenUriRoots { get; init; } = [ new ("https://maven.fabricmc.net/", 1) ];
+    public IReadOnlyList<DownloadUriInfo> ForgeMavenUriRoots { get; init; } = [ new ("https://maven.minecraftforge.net/", 1) ];
+    public IReadOnlyList<DownloadUriInfo> ForgeMavenOldUriRoots { get; init; } = [ new ("https://files.minecraftforge.net/maven/", 1) ];
+    public IReadOnlyList<DownloadUriInfo> QuiltMavenUriRoots { get; init; } = [ new ("https://maven.quiltmc.org/repository/release/", 1) ];
 
     public override async IAsyncEnumerable<IGameResource> ResolveResourceAsync(
         string basePath,
@@ -60,7 +61,12 @@ public sealed class LibraryInfoResolver : ResolverBase
                 if (computedHash.Equals(lib.Sha1, StringComparison.OrdinalIgnoreCase)) continue;
             }
 
-            yield return this.GetDownloadFile(basePath, lib);
+            var downloadFile = this.GetDownloadFile(basePath, lib);
+
+            if (downloadFile.Urls.Count == 0)
+                continue;
+
+            yield return downloadFile;
         }
 
         this.OnResolve("检索并验证 Library", ProgressValue.Start);
@@ -88,7 +94,12 @@ public sealed class LibraryInfoResolver : ResolverBase
                 if (computedHash.Equals(native.FileInfo.Sha1, StringComparison.OrdinalIgnoreCase)) continue;
             }
 
-            yield return this.GetDownloadFile(basePath, native.FileInfo);
+            var downloadFile = this.GetDownloadFile(basePath, native.FileInfo);
+
+            if (downloadFile.Urls.Count == 0)
+                continue;
+
+            yield return downloadFile;
         }
 
         this.OnResolve("检查Library完成", ProgressValue.Finished);
@@ -99,14 +110,15 @@ public sealed class LibraryInfoResolver : ResolverBase
         var libType = GetLibType(lL);
         var uris = libType switch
         {
-            LibraryType.ForgeMaven => this.ForgeMavenUriRoots.Select(r => $"{r}{lL.Path}"),
-            LibraryType.ForgeMavenOld => this.ForgeMavenOldUriRoots.Select(r => $"{r}{lL.Path}"),
-            LibraryType.Forge => this.ForgeUriRoots.Select(r => $"{r}{lL.Path}"),
-            LibraryType.Fabric => this.FabricMavenUriRoots.Select(r => $"{r}{lL.Path}"),
-            LibraryType.Quilt => this.QuiltMavenUriRoots.Select(r => $"{r}{lL.Path}"),
-            LibraryType.ReplacementNative => [lL.Url!],
-            LibraryType.Other => this.LibraryUriRoots.Select(r => $"{r}{lL.Path}"),
-            _ => [string.Empty]
+            LibraryType.ForgeMaven => this.ForgeMavenUriRoots.Select(r => r with { DownloadUri = $"{r}{lL.Path}" }),
+            LibraryType.ForgeMavenOld =>
+                this.ForgeMavenOldUriRoots.Select(r => r with { DownloadUri = $"{r}{lL.Path}" }),
+            LibraryType.Forge => this.ForgeUriRoots.Select(r => r with { DownloadUri = $"{r}{lL.Path}" }),
+            LibraryType.Fabric => this.FabricMavenUriRoots.Select(r => r with { DownloadUri = $"{r}{lL.Path}" }),
+            LibraryType.Quilt => this.QuiltMavenUriRoots.Select(r => r with { DownloadUri = $"{r}{lL.Path}" }),
+            LibraryType.ReplacementNative => [new DownloadUriInfo(lL.Url!, 1)],
+            LibraryType.Other => this.LibraryUriRoots.Select(r => r with { DownloadUri = $"{r}{lL.Path}" }),
+            _ => []
         };
 
         var symbolIndex = lL.Path!.LastIndexOf('/');

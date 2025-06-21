@@ -23,8 +23,8 @@ public sealed class AssetInfoResolver : ResolverBase
     const string DefaultVersionManifestUrl = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
 
     public string? VersionManifestUrl { get; init; }
-    public IReadOnlyList<string>? AssetIndexUriRoots { get; init; }
-    public IReadOnlyList<string> AssetUriRoots { get; init; } = ["https://resources.download.minecraft.net/"];
+    public IReadOnlyList<DownloadUriInfo>? AssetIndexUriRoots { get; init; }
+    public IReadOnlyList<DownloadUriInfo> AssetUriRoots { get; init; } = [ new ("https://resources.download.minecraft.net/", 1) ];
     public IReadOnlyList<VersionManifestVersionsModel>? Versions { get; init; }
 
     public required IHttpClientFactory HttpClientFactory { get; init; }
@@ -90,7 +90,7 @@ public sealed class AssetInfoResolver : ResolverBase
 
                 if (versionObject == null) yield break;
 
-                var fallbackUrls = new List<string> { versionObject.Url };
+                var fallbackUrls = new List<DownloadUriInfo> { new (versionObject.Url, 1) };
                 if (AssetIndexUriRoots is { Count: > 0 })
                 {
                     var initUrl = fallbackUrls[0];
@@ -98,10 +98,13 @@ public sealed class AssetInfoResolver : ResolverBase
 
                     foreach (var uriRoot in AssetIndexUriRoots)
                     {
-                        var replacedUrl = initUrl
-                            .Replace("https://piston-meta.mojang.com", uriRoot)
-                            .Replace("https://launchermeta.mojang.com", uriRoot)
-                            .Replace("https://launcher.mojang.com", uriRoot);
+                        var replacedUrl = initUrl with
+                        {
+                            DownloadUri = initUrl.DownloadUri
+                                .Replace("https://piston-meta.mojang.com", uriRoot.DownloadUri)
+                                .Replace("https://launchermeta.mojang.com", uriRoot.DownloadUri)
+                                .Replace("https://launcher.mojang.com", uriRoot.DownloadUri)
+                        };
 
                         fallbackUrls.Add(replacedUrl);
                     }
@@ -111,7 +114,7 @@ public sealed class AssetInfoResolver : ResolverBase
                 {
                     try
                     {
-                        using var jsonRes = await client.GetAsync(url);
+                        using var jsonRes = await client.GetAsync(url.DownloadUri);
                         var versionModel =
                             await jsonRes.Content.ReadFromJsonAsync(RawVersionModelContext.Default.RawVersionModel);
 
@@ -129,7 +132,7 @@ public sealed class AssetInfoResolver : ResolverBase
 
             if (string.IsNullOrEmpty(assetIndexDownloadUri)) yield break;
 
-            var urls = new List<string> { assetIndexDownloadUri };
+            var urls = new List<DownloadUriInfo> { new (assetIndexDownloadUri, 1) };
 
             if (AssetIndexUriRoots is { Count: > 0 })
             {
@@ -138,10 +141,13 @@ public sealed class AssetInfoResolver : ResolverBase
 
                 foreach (var uriRoot in AssetIndexUriRoots)
                 {
-                    var replacedUrl = initUrl
-                        .Replace("https://piston-meta.mojang.com", uriRoot)
-                        .Replace("https://launchermeta.mojang.com", uriRoot)
-                        .Replace("https://launcher.mojang.com", uriRoot);
+                    var replacedUrl = initUrl with
+                    {
+                        DownloadUri = initUrl.DownloadUri
+                            .Replace("https://piston-meta.mojang.com", uriRoot.DownloadUri)
+                            .Replace("https://launchermeta.mojang.com", uriRoot.DownloadUri)
+                            .Replace("https://launcher.mojang.com", uriRoot.DownloadUri)
+                    };
 
                     urls.Add(replacedUrl);
                 }
@@ -243,7 +249,9 @@ public sealed class AssetInfoResolver : ResolverBase
                 Title = hash,
                 Path = path,
                 Type = ResourceType.Asset,
-                Urls = this.AssetUriRoots.Select(r => $"{r}{twoDigitsHash}/{fi.Hash}").ToImmutableList(),
+                Urls = this.AssetUriRoots
+                    .Select(r => r with { DownloadUri = $"{r}{twoDigitsHash}/{fi.Hash}" })
+                    .ToImmutableList(),
                 FileSize = fi.Size,
                 CheckSum = hash,
                 FileName = hash

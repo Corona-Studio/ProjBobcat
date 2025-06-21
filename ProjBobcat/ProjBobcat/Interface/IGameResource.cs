@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using ProjBobcat.Class.Model;
+using ProjBobcat.Class.Model.Downloading;
 
 namespace ProjBobcat.Interface;
 
@@ -23,7 +24,7 @@ public interface IGameResource
     /// <summary>
     ///     Urls
     /// </summary>
-    IReadOnlyList<string> Urls { get; init; }
+    IReadOnlyList<DownloadUriInfo> Urls { get; init; }
 
     string FileName { get; init; }
 
