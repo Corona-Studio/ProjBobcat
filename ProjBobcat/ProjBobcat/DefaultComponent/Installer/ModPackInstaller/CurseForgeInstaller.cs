@@ -91,7 +91,10 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
             }
         }
 
-        var projectIds = files.Select(file => file.ProjectId).ToArray();
+        var projectIds = manifest.Files
+            ?.Where(file => file.ProjectId != 0 && file.FileId != 0)
+            .Select(file => file.ProjectId)
+            .ToArray() ?? [];
 
         CurseForgeAddonInfo[]? modProjectDetails = null;
 
