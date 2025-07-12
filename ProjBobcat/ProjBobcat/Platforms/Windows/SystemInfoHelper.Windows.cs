@@ -180,7 +180,10 @@ public static class SystemInfoHelper
                 .Union(FindJavaInternal(wow64Reg))
                 .ToHashSet();
 
-            var drives = DriveInfo.GetDrives();
+            var drives = DriveInfo
+                .GetDrives()
+                .Where(d => d.DriveType == DriveType.Fixed)
+                .ToArray();
 
             foreach (var drive in drives)
                 FindJavaBlur(drive.RootDirectory, javas);
