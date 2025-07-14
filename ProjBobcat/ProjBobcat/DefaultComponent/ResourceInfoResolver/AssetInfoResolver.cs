@@ -250,7 +250,7 @@ public sealed class AssetInfoResolver : ResolverBase
                 Path = path,
                 Type = ResourceType.Asset,
                 Urls = this.AssetUriRoots
-                    .Select(r => r with { DownloadUri = $"{r}{twoDigitsHash}/{fi.Hash}" })
+                    .Select(r => r with { DownloadUri = $"{r.DownloadUri}{twoDigitsHash}/{fi.Hash}" })
                     .ToImmutableList(),
                 FileSize = fi.Size,
                 CheckSum = hash,

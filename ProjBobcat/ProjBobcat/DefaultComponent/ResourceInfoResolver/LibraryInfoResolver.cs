@@ -110,14 +110,14 @@ public sealed class LibraryInfoResolver : ResolverBase
         var libType = GetLibType(lL);
         var uris = libType switch
         {
-            LibraryType.ForgeMaven => this.ForgeMavenUriRoots.Select(r => r with { DownloadUri = $"{r}{lL.Path}" }),
+            LibraryType.ForgeMaven => this.ForgeMavenUriRoots.Select(r => r with { DownloadUri = $"{r.DownloadUri}{lL.Path}" }),
             LibraryType.ForgeMavenOld =>
-                this.ForgeMavenOldUriRoots.Select(r => r with { DownloadUri = $"{r}{lL.Path}" }),
-            LibraryType.Forge => this.ForgeUriRoots.Select(r => r with { DownloadUri = $"{r}{lL.Path}" }),
-            LibraryType.Fabric => this.FabricMavenUriRoots.Select(r => r with { DownloadUri = $"{r}{lL.Path}" }),
-            LibraryType.Quilt => this.QuiltMavenUriRoots.Select(r => r with { DownloadUri = $"{r}{lL.Path}" }),
+                this.ForgeMavenOldUriRoots.Select(r => r with { DownloadUri = $"{r.DownloadUri}{lL.Path}" }),
+            LibraryType.Forge => this.ForgeUriRoots.Select(r => r with { DownloadUri = $"{r.DownloadUri}{lL.Path}" }),
+            LibraryType.Fabric => this.FabricMavenUriRoots.Select(r => r with { DownloadUri = $"{r.DownloadUri}{lL.Path}" }),
+            LibraryType.Quilt => this.QuiltMavenUriRoots.Select(r => r with { DownloadUri = $"{r.DownloadUri}{lL.Path}" }),
             LibraryType.ReplacementNative => [new DownloadUriInfo(lL.Url!, 1)],
-            LibraryType.Other => this.LibraryUriRoots.Select(r => r with { DownloadUri = $"{r}{lL.Path}" }),
+            LibraryType.Other => this.LibraryUriRoots.Select(r => r with { DownloadUri = $"{r.DownloadUri}{lL.Path}" }),
             _ => []
         };
 
