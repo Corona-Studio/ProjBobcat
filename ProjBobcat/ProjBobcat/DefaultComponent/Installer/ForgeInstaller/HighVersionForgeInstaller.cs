@@ -274,7 +274,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             mappingDf.Changed += (_, args) =>
             {
                 this.InvokeStatusChangedEvent(
-                    $"下载 - {mappingFileName} ( {args.ProgressPercentage} / 100 )",
+                    $"下载 - {mappingFileName} ( {args.ProgressPercentage.DisplayValue:F} / 100 )",
                     args.ProgressPercentage);
             };
 
