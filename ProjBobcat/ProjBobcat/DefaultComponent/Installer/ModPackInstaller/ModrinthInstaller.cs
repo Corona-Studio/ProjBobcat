@@ -64,7 +64,7 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
         if (!di.Exists)
             di.Create();
 
-        var downloadFiles = new List<SimpleDownloadFile>();
+        var downloadFiles = new List<MultiSourceDownloadFile>();
 
         foreach (var file in index.Files)
         {
@@ -76,11 +76,15 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
             var fileName = Path.GetFileName(fullPath);
             var checkSum = file.Hashes.TryGetValue("sha1", out var sha1) ? sha1 : string.Empty;
 
-            var df = new SimpleDownloadFile
+            IEnumerable<string> urls = DownloadUriReplacer == null
+                ? file.Downloads
+                : [.. DownloadUriReplacer(file.Downloads), .. file.Downloads];
+
+            var df = new MultiSourceDownloadFile
             {
                 CheckSum = checkSum,
                 DownloadPath = downloadDir,
-                DownloadUri = Random.Shared.GetItems(file.Downloads, 1)[0],
+                DownloadUris = urls.Distinct().Select(u => new DownloadUriInfo(u, 1)).ToArray(),
                 FileName = fileName,
                 FileSize = file.Size
             };
@@ -91,15 +95,19 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
 
         this.TotalDownloaded = 0;
         this.NeedToDownload = downloadFiles.Count;
-        await DownloadHelper.AdvancedDownloadListFile(downloadFiles, new DownloadSettings
+
+        if (downloadFiles.Count > 0)
         {
-            DownloadParts = 8,
-            RetryCount = 10,
-            Timeout = TimeSpan.FromMinutes(1),
-            CheckFile = true,
-            HashType = HashType.SHA1,
-            HttpClientFactory = this.HttpClientFactory
-        });
+            await DownloadHelper.AdvancedDownloadListFile(downloadFiles, new DownloadSettings
+            {
+                DownloadParts = 8,
+                RetryCount = downloadFiles.MaxBy(u => u.DownloadUris.Count)!.DownloadUris.Count,
+                Timeout = TimeSpan.FromMinutes(1),
+                CheckFile = true,
+                HashType = HashType.SHA1,
+                HttpClientFactory = this.HttpClientFactory
+            });
+        }
 
         ArgumentOutOfRangeException.ThrowIfEqual(this.FailedFiles.IsEmpty, false);
 

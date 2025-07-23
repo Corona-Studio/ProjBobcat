@@ -136,7 +136,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
         var fileDic = files.ToDictionary(k => k.Id, v => v);
         var projectDic = modProjectDetails.ToDictionary(k => k.Id, v => v);
-        var downloadFiles = new List<AbstractDownloadBase>();
+        var downloadFiles = new List<MultiSourceDownloadFile>();
 
         foreach (var fileId in fileIds)
         {
@@ -166,10 +166,15 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
             if (string.IsNullOrEmpty(downloadUrl))
             {
+                var fallbackUrls = GeneratePossibleDownloadUrls(file.Id, file.FileName);
+                var proceededUrls = DownloadUriReplacer == null
+                    ? GeneratePossibleDownloadUrls(file.Id, file.FileName)
+                    : [.. DownloadUriReplacer(GeneratePossibleDownloadUrls(file.Id, file.FileName)), ..fallbackUrls];
+
                 var guessDownloadFile = new MultiSourceDownloadFile
                 {
                     DownloadPath = di.FullName,
-                    DownloadUris = GeneratePossibleDownloadUrls(file.Id, file.FileName),
+                    DownloadUris = proceededUrls.Distinct().Select(u => new DownloadUriInfo(u, 1)).ToArray(),
                     FileName = file.FileName
                 };
 
@@ -178,10 +183,14 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
                 continue;
             }
 
-            var downloadFile = new SimpleDownloadFile
+            IEnumerable<string> urls = DownloadUriReplacer == null
+                ? [downloadUrl]
+                : [.. DownloadUriReplacer([downloadUrl]), downloadUrl];
+
+            var downloadFile = new MultiSourceDownloadFile
             {
                 DownloadPath = di.FullName,
-                DownloadUri = downloadUrl,
+                DownloadUris = urls.Distinct().Select(u => new DownloadUriInfo(u, 1)).ToArray(),
                 FileName = file.FileName
             };
 
@@ -192,13 +201,17 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         this.InvokeStatusChangedEvent("成功解析整合包模组的下载地址", ProgressValue.Finished);
 
         this.TotalDownloaded = 0;
-        await DownloadHelper.AdvancedDownloadListFile(downloadFiles, new DownloadSettings
+
+        if (downloadFiles.Count > 0)
         {
-            DownloadParts = 8,
-            RetryCount = 10,
-            Timeout = TimeSpan.FromMinutes(5),
-            HttpClientFactory = this.HttpClientFactory
-        });
+            await DownloadHelper.AdvancedDownloadListFile(downloadFiles, new DownloadSettings
+            {
+                DownloadParts = 2,
+                RetryCount = downloadFiles.MaxBy(u => u.DownloadUris.Count)!.DownloadUris.Count,
+                Timeout = TimeSpan.FromMinutes(5),
+                HttpClientFactory = this.HttpClientFactory
+            });
+        }
 
         var modPackFullPath = Path.GetFullPath(this.ModPackPath);
 
@@ -440,14 +453,12 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         }
     }
 
-    private static DownloadUriInfo[] GeneratePossibleDownloadUrls(long fileId, string fileName)
+    private static IEnumerable<string> GeneratePossibleDownloadUrls(long fileId, string fileName)
     {
         var fileIdStr = fileId.ToString();
-        
-        return [
-            new DownloadUriInfo($"https://edge.forgecdn.net/files/{fileIdStr[..4]}/{fileIdStr[4..]}/{fileName}", 1),
-            new DownloadUriInfo($"https://mediafiles.forgecdn.net/files/{fileIdStr[..4]}/{fileIdStr[4..]}/{fileName}", 1)
-        ];
+
+        yield return $"https://edge.forgecdn.net/files/{fileIdStr[..4]}/{fileIdStr[4..]}/{fileName}";
+        yield return $"https://mediafiles.forgecdn.net/files/{fileIdStr[..4]}/{fileIdStr[4..]}/{fileName}";
     }
 
     public static async Task<(string? FileName, string? Url)> TryGuessModDownloadLink(
@@ -471,12 +482,12 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
             foreach (var url in pendingCheckUrls)
             {
-                using var checkReq = new HttpRequestMessage(HttpMethod.Head, url.DownloadUri);
+                using var checkReq = new HttpRequestMessage(HttpMethod.Head, url);
                 using var checkRes = await client.SendAsync(checkReq);
 
                 if (!checkRes.IsSuccessStatusCode) continue;
 
-                return (fileName, url.DownloadUri);
+                return (fileName, url);
             }
 
             return default;

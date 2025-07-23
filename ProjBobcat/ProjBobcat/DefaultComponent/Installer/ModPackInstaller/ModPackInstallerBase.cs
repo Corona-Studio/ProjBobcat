@@ -1,4 +1,6 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Downloading;
 using ProjBobcat.Event;
@@ -9,6 +11,8 @@ public abstract class ModPackInstallerBase : InstallerBase
 {
     protected readonly ConcurrentBag<AbstractDownloadBase> FailedFiles = [];
     protected int TotalDownloaded, NeedToDownload;
+
+    public Func<IEnumerable<string>, IReadOnlyList<string>>? DownloadUriReplacer { get; init; }
 
     protected void WhenCompleted(object? sender, DownloadFileCompletedEventArgs e)
     {
