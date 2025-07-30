@@ -377,11 +377,19 @@ public sealed partial class DefaultGameCore : GameCoreBase
                 ? Path.Combine(this.RootPath, GamePathHelper.GetGamePath(settings.Version))
                 : this.RootPath;
 
-            ProcessStartInfo psi;
+            ProcessStartInfo processStartInfo;
+
+            var commandProxy = settings.CommandProxy;
 
             if (!settings.UseShellExecute)
             {
-                psi = new ProcessStartInfo(java!.JavaPath, string.Join(' ', arguments))
+                var (command, finalArguments) = string.IsNullOrWhiteSpace(commandProxy) switch
+                {
+                    true => (java!.JavaPath, string.Join(' ', arguments)),
+                    false => (commandProxy.Trim(), $"\"{java!.JavaPath}\" {string.Join(' ', arguments)}")
+                };
+
+                processStartInfo = new ProcessStartInfo(command, finalArguments)
                 {
                     UseShellExecute = false,
                     WorkingDirectory = rootPath,
@@ -394,9 +402,11 @@ public sealed partial class DefaultGameCore : GameCoreBase
             else
             {
                 var normalJavaPath = java!.JavaPath.Replace("javaw", "java", StringComparison.OrdinalIgnoreCase);
-                var javaCommand = $"\"{normalJavaPath}\" {string.Join(' ', arguments)}";
+                var javaCommand = string.IsNullOrWhiteSpace(commandProxy)
+                    ? $"\"{normalJavaPath}\" {string.Join(' ', arguments)}"
+                    : $"\"{commandProxy}\" \"{normalJavaPath}\" {string.Join(' ', arguments)}";
 
-                psi = javaCommand switch
+                processStartInfo = javaCommand switch
                 {
                     _ when RuntimeInformation.IsOSPlatform(OSPlatform.Windows) =>
                         await StartGameInShellInWindows(rootPath, javaCommand),
@@ -406,15 +416,15 @@ public sealed partial class DefaultGameCore : GameCoreBase
                     _ => throw new PlatformNotSupportedException("Unsupported OS platform.")
                 };
             }
-            
+
             if (!settings.UseShellExecute)
             {
                 // Patch for third-party launcher
-                psi.EnvironmentVariables.Remove("JAVA_TOOL_OPTIONS");
+                processStartInfo.EnvironmentVariables.Remove("JAVA_TOOL_OPTIONS");
 
                 foreach (var (k, v) in ParseGameEnv(settings.GameEnvironmentVariables))
                 {
-                    psi.EnvironmentVariables.Add(k, v);
+                    processStartInfo.EnvironmentVariables.Add(k, v);
                 }
             }
 
@@ -451,7 +461,7 @@ public sealed partial class DefaultGameCore : GameCoreBase
             var launchWrapper = new LaunchWrapper(authResult, settings)
             {
                 GameCore = this,
-                Process = Process.Start(psi)
+                Process = Process.Start(processStartInfo)
             };
 
             launchWrapper.Do();
