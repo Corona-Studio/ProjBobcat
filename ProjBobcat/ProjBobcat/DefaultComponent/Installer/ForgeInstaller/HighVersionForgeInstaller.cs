@@ -37,6 +37,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
     public override required string RootPath { get; init; }
     public required string ForgeExecutablePath { get; init; }
     public required VersionLocatorBase VersionLocator { get; init; }
+    public int DownloadThread { get; set; } = Environment.ProcessorCount;
 
     public ForgeInstallResult InstallForge()
     {
@@ -291,14 +292,13 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             {
                 CheckFile = true,
                 DownloadParts = 1,
+                DownloadThread = DownloadThread,
                 HashType = HashType.SHA1,
                 RetryCount = 12,
                 Timeout = TimeSpan.FromMinutes(1),
                 HttpClientFactory = this.HttpClientFactory,
                 ShowDownloadProgress = true
             });
-
-
         }
 
         #endregion
