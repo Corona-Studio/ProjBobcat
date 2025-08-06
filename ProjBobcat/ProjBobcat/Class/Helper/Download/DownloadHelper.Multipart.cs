@@ -533,7 +533,9 @@ public static partial class DownloadHelper
             }
         }
 
-        downloadFile.OnCompleted(false, new AggregateException(exceptions), -1);
+        // Fallback to normal download if all retries failed
+        downloadFile.RetryCount = 0;
+        await DownloadData(downloadFile, downloadSettings);
     }
 
     record PreChunkInfo(
