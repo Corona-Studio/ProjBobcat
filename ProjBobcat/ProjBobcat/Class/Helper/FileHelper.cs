@@ -11,8 +11,11 @@ namespace ProjBobcat.Class.Helper;
 /// </summary>
 public static class FileHelper
 {
-    public static string GetValidPathName(string input)
+    public static string GetValidPathName(string? input)
     {
+        if (string.IsNullOrWhiteSpace(input))
+            return string.Empty;
+
         return Path.GetInvalidFileNameChars().Aggregate(input, (current, c) => current.Replace(c, '_'));
     }
 
