@@ -321,9 +321,10 @@ public static partial class DownloadHelper
                         }
                         else
                         {
-                            var splitRanges = CalculateDownloadRanges(undoneRange.Length, undoneRange.Start, downloadSettings)
-                                .ToList()
-                                .AsReadOnly();
+                            var splitRanges =
+                                CalculateDownloadRanges(undoneRange.Length, undoneRange.Start, downloadSettings)
+                                    .ToList()
+                                    .AsReadOnly();
 
                             foreach (var range in splitRanges)
                             {
@@ -515,6 +516,16 @@ public static partial class DownloadHelper
                     await Task.Delay((int)delay, CancellationToken.None);
                 }
             }
+            catch (OperationCanceledException e)
+            {
+                // Timeout, or cancellation requested
+                // Just retry the download
+                downloadFile.RetryCount++;
+                exceptions.Add(e);
+
+                var delay = Math.Min(1000 * Math.Pow(2, downloadFile.RetryCount - 1), 5000);
+                await Task.Delay((int)delay, CancellationToken.None);
+            }
             catch (Exception ex)
             {
                 downloadFile.RetryCount++;
@@ -528,7 +539,7 @@ public static partial class DownloadHelper
                     0,
                     0);
 
-                var delay = Math.Min(1000 * Math.Pow(2, downloadFile.RetryCount - 1), 10000);
+                var delay = Math.Min(1000 * Math.Pow(2, downloadFile.RetryCount - 1), 5000);
                 await Task.Delay((int)delay, CancellationToken.None);
             }
         }
