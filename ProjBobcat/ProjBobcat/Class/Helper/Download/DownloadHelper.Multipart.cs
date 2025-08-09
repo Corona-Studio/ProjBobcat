@@ -135,7 +135,6 @@ public static partial class DownloadHelper
             return;
         }
 
-        var exceptions = new List<Exception>();
         var filePath = Path.Combine(downloadFile.DownloadPath, downloadFile.FileName);
         var trials = downloadSettings.RetryCount <= 0 ? 1 : downloadSettings.RetryCount;
         
@@ -462,7 +461,7 @@ public static partial class DownloadHelper
                         {
                             finishedRangeStreams.Clear();
 
-                            exceptions.Add(new HashMismatchException(filePath, downloadFile.CheckSum, checkSum));
+                            //exceptions.Add(new HashMismatchException(filePath, downloadFile.CheckSum, checkSum));
 
                             continue;
                         }
@@ -508,7 +507,7 @@ public static partial class DownloadHelper
             catch (HttpRequestException e)
             {
                 downloadFile.RetryCount++;
-                exceptions.Add(e);
+                //exceptions.Add(e);
 
                 if (e.StatusCode != HttpStatusCode.NotFound)
                 {
@@ -521,7 +520,7 @@ public static partial class DownloadHelper
                 // Timeout, or cancellation requested
                 // Just retry the download
                 downloadFile.RetryCount++;
-                exceptions.Add(e);
+                //exceptions.Add(e);
 
                 var delay = Math.Min(1000 * Math.Pow(2, downloadFile.RetryCount - 1), 5000);
                 await Task.Delay((int)delay, CancellationToken.None);
@@ -531,7 +530,7 @@ public static partial class DownloadHelper
                 downloadFile.RetryCount++;
 
                 finishedRangeStreams.Clear();
-                exceptions.Add(ex);
+                //exceptions.Add(ex);
 
                 downloadFile.OnChanged(
                     0,
