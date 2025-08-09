@@ -14,7 +14,6 @@ using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Downloading;
-using ProjBobcat.Exceptions;
 
 namespace ProjBobcat.Class.Helper.Download;
 
@@ -515,7 +514,7 @@ public static partial class DownloadHelper
                     await Task.Delay((int)delay, CancellationToken.None);
                 }
             }
-            catch (OperationCanceledException e)
+            catch (OperationCanceledException)
             {
                 // Timeout, or cancellation requested
                 // Just retry the download
@@ -525,7 +524,7 @@ public static partial class DownloadHelper
                 var delay = Math.Min(1000 * Math.Pow(2, downloadFile.RetryCount - 1), 5000);
                 await Task.Delay((int)delay, CancellationToken.None);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 downloadFile.RetryCount++;
 
