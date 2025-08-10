@@ -10,6 +10,7 @@ public class SearchOptions
     public int? Index { get; init; }
     public int? PageSize { get; init; }
     public string? SearchFilter { get; init; }
+    public string? Slug { get; init; }
     public int? Sort { get; init; }
     public string? SortOrder { get; set; }
     public int? ModLoaderFilter { get; init; }
@@ -31,6 +32,8 @@ public class SearchOptions
             result += $"&gameVersion={this.GameVersion}";
         if (!string.IsNullOrEmpty(this.SearchFilter))
             result += $"&searchFilter={this.SearchFilter}";
+        if (!string.IsNullOrEmpty(this.Slug))
+            result += $"&slug={this.Slug}";
         if (this.ClassId != null && this.ParentCategoryId is null)
             result += $"&classId={this.ClassId}";
         if (this.CategoryId != null)
