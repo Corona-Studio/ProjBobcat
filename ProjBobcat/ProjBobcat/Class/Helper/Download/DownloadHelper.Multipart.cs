@@ -143,6 +143,7 @@ public static partial class DownloadHelper
         var lastProgressUpdateTime = DateTime.UtcNow;
         var progressUpdateInterval = TimeSpan.FromMilliseconds(200); // 限制更新频率
         var finishedRangeStreams = new ConcurrentDictionary<DownloadRange, FileStream>();
+        var canceledRetryCountAdder = 0;
         UrlInfo? calculatedUrlInfo = null;
 
         using var cts = new CancellationTokenSource(downloadSettings.Timeout);
@@ -518,7 +519,8 @@ public static partial class DownloadHelper
             {
                 // Timeout, or cancellation requested
                 // Just retry the download
-                downloadFile.RetryCount++;
+                canceledRetryCountAdder++;
+                downloadFile.RetryCount += canceledRetryCountAdder % 2;
                 //exceptions.Add(e);
 
                 var delay = Math.Min(1000 * Math.Pow(2, downloadFile.RetryCount - 1), 5000);
