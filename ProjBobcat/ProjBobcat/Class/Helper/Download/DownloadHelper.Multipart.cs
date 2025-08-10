@@ -520,7 +520,14 @@ public static partial class DownloadHelper
                 // Timeout, or cancellation requested
                 // Just retry the download
                 canceledRetryCountAdder++;
-                downloadFile.RetryCount += canceledRetryCountAdder % 2;
+
+                if (canceledRetryCountAdder >= Math.Max(1, downloadSettings.RetryCount / 2))
+                {
+                    // If we have retried enough times, we will not retry anymore
+                    downloadFile.RetryCount++;
+                    canceledRetryCountAdder = 0;
+                }
+
                 //exceptions.Add(e);
 
                 var delay = Math.Min(1000 * Math.Pow(2, downloadFile.RetryCount - 1), 5000);
