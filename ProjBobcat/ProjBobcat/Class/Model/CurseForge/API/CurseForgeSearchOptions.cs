@@ -1,6 +1,6 @@
 ﻿namespace ProjBobcat.Class.Model.CurseForge.API;
 
-public class SearchOptions
+public class CurseForgeSearchOptions
 {
     public int? CategoryId { get; init; }
     public int? ClassId { get; init; }

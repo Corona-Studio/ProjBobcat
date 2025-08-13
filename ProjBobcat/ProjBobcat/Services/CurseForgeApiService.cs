@@ -49,7 +49,7 @@ public class CurseForgeApiService(
 {
     private const string DefaultApiUrl = "https://api.curseforge.com/v1";
 
-    public async Task<DataModelWithPagination<CurseForgeAddonInfo[]>?> SearchAddons(SearchOptions options,
+    public async Task<DataModelWithPagination<CurseForgeAddonInfo[]>?> SearchAddons(CurseForgeSearchOptions options,
         CancellationToken ct)
     {
         var reqUrl = $"{this.GetApiRoot()}/mods/search{options}";
