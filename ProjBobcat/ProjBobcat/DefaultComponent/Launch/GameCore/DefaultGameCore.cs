@@ -189,13 +189,13 @@ public sealed partial class DefaultGameCore : GameCoreBase
 
             //在以下方法中，我们存储前一个步骤的时间并且重置秒表，以此逐步测量启动时间。
             //In the method InvokeLaunchLogThenStart(args), we storage the time span of the previous process and restart the watch in order that the time used in each step is recorded.
-            this.InvokeLaunchLogThenStart("解析游戏", ref currentTimestamp);
+            this.InvokeLaunchLogThenStart(settings.Version, "解析游戏", ref currentTimestamp);
 
             #endregion
 
             #region 验证账户凭据 Legal Account Verifier
 
-            this.InvokeLaunchLogThenStart("正在验证账户凭据", ref currentTimestamp);
+            this.InvokeLaunchLogThenStart(settings.Version, "正在验证账户凭据", ref currentTimestamp);
 
             //以下代码实现了账户模式从离线到在线的切换。
             //The following code switches account mode between offline and yggdrasil.
@@ -207,7 +207,7 @@ public sealed partial class DefaultGameCore : GameCoreBase
                 _ => null
             };
 
-            this.InvokeLaunchLogThenStart("账户凭据验证完成", ref currentTimestamp);
+            this.InvokeLaunchLogThenStart(settings.Version, "账户凭据验证完成", ref currentTimestamp);
 
             //错误处理
             //Error processor
@@ -294,12 +294,13 @@ public sealed partial class DefaultGameCore : GameCoreBase
             var nativeRoot = Path.Combine(this.RootPath, GamePathHelper.CreateNativeRoot(settings.Version));
             var arguments =
                 argumentParser.GenerateLaunchArguments(nativeRoot, version, resolvedVersion, settings, authResult);
-            this.InvokeLaunchLogThenStart("解析启动参数", ref currentTimestamp);
+            this.InvokeLaunchLogThenStart(settings.Version, "解析启动参数", ref currentTimestamp);
 
             //通过String Builder格式化参数。（转化成字符串）
             //Format the arguments using string builder.(Convert to string)
             // arguments.ForEach(arg => sb.Append(arg.Trim()).Append(' '));
-            this.InvokeLaunchLogThenStart(string.Join(Environment.NewLine, arguments), ref currentTimestamp);
+            this.InvokeLaunchLogThenStart(settings.Version, string.Join(Environment.NewLine, arguments),
+                ref currentTimestamp);
 
             #endregion
 
@@ -340,7 +341,8 @@ public sealed partial class DefaultGameCore : GameCoreBase
                             continue;
                         }
 
-                        this.InvokeLaunchLogThenStart($"[解压 Natives] - {entry.FullName}", ref currentTimestamp);
+                        this.InvokeLaunchLogThenStart(settings.Version, $"[解压 Natives] - {entry.FullName}",
+                            ref currentTimestamp);
 
                         var fi = new FileInfo(extractPath);
                         var di = fi.Directory ?? new DirectoryInfo(Path.GetDirectoryName(extractPath)!);
@@ -406,7 +408,7 @@ public sealed partial class DefaultGameCore : GameCoreBase
                     _ => throw new PlatformNotSupportedException("Unsupported OS platform.")
                 };
             }
-            
+
             if (!settings.UseShellExecute)
             {
                 // Patch for third-party launcher
@@ -442,7 +444,7 @@ public sealed partial class DefaultGameCore : GameCoreBase
                 }
             });
 
-            this.InvokeLaunchLogThenStart("设置 log4j 缓解措施", ref currentTimestamp);
+            this.InvokeLaunchLogThenStart(settings.Version, "设置 log4j 缓解措施", ref currentTimestamp);
 
             #endregion
 
@@ -455,12 +457,13 @@ public sealed partial class DefaultGameCore : GameCoreBase
             };
 
             launchWrapper.Do();
-            this.InvokeLaunchLogThenStart("启动游戏", ref currentTimestamp);
+            this.InvokeLaunchLogThenStart(settings.Version, "启动游戏", ref currentTimestamp);
 
             if (launchWrapper.Process == null)
             {
                 this.OnGameExit(launchWrapper, new GameExitEventArgs
                 {
+                    SourceGameId = settings.Version,
                     Exception = null,
                     ExitCode = -1
                 });
@@ -480,6 +483,7 @@ public sealed partial class DefaultGameCore : GameCoreBase
                 {
                     this.OnGameExit(launchWrapper, new GameExitEventArgs
                     {
+                        SourceGameId = settings.Version,
                         Exception = task.Exception,
                         ExitCode = launchWrapper.ExitCode == 0
                             ? ProcessorHelper.TryGetProcessExitCode(launchWrapper.Process, out var code) ? code : 0

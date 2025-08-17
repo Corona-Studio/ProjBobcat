@@ -108,12 +108,14 @@ public abstract class GameCoreBase : IGameCore
     ///     （内部方法）写入日志，记录时间。
     ///     Write the log and record the time.
     /// </summary>
+    /// <param name="sourceGameId"></param>
     /// <param name="item"></param>
     /// <param name="timestamp"></param>
-    protected void InvokeLaunchLogThenStart(string item, ref long timestamp)
+    protected void InvokeLaunchLogThenStart(string sourceGameId, string item, ref long timestamp)
     {
         this.OnLogLaunchData(this, new LaunchLogEventArgs
         {
+            SourceGameId = sourceGameId,
             Item = item,
             ItemRunTime = Stopwatch.GetElapsedTime(timestamp)
         });

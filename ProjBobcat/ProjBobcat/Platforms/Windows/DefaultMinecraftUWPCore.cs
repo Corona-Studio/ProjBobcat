@@ -52,13 +52,14 @@ public class DefaultMineCraftUWPCore : GameCoreBase
         };
         launchWrapper.Do();
 
-        this.InvokeLaunchLogThenStart("启动游戏", ref timestamp);
+        this.InvokeLaunchLogThenStart(string.Empty, "启动游戏", ref timestamp);
 
         Task.Run(launchWrapper.Process.WaitForExit)
             .ContinueWith(task =>
             {
                 this.OnGameExit(launchWrapper, new GameExitEventArgs
                 {
+                    SourceGameId = string.Empty,
                     Exception = task.Exception,
                     ExitCode = launchWrapper.ExitCode
                 });
