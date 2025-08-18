@@ -63,6 +63,8 @@ public class LaunchSettings
     public bool VersionInsulation { get; init; }
     public string? LauncherName { get; init; }
 
+    public string? CommandProxy {  get; init; }
+    
     public GameArguments? FallBackGameArguments { get; init; }
     public required GameArguments GameArguments { get; init; }
     public required string[] GameEnvironmentVariables { get; init; }
