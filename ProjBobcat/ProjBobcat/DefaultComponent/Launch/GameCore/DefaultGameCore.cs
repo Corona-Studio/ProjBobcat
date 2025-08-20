@@ -91,7 +91,7 @@ public sealed partial class DefaultGameCore : GameCoreBase
         fileContent = CrLfRegex().Replace(fileContent, "\r\n");
 
         var encoding = preferUtf8Encoding
-            ? Encoding.UTF8
+            ? new UTF8Encoding(false)
             : Encoding.GetEncoding(ansi);
 
         await File.WriteAllTextAsync(tempScriptPath, fileContent, encoding);
@@ -392,7 +392,7 @@ public sealed partial class DefaultGameCore : GameCoreBase
             {
                 var ansi = CultureInfo.CurrentCulture.TextInfo.ANSICodePage;
                 var encoding = settings.PreferUtf8Encoding
-                    ? Encoding.UTF8
+                    ? new UTF8Encoding(false)
                     : Encoding.GetEncoding(ansi);
 
                 psi = new ProcessStartInfo(java!.JavaPath, string.Join(' ', arguments))
