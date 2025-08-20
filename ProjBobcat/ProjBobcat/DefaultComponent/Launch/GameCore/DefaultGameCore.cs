@@ -75,12 +75,13 @@ public sealed partial class DefaultGameCore : GameCoreBase
 
     private static async Task<ProcessStartInfo> StartGameInShellInWindows(
         string rootPath,
-        string command)
+        string command,
+        bool preferUtf8Encoding)
     {
         var ansi = CultureInfo.CurrentCulture.TextInfo.ANSICodePage;
         var tempScriptPath = Path.Combine(Path.GetTempPath(), "launch_java_command.bat");
         var fileContent = $"""
-                           chcp {ansi}
+                           chcp {(preferUtf8Encoding ? 65001 : ansi)}
                            @echo off
                            cd /d "{rootPath}"
                            {command}
@@ -89,7 +90,11 @@ public sealed partial class DefaultGameCore : GameCoreBase
 
         fileContent = CrLfRegex().Replace(fileContent, "\r\n");
 
-        await File.WriteAllTextAsync(tempScriptPath, fileContent, Encoding.GetEncoding(ansi));
+        var encoding = preferUtf8Encoding
+            ? Encoding.UTF8
+            : Encoding.GetEncoding(ansi);
+
+        await File.WriteAllTextAsync(tempScriptPath, fileContent, encoding);
 
         return new ProcessStartInfo("cmd.exe", $"/k \"{tempScriptPath}\"")
         {
@@ -385,14 +390,19 @@ public sealed partial class DefaultGameCore : GameCoreBase
 
             if (!settings.UseShellExecute)
             {
+                var ansi = CultureInfo.CurrentCulture.TextInfo.ANSICodePage;
+                var encoding = settings.PreferUtf8Encoding
+                    ? Encoding.UTF8
+                    : Encoding.GetEncoding(ansi);
+
                 psi = new ProcessStartInfo(java!.JavaPath, string.Join(' ', arguments))
                 {
                     UseShellExecute = false,
                     WorkingDirectory = rootPath,
                     RedirectStandardError = true,
                     RedirectStandardOutput = true,
-                    StandardOutputEncoding = Encoding.UTF8,
-                    StandardErrorEncoding = Encoding.UTF8
+                    StandardOutputEncoding = encoding,
+                    StandardErrorEncoding = encoding
                 };
             }
             else
@@ -403,7 +413,7 @@ public sealed partial class DefaultGameCore : GameCoreBase
                 psi = javaCommand switch
                 {
                     _ when RuntimeInformation.IsOSPlatform(OSPlatform.Windows) =>
-                        await StartGameInShellInWindows(rootPath, javaCommand),
+                        await StartGameInShellInWindows(rootPath, javaCommand, settings.PreferUtf8Encoding),
                     _ when RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ||
                            RuntimeInformation.IsOSPlatform(OSPlatform.Linux) =>
                         await StartGameInShellInUnix(rootPath, javaCommand),

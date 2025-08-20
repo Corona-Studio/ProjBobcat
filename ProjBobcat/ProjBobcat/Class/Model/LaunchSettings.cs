@@ -67,6 +67,7 @@ public class LaunchSettings
     public required GameArguments GameArguments { get; init; }
     public required string[] GameEnvironmentVariables { get; init; }
     public required bool UseV4NetworkingStack { get; init; }
+    public required bool PreferUtf8Encoding { get; init; }
 
     public override string ToString()
     {
