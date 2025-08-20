@@ -1,14 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
-using ProjBobcat.Class;
+﻿using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Auth;
 using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.Version;
 using ProjBobcat.Interface;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Text;
 
 namespace ProjBobcat.DefaultComponent.Launch;
 
@@ -129,9 +130,19 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
 
         #region Set Output Encoding
 
-        yield return "-Dfile.encoding=UTF-8";
-        yield return "-Dstdout.encoding=UTF-8";
-        yield return "-Dstderr.encoding=UTF-8";
+        if (OperatingSystem.IsWindows())
+        {
+            var ansi = CultureInfo.CurrentCulture.TextInfo.ANSICodePage;
+            yield return $"-Dfile.encoding=windows-{ansi}";
+            yield return $"-Dstdout.encoding=windows-{ansi}";
+            yield return $"-Dstderr.encoding=windows-{ansi}";
+        }
+        else
+        {
+            yield return "-Dfile.encoding=UTF-8";
+            yield return "-Dstdout.encoding=UTF-8";
+            yield return "-Dstderr.encoding=UTF-8";
+        }
 
         #endregion
 
@@ -184,21 +195,22 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
                              Guid.Empty.ToString("D"))
             .Replace("-", string.Empty).ToUpper();
         var clientIdBytes = Encoding.ASCII.GetBytes(clientIdUpper);
-        var clientId = Convert.ToBase64String(clientIdBytes); 
-        
+        var clientId = Convert.ToBase64String(clientIdBytes);
+
         var castVersionInfo = (VersionInfo)versionInfo;
 
         var userType = authResult switch
         {
             MicrosoftAuthResult => "msa",
-            YggdrasilAuthResult when new ComparableVersion(castVersionInfo.GameBaseVersion) > new ComparableVersion("1.18.2") => "msa",
+            YggdrasilAuthResult when new ComparableVersion(castVersionInfo.GameBaseVersion) >
+                                     new ComparableVersion("1.18.2") => "msa",
             _ => "Mojang"
         };
         var xuid = authResult is MicrosoftAuthResult microsoftAuthResult
             ? microsoftAuthResult.XBoxUid ?? Guid.Empty.ToString("N")
             : Guid.Empty.ToString("N");
 
-        
+
         var assetRoot = Path.Combine(this.RootPath, GamePathHelper.GetAssetsRoot());
         var mcArgumentsDic = new Dictionary<string, string>
         {

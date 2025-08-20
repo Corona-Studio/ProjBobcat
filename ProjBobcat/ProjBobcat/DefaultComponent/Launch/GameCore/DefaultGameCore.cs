@@ -1,7 +1,15 @@
-﻿using System;
+﻿using Microsoft.Extensions.Configuration;
+using ProjBobcat.Class;
+using ProjBobcat.Class.Helper;
+using ProjBobcat.Class.Model;
+using ProjBobcat.Class.Model.YggdrasilAuth;
+using ProjBobcat.DefaultComponent.Authenticator;
+using ProjBobcat.Event;
+using System;
 using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -11,13 +19,6 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Windows.Win32;
 using Windows.Win32.Foundation;
-using Microsoft.Extensions.Configuration;
-using ProjBobcat.Class;
-using ProjBobcat.Class.Helper;
-using ProjBobcat.Class.Model;
-using ProjBobcat.Class.Model.YggdrasilAuth;
-using ProjBobcat.DefaultComponent.Authenticator;
-using ProjBobcat.Event;
 using FileInfo = System.IO.FileInfo;
 
 namespace ProjBobcat.DefaultComponent.Launch.GameCore;
@@ -76,9 +77,10 @@ public sealed partial class DefaultGameCore : GameCoreBase
         string rootPath,
         string command)
     {
+        var ansi = CultureInfo.CurrentCulture.TextInfo.ANSICodePage;
         var tempScriptPath = Path.Combine(Path.GetTempPath(), "launch_java_command.bat");
         var fileContent = $"""
-                           chcp 65001
+                           chcp {ansi}
                            @echo off
                            cd /d "{rootPath}"
                            {command}
@@ -87,7 +89,7 @@ public sealed partial class DefaultGameCore : GameCoreBase
 
         fileContent = CrLfRegex().Replace(fileContent, "\r\n");
 
-        await File.WriteAllTextAsync(tempScriptPath, fileContent);
+        await File.WriteAllTextAsync(tempScriptPath, fileContent, Encoding.GetEncoding(ansi));
 
         return new ProcessStartInfo("cmd.exe", $"/k \"{tempScriptPath}\"")
         {

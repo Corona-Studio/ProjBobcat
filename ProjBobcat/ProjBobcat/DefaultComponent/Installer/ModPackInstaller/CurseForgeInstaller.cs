@@ -46,7 +46,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         ArgumentNullException.ThrowIfNull(manifest, "无法读取到 CurseForge 的 manifest 文件");
 
         var idPath = Path.Combine(this.RootPath, GamePathHelper.GetGamePath(this.GameId));
-        
+
         this.NeedToDownload = manifest.Files?.Length ?? 0;
 
         var fileIds = manifest.Files
@@ -214,8 +214,6 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         }
 
         var modPackFullPath = Path.GetFullPath(this.ModPackPath);
-
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
         var gbk = Encoding.GetEncoding("GBK");
 
         await using var modPackFs = File.OpenRead(modPackFullPath);
@@ -267,7 +265,8 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
             TotalDownloaded == 0 &&
             downloadFiles.Count != 0)
         {
-            throw new Exception("我们无法下载这个整合包中的模组，这可能是因为您和 CurseForge 的网络连接不稳定导致的。尽管如此，我们还是完成了整合包安装的其他步骤。您可以稍后尝试重新安装或是手动下载整合包模组。");
+            throw new Exception(
+                "我们无法下载这个整合包中的模组，这可能是因为您和 CurseForge 的网络连接不稳定导致的。尽管如此，我们还是完成了整合包安装的其他步骤。您可以稍后尝试重新安装或是手动下载整合包模组。");
         }
 
         if (!this.FailedFiles.IsEmpty)
@@ -398,7 +397,8 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
             var rightTask = GetModProjectDetails(curseForgeApiService, ids[mid..], true);
             var files = await Task.WhenAll(leftTask, rightTask);
 
-            return [
+            return
+            [
                 .. files[0],
                 .. files[1]
             ];

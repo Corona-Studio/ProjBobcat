@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using ProjBobcat.Class.Helper.Download;
 using ProjBobcat.Interface;
@@ -16,13 +17,12 @@ public static class InitHelper
         var coreSettings = coreSettingsProvider();
         var userAgent = coreSettings.DefaultUserAgent ?? DownloadHelper.DefaultUserAgent;
 
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
         services.AddSingleton(_ => coreSettings);
 
         services.AddHttpClient(DownloadHelper.DefaultDownloadClientName,
-            client =>
-            {
-                client.DefaultRequestHeaders.Add("User-Agent", userAgent);
-            });
+            client => { client.DefaultRequestHeaders.Add("User-Agent", userAgent); });
 
         services.AddHttpClient<IModrinthApiService, ModrinthApiService>(client =>
         {
