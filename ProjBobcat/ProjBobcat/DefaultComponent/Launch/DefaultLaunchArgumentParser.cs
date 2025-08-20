@@ -130,23 +130,14 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
 
         #region Set Output Encoding
 
-        if (OperatingSystem.IsWindows() && !launchSettings.PreferUtf8Encoding)
-        {
-            var ansi = CultureInfo.CurrentCulture.TextInfo.ANSICodePage;
-            yield return $"-Dfile.encoding=windows-{ansi}";
-            yield return $"-Dstdout.encoding=windows-{ansi}";
-            yield return $"-Dstderr.encoding=windows-{ansi}";
-            yield return $"-Dsun.stdout.encoding=windows-{ansi}";
-            yield return $"-Dsun.stderr.encoding=windows-{ansi}";
-        }
-        else
-        {
-            yield return "-Dfile.encoding=UTF-8";
-            yield return "-Dstdout.encoding=UTF-8";
-            yield return "-Dstderr.encoding=UTF-8";
-            yield return "-Dsun.stdout.encoding=UTF-8";
-            yield return "-Dsun.stderr.encoding=UTF-8";
-        }
+        var encoding = EncodingHelper.GetUtf8NoBomOrAnsi(launchSettings.PreferUtf8Encoding);
+        var encodingArg = EncodingHelper.GetJavaCharsetForAnsi(encoding.CodePage);
+
+        yield return $"-Dfile.encoding={encodingArg}";
+        yield return $"-Dstdout.encoding={encodingArg}";
+        yield return $"-Dstderr.encoding={encodingArg}";
+        yield return $"-Dsun.stdout.encoding={encodingArg}";
+        yield return $"-Dsun.stderr.encoding={encodingArg}";
 
         #endregion
 

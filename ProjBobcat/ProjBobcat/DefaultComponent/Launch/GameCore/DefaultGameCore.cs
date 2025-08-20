@@ -78,10 +78,10 @@ public sealed partial class DefaultGameCore : GameCoreBase
         string command,
         bool preferUtf8Encoding)
     {
-        var ansi = CultureInfo.CurrentCulture.TextInfo.ANSICodePage;
+        var encoding = EncodingHelper.GetUtf8NoBomOrAnsi(preferUtf8Encoding);
         var tempScriptPath = Path.Combine(Path.GetTempPath(), "launch_java_command.bat");
         var fileContent = $"""
-                           chcp {(preferUtf8Encoding ? 65001 : ansi)}
+                           chcp {encoding.CodePage}
                            @echo off
                            cd /d "{rootPath}"
                            {command}
@@ -89,10 +89,6 @@ public sealed partial class DefaultGameCore : GameCoreBase
                            """;
 
         fileContent = CrLfRegex().Replace(fileContent, "\r\n");
-
-        var encoding = preferUtf8Encoding
-            ? new UTF8Encoding(false)
-            : Encoding.GetEncoding(ansi);
 
         await File.WriteAllTextAsync(tempScriptPath, fileContent, encoding);
 
@@ -390,10 +386,7 @@ public sealed partial class DefaultGameCore : GameCoreBase
 
             if (!settings.UseShellExecute)
             {
-                var ansi = CultureInfo.CurrentCulture.TextInfo.ANSICodePage;
-                var encoding = settings.PreferUtf8Encoding
-                    ? new UTF8Encoding(false)
-                    : Encoding.GetEncoding(ansi);
+                var encoding = EncodingHelper.GetUtf8NoBomOrAnsi(settings.PreferUtf8Encoding);
 
                 psi = new ProcessStartInfo(java!.JavaPath, string.Join(' ', arguments))
                 {
