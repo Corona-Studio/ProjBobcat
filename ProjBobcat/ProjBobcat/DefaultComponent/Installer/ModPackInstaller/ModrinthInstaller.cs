@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -75,6 +76,24 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
             var downloadDir = Path.GetDirectoryName(fullPath)!;
             var fileName = Path.GetFileName(fullPath);
             var checkSum = file.Hashes.TryGetValue("sha1", out var sha1) ? sha1 : string.Empty;
+            var fileDownloadPath = Path.Combine(downloadDir, fileName);
+
+            if (File.Exists(fileDownloadPath) && !string.IsNullOrEmpty(checkSum))
+            {
+                try
+                {
+                    // Check local file
+                    await using var fs = File.OpenRead(fileDownloadPath);
+                    var computedSha1 = await SHA1.HashDataAsync(fs);
+
+                    if (Convert.ToHexString(computedSha1).Equals(sha1, StringComparison.OrdinalIgnoreCase))
+                        continue;
+                }
+                catch (Exception)
+                {
+                    // ignored
+                }
+            }
 
             IEnumerable<string> urls = DownloadUriReplacer == null
                 ? file.Downloads

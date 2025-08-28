@@ -7,6 +7,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -187,6 +188,26 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
                 ? [downloadUrl]
                 : [.. DownloadUriReplacer([downloadUrl]), downloadUrl];
 
+            var fileDownloadPath = Path.Combine(di.FullName, file.FileName);
+            var fileHash = file.Hashes?.FirstOrDefault(h => h.Algorithm == 1)?.Value;
+
+            if (File.Exists(fileDownloadPath) && !string.IsNullOrEmpty(fileHash))
+            {
+                try
+                {
+                    // Check local file
+                    await using var fs = File.OpenRead(fileDownloadPath);
+                    var computedSha1 = await SHA1.HashDataAsync(fs);
+                    if (Convert.ToHexString(computedSha1).Equals(fileHash, StringComparison.OrdinalIgnoreCase))
+                        continue;
+                }
+                catch (Exception)
+                {
+                    // ignored
+                }
+            }
+
+
             var downloadFile = new MultiSourceDownloadFile
             {
                 DownloadPath = di.FullName,
@@ -298,7 +319,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 #if NET9_0_OR_GREATER
         FrozenSet.Create<long>(4465, 5193, 5244);
 #else
-        new []{4465L, 5193L, 5244L}.ToFrozenSet();
+        new[] { 4465L, 5193L, 5244L }.ToFrozenSet();
 #endif
 
     private static readonly FrozenSet<long> ModFilterIds =
@@ -312,12 +333,15 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
             6821, 6954
         );
 #else
-        new []{4485L, 4545L, 4558L,
+        new[]
+        {
+            4485L, 4545L, 4558L,
             4671L, 4672L, 4773L,
             4843L, 4906L, 5191L,
             5232L, 5299L, 5314L,
             6145L, 6484L, 6814L,
-            6821L, 6954L}.ToFrozenSet();
+            6821L, 6954L
+        }.ToFrozenSet();
 #endif
 
     private static string? GetResourceFolderName(long type)
