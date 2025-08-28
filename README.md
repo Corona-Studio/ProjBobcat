@@ -19,7 +19,9 @@ Developed and maintained by Corona Studio.
 
 ## NativeAOT (ahead-of-time compilation) Support
 
-ProjBobcat provides full support for [NativeAot](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/). Native AOT apps start up very quickly and use less memory. Users of the application can run it on a machine that doesn't have the .NET runtime installed. 
+ProjBobcat provides full support for [NativeAot](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/).
+
+Native AOT apps start up very quickly and use less memory. Users of the application can run it on a machine that doesn't have the .NET runtime installed. 
 
 ## Multi-Platform Support
 
