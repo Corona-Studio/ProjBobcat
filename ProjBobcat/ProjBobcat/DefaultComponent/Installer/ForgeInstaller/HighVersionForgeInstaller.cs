@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -38,9 +38,9 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
     public required string ForgeExecutablePath { get; init; }
     public required VersionLocatorBase VersionLocator { get; init; }
     public int DownloadThread { get; set; } = Environment.ProcessorCount;
-    public IReadOnlyList<string> MavenForgeUri { get; init; } = [];
-    public IReadOnlyList<string> FilesForgeUri { get; init; } = [];
-    public IReadOnlyList<string> MineCraftLibsUri { get; init; } = [];
+    public IReadOnlyList<DownloadUriInfo> MavenForgeUri { get; init; } = [];
+    public IReadOnlyList<DownloadUriInfo> FilesForgeUri { get; init; } = [];
+    public IReadOnlyList<DownloadUriInfo> MineCraftLibsUri { get; init; } = [];
     public ForgeInstallResult InstallForge()
     {
         return this.InstallForgeTaskAsync().GetAwaiter().GetResult();
@@ -452,20 +452,21 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
             if (!libDi.Exists)
                 libDi.Create();
-            var uris = new List<string>();
+            var uris = new List<DownloadUriInfo>();
             if(lib.Url.Contains("https://maven.minecraftforge.net/"))
-                uris.AddRange(MavenForgeUri.Select(e => lib.Url.Replace("https://maven.minecraftforge.net/", e)));
+                uris.AddRange(MavenForgeUri.Select(e => 
+                    e with { DownloadUri = lib.Url.Replace("https://maven.minecraftforge.net/", e.DownloadUri) }));
             else if (lib.Url.Contains("https://libraries.minecraft.net/"))
-                uris.AddRange(MineCraftLibsUri.Select(e => lib.Url.Replace("https://libraries.minecraft.net/", e)));
+                uris.AddRange(MineCraftLibsUri.Select(e =>  e with { DownloadUri = lib.Url.Replace("https://libraries.minecraft.net/", e.DownloadUri) } ));
             else if (lib.Url.Contains("https://files.minecraftforge.net/"))
-                uris.AddRange(FilesForgeUri.Select(e => lib.Url.Replace("https://files.minecraftforge.net/", e)));
+                uris.AddRange(FilesForgeUri.Select(e => e with { DownloadUri = lib.Url.Replace("https://files.minecraftforge.net/", e.DownloadUri)}));
             
             var df = new MultiSourceDownloadFile()
             {
                 CheckSum = lib.Sha1,
                 DownloadPath = path,
                 FileName = fileName,
-                DownloadUris = uris,
+                DownloadUris = uris.OrderBy(e => e.Weight).ToList(),
                 FileSize = lib.Size
             };
             df.Completed += this.WhenCompleted;
