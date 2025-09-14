@@ -557,7 +557,8 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             }
 
             // Fix for Optifine Class Path
-            var optifineLib = libraries.FirstOrDefault(l => l.Name?.StartsWith("optifine", StringComparison.OrdinalIgnoreCase) ?? false);
+            var optifineLib = libraries.FirstOrDefault(l =>
+                l.Name?.StartsWith("optifine", StringComparison.OrdinalIgnoreCase) ?? false);
 
             if (optifineLib != null)
             {
@@ -735,6 +736,12 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             // Add all deserialized inherited version to a list recursively.
             while (!string.IsNullOrEmpty(current.InheritsFrom))
             {
+                if (current.InheritsFrom == current.Id)
+                    return new BrokenVersionInfo(id)
+                    {
+                        BrokenReason = GameBrokenReason.Parent | GameBrokenReason.CycleDepDetected
+                    };
+
                 var parentRawVersion = this.ParseRawVersion(current.InheritsFrom);
 
                 if (parentRawVersion.Item1.HasValue)
