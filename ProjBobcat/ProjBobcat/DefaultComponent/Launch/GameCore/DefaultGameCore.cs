@@ -495,16 +495,19 @@ public sealed partial class DefaultGameCore : GameCoreBase
                 });
 
             if (!string.IsNullOrEmpty(settings.WindowTitle))
-                Task.Run(() =>
+                Task.Run(async () =>
                 {
                     do
                     {
                         if (launchWrapper.Process == null) break;
+                        if (launchWrapper.Process.HasExited) break;
 
                         if (OperatingSystem.IsWindows() && OperatingSystem.IsWindowsVersionAtLeast(5))
                             _ = PInvoke.SetWindowText(
                                 new HWND(launchWrapper.Process.MainWindowHandle),
                                 settings.WindowTitle);
+
+                        await Task.Delay(100);
                     } while (string.IsNullOrEmpty(launchWrapper.Process?.MainWindowTitle));
                 });
 #pragma warning restore CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
