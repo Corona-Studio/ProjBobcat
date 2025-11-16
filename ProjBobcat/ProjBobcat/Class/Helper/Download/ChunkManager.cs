@@ -10,22 +10,13 @@ namespace ProjBobcat.Class.Helper.Download;
 /// <summary>
 ///     Manages download chunks with smart retry and resume capabilities
 /// </summary>
-internal sealed class ChunkManager : IDisposable
+internal sealed class ChunkManager(DownloadSettings settings) : IDisposable
 {
-    private readonly ConcurrentDictionary<DownloadRange, ChunkDownloadState> _chunks;
-    private readonly ConcurrentQueue<DownloadRange> _pendingChunks;
-    private readonly ConcurrentDictionary<DownloadRange, int> _failedChunks;
-    private readonly DownloadSettings _settings;
+    private readonly ConcurrentDictionary<DownloadRange, ChunkDownloadState> _chunks = [];
+    private readonly ConcurrentQueue<DownloadRange> _pendingChunks = [];
+    private readonly ConcurrentDictionary<DownloadRange, int> _failedChunks = [];
     private double _globalAverageSpeed;
     private int _completedCount;
-
-    public ChunkManager(DownloadSettings settings)
-    {
-        _settings = settings;
-        _chunks = new ConcurrentDictionary<DownloadRange, ChunkDownloadState>();
-        _pendingChunks = new ConcurrentQueue<DownloadRange>();
-        _failedChunks = new ConcurrentDictionary<DownloadRange, int>();
-    }
 
     /// <summary>
     ///     Initialize chunks for download
@@ -43,30 +34,32 @@ internal sealed class ChunkManager : IDisposable
     /// </summary>
     public bool TryGetNextChunk(out DownloadRange range, out ChunkDownloadState state)
     {
-        // First, try to get a pending chunk
-        if (_pendingChunks.TryDequeue(out range))
+        while (true)
         {
-            state = new ChunkDownloadState(range, _globalAverageSpeed);
-            if (!_chunks.TryAdd(range, state))
+            // First, try to get a pending chunk
+            if (_pendingChunks.TryDequeue(out range))
             {
+                state = new ChunkDownloadState(range, _globalAverageSpeed);
+
+                if (_chunks.TryAdd(range, state)) return true;
+
                 // Race condition, chunk already added
                 state.Dispose();
-                return TryGetNextChunk(out range, out state);
+                continue;
             }
 
-            return true;
-        }
+            // No more pending chunks
+            range = default;
+            state = null!;
 
-        // No more pending chunks
-        range = default;
-        state = null!;
-        return false;
+            return false;
+        }
     }
 
     /// <summary>
     ///     Mark chunk as completed
     /// </summary>
-    public void CompleteChunk(DownloadRange range, ChunkDownloadState state)
+    public void CompleteChunk(DownloadRange _, ChunkDownloadState state)
     {
         if (state.IsCompleted)
         {
@@ -90,7 +83,7 @@ internal sealed class ChunkManager : IDisposable
             if (remainingRange != null)
             {
                 // Split remaining into smaller chunks
-                var splitRanges = SplitRange(remainingRange.Value, _settings.DownloadParts);
+                var splitRanges = SplitRange(remainingRange.Value, settings.DownloadParts);
                 foreach (var splitRange in splitRanges)
                 {
                     _pendingChunks.Enqueue(splitRange);
@@ -112,7 +105,7 @@ internal sealed class ChunkManager : IDisposable
         }
 
         // Retry the chunk if under retry limit
-        if (failCount < _settings.RetryCount || _settings.RetryCount <= 0)
+        if (failCount < settings.RetryCount || settings.RetryCount <= 0)
         {
             // Re-queue for retry
             _pendingChunks.Enqueue(range);
@@ -204,8 +197,7 @@ internal sealed class ChunkManager : IDisposable
         var length = range.Length;
         var partSize = length / parts;
         var remainder = length % parts;
-
-        long currentStart = range.Start;
+        var currentStart = range.Start;
 
         for (var i = 0; i < parts; i++)
         {
