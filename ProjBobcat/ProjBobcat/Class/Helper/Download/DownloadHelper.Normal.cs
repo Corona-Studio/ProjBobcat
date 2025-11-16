@@ -226,12 +226,6 @@ public static partial class DownloadHelper
         downloadFile.OnCompleted(false, new AggregateException(exceptions), -1);
     }
 
-    private static int CalculateRetryDelay(int retryCount)
-    {
-        // Exponential backoff: 1s, 2s, 4s, 8s, max 10s
-        return (int)Math.Min(1000 * Math.Pow(2, retryCount - 1), 10000);
-    }
-
     private static void CleanupTempFile(Stream? stream, string tempFilePath)
     {
         try

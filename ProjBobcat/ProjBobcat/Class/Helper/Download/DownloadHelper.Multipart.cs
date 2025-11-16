@@ -130,6 +130,7 @@ public static partial class DownloadHelper
         }
 
         var filePath = Path.Combine(downloadFile.DownloadPath, downloadFile.FileName);
+        var trials = downloadSettings.RetryCount <= 0 ? 1 : downloadSettings.RetryCount;
         var downloadUrl = downloadFile.GetDownloadUrl();
 
         // Check if server supports partial downloads
@@ -144,156 +145,179 @@ public static partial class DownloadHelper
             return;
         }
 
-        // Initialize for multipart download
-        var globalSpeedCalculator = new DownloadSpeedCalculator();
-        using var chunkManager = new ChunkManager(downloadSettings);
-        var initialRanges = CalculateDownloadRanges(urlInfo.FileLength, 0, downloadSettings.DownloadParts).ToList();
-        chunkManager.InitializeChunks(initialRanges);
-
         var exceptions = new List<Exception>();
-        using var cts = new CancellationTokenSource(downloadSettings.Timeout);
 
-        try
+        // Retry loop for multipart download
+        while (downloadFile.RetryCount < trials)
         {
-            // Download all chunks with parallel workers
-            var maxConcurrency = Math.Min(downloadSettings.DownloadThread, MaxConcurrentChunkDownloads);
-            var semaphore = new SemaphoreSlim(maxConcurrency, maxConcurrency);
+            // Initialize for multipart download
+            var globalSpeedCalculator = new DownloadSpeedCalculator();
+            using var chunkManager = new ChunkManager(downloadSettings);
+            var initialRanges = CalculateDownloadRanges(urlInfo.FileLength, 0, downloadSettings.DownloadParts).ToList();
+            chunkManager.InitializeChunks(initialRanges);
 
-            // Progress reporting task
-            var progressReportingCts = new CancellationTokenSource();
-            var progressTask = Task.Run(async () =>
-            {
-                while (!progressReportingCts.Token.IsCancellationRequested)
-                {
-                    try
-                    {
-                        await Task.Delay(200, progressReportingCts.Token).ConfigureAwait(false);
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        break;
-                    }
-
-                    if (!downloadSettings.ShowDownloadProgress) continue;
-
-                    var totalBytes = chunkManager.GetTotalDownloadedBytes();
-                    var currentSpeed = globalSpeedCalculator.CurrentSpeed;
-
-                    downloadFile.OnChanged(
-                        currentSpeed,
-                        ProgressValue.Create(totalBytes, urlInfo.FileLength),
-                        totalBytes,
-                        urlInfo.FileLength);
-                }
-            }, progressReportingCts.Token);
-
-            // Chunk download workers
-            var workerTasks = new List<Task>();
-            for (var i = 0; i < maxConcurrency; i++)
-            {
-                var workerTask = Task.Run(async () =>
-                {
-                    while (!cts.Token.IsCancellationRequested)
-                    {
-                        if (!chunkManager.TryGetNextChunk(out var range, out var chunkState))
-                            break;
-
-                        await semaphore.WaitAsync(cts.Token);
-
-                        try
-                        {
-                            await DownloadChunkAsync(
-                                range,
-                                chunkState,
-                                downloadUrl,
-                                downloadSettings,
-                                chunkManager,
-                                globalSpeedCalculator,
-                                cts.Token);
-
-                            chunkManager.CompleteChunk(range, chunkState);
-                        }
-                        catch (Exception ex)
-                        {
-                            // Handle chunk failure
-                            var canRetry = chunkManager.HandleChunkFailure(range, chunkState, canSplit: true);
-                            if (!canRetry)
-                            {
-                                exceptions.Add(ex);
-                            }
-                        }
-                        finally
-                        {
-                            semaphore.Release();
-                        }
-                    }
-                }, cts.Token);
-
-                workerTasks.Add(workerTask);
-            }
-
-            // Wait for all workers to complete
-            await Task.WhenAll(workerTasks);
-
-            // Stop progress reporting
-            await progressReportingCts.CancelAsync();
+            using var cts = new CancellationTokenSource(downloadSettings.Timeout);
 
             try
             {
-                await progressTask;
+                // Download all chunks with parallel workers
+                var maxConcurrency = Math.Min(downloadSettings.DownloadThread, MaxConcurrentChunkDownloads);
+                var semaphore = new SemaphoreSlim(maxConcurrency, maxConcurrency);
+
+                // Progress reporting task
+                var progressReportingCts = new CancellationTokenSource();
+                var progressTask = Task.Run(async () =>
+                {
+                    while (!progressReportingCts.Token.IsCancellationRequested)
+                    {
+                        try
+                        {
+                            await Task.Delay(200, progressReportingCts.Token).ConfigureAwait(false);
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            break;
+                        }
+
+                        if (!downloadSettings.ShowDownloadProgress) continue;
+
+                        var totalBytes = chunkManager.GetTotalDownloadedBytes();
+                        var currentSpeed = globalSpeedCalculator.CurrentSpeed;
+
+                        downloadFile.OnChanged(
+                            currentSpeed,
+                            ProgressValue.Create(totalBytes, urlInfo.FileLength),
+                            totalBytes,
+                            urlInfo.FileLength);
+                    }
+                }, progressReportingCts.Token);
+
+                // Chunk download workers
+                var workerTasks = new List<Task>();
+                for (var i = 0; i < maxConcurrency; i++)
+                {
+                    var workerTask = Task.Run(async () =>
+                    {
+                        while (!cts.Token.IsCancellationRequested)
+                        {
+                            if (!chunkManager.TryGetNextChunk(out var range, out var chunkState))
+                                break;
+
+                            await semaphore.WaitAsync(cts.Token);
+
+                            try
+                            {
+                                await DownloadChunkAsync(
+                                    range,
+                                    chunkState,
+                                    downloadUrl,
+                                    downloadSettings,
+                                    chunkManager,
+                                    globalSpeedCalculator,
+                                    cts.Token);
+
+                                chunkManager.CompleteChunk(range, chunkState);
+                            }
+                            catch (Exception ex)
+                            {
+                                // Handle chunk failure
+                                var canRetry = chunkManager.HandleChunkFailure(range, chunkState, canSplit: true);
+                                if (!canRetry)
+                                {
+                                    exceptions.Add(ex);
+                                }
+                            }
+                            finally
+                            {
+                                semaphore.Release();
+                            }
+                        }
+                    }, cts.Token);
+
+                    workerTasks.Add(workerTask);
+                }
+
+                // Wait for all workers to complete
+                await Task.WhenAll(workerTasks);
+
+                // Stop progress reporting
+                await progressReportingCts.CancelAsync();
+
+                try
+                {
+                    await progressTask;
+                }
+                catch (OperationCanceledException)
+                {
+                    // Expected
+                }
+
+                // Check if all chunks completed successfully
+                if (!chunkManager.AreAllChunksCompleted() || exceptions.Count > 0)
+                {
+                    throw new AggregateException("Some chunks failed to download", exceptions);
+                }
+
+                // Merge chunks and verify hash
+                await MergeChunksAndVerifyAsync(
+                    chunkManager,
+                    filePath,
+                    downloadFile.CheckSum,
+                    downloadSettings,
+                    cts.Token);
+
+                // Calculate final speed
+                var finalSpeed = globalSpeedCalculator.Recalculate();
+
+                downloadFile.OnCompleted(true, null, finalSpeed);
+
+                return;
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException e)
             {
-                // Expected
-            }
+                downloadFile.RetryCount++;
+                exceptions.Add(e);
 
-            // Check if all chunks completed successfully
-            if (!chunkManager.AreAllChunksCompleted() || exceptions.Count > 0)
-            {
-                throw new AggregateException("Some chunks failed to download", exceptions);
-            }
-
-            // Merge chunks and verify hash
-            await MergeChunksAndVerifyAsync(
-                chunkManager,
-                filePath,
-                downloadFile.CheckSum,
-                downloadSettings,
-                cts.Token);
-
-            // Calculate final speed
-            var finalSpeed = globalSpeedCalculator.Recalculate();
-
-            downloadFile.OnCompleted(true, null, finalSpeed);
-        }
-        catch (OperationCanceledException)
-        {
-            downloadFile.RetryCount++;
-
-            if (downloadFile.RetryCount < downloadSettings.RetryCount || downloadSettings.RetryCount <= 0)
-            {
                 // Retry with backoff
                 var delay = CalculateRetryDelay(downloadFile.RetryCount);
                 await Task.Delay(delay, CancellationToken.None);
-
-                // Retry entire multipart download
-                await MultiPartDownloadTaskAsync(downloadFile, downloadSettings);
             }
-            else
+            catch (InvalidDataException e)
             {
-                // Fallback to normal download
-                downloadFile.RetryCount = 0;
-                await DownloadData(downloadFile, downloadSettings);
+                // Hash mismatch - retry
+                downloadFile.RetryCount++;
+                exceptions.Add(e);
+
+                var delay = CalculateRetryDelay(downloadFile.RetryCount);
+                await Task.Delay(delay, CancellationToken.None);
+            }
+            catch (HttpRequestException e)
+            {
+                downloadFile.RetryCount++;
+                exceptions.Add(e);
+
+                if (e.StatusCode == HttpStatusCode.NotFound)
+                {
+                    // Don't retry on 404
+                    break;
+                }
+
+                var delay = CalculateRetryDelay(downloadFile.RetryCount);
+                await Task.Delay(delay, CancellationToken.None);
+            }
+            catch (Exception e)
+            {
+                downloadFile.RetryCount++;
+                exceptions.Add(e);
+
+                var delay = CalculateRetryDelay(downloadFile.RetryCount);
+                await Task.Delay(delay, CancellationToken.None);
             }
         }
-        catch (Exception ex)
-        {
-            // On any failure, fallback to normal download
-            downloadFile.RetryCount = 0;
-            exceptions.Add(ex);
 
-            await DownloadData(downloadFile, downloadSettings);
-        }
+        // After all retries failed, fallback to normal download
+        downloadFile.RetryCount = 0;
+        await DownloadData(downloadFile, downloadSettings);
     }
 
     /// <summary>

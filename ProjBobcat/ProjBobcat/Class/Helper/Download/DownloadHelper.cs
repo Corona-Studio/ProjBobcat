@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
@@ -28,6 +29,12 @@ public static partial class DownloadHelper
     public static string GetTempFilePath()
     {
         return Path.Combine(GetTempDownloadPath(), Path.GetRandomFileName());
+    }
+
+    internal static int CalculateRetryDelay(int retryCount)
+    {
+        // Exponential backoff: 1s, 2s, 4s, 8s, max 10s
+        return (int)Math.Min(1000 * Math.Pow(2, retryCount - 1), 10000);
     }
 
     public static string AutoFormatSpeedString(double speedInBytePerSecond)
