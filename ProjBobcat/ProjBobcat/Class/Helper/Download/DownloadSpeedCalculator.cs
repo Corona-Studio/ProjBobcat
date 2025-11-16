@@ -1,126 +1,132 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Linq;
+﻿using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace ProjBobcat.Class.Helper.Download;
 
 /// <summary>
-///     使用滑动窗口计算下载速度，基于ConcurrentQueue的线程安全实现
+///     High-performance download speed calculator using exponential moving average
+///     Thread-safe and lock-free implementation
 /// </summary>
 public class DownloadSpeedCalculator
 {
-#if NET9_0_OR_GREATER
-    private readonly Lock _cleanupLock = new();
-#else
-    private readonly object _cleanupLock = new();
-#endif
+    private const double SmoothingFactor = 0.3; // EMA smoothing factor (0-1)
+    private const long MinUpdateIntervalTicks = 500_000; // 50ms in ticks (100ns units)
 
-    private readonly int _maxSamples;
-    private readonly ConcurrentQueue<(DateTime Time, long Bytes)> _speedSamples = new();
-    private readonly TimeSpan _windowDuration;
-    private double _currentSpeed;
     private long _totalBytes;
+    private double _currentSpeed;
+    private long _lastUpdateTicks;
+    private long _lastSampleBytes;
+    private long _startTicks;
 
     /// <summary>
-    ///     初始化下载速度计算器
+    ///     Initialize download speed calculator
     /// </summary>
-    /// <param name="windowDuration">窗口时间范围，默认5秒</param>
-    /// <param name="maxSamples">最大样本数，默认20个</param>
-    public DownloadSpeedCalculator(TimeSpan? windowDuration = null, int maxSamples = 20)
+    public DownloadSpeedCalculator()
     {
-        this._windowDuration = windowDuration ?? TimeSpan.FromSeconds(5);
-        this._maxSamples = maxSamples;
+        Reset();
     }
 
     /// <summary>
-    ///     获取总接收字节数，线程安全
+    ///     Get total received bytes (thread-safe)
     /// </summary>
-    public long TotalBytes => Interlocked.Read(ref this._totalBytes);
+    public long TotalBytes => Interlocked.Read(ref _totalBytes);
 
     /// <summary>
-    ///     添加数据样本并返回当前下载速度（字节/秒）
+    ///     Get current speed in bytes/second (thread-safe)
     /// </summary>
-    /// <param name="bytesReceived">新接收的字节数</param>
-    /// <returns>当前下载速度（字节/秒）</returns>
+    public double CurrentSpeed => Interlocked.CompareExchange(ref _currentSpeed, 0, 0);
+
+    /// <summary>
+    ///     Get average speed since start
+    /// </summary>
+    public double AverageSpeed
+    {
+        get
+        {
+            var elapsed = GetElapsedSeconds();
+            return elapsed > 0 ? TotalBytes / elapsed : 0;
+        }
+    }
+
+    /// <summary>
+    ///     Add data sample and return current download speed (bytes/second)
+    ///     Uses Exponential Moving Average for smooth speed calculation
+    /// </summary>
+    /// <param name="bytesReceived">Bytes received in this sample</param>
+    /// <returns>Current download speed (bytes/second)</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public double AddSample(long bytesReceived)
     {
-        var now = DateTime.UtcNow;
+        if (bytesReceived <= 0) return CurrentSpeed;
 
-        // 原子增加总字节数
-        Interlocked.Add(ref this._totalBytes, bytesReceived);
+        var now = Stopwatch.GetTimestamp();
 
-        // 添加新样本
-        this._speedSamples.Enqueue((now, bytesReceived));
+        // Update total bytes atomically
+        Interlocked.Add(ref _totalBytes, bytesReceived);
+        Interlocked.Add(ref _lastSampleBytes, bytesReceived);
 
-        // 移除过期样本 - 这部分仍需要锁定以保证一致性
-        // ConcurrentQueue不支持从头部删除元素，我们需要定期清理
-        if (this._speedSamples.Count > this._maxSamples)
-            lock (this._cleanupLock)
-            {
-                // 再次检查，因为可能另一个线程已经清理过
-                if (this._speedSamples.Count > this._maxSamples) this.CleanupOldSamples(now);
-            }
+        // Throttle speed calculation updates
+        var lastUpdate = Interlocked.Read(ref _lastUpdateTicks);
+        var ticksSinceUpdate = now - lastUpdate;
 
-        // 计算当前速度
-        this.CalculateCurrentSpeed(now);
+        if (ticksSinceUpdate < MinUpdateIntervalTicks)
+            return CurrentSpeed;
 
-        return this._currentSpeed;
+        // Try to acquire update lock via CAS
+        if (Interlocked.CompareExchange(ref _lastUpdateTicks, now, lastUpdate) != lastUpdate)
+            return CurrentSpeed;
+
+        // Calculate instantaneous speed
+        var sampleBytes = Interlocked.Exchange(ref _lastSampleBytes, 0);
+        var elapsedSeconds = (double)ticksSinceUpdate / Stopwatch.Frequency;
+
+        if (elapsedSeconds <= 0.001) return CurrentSpeed;
+
+        var instantSpeed = sampleBytes / elapsedSeconds;
+
+        // Apply EMA smoothing
+        var oldSpeed = Interlocked.CompareExchange(ref _currentSpeed, 0, 0);
+        var newSpeed = oldSpeed == 0
+            ? instantSpeed
+            : (SmoothingFactor * instantSpeed) + ((1 - SmoothingFactor) * oldSpeed);
+
+        Interlocked.Exchange(ref _currentSpeed, newSpeed);
+
+        return newSpeed;
     }
 
     /// <summary>
-    ///     清理过期样本
+    ///     Force recalculate speed (useful for getting final accurate speed)
     /// </summary>
-    private void CleanupOldSamples(DateTime now)
+    public double Recalculate()
     {
-        while (this._speedSamples.Count > this._maxSamples ||
-               (this._speedSamples.TryPeek(out var oldestSample) &&
-                now - oldestSample.Time > this._windowDuration))
-            // 尝试移除队列头部元素
-            if (!this._speedSamples.TryDequeue(out _))
-                break; // 如果无法移除，中断循环
+        var elapsed = GetElapsedSeconds();
+        if (elapsed <= 0) return 0;
+
+        var avgSpeed = TotalBytes / elapsed;
+        Interlocked.Exchange(ref _currentSpeed, avgSpeed);
+        return avgSpeed;
     }
 
     /// <summary>
-    ///     计算当前速度
-    /// </summary>
-    private void CalculateCurrentSpeed(DateTime now)
-    {
-        // 为了计算速度，我们需要拷贝队列内容以避免在计算过程中被修改
-        var samples = this._speedSamples.ToArray();
-
-        if (samples.Length < 2)
-        {
-            Interlocked.Exchange(ref this._currentSpeed, 0);
-            return;
-        }
-
-        var oldestTime = samples.Min(s => s.Time);
-        var timeSpan = (now - oldestTime).TotalSeconds;
-
-        if (timeSpan <= 0.001)
-        {
-            Interlocked.Exchange(ref this._currentSpeed, 0);
-            return;
-        }
-
-        var bytesInWindow = samples.Sum(s => s.Bytes);
-        var speed = bytesInWindow / timeSpan;
-
-        // 原子更新当前速度
-        Interlocked.Exchange(ref this._currentSpeed, speed);
-    }
-
-    /// <summary>
-    ///     重置计算器，线程安全
+    ///     Reset calculator (thread-safe)
     /// </summary>
     public void Reset()
     {
-        // 清空队列
-        _speedSamples.Clear();
+        Interlocked.Exchange(ref _totalBytes, 0);
+        Interlocked.Exchange(ref _currentSpeed, 0);
+        Interlocked.Exchange(ref _lastSampleBytes, 0);
+        var now = Stopwatch.GetTimestamp();
+        Interlocked.Exchange(ref _startTicks, now);
+        Interlocked.Exchange(ref _lastUpdateTicks, now);
+    }
 
-        // 重置计数器
-        Interlocked.Exchange(ref this._totalBytes, 0);
-        Interlocked.Exchange(ref this._currentSpeed, 0);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private double GetElapsedSeconds()
+    {
+        var start = Interlocked.Read(ref _startTicks);
+        var elapsed = Stopwatch.GetTimestamp() - start;
+        return (double)elapsed / Stopwatch.Frequency;
     }
 }

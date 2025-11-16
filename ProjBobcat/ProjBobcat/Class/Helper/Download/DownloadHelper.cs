@@ -12,6 +12,7 @@ public static partial class DownloadHelper
 {
     internal const string DefaultDownloadClientName = nameof(DownloadHelper);
     private const int DefaultCopyBufferSize = 1024 * 8 * 10;
+    internal const int MinimumChunkSize = 1_000_000; // 1 MB
 
     private static readonly RecyclableMemoryStreamManager MemoryStreamManager = new();
 
@@ -34,12 +35,12 @@ public static partial class DownloadHelper
         var speed = AutoFormatSpeed(speedInBytePerSecond);
         var unit = speed.Unit switch
         {
-            SizeUnit.B =>  " B / s",
+            SizeUnit.B => " B / s",
             SizeUnit.Kb => "Kb / s",
             SizeUnit.Mb => "Mb / s",
             SizeUnit.Gb => "Gb / s",
             SizeUnit.Tb => "Tb / s",
-            _ =>           " B / s"
+            _ => " B / s"
         };
 
         return $"{speed.Speed:F1} {unit,6}";

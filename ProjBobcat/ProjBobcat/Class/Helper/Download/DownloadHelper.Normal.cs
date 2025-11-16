@@ -16,10 +16,10 @@ namespace ProjBobcat.Class.Helper.Download;
 public static partial class DownloadHelper
 {
     /// <summary>
-    ///     Simple download data impl
+    ///     Simple single-part download implementation with improved error handling
     /// </summary>
-    /// <param name="downloadFile"></param>
-    /// <param name="downloadSettings"></param>
+    /// <param name="downloadFile">Download file information</param>
+    /// <param name="downloadSettings">Download settings</param>
     /// <returns></returns>
     public static async Task DownloadData(AbstractDownloadBase downloadFile, DownloadSettings downloadSettings)
     {
@@ -28,9 +28,12 @@ public static partial class DownloadHelper
         if (!Directory.Exists(lxTempPath))
             Directory.CreateDirectory(lxTempPath);
 
+        if (!Directory.Exists(downloadFile.DownloadPath))
+            Directory.CreateDirectory(downloadFile.DownloadPath);
+
         var timeout = downloadSettings.Timeout;
         var client = downloadSettings.HttpClientFactory.CreateClient(DefaultDownloadClientName);
-        var trials = downloadSettings.RetryCount == 0 ? 1 : downloadSettings.RetryCount;
+        var trials = downloadSettings.RetryCount <= 0 ? 1 : downloadSettings.RetryCount;
         var filePath = Path.Combine(downloadFile.DownloadPath, downloadFile.FileName);
         var exceptions = new List<Exception>();
         var speedCalculator = new DownloadSpeedCalculator();
@@ -38,6 +41,8 @@ public static partial class DownloadHelper
         while (downloadFile.RetryCount < trials)
         {
             using var cts = new CancellationTokenSource(timeout);
+            Stream? tempFileStream = null;
+            var tempFilePath = string.Empty;
 
             try
             {
@@ -48,8 +53,7 @@ public static partial class DownloadHelper
                 if (!string.IsNullOrEmpty(downloadSettings.Host))
                     request.Headers.Host = downloadSettings.Host;
 
-                using var res =
-                    await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token);
+                using var res = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token);
 
                 res.EnsureSuccessStatusCode();
 
@@ -58,79 +62,121 @@ public static partial class DownloadHelper
 
                 using var hashProvider = downloadSettings.GetCryptoTransform();
 
-                Stream ms = hashCheckFile
+                // Use temp file for downloading, then move to final location
+                tempFilePath = hashCheckFile ? string.Empty : GetTempFilePath();
+
+                var ms = hashCheckFile
                     ? MemoryStreamManager.GetStream()
-                    : File.Create(filePath);
-                var cryptoStream = new CryptoStream(ms, hashProvider, CryptoStreamMode.Write);
+                    : (tempFileStream = File.Create(tempFilePath));
 
-                // Reset speed calculator
-                speedCalculator.Reset();
-
-                await using (var stream = await res.Content.ReadAsStreamAsync(cts.Token))
-                await using (var destStream = hashCheckFile ? cryptoStream : ms)
+                try
                 {
-                    using var buffer = MemoryPool<byte>.Shared.Rent(DefaultCopyBufferSize);
+                    // Use CryptoStream with leaveOpen = true to prevent disposing ms
+                    var cryptoStream = hashCheckFile
+                        ? new CryptoStream(ms, hashProvider, CryptoStreamMode.Write, leaveOpen: true)
+                        : null;
 
-                    var bytesReadInTotal = 0L;
-                    var lastProgressUpdateTime = DateTime.UtcNow;
-                    var progressUpdateInterval = TimeSpan.FromMilliseconds(200); // 更新频率限制
+                    // Reset speed calculator
+                    speedCalculator.Reset();
 
-                    while (true)
+                    try
                     {
-                        var bytesRead = await stream.ReadAsync(buffer.Memory, cts.Token);
+                        await using var stream = await res.Content.ReadAsStreamAsync(cts.Token);
+                        using var buffer = MemoryPool<byte>.Shared.Rent(DefaultCopyBufferSize);
 
-                        if (bytesRead == 0) break;
+                        var destStream = cryptoStream ?? ms;
+                        var bytesReadInTotal = 0L;
+                        var lastProgressUpdateTime = Stopwatch.GetTimestamp();
+                        var progressUpdateIntervalTicks = (long)(0.2 * Stopwatch.Frequency); // 200ms
 
-                        bytesReadInTotal += bytesRead;
+                        while (true)
+                        {
+                            var bytesRead = await stream.ReadAsync(buffer.Memory, cts.Token);
 
-                        await destStream.WriteAsync(buffer.Memory[..bytesRead], cts.Token);
+                            if (bytesRead == 0) break;
 
-                        // 更新速度计算
-                        var currentSpeed = speedCalculator.AddSample(bytesRead);
+                            bytesReadInTotal += bytesRead;
 
-                        // 限制进度更新频率，避免UI过载
-                        var now = DateTime.UtcNow;
+                            await destStream.WriteAsync(buffer.Memory[..bytesRead], cts.Token);
 
-                        if (!downloadSettings.ShowDownloadProgress ||
-                            now - lastProgressUpdateTime < progressUpdateInterval)
-                            continue;
+                            // Update speed calculation
+                            var currentSpeed = speedCalculator.AddSample(bytesRead);
 
-                        lastProgressUpdateTime = now;
-                        downloadFile.OnChanged(
-                            currentSpeed,
-                            ProgressValue.Create(bytesReadInTotal, responseLength),
-                            bytesReadInTotal,
-                            responseLength);
+                            // Throttle progress updates to avoid UI overload
+                            var now = Stopwatch.GetTimestamp();
+
+                            if (downloadSettings.ShowDownloadProgress &&
+                                now - lastProgressUpdateTime >= progressUpdateIntervalTicks)
+                            {
+                                lastProgressUpdateTime = now;
+                                downloadFile.OnChanged(
+                                    currentSpeed,
+                                    ProgressValue.Create(bytesReadInTotal, responseLength),
+                                    bytesReadInTotal,
+                                    responseLength);
+                            }
+                        }
+
+                        // Flush crypto stream if used
+                        if (cryptoStream != null)
+                            await cryptoStream.FlushFinalBlockAsync(cts.Token);
+
+                        await destStream.FlushAsync(cts.Token);
+                    }
+                    finally
+                    {
+                        if (cryptoStream != null)
+                            await cryptoStream.DisposeAsync();
                     }
 
-                    if (hashCheckFile && destStream is CryptoStream cStream)
-                        await cStream.FlushFinalBlockAsync(cts.Token);
-
+                    // Handle hash verification
                     if (hashCheckFile && !string.IsNullOrEmpty(downloadFile.CheckSum))
                     {
                         var checkSum = Convert.ToHexString(hashProvider.Hash!.AsSpan());
 
                         if (!checkSum.Equals(downloadFile.CheckSum, StringComparison.OrdinalIgnoreCase))
-                            continue;
-
-                        // ReSharper disable once ConvertToUsingDeclaration
-                        await using (var fs = File.Create(filePath))
                         {
-                            ms.Seek(0, SeekOrigin.Begin);
-                            await ms.CopyToAsync(fs, cts.Token);
-                            await fs.FlushAsync(cts.Token);
+                            // Hash mismatch, retry
+                            downloadFile.RetryCount++;
+
+                            var delay = CalculateRetryDelay(downloadFile.RetryCount);
+                            await Task.Delay(delay, CancellationToken.None);
+                            continue;
                         }
+
+                        // Hash verified, write to final file
+                        await using var fs = File.Create(filePath);
+
+                        ms.Seek(0, SeekOrigin.Begin);
+                        await ms.CopyToAsync(fs, cts.Token);
+                        await fs.FlushAsync(cts.Token);
                     }
-                    else
+                    else if (!hashCheckFile)
                     {
-                        await ms.FlushAsync(cts.Token);
+                        // Close temp file stream
+                        if (tempFileStream != null)
+                        {
+                            await tempFileStream.DisposeAsync();
+                            tempFileStream = null;
+                        }
+
+                        // Move temp file to final location
+                        if (File.Exists(filePath))
+                            File.Delete(filePath);
+
+                        File.Move(tempFilePath, filePath);
+                        tempFilePath = string.Empty;
                     }
                 }
+                finally
+                {
+                    if (hashCheckFile)
+                        await ms.DisposeAsync();
+                    // tempFileStream will be disposed in the catch blocks
+                }
 
-                // 使用最终速度作为完成回调的参数
-                var finalSpeed = speedCalculator.TotalBytes / Stopwatch.GetElapsedTime(
-                    Stopwatch.GetTimestamp() - (long)(timeout.TotalSeconds * Stopwatch.Frequency)
-                ).TotalSeconds;
+                // Calculate final speed
+                var finalSpeed = speedCalculator.Recalculate();
 
                 downloadFile.OnCompleted(true, null, finalSpeed);
 
@@ -141,22 +187,63 @@ public static partial class DownloadHelper
                 downloadFile.RetryCount++;
                 exceptions.Add(e);
 
-                if (e.StatusCode != HttpStatusCode.NotFound)
+                // Clean up temp file
+                CleanupTempFile(tempFileStream, tempFilePath);
+
+                if (e.StatusCode == HttpStatusCode.NotFound)
                 {
-                    var delay = Math.Min(1000 * Math.Pow(2, downloadFile.RetryCount), 10000);
-                    await Task.Delay((int)delay, CancellationToken.None);
+                    // Don't retry on 404
+                    break;
                 }
+
+                var delay = CalculateRetryDelay(downloadFile.RetryCount);
+                await Task.Delay(delay, CancellationToken.None);
+            }
+            catch (OperationCanceledException e)
+            {
+                downloadFile.RetryCount++;
+                exceptions.Add(e);
+
+                // Clean up temp file
+                CleanupTempFile(tempFileStream, tempFilePath);
+
+                var delay = CalculateRetryDelay(downloadFile.RetryCount);
+                await Task.Delay(delay, CancellationToken.None);
             }
             catch (Exception e)
             {
                 downloadFile.RetryCount++;
-
-                var delay = Math.Min(1000 * Math.Pow(2, downloadFile.RetryCount), 10000);
-                await Task.Delay((int)delay, CancellationToken.None);
                 exceptions.Add(e);
+
+                // Clean up temp file
+                CleanupTempFile(tempFileStream, tempFilePath);
+
+                var delay = CalculateRetryDelay(downloadFile.RetryCount);
+                await Task.Delay(delay, CancellationToken.None);
             }
         }
 
         downloadFile.OnCompleted(false, new AggregateException(exceptions), -1);
+    }
+
+    private static int CalculateRetryDelay(int retryCount)
+    {
+        // Exponential backoff: 1s, 2s, 4s, 8s, max 10s
+        return (int)Math.Min(1000 * Math.Pow(2, retryCount - 1), 10000);
+    }
+
+    private static void CleanupTempFile(Stream? stream, string tempFilePath)
+    {
+        try
+        {
+            stream?.Dispose();
+
+            if (!string.IsNullOrEmpty(tempFilePath) && File.Exists(tempFilePath))
+                File.Delete(tempFilePath);
+        }
+        catch
+        {
+            // Ignore cleanup errors
+        }
     }
 }
