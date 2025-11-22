@@ -364,6 +364,7 @@ public static partial class DownloadHelper
 
             await chunkState.TempFileStream!.WriteAsync(buffer.Memory[..bytesRead], ct);
 
+            chunkState.UpdateProgress(bytesRead);
             globalSpeedCalculator.AddSample(bytesRead);
 
             // Check if download speed is too slow
