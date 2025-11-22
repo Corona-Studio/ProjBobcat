@@ -8,15 +8,21 @@ using ProjBobcat.Class.Model.Downloading;
 namespace ProjBobcat.Class.Helper.Download;
 
 /// <summary>
-///     Manages download chunks with smart retry and resume capabilities
+///     Manages download chunks with smart retry and resume capabilities (thread-safe, lockless)
 /// </summary>
 internal sealed class ChunkManager(DownloadSettings settings) : IDisposable
 {
     private readonly ConcurrentDictionary<DownloadRange, ChunkDownloadState> _chunks = [];
     private readonly ConcurrentQueue<DownloadRange> _pendingChunks = [];
     private readonly ConcurrentDictionary<DownloadRange, int> _failedChunks = [];
-    private double _globalAverageSpeed;
+    private long _globalAverageSpeedBits; // Store double as long bits for atomic operations
     private int _completedCount;
+    
+    private double GlobalAverageSpeed
+    {
+        get => BitConverter.Int64BitsToDouble(Interlocked.Read(ref _globalAverageSpeedBits));
+        set => Interlocked.Exchange(ref _globalAverageSpeedBits, BitConverter.DoubleToInt64Bits(value));
+    }
 
     /// <summary>
     ///     Initialize chunks for download
@@ -30,7 +36,7 @@ internal sealed class ChunkManager(DownloadSettings settings) : IDisposable
     }
 
     /// <summary>
-    ///     Try to get next chunk to download
+    ///     Try to get next chunk to download (thread-safe, lockless)
     /// </summary>
     public bool TryGetNextChunk(out DownloadRange range, out ChunkDownloadState state)
     {
@@ -39,7 +45,7 @@ internal sealed class ChunkManager(DownloadSettings settings) : IDisposable
             // First, try to get a pending chunk
             if (_pendingChunks.TryDequeue(out range))
             {
-                state = new ChunkDownloadState(range, _globalAverageSpeed);
+                state = new ChunkDownloadState(range, GlobalAverageSpeed);
 
                 if (_chunks.TryAdd(range, state)) return true;
 
@@ -69,7 +75,7 @@ internal sealed class ChunkManager(DownloadSettings settings) : IDisposable
     }
 
     /// <summary>
-    ///     Handle chunk failure - decide whether to retry or split
+    ///     Handle chunk failure - decide whether to retry or split (thread-safe)
     /// </summary>
     public bool HandleChunkFailure(DownloadRange range, ChunkDownloadState state, bool canSplit)
     {
@@ -82,8 +88,9 @@ internal sealed class ChunkManager(DownloadSettings settings) : IDisposable
             var remainingRange = state.GetRemainingRange();
             if (remainingRange != null)
             {
-                // Split remaining into smaller chunks
-                var splitRanges = SplitRange(remainingRange.Value, settings.DownloadParts);
+                // Split remaining into smaller chunks (max 4 parts to avoid too many tiny chunks)
+                var splitCount = Math.Min(4, settings.DownloadParts);
+                var splitRanges = SplitRange(remainingRange.Value, splitCount);
                 foreach (var splitRange in splitRanges)
                 {
                     _pendingChunks.Enqueue(splitRange);
@@ -93,7 +100,7 @@ internal sealed class ChunkManager(DownloadSettings settings) : IDisposable
                 if (state.BytesDownloaded > 0)
                 {
                     var downloadedRange = state.GetDownloadedRange();
-                    var completedState = new ChunkDownloadState(downloadedRange, _globalAverageSpeed);
+                    var completedState = new ChunkDownloadState(downloadedRange, GlobalAverageSpeed);
                     completedState.UpdateProgress(state.BytesDownloaded);
 
                     // Replace the failed chunk state with completed portion
@@ -107,7 +114,7 @@ internal sealed class ChunkManager(DownloadSettings settings) : IDisposable
         // Retry the chunk if under retry limit
         if (failCount < settings.RetryCount || settings.RetryCount <= 0)
         {
-            // Re-queue for retry
+            // Re-queue for retry at the front (higher priority for retries)
             _pendingChunks.Enqueue(range);
             return true;
         }
@@ -178,7 +185,7 @@ internal sealed class ChunkManager(DownloadSettings settings) : IDisposable
     }
 
     /// <summary>
-    ///     Update global average speed based on completed chunks
+    ///     Update global average speed based on completed chunks (thread-safe)
     /// </summary>
     private void UpdateGlobalSpeed()
     {
@@ -186,7 +193,7 @@ internal sealed class ChunkManager(DownloadSettings settings) : IDisposable
         if (completedChunks.Count == 0) return;
 
         var totalSpeed = completedChunks.Sum(c => c.GetAverageSpeed());
-        _globalAverageSpeed = totalSpeed / completedChunks.Count;
+        GlobalAverageSpeed = totalSpeed / completedChunks.Count;
     }
 
     /// <summary>

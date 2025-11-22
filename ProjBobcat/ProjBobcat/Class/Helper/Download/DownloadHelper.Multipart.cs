@@ -207,6 +207,10 @@ public static partial class DownloadHelper
 
                             try
                             {
+                                // Add per-chunk timeout (3 minutes max per chunk)
+                                using var chunkCts = CancellationTokenSource.CreateLinkedTokenSource(cts.Token);
+                                chunkCts.CancelAfter(TimeSpan.FromMinutes(3));
+
                                 await DownloadChunkAsync(
                                     range,
                                     chunkState,
@@ -214,9 +218,18 @@ public static partial class DownloadHelper
                                     downloadSettings,
                                     chunkManager,
                                     globalSpeedCalculator,
-                                    cts.Token);
+                                    chunkCts.Token);
 
                                 chunkManager.CompleteChunk(range, chunkState);
+                            }
+                            catch (OperationCanceledException) when (!cts.Token.IsCancellationRequested)
+                            {
+                                // Chunk timeout - retry with split if possible
+                                var canRetry = chunkManager.HandleChunkFailure(range, chunkState, canSplit: true);
+                                if (!canRetry)
+                                {
+                                    exceptions.Add(new TimeoutException($"Chunk {range.Start}-{range.End} timed out"));
+                                }
                             }
                             catch (Exception ex)
                             {

@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
 using ProjBobcat.Class.Model.Downloading;
 
 namespace ProjBobcat.Class.Helper.Download;
@@ -14,12 +15,14 @@ internal sealed class ChunkDownloadState : IDisposable
     private const int SlowSpeedCheckIntervalMs = 3000; // Check every 3 seconds
 
     public DownloadRange Range { get; }
-    public long BytesDownloaded { get; private set; }
-    public int RetryCount { get; private set; }
+    public long BytesDownloaded => Interlocked.Read(ref _bytesDownloaded);
+    public int RetryCount => Interlocked.CompareExchange(ref _retryCount, 0, 0);
     public bool IsCompleted => BytesDownloaded >= Range.Length;
     public FileStream? TempFileStream { get; private set; }
     public string? TempFilePath { get; private set; }
 
+    private long _bytesDownloaded;
+    private int _retryCount;
     private readonly DownloadSpeedCalculator _speedCalculator;
     private long _lastSpeedCheckTimestamp;
     private long _lastSpeedCheckBytes;
@@ -36,11 +39,11 @@ internal sealed class ChunkDownloadState : IDisposable
     }
 
     /// <summary>
-    ///     Update download progress and return current speed
+    ///     Update download progress and return current speed (thread-safe)
     /// </summary>
     public double UpdateProgress(long additionalBytes)
     {
-        BytesDownloaded += additionalBytes;
+        Interlocked.Add(ref _bytesDownloaded, additionalBytes);
         return _speedCalculator.AddSample(additionalBytes);
     }
 
@@ -52,15 +55,18 @@ internal sealed class ChunkDownloadState : IDisposable
         if (_expectedSpeed <= 0) return false;
 
         var now = Stopwatch.GetTimestamp();
-        var elapsed = (double)(now - _lastSpeedCheckTimestamp) / Stopwatch.Frequency;
+        var lastCheck = Interlocked.Read(ref _lastSpeedCheckTimestamp);
+        var elapsed = (double)(now - lastCheck) / Stopwatch.Frequency;
 
         if (elapsed < SlowSpeedCheckIntervalMs / 1000.0) return false;
 
-        var bytesSinceLastCheck = BytesDownloaded - _lastSpeedCheckBytes;
+        var currentBytes = BytesDownloaded;
+        var lastBytes = Interlocked.Read(ref _lastSpeedCheckBytes);
+        var bytesSinceLastCheck = currentBytes - lastBytes;
         var currentSpeed = elapsed > 0 ? bytesSinceLastCheck / elapsed : 0;
 
-        _lastSpeedCheckTimestamp = now;
-        _lastSpeedCheckBytes = BytesDownloaded;
+        Interlocked.Exchange(ref _lastSpeedCheckTimestamp, now);
+        Interlocked.Exchange(ref _lastSpeedCheckBytes, currentBytes);
 
         // If speed is less than 10% of expected, consider it too slow
         return currentSpeed < (_expectedSpeed * MinAcceptableSpeedRatio);
@@ -77,9 +83,9 @@ internal sealed class ChunkDownloadState : IDisposable
     public double GetAverageSpeed() => _speedCalculator.AverageSpeed;
 
     /// <summary>
-    ///     Increment retry count
+    ///     Increment retry count (thread-safe)
     /// </summary>
-    public void IncrementRetry() => RetryCount++;
+    public void IncrementRetry() => Interlocked.Increment(ref _retryCount);
 
     /// <summary>
     ///     Get remaining bytes to download

@@ -30,13 +30,18 @@ public class DefaultResourceCompleter : IResourceCompleter
     public int MaxDegreeOfParallelism { get; set; } = 1;
     public int TotalRetry { get; set; } = 2;
     public bool CheckFile { get; set; } = true;
+    public bool RandomizeDownloadOrder { get; set; } = true;
     public IReadOnlyList<IResourceInfoResolver>? ResourceInfoResolvers { get; set; }
 
     public event EventHandler<GameResourceInfoResolveEventArgs>? GameResourceInfoResolveStatus;
     public event EventHandler<DownloadFileChangedEventArgs>? DownloadFileChangedEvent;
     public event EventHandler<GameResourceDownloadedEventArgs>? DownloadFileCompletedEvent;
 
-    record CheckFileInfo(IResourceInfoResolver Resolver, string BasePath, bool CheckLocalFiles, ResolvedGameVersion ResolvedGame);
+    record CheckFileInfo(
+        IResourceInfoResolver Resolver,
+        string BasePath,
+        bool CheckLocalFiles,
+        ResolvedGameVersion ResolvedGame);
 
     public TaskResult<ResourceCompleterCheckResult?> CheckAndDownload(
         string basePath,
@@ -65,6 +70,7 @@ public class DefaultResourceCompleter : IResourceCompleter
         {
             CheckFile = this.CheckFile,
             DownloadParts = this.DownloadParts,
+            DownloadThread = DownloadThread,
             HashType = HashType.SHA1,
             RetryCount = this.TotalRetry,
             Timeout = this.TimeoutPerFile,
@@ -79,13 +85,16 @@ public class DefaultResourceCompleter : IResourceCompleter
 
         var linkOption = new DataflowLinkOptions { PropagateCompletion = true };
 
-        var downloadBlock = DownloadHelper.BuildAdvancedDownloadTplBlock(downloadSettings);
+        var downloadBlock = this.RandomizeDownloadOrder
+            ? DownloadHelper.BuildRandomizingDownloadTplBlock(downloadSettings)
+            : DownloadHelper.BuildAdvancedDownloadTplBlock(downloadSettings);
 
-        var checkBlock = new TransformManyBlock<CheckFileInfo, AbstractDownloadBase>(TransformCheckFiles, new ExecutionDataflowBlockOptions
-        {
-            MaxDegreeOfParallelism = numBatches,
-            EnsureOrdered = false
-        });
+        var checkBlock = new TransformManyBlock<CheckFileInfo, AbstractDownloadBase>(TransformCheckFiles,
+            new ExecutionDataflowBlockOptions
+            {
+                MaxDegreeOfParallelism = numBatches,
+                EnsureOrdered = false
+            });
 
         checkBlock.LinkTo(downloadBlock, linkOption);
 
@@ -122,25 +131,63 @@ public class DefaultResourceCompleter : IResourceCompleter
     {
         arg.Resolver.GameResourceInfoResolveEvent += FireResolveEvent;
 
-        await foreach (var element in arg.Resolver.ResolveResourceAsync(
-                           arg.BasePath,
-                           arg.CheckLocalFiles,
-                           arg.ResolvedGame))
+        IAsyncEnumerator<IGameResource>? enumerator = null;
+
+        try
         {
-            var dF = new MultiSourceDownloadFile
+            var resourceEnumerable = arg.Resolver.ResolveResourceAsync(
+                arg.BasePath,
+                arg.CheckLocalFiles,
+                arg.ResolvedGame);
+
+            enumerator = resourceEnumerable.GetAsyncEnumerator();
+
+            while (true)
             {
-                DownloadPath = element.Path,
-                DownloadUris = element.Urls,
-                FileName = element.FileName,
-                FileSize = element.FileSize,
-                CheckSum = element.CheckSum,
-                FileType = element.Type
-            };
-            dF.Completed += this.WhenCompleted;
+                IGameResource element;
 
-            Interlocked.Increment(ref this._needToDownload);
+                try
+                {
+                    if (!await enumerator.MoveNextAsync())
+                        break;
 
-            yield return dF;
+                    element = enumerator.Current;
+                }
+                catch (Exception ex)
+                {
+                    // Log error but continue processing other resources
+                    this.OnResolveComplete(this, new GameResourceInfoResolveEventArgs
+                    {
+                        Progress = ProgressValue.Start,
+                        Status = $"资源解析错误: {ex.Message}"
+                    });
+
+                    // Skip this resource and continue
+                    continue;
+                }
+
+                var dF = new MultiSourceDownloadFile
+                {
+                    DownloadPath = element.Path,
+                    DownloadUris = element.Urls,
+                    FileName = element.FileName,
+                    FileSize = element.FileSize,
+                    CheckSum = element.CheckSum,
+                    FileType = element.Type
+                };
+                dF.Completed += this.WhenCompleted;
+
+                Interlocked.Increment(ref this._needToDownload);
+
+                yield return dF;
+            }
+        }
+        finally
+        {
+            if (enumerator != null)
+                await enumerator.DisposeAsync();
+
+            arg.Resolver.GameResourceInfoResolveEvent -= FireResolveEvent;
         }
 
         yield break;
