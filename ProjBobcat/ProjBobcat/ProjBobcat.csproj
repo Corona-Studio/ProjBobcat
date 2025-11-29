@@ -73,7 +73,7 @@ resolved the issue that LaunchWrapper may not return the correct exit code
   <ItemGroup>
     <PackageReference Include="System.Management" Version="10.0.0" />
     <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="10.0.0" />
-    <PackageReference Include="Microsoft.Windows.CsWin32" Version="0.3.252">
+    <PackageReference Include="Microsoft.Windows.CsWin32" Version="0.3.257">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
   </ItemGroup>
