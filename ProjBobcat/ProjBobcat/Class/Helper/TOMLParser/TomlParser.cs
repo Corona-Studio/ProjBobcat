@@ -2050,25 +2050,28 @@ static partial class TomlSyntax
 
 static class StringUtils
 {
-    public static string AsKey(this string key)
+    extension(string key)
     {
-        var quote = key.Any(c => !TomlSyntax.IsBareKey(c));
-        return !quote ? key : $"{TomlSyntax.BASIC_STRING_SYMBOL}{key.Escape()}{TomlSyntax.BASIC_STRING_SYMBOL}";
-    }
-
-    public static string Join(this string self, IEnumerable<string> subItems)
-    {
-        var sb = new StringBuilder();
-        var first = true;
-
-        foreach (var subItem in subItems)
+        public string AsKey()
         {
-            if (!first) sb.Append(self);
-            first = false;
-            sb.Append(subItem);
+            var quote = key.Any(c => !TomlSyntax.IsBareKey(c));
+            return !quote ? key : $"{TomlSyntax.BASIC_STRING_SYMBOL}{key.Escape()}{TomlSyntax.BASIC_STRING_SYMBOL}";
         }
 
-        return sb.ToString();
+        public string Join(IEnumerable<string> subItems)
+        {
+            var sb = new StringBuilder();
+            var first = true;
+
+            foreach (var subItem in subItems)
+            {
+                if (!first) sb.Append(key);
+                first = false;
+                sb.Append(subItem);
+            }
+
+            return sb.ToString();
+        }
     }
 
     public static bool TryParseDateTime(string s,
@@ -2091,90 +2094,93 @@ static class StringUtils
         return false;
     }
 
-    public static void AsComment(this string self, TextWriter tw)
+    extension(string self)
     {
-        foreach (var line in self.Split(TomlSyntax.NEWLINE_CHARACTER))
-            tw.WriteLine($"{TomlSyntax.COMMENT_SYMBOL} {line.Trim()}");
-    }
-
-    public static string RemoveAll(this string txt, char toRemove)
-    {
-        var sb = new StringBuilder(txt.Length);
-        foreach (var c in txt.Where(c => c != toRemove))
-            sb.Append(c);
-        return sb.ToString();
-    }
-
-    public static string Escape(this string txt, bool escapeNewlines = true)
-    {
-        var stringBuilder = new StringBuilder(txt.Length + 2);
-        for (var i = 0; i < txt.Length; i++)
+        public void AsComment(TextWriter tw)
         {
-            var c = txt[i];
-
-            static string CodePoint(string txt, ref int i, char c)
-            {
-                return char.IsSurrogatePair(txt, i)
-                    ? $"\\U{char.ConvertToUtf32(txt, i++):X8}"
-                    : $"\\u{c:X4}";
-            }
-
-            stringBuilder.Append(c switch
-            {
-                '\b' => @"\b",
-                '\t' => @"\t",
-                '\n' when escapeNewlines => @"\n",
-                '\f' => @"\f",
-                '\r' when escapeNewlines => @"\r",
-                '\\' => @"\\",
-                '\"' => @"\""",
-                _ when TomlSyntax.ShouldBeEscaped(c) || (TOML.ForceASCII && c > sbyte.MaxValue) =>
-                    CodePoint(txt, ref i, c),
-                _ => c
-            });
+            foreach (var line in self.Split(TomlSyntax.NEWLINE_CHARACTER))
+                tw.WriteLine($"{TomlSyntax.COMMENT_SYMBOL} {line.Trim()}");
         }
 
-        return stringBuilder.ToString();
-    }
-
-    public static string Unescape(this string txt)
-    {
-        if (string.IsNullOrEmpty(txt)) return txt;
-        var stringBuilder = new StringBuilder(txt.Length);
-        for (var i = 0; i < txt.Length;)
+        public string RemoveAll(char toRemove)
         {
-            var num = txt.IndexOf('\\', i);
-            var next = num + 1;
-            if (num < 0 || num == txt.Length - 1) num = txt.Length;
-            stringBuilder.Append(txt, i, num - i);
-            if (num >= txt.Length) break;
-            var c = txt[next];
-
-            static string CodePoint(int next, string txt, ref int num, int size)
-            {
-                if (next + size >= txt.Length) throw new Exception("Undefined escape sequence!");
-                num += size;
-                return char.ConvertFromUtf32(Convert.ToInt32(txt.Substring(next + 1, size), 16));
-            }
-
-            stringBuilder.Append(c switch
-            {
-                'b' => "\b",
-                't' => "\t",
-                'n' => "\n",
-                'f' => "\f",
-                'r' => "\r",
-                '\'' => "\'",
-                '\"' => "\"",
-                '\\' => "\\",
-                'u' => CodePoint(next, txt, ref num, 4),
-                'U' => CodePoint(next, txt, ref num, 8),
-                _ => throw new Exception("Undefined escape sequence!")
-            });
-            i = num + 2;
+            var sb = new StringBuilder(self.Length);
+            foreach (var c in self.Where(c => c != toRemove))
+                sb.Append(c);
+            return sb.ToString();
         }
 
-        return stringBuilder.ToString();
+        public string Escape(bool escapeNewlines = true)
+        {
+            var stringBuilder = new StringBuilder(self.Length + 2);
+            for (var i = 0; i < self.Length; i++)
+            {
+                var c = self[i];
+
+                static string CodePoint(string txt, ref int i, char c)
+                {
+                    return char.IsSurrogatePair(txt, i)
+                        ? $"\\U{char.ConvertToUtf32(txt, i++):X8}"
+                        : $"\\u{c:X4}";
+                }
+
+                stringBuilder.Append(c switch
+                {
+                    '\b' => @"\b",
+                    '\t' => @"\t",
+                    '\n' when escapeNewlines => @"\n",
+                    '\f' => @"\f",
+                    '\r' when escapeNewlines => @"\r",
+                    '\\' => @"\\",
+                    '\"' => @"\""",
+                    _ when TomlSyntax.ShouldBeEscaped(c) || (TOML.ForceASCII && c > sbyte.MaxValue) =>
+                        CodePoint(self, ref i, c),
+                    _ => c
+                });
+            }
+
+            return stringBuilder.ToString();
+        }
+
+        public string Unescape()
+        {
+            if (string.IsNullOrEmpty(self)) return self;
+            var stringBuilder = new StringBuilder(self.Length);
+            for (var i = 0; i < self.Length;)
+            {
+                var num = self.IndexOf('\\', i);
+                var next = num + 1;
+                if (num < 0 || num == self.Length - 1) num = self.Length;
+                stringBuilder.Append(self, i, num - i);
+                if (num >= self.Length) break;
+                var c = self[next];
+
+                static string CodePoint(int next, string txt, ref int num, int size)
+                {
+                    if (next + size >= txt.Length) throw new Exception("Undefined escape sequence!");
+                    num += size;
+                    return char.ConvertFromUtf32(Convert.ToInt32(txt.Substring(next + 1, size), 16));
+                }
+
+                stringBuilder.Append(c switch
+                {
+                    'b' => "\b",
+                    't' => "\t",
+                    'n' => "\n",
+                    'f' => "\f",
+                    'r' => "\r",
+                    '\'' => "\'",
+                    '\"' => "\"",
+                    '\\' => "\\",
+                    'u' => CodePoint(next, self, ref num, 4),
+                    'U' => CodePoint(next, self, ref num, 8),
+                    _ => throw new Exception("Undefined escape sequence!")
+                });
+                i = num + 2;
+            }
+
+            return stringBuilder.ToString();
+        }
     }
 }
 

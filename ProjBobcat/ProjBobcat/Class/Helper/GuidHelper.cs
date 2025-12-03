@@ -13,34 +13,36 @@ namespace ProjBobcat.Class.Helper;
 /// </summary>
 public static class GuidHelper
 {
-    /// <summary>
-    ///     根据一段字符串，计算其哈希值，并转换为一个对应的 <see cref="Guid" /> 。
-    ///     相等的字符串将产生相等的 <see cref="Guid" /> 。
-    /// </summary>
     /// <param name="str">字符串。</param>
-    /// <returns>生成结果。</returns>
-    public static Guid ToGuidHash(this string str)
+    extension(string str)
     {
-        var data = MD5.HashData(Encoding.UTF8.GetBytes(str));
-        return new Guid(data);
-    }
+        /// <summary>
+        ///     根据一段字符串，计算其哈希值，并转换为一个对应的 <see cref="Guid" /> 。
+        ///     相等的字符串将产生相等的 <see cref="Guid" /> 。
+        /// </summary>
+        /// <returns>生成结果。</returns>
+        public Guid ToGuidHash()
+        {
+            var data = MD5.HashData(Encoding.UTF8.GetBytes(str));
+            return new Guid(data);
+        }
 
-    /// <summary>
-    ///     根据离线玩家名，按一定方式处理并计算哈希值，转换为一个对应的 <see cref="Guid" /> 。
-    ///     相等的玩家名将产生相等的 <see cref="Guid" /> 。
-    ///     满足 Bukkit 离线玩家 UUID 生成规则。
-    ///     <see href="https://github.com/MCLF-CN/docs/issues/7" />
-    /// </summary>
-    /// <param name="username">玩家名。</param>
-    /// <returns>生成结果。</returns>
-    public static Guid ToGuidHashAsName(this string username)
-    {
-        var hash = MD5.HashData(Encoding.UTF8.GetBytes("OfflinePlayer:" + username));
+        /// <summary>
+        ///     根据离线玩家名，按一定方式处理并计算哈希值，转换为一个对应的 <see cref="Guid" /> 。
+        ///     相等的玩家名将产生相等的 <see cref="Guid" /> 。
+        ///     满足 Bukkit 离线玩家 UUID 生成规则。
+        ///     <see href="https://github.com/MCLF-CN/docs/issues/7" />
+        /// </summary>
+        /// <returns>生成结果。</returns>
+        public Guid ToGuidHashAsName()
+        {
+            var hash = MD5.HashData(Encoding.UTF8.GetBytes("OfflinePlayer:" + str));
 
-        hash[6] = (byte)((hash[6] & 0x0f) | 0x30);
-        hash[8] = (byte)((hash[8] & 0x3f) | 0x80);
+            hash[6] = (byte)((hash[6] & 0x0f) | 0x30);
+            hash[8] = (byte)((hash[8] & 0x3f) | 0x80);
 
-        return Guid.Parse(new Uuid(hash).ToString());
+            return Guid.Parse(new Uuid(hash).ToString());
+        }
     }
 
     /// <summary>

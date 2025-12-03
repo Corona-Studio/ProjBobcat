@@ -16,49 +16,52 @@ public static class ArchiveHelper
         return entry.Length == 0 && entry.FullName.EndsWith('/');
     }
 
-    public static void AddEntry(this ZipArchive archive, string entryName, Stream stream, DateTime time,
-        CompressionLevel level = CompressionLevel.SmallestSize)
+    extension(ZipArchive archive)
     {
-        var entry = archive.CreateEntry(entryName, level);
-
-        entry.LastWriteTime = time.Year switch
+        public void AddEntry(string entryName, Stream stream, DateTime time,
+            CompressionLevel level = CompressionLevel.SmallestSize)
         {
-            < ValidZipDateYearMin or > ValidZipDateYearMax => DateTime.Now,
-            _ => time
-        };
+            var entry = archive.CreateEntry(entryName, level);
 
-        using var entryStream = entry.Open();
+            entry.LastWriteTime = time.Year switch
+            {
+                < ValidZipDateYearMin or > ValidZipDateYearMax => DateTime.Now,
+                _ => time
+            };
 
-        stream.CopyTo(entryStream);
-    }
+            using var entryStream = entry.Open();
 
-    public static void AddEntry(this ZipArchive archive, string entryName, Stream stream,
-        CompressionLevel level = CompressionLevel.SmallestSize)
-    {
-        var entry = archive.CreateEntry(entryName, level);
-        using var entryStream = entry.Open();
+            stream.CopyTo(entryStream);
+        }
 
-        stream.CopyTo(entryStream);
-    }
+        public void AddEntry(string entryName, Stream stream,
+            CompressionLevel level = CompressionLevel.SmallestSize)
+        {
+            var entry = archive.CreateEntry(entryName, level);
+            using var entryStream = entry.Open();
 
-    public static async Task AddEntryAsync(this ZipArchive archive, string entryName, string filePath,
-        CompressionLevel level = CompressionLevel.SmallestSize)
-    {
-        var entry = archive.CreateEntry(entryName, level);
+            stream.CopyTo(entryStream);
+        }
 
-        await using var fs = File.OpenRead(filePath);
-        await using var entryStream = entry.Open();
+        public async Task AddEntryAsync(string entryName, string filePath,
+            CompressionLevel level = CompressionLevel.SmallestSize)
+        {
+            var entry = archive.CreateEntry(entryName, level);
 
-        await fs.CopyToAsync(entryStream);
-    }
+            await using var fs = File.OpenRead(filePath);
+            await using var entryStream = await entry.OpenAsync();
 
-    public static async Task AddEntryAsync(this ZipArchive archive, string entryName, Stream stream,
-        CompressionLevel level = CompressionLevel.SmallestSize)
-    {
-        var entry = archive.CreateEntry(entryName, level);
-        await using var entryStream = entry.Open();
+            await fs.CopyToAsync(entryStream);
+        }
 
-        await stream.CopyToAsync(entryStream);
+        public async Task AddEntryAsync(string entryName, Stream stream,
+            CompressionLevel level = CompressionLevel.SmallestSize)
+        {
+            var entry = archive.CreateEntry(entryName, level);
+            await using var entryStream = await entry.OpenAsync();
+
+            await stream.CopyToAsync(entryStream);
+        }
     }
 
     public static bool TryOpenRead(Stream stream, [MaybeNullWhen(false)] out ZipArchive archive)
