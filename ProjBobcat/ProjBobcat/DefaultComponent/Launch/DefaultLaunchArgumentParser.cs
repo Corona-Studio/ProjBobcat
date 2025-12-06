@@ -122,6 +122,19 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
             { "${primary_jar_name}", $"\"{version.Id}.jar\"" }
         };
 
+        #region Old 1.16.5 game multiplayer fix apply
+
+        if (launchSettings.AutoApplyFixForOldMultiPlayerGame &&
+            !string.IsNullOrEmpty(launchSettings.OldGameTrustStorePath) &&
+            File.Exists(launchSettings.OldGameTrustStorePath))
+        {
+            yield return $"-Djavax.net.ssl.trustStore=\"{launchSettings.OldGameTrustStorePath}\"";
+            yield return "-Djavax.net.ssl.trustStorePassword=changeit";
+            yield return "-Djdk.tls.client.protocols=TLSv1.2";
+        }
+
+        #endregion
+
         #region log4j 缓解措施
 
         yield return "-Dlog4j2.formatMsgNoLookups=true";

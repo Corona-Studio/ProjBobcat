@@ -68,6 +68,8 @@ public class LaunchSettings
     public required string[] GameEnvironmentVariables { get; init; }
     public required bool UseV4NetworkingStack { get; init; }
     public required bool PreferUtf8Encoding { get; init; }
+    public required bool AutoApplyFixForOldMultiPlayerGame { get; init; }
+    public required string? OldGameTrustStorePath { get; init; }
 
     public override string ToString()
     {
