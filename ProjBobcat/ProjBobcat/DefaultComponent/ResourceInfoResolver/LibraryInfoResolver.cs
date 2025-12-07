@@ -16,12 +16,18 @@ namespace ProjBobcat.DefaultComponent.ResourceInfoResolver;
 
 public sealed class LibraryInfoResolver : ResolverBase
 {
-    public IReadOnlyList<DownloadUriInfo> LibraryUriRoots { get; init; } = [ new ("https://libraries.minecraft.net/", 1) ];
-    public IReadOnlyList<DownloadUriInfo> ForgeUriRoots { get; init; } = [ new ("https://files.minecraftforge.net/", 1) ];
-    public IReadOnlyList<DownloadUriInfo> FabricMavenUriRoots { get; init; } = [ new ("https://maven.fabricmc.net/", 1) ];
-    public IReadOnlyList<DownloadUriInfo> ForgeMavenUriRoots { get; init; } = [ new ("https://maven.minecraftforge.net/", 1) ];
-    public IReadOnlyList<DownloadUriInfo> ForgeMavenOldUriRoots { get; init; } = [ new ("https://files.minecraftforge.net/maven/", 1) ];
-    public IReadOnlyList<DownloadUriInfo> QuiltMavenUriRoots { get; init; } = [ new ("https://maven.quiltmc.org/repository/release/", 1) ];
+    public IReadOnlyList<DownloadUriInfo> LibraryUriRoots { get; init; } = [new("https://libraries.minecraft.net/", 1)];
+    public IReadOnlyList<DownloadUriInfo> ForgeUriRoots { get; init; } = [new("https://files.minecraftforge.net/", 1)];
+    public IReadOnlyList<DownloadUriInfo> FabricMavenUriRoots { get; init; } = [new("https://maven.fabricmc.net/", 1)];
+
+    public IReadOnlyList<DownloadUriInfo> ForgeMavenUriRoots { get; init; } =
+        [new("https://maven.minecraftforge.net/", 1)];
+
+    public IReadOnlyList<DownloadUriInfo> ForgeMavenOldUriRoots { get; init; } =
+        [new("https://files.minecraftforge.net/maven/", 1)];
+
+    public IReadOnlyList<DownloadUriInfo> QuiltMavenUriRoots { get; init; } =
+        [new("https://maven.quiltmc.org/repository/release/", 1)];
 
     public override async IAsyncEnumerable<IGameResource> ResolveResourceAsync(
         string basePath,
@@ -110,12 +116,15 @@ public sealed class LibraryInfoResolver : ResolverBase
         var libType = GetLibType(lL);
         var uris = libType switch
         {
-            LibraryType.ForgeMaven => this.ForgeMavenUriRoots.Select(r => r with { DownloadUri = $"{r.DownloadUri}{lL.Path}" }),
+            LibraryType.ForgeMaven => this.ForgeMavenUriRoots.Select(r =>
+                r with { DownloadUri = $"{r.DownloadUri}{lL.Path}" }),
             LibraryType.ForgeMavenOld =>
                 this.ForgeMavenOldUriRoots.Select(r => r with { DownloadUri = $"{r.DownloadUri}{lL.Path}" }),
             LibraryType.Forge => this.ForgeUriRoots.Select(r => r with { DownloadUri = $"{r.DownloadUri}{lL.Path}" }),
-            LibraryType.Fabric => this.FabricMavenUriRoots.Select(r => r with { DownloadUri = $"{r.DownloadUri}{lL.Path}" }),
-            LibraryType.Quilt => this.QuiltMavenUriRoots.Select(r => r with { DownloadUri = $"{r.DownloadUri}{lL.Path}" }),
+            LibraryType.Fabric => this.FabricMavenUriRoots.Select(r =>
+                r with { DownloadUri = $"{r.DownloadUri}{lL.Path}" }),
+            LibraryType.Quilt => this.QuiltMavenUriRoots.Select(r =>
+                r with { DownloadUri = $"{r.DownloadUri}{lL.Path}" }),
             LibraryType.ReplacementNative => [new DownloadUriInfo(lL.Url!, 1)],
             LibraryType.Other => this.LibraryUriRoots.Select(r => r with { DownloadUri = $"{r.DownloadUri}{lL.Path}" }),
             _ => []
@@ -131,7 +140,7 @@ public sealed class LibraryInfoResolver : ResolverBase
             Path = path,
             Title = lL.Name?.Split(':')[1] ?? fileName,
             Type = ResourceType.LibraryOrNative,
-            Urls = uris.ToHashSet().ToImmutableList(),
+            Urls = [.. uris],
             FileSize = lL.Size,
             CheckSum = lL.Sha1,
             FileName = fileName
@@ -144,12 +153,12 @@ public sealed class LibraryInfoResolver : ResolverBase
             !string.IsNullOrEmpty(fi.Url) &&
             fi.Url.StartsWith("https://maven.minecraftforge.net", StringComparison.OrdinalIgnoreCase))
             return LibraryType.ForgeMaven;
-        
+
         if (IsForgeLib(fi) &&
             !string.IsNullOrEmpty(fi.Url) &&
             fi.Url.StartsWith("https://files.minecraftforge.net/maven/", StringComparison.OrdinalIgnoreCase))
             return LibraryType.ForgeMavenOld;
-        
+
         if (IsForgeLib(fi)) return LibraryType.Forge;
         if (IsFabricLib(fi)) return LibraryType.Fabric;
         if (IsQuiltLib(fi) && !string.IsNullOrEmpty(fi.Url)) return LibraryType.Quilt;

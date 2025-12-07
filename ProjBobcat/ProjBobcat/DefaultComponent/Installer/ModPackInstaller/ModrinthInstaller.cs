@@ -103,7 +103,7 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
             {
                 CheckSum = checkSum,
                 DownloadPath = downloadDir,
-                DownloadUris = urls.Distinct().Select(u => new DownloadUriInfo(u, 1)).ToArray(),
+                DownloadUris = [.. urls.Distinct().Select(u => new DownloadUriInfo(u, 1))],
                 FileName = fileName,
                 FileSize = file.Size
             };

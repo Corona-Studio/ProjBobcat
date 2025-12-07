@@ -121,7 +121,7 @@ public class DefaultResourceCompleter : IResourceCompleter
         var resultArgs = new ResourceCompleterCheckResult
         {
             IsLibDownloadFailed = isLibraryFailed,
-            FailedFiles = new List<MultiSourceDownloadFile>(this._failedFiles)
+            FailedFiles = [.. this._failedFiles]
         };
 
         return new TaskResult<ResourceCompleterCheckResult?>(result, value: resultArgs);

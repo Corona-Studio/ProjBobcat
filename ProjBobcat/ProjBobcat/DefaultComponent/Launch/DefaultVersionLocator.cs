@@ -504,8 +504,8 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                 }
                 else
                 {
-                    jvmArguments = jvmArgs.ToList();
-                    gameArguments = middleGameArgs.Item1.ToList();
+                    jvmArguments = [.. jvmArgs];
+                    gameArguments = [.. middleGameArgs.Item1];
                     availableGameArgs = middleGameArgs.Item2;
                 }
 
@@ -537,11 +537,13 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                 deduplicatedArgs.Add($"{argPair[0]} {argPair[1]}");
             }
 
-            gameArguments = deduplicatedArgs
-                .Where(p => !string.IsNullOrWhiteSpace(p))
-                .Select(p => p.Split(' '))
-                .SelectMany(p => p)
-                .ToList();
+            gameArguments =
+            [
+                .. deduplicatedArgs
+                    .Where(p => !string.IsNullOrWhiteSpace(p))
+                    .Select(p => p.Split(' '))
+                    .SelectMany(p => p)
+            ];
 
             // Fix for optifine.OptiFineForgeTweaker 
             // --tweakClass optifine.OptiFineForgeTweaker
@@ -680,13 +682,13 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
 
         libraries = libs.Item2;
         natives = libs.Item1;
-        jvmArguments = this.ParseJvmArguments(versionInfo.RawVersion.Arguments?.Jvm).ToList();
+        jvmArguments = [.. this.ParseJvmArguments(versionInfo.RawVersion.Arguments?.Jvm)];
 
         var gameArgs = this.ParseGameArguments(
             versionInfo.RawVersion.MinecraftArguments,
             versionInfo.RawVersion.Arguments?.Game);
 
-        gameArguments = gameArgs.Item1.ToList();
+        gameArguments = [.. gameArgs.Item1];
         availableGameArgs = gameArgs.Item2;
 
         return new ResolvedGameVersion(

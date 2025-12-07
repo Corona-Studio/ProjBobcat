@@ -30,8 +30,10 @@ public static class SystemInfoHelper
 #if NET9_0_OR_GREATER
         FrozenSet.Create(
             "java", "jdk", "env", "环境", "run", "软件", "jre", "mc", "soft", "cache", "temp", "corretto", "roaming",
-            "users", "craft", "program", "世界", "net", "游戏", "oracle", "game", "file", "data", "jvm", "服务", "server", "客户",
-            "client", "整合", "应用", "运行", "前置", "mojang", "官启", "新建文件夹", "eclipse", "microsoft", "hotspot", "runtime", "x86",
+            "users", "craft", "program", "世界", "net", "游戏", "oracle", "game", "file", "data", "jvm", "服务", "server",
+            "客户",
+            "client", "整合", "应用", "运行", "前置", "mojang", "官启", "新建文件夹", "eclipse", "microsoft", "hotspot", "runtime",
+            "x86",
             "x64", "forge", "原版", "optifine", "官方", "启动", "hmcl", "mod", "高清", "download", "launch", "程序", "path",
             "version", "baka", "pcl", "zulu", "local", "packages", "4297127d64ec6", "国服", "网易", "ext", "netease", "1.",
             "启动",
@@ -74,7 +76,7 @@ public static class SystemInfoHelper
         };
 
         using var process = Process.Start(psi);
-        
+
         ArgumentNullException.ThrowIfNull(process);
 
         var reader = process.StandardOutput;
@@ -146,12 +148,14 @@ public static class SystemInfoHelper
                 "NonRemovable" => appxPackageInfo with { NonRemovable = Convert.ToBoolean(value) },
                 "Dependencies" => appxPackageInfo with
                 {
-                    Dependencies = value
-                        .TrimStart('{')
-                        .TrimEnd('}')
-                        .Split(',')
-                        .Select(s => s.Trim())
-                        .ToArray()
+                    Dependencies =
+                    [
+                        .. value
+                            .TrimStart('{')
+                            .TrimEnd('}')
+                            .Split(',')
+                            .Select(s => s.Trim())
+                    ]
                 },
                 "IsPartiallyStaged" => appxPackageInfo with { IsPartiallyStaged = Convert.ToBoolean(value) },
                 "SignatureKind" => appxPackageInfo with { SignatureKind = value },
@@ -437,8 +441,8 @@ public static class SystemInfoHelper
     {
         // Try each method in sequence until we get a valid result
         var cpuName = TryGetCpuNameFromWmi() ??
-                     TryGetCpuNameFromRegistry() ??
-                     TryGetCpuNameFromEnvironment();
+                      TryGetCpuNameFromRegistry() ??
+                      TryGetCpuNameFromEnvironment();
 
         return cpuName?.Trim() ?? "Unknown CPU";
     }

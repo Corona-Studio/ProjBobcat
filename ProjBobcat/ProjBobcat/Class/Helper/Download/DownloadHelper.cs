@@ -41,8 +41,8 @@ public static partial class DownloadHelper
 
     public static string AutoFormatSpeedString(double speedInBytePerSecond)
     {
-        var speed = AutoFormatSpeed(speedInBytePerSecond);
-        var unit = speed.Unit switch
+        var (speed, sizeUnit) = AutoFormatSpeed(speedInBytePerSecond);
+        var unit = sizeUnit switch
         {
             SizeUnit.B => " B / s",
             SizeUnit.Kb => "Kb / s",
@@ -52,7 +52,7 @@ public static partial class DownloadHelper
             _ => " B / s"
         };
 
-        return $"{speed.Speed:F1} {unit,6}";
+        return $"{speed:F1} {unit,6}";
     }
 
     public static (double Speed, SizeUnit Unit) AutoFormatSpeed(double transferSpeed)

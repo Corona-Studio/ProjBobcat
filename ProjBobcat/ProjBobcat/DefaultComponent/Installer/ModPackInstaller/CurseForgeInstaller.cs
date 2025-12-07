@@ -175,7 +175,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
                 var guessDownloadFile = new MultiSourceDownloadFile
                 {
                     DownloadPath = di.FullName,
-                    DownloadUris = proceededUrls.Distinct().Select(u => new DownloadUriInfo(u, 1)).ToArray(),
+                    DownloadUris = [.. proceededUrls.Distinct().Select(u => new DownloadUriInfo(u, 1))],
                     FileName = file.FileName
                 };
 
@@ -211,7 +211,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
             var downloadFile = new MultiSourceDownloadFile
             {
                 DownloadPath = di.FullName,
-                DownloadUris = urls.Distinct().Select(u => new DownloadUriInfo(u, 1)).ToArray(),
+                DownloadUris = [.. urls.Distinct().Select(u => new DownloadUriInfo(u, 1))],
                 FileName = file.FileName
             };
 

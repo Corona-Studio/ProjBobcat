@@ -24,7 +24,10 @@ public sealed class AssetInfoResolver : ResolverBase
 
     public string? VersionManifestUrl { get; init; }
     public IReadOnlyList<DownloadUriInfo>? AssetIndexUriRoots { get; init; }
-    public IReadOnlyList<DownloadUriInfo> AssetUriRoots { get; init; } = [ new ("https://resources.download.minecraft.net/", 1) ];
+
+    public IReadOnlyList<DownloadUriInfo> AssetUriRoots { get; init; } =
+        [new("https://resources.download.minecraft.net/", 1)];
+
     public IReadOnlyList<VersionManifestVersionsModel>? Versions { get; init; }
 
     public required IHttpClientFactory HttpClientFactory { get; init; }
@@ -63,7 +66,8 @@ public sealed class AssetInfoResolver : ResolverBase
         {
             this.OnResolve("没有提供 Version Manifest， 开始下载", ProgressValue.Start);
 
-            using var vmJsonReq = new HttpRequestMessage(HttpMethod.Get, VersionManifestUrl ?? DefaultVersionManifestUrl);
+            using var vmJsonReq =
+                new HttpRequestMessage(HttpMethod.Get, VersionManifestUrl ?? DefaultVersionManifestUrl);
             using var vmJsonRes = await client.SendAsync(vmJsonReq);
 
             var vm = await vmJsonRes.Content.ReadFromJsonAsync(VersionManifestContext.Default.VersionManifest);
@@ -76,7 +80,7 @@ public sealed class AssetInfoResolver : ResolverBase
         if (isAssetInfoNotExists &&
             string.IsNullOrEmpty(resolvedGame.Assets))
             yield break;
-        
+
         if (!isAssetsIndexExists)
         {
             this.OnResolve("没有发现 Asset Indexes 文件， 开始下载", ProgressValue.Start);
@@ -90,7 +94,7 @@ public sealed class AssetInfoResolver : ResolverBase
 
                 if (versionObject == null) yield break;
 
-                var fallbackUrls = new List<DownloadUriInfo> { new (versionObject.Url, 1) };
+                var fallbackUrls = new List<DownloadUriInfo> { new(versionObject.Url, 1) };
                 if (AssetIndexUriRoots is { Count: > 0 })
                 {
                     var initUrl = fallbackUrls[0];
@@ -132,7 +136,7 @@ public sealed class AssetInfoResolver : ResolverBase
 
             if (string.IsNullOrEmpty(assetIndexDownloadUri)) yield break;
 
-            var urls = new List<DownloadUriInfo> { new (assetIndexDownloadUri, 1) };
+            var urls = new List<DownloadUriInfo> { new(assetIndexDownloadUri, 1) };
 
             if (AssetIndexUriRoots is { Count: > 0 })
             {
@@ -249,9 +253,11 @@ public sealed class AssetInfoResolver : ResolverBase
                 Title = hash,
                 Path = path,
                 Type = ResourceType.Asset,
-                Urls = this.AssetUriRoots
-                    .Select(r => r with { DownloadUri = $"{r.DownloadUri}{twoDigitsHash}/{fi.Hash}" })
-                    .ToImmutableList(),
+                Urls =
+                [
+                    .. this.AssetUriRoots.Select(r =>
+                        r with { DownloadUri = $"{r.DownloadUri}{twoDigitsHash}/{fi.Hash}" })
+                ],
                 FileSize = fi.Size,
                 CheckSum = hash,
                 FileName = hash
