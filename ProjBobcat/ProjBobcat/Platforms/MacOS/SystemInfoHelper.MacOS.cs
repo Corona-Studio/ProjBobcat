@@ -19,11 +19,40 @@ public static partial class SystemInfoHelper
 
     public static IEnumerable<string> FindJavaMacOS()
     {
+        foreach (var java in FindOriginalJavaMacOS())
+            yield return java;
+        foreach (var java in FindSdkManJavaMacOS())
+            yield return java;
+    }
+
+    private static IEnumerable<string> FindOriginalJavaMacOS()
+    {
         const string rootPath = "/Library/Java/JavaVirtualMachines";
 
         foreach (var dir in Directory.EnumerateDirectories(rootPath))
         {
             var filePath = $"{dir}/{Constants.JavaExecutablePath}";
+            if (File.Exists(filePath))
+            {
+                var flag = File.GetUnixFileMode(filePath);
+
+                if (flag.HasFlag(UnixFileMode.GroupExecute) && flag.HasFlag(UnixFileMode.UserExecute))
+                    yield return filePath;
+            }
+        }
+    }
+
+    private static IEnumerable<string> FindSdkManJavaMacOS()
+    {
+        var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        var sdkManPath = Path.Combine(home, ".sdkman", "candidates", "java");
+
+        if (!Directory.Exists(sdkManPath))
+            yield break;
+
+        foreach (var dir in Directory.EnumerateDirectories(sdkManPath))
+        {
+            var filePath = $"{dir}/{Constants.UnixKind.JavaExecutableDefaultPath}";
             if (File.Exists(filePath))
             {
                 var flag = File.GetUnixFileMode(filePath);

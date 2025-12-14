@@ -36,7 +36,7 @@ public static class Constants
         var id => throw new PlatformNotSupportedException($"Unknown operating system: {id}")
     };
 
-    static class Windows
+    public static class Windows
     {
         public const string Where = "where";
         public const string JavaExecutableName = "javaw.exe";
@@ -46,7 +46,7 @@ public static class Constants
         public const string Os = "windows";
     }
 
-    static class UnixKind
+    public static class UnixKind
     {
         public const string Where = "whereis";
         public const string JavaExecutableName = "java";
@@ -55,7 +55,7 @@ public static class Constants
         public const string Os = "linux";
     }
 
-    static class MacOs
+    public static class MacOs
     {
         public const string JavaExecutableDefaultPath = $"Contents/Home/bin/{UnixKind.JavaExecutableName}";
         public const string Os = "osx";

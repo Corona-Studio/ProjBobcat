@@ -69,7 +69,7 @@ public static class SystemInfoHelper
     {
         var psi = new ProcessStartInfo(@"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe")
         {
-            WorkingDirectory = Environment.CurrentDirectory,
+            WorkingDirectory = AppContext.BaseDirectory,
             RedirectStandardOutput = true,
             CreateNoWindow = true,
             Arguments = $"Get-AppxPackage -Name \"{appName}\""
@@ -196,7 +196,7 @@ public static class SystemInfoHelper
                 javas);
             FindJavaBlur(new DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)),
                 javas);
-            FindJavaBlur(new DirectoryInfo(Environment.CurrentDirectory), javas);
+            FindJavaBlur(new DirectoryInfo(AppContext.BaseDirectory), javas);
 
             return javas;
         }
