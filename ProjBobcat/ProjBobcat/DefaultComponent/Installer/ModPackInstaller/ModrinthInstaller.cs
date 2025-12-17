@@ -27,7 +27,7 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
         var path = Path.GetFullPath(this.ModPackPath);
 
         await using var fs = File.OpenRead(path);
-        using var archive = new ZipArchive(fs, ZipArchiveMode.Read);
+        await using var archive = new ZipArchive(fs, ZipArchiveMode.Read);
 
         var manifestEntry =
             archive.Entries.FirstOrDefault(x =>
@@ -36,7 +36,7 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
         if (manifestEntry == null)
             return null;
 
-        await using var stream = manifestEntry.Open();
+        await using var stream = await manifestEntry.OpenAsync();
 
         var manifestModel = await JsonSerializer.DeserializeAsync(stream,
             ModrinthModPackIndexModelContext.Default.ModrinthModPackIndexModel);
@@ -136,7 +136,7 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
         var gbk = Encoding.GetEncoding("GBK");
 
         await using var modPackFs = File.OpenRead(modPackFullPath);
-        using var archive = new ZipArchive(modPackFs, ZipArchiveMode.Read, true, gbk);
+        await using var archive = new ZipArchive(modPackFs, ZipArchiveMode.Read, true, gbk);
 
         this.TotalDownloaded = 0;
         this.NeedToDownload = archive.Entries.Count;
@@ -172,7 +172,7 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
             this.InvokeStatusChangedEvent($"解压缩安装文件：{subPathName}", progress);
 
             await using var fs = File.OpenWrite(path);
-            await using var entryStream = entry.Open();
+            await using var entryStream = await entry.OpenAsync();
 
             await entryStream.CopyToAsync(fs);
 

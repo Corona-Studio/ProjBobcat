@@ -51,7 +51,7 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
         this.InvokeStatusChangedEvent("读取 Optifine 数据", ProgressValue.FromDisplay(20));
 
         await using var fs = File.OpenRead(this.OptifineJarPath);
-        using var archive = new ZipArchive(fs, ZipArchiveMode.Read);
+        await using var archive = new ZipArchive(fs, ZipArchiveMode.Read);
 
         var entries = archive.Entries;
 
@@ -61,7 +61,7 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
 
         if (launchWrapperOfEntry != null)
         {
-            await using var stream = launchWrapperOfEntry.Open();
+            await using var stream = await launchWrapperOfEntry.OpenAsync();
             using var sr = new StreamReader(stream, Encoding.UTF8);
             launchWrapperVersion = await sr.ReadToEndAsync();
         }
@@ -127,7 +127,7 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
                 ProgressValue.FromDisplay(65));
 
             await using var launchWrapperFs = File.OpenWrite(launchWrapperPath);
-            await using var launchWrapperStream = launchWrapperEntry.Open();
+            await using var launchWrapperStream = await launchWrapperEntry.OpenAsync();
 
             await launchWrapperStream.CopyToAsync(launchWrapperFs);
         }

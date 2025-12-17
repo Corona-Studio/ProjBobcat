@@ -71,7 +71,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             };
 
         await using var archiveFs = File.OpenRead(Path.GetFullPath(this.ForgeExecutablePath));
-        using var archive = new ZipArchive(archiveFs, ZipArchiveMode.Read);
+        await using var archive = new ZipArchive(archiveFs, ZipArchiveMode.Read);
 
         #region 解析 Version.json
 
@@ -83,7 +83,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
         if (versionJsonEntry == null)
             return GetCorruptedFileResult();
 
-        await using var stream = versionJsonEntry.Open();
+        await using var stream = await versionJsonEntry.OpenAsync();
         var versionJsonModel =
             await JsonSerializer.DeserializeAsync(stream, RawVersionModelContext.Default.RawVersionModel);
 
@@ -116,7 +116,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
         if (installProfileEntry == null)
             return GetCorruptedFileResult();
 
-        await using var ipStream = installProfileEntry.Open();
+        await using var ipStream = await installProfileEntry.OpenAsync();
         var ipModel =
             await JsonSerializer.DeserializeAsync(ipStream, ForgeInstallProfileContext.Default.ForgeInstallProfile);
 
@@ -149,7 +149,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
                 di.Create();
 
             await using var sFs = File.OpenWrite(serverBinPath);
-            await using var serverLzmaFs = serverLzma.Open();
+            await using var serverLzmaFs = await serverLzma.OpenAsync();
 
             await serverLzmaFs.CopyToAsync(sFs);
         }
@@ -170,7 +170,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
                 di.Create();
 
             await using var cFs = File.OpenWrite(clientBinPath);
-            await using var clientLzmaFs = clientLzma.Open();
+            await using var clientLzmaFs = await clientLzma.OpenAsync();
 
             await clientLzmaFs.CopyToAsync(cFs);
         }
@@ -231,7 +231,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
                 fLDi.Create();
 
             await using var forgeFs = File.OpenWrite(forgeLibPath);
-            await using var forgeJarFs = forgeJar.Open();
+            await using var forgeJarFs = await forgeJar.OpenAsync();
 
             await forgeJarFs.CopyToAsync(forgeFs);
         }
@@ -250,7 +250,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
             var clientMavenStr = mapsVal.Client.TrimStart('[').TrimEnd(']');
             var resolvedMappingMaven = clientMavenStr.ResolveMavenString();
-            
+
             if (resolvedMappingMaven == null)
                 goto SkipMojMapDownload;
 
@@ -504,7 +504,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
             ArgumentNullException.ThrowIfNull(libFs);
 
-            using var libArchive = new ZipArchive(libFs, ZipArchiveMode.Read);
+            await using var libArchive = new ZipArchive(libFs, ZipArchiveMode.Read);
 
             var libEntry =
                 libArchive.Entries.FirstOrDefault(e =>
@@ -513,7 +513,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             if (libEntry == null)
                 return GetCorruptedFileResult();
 
-            await using var libStream = libEntry.Open();
+            await using var libStream = await libEntry.OpenAsync(cts.Token);
             using var libSr = new StreamReader(libStream, Encoding.UTF8);
             var content = await libSr.ReadToEndAsync(cts.Token);
             var mainClass =

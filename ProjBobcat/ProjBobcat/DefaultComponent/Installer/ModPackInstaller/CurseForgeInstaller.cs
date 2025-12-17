@@ -238,7 +238,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         var gbk = Encoding.GetEncoding("GBK");
 
         await using var modPackFs = File.OpenRead(modPackFullPath);
-        using var archive = new ZipArchive(modPackFs, ZipArchiveMode.Read, true, gbk);
+        await using var archive = new ZipArchive(modPackFs, ZipArchiveMode.Read, true, gbk);
 
         this.TotalDownloaded = 0;
         this.NeedToDownload = archive.Entries.Count;
@@ -273,7 +273,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
             this.InvokeStatusChangedEvent($"解压缩安装文件：{subPathName}", progress);
 
             await using var fs = File.OpenWrite(path);
-            await using var entryStream = entry.Open();
+            await using var entryStream = await entry.OpenAsync();
 
             await entryStream.CopyToAsync(fs);
 
@@ -364,7 +364,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         var modPackFullPath = Path.GetFullPath(modPackPath);
 
         await using var fullPackFs = File.OpenRead(modPackFullPath);
-        using var archive = new ZipArchive(fullPackFs, ZipArchiveMode.Read);
+        await using var archive = new ZipArchive(fullPackFs, ZipArchiveMode.Read);
 
         var manifestEntry =
             archive.Entries.FirstOrDefault(x =>
@@ -373,7 +373,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         if (manifestEntry == null)
             return null;
 
-        await using var stream = manifestEntry.Open();
+        await using var stream = await manifestEntry.OpenAsync();
 
         var manifestModel =
             await JsonSerializer.DeserializeAsync(stream,

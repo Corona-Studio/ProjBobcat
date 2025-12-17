@@ -45,7 +45,7 @@ public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
             this.InvokeStatusChangedEvent("解压安装文件", ProgressValue.Start);
 
             await using var forgeFs = File.OpenRead(this.ForgeExecutablePath);
-            using var reader = new ZipArchive(forgeFs, ZipArchiveMode.Read);
+            await using var reader = new ZipArchive(forgeFs, ZipArchiveMode.Read);
 
             var profileEntry =
                 reader.Entries.FirstOrDefault(e => e.FullName.Equals("install_profile.json", StringComparison.Ordinal));
@@ -79,7 +79,7 @@ public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
 
             this.InvokeStatusChangedEvent("解压完成", ProgressValue.FromDisplay(5));
 
-            await using var stream = profileEntry.Open();
+            await using var stream = await profileEntry.OpenAsync();
 
             this.InvokeStatusChangedEvent("解析安装文档", ProgressValue.FromDisplay(35));
 
@@ -116,7 +116,7 @@ public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
                 libDi.Create();
 
             await using var fs = File.OpenWrite(forgeLibPath);
-            await using var legacyJarEntryStream = legacyJarEntry.Open();
+            await using var legacyJarEntryStream = await legacyJarEntry.OpenAsync();
 
             await legacyJarEntryStream.CopyToAsync(fs);
 

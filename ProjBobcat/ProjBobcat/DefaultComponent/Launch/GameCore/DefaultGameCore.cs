@@ -325,7 +325,7 @@ public sealed partial class DefaultGameCore : GameCoreBase
                     if (!File.Exists(path)) continue;
 
                     await using var stream = File.OpenRead(path);
-                    using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
+                    await using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
 
                     foreach (var entry in archive.Entries)
                     {
@@ -352,7 +352,7 @@ public sealed partial class DefaultGameCore : GameCoreBase
                             di.Create();
 
                         await using var fs = fi.OpenWrite();
-                        await using var entryStream = entry.Open();
+                        await using var entryStream = await entry.OpenAsync();
 
                         await entryStream.CopyToAsync(fs);
                     }

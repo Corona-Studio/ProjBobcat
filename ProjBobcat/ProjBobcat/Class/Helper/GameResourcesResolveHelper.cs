@@ -29,14 +29,14 @@ public static class GameResourcesResolveHelper
 
         return FileVersionInfo.GetVersionInfo(path).FileVersion ?? "-";
     }
-    
+
     static async Task<GameModResolvedInfo?> GetTomlModInfo(
         ZipArchiveEntry entry,
         string file,
         bool isEnabled,
         bool isNeoForge)
     {
-        await using var stream = entry.Open();
+        await using var stream = await entry.OpenAsync();
         using var sR = new StreamReader(stream, Encoding.UTF8, leaveOpen: true);
         using var parser = new TOMLParser.TOMLParser(sR);
         var pResult = parser.TryParse(out var table, out _);
@@ -102,7 +102,7 @@ public static class GameResourcesResolveHelper
         {
             GameModInfoModel[]? model = null;
 
-            await using var stream = entry.Open();
+            await using var stream = await entry.OpenAsync(ct);
             using var sr = new StreamReader(stream, Encoding.UTF8, leaveOpen: true);
 
             var json = await sr.ReadToEndAsync(ct);
@@ -151,9 +151,9 @@ public static class GameResourcesResolveHelper
 
             var displayModel = new GameModResolvedInfo(
                 authorResult,
-                file, 
-                modList, 
-                titleResult, 
+                file,
+                modList,
+                titleResult,
                 TryGetVersion(file, baseMod.Version),
                 "Forge *", isEnabled);
 
@@ -177,7 +177,7 @@ public static class GameResourcesResolveHelper
     {
         try
         {
-            await using var stream = entry.Open();
+            await using var stream = await entry.OpenAsync(ct);
             var tempModel = await JsonSerializer.DeserializeAsync(stream,
                 FabricModInfoModelContext.Default.FabricModInfoModel, ct);
 
@@ -242,7 +242,7 @@ public static class GameResourcesResolveHelper
         if (iconEntry == null)
             return null;
 
-        await using var entryStream = iconEntry.Open();
+        await using var entryStream = await iconEntry.OpenAsync();
         await using var ms = new MemoryStream();
 
         await entryStream.CopyToAsync(ms);
@@ -399,7 +399,7 @@ public static class GameResourcesResolveHelper
 
         if (packIconEntry != null)
         {
-            await using var stream = packIconEntry.Open();
+            await using var stream = await packIconEntry.OpenAsync(ct);
             await using var ms = new MemoryStream();
             await stream.CopyToAsync(ms, ct);
 
@@ -414,7 +414,7 @@ public static class GameResourcesResolveHelper
 
         try
         {
-            await using var stream = packInfoEntry.Open();
+            await using var stream = await packInfoEntry.OpenAsync(ct);
             (descriptions, version) = await ResolveResPackAsync(stream, ct);
         }
         catch (JsonException e)

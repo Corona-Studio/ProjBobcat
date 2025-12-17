@@ -23,7 +23,7 @@ public static class FileTypeHelper
             case ".zip":
             {
                 await using var fs = File.OpenRead(filePath);
-                using var archive = new ZipArchive(fs, ZipArchiveMode.Read);
+                await using var archive = new ZipArchive(fs, ZipArchiveMode.Read);
 
                 if (archive.Entries.Any(e => e.FullName.Equals("manifest.json", StringComparison.OrdinalIgnoreCase)))
                     return AssetFileType.CurseForgeModPack;
