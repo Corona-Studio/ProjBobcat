@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Threading;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Event;
@@ -22,7 +23,8 @@ public abstract class ResolverBase : IResourceInfoResolver
     public abstract IAsyncEnumerable<IGameResource> ResolveResourceAsync(
         string basePath,
         bool checkLocalFiles,
-        ResolvedGameVersion resolvedGame);
+        ResolvedGameVersion resolvedGame,
+        CancellationToken cancellationToken = default);
 
     public virtual IEnumerable<IGameResource> ResolveResource(
         string basePath,

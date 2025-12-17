@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Event;
 
@@ -10,7 +11,8 @@ public interface IResourceInfoResolver : IDisposable
     IAsyncEnumerable<IGameResource> ResolveResourceAsync(
         string basePath,
         bool checkLocalFiles,
-        ResolvedGameVersion resolvedGame);
+        ResolvedGameVersion resolvedGame,
+        CancellationToken cancellationToken = default);
 
     IEnumerable<IGameResource> ResolveResource(string basePath, bool checkLocalFiles, ResolvedGameVersion resolvedGame);
 

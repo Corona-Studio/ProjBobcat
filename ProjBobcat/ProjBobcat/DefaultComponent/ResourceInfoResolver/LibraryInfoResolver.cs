@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Threading;
+using System.Threading.Tasks;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Downloading;
@@ -32,9 +34,12 @@ public sealed class LibraryInfoResolver : ResolverBase
     public override async IAsyncEnumerable<IGameResource> ResolveResourceAsync(
         string basePath,
         bool checkLocalFiles,
-        ResolvedGameVersion resolvedGame)
+        ResolvedGameVersion resolvedGame,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         if (!checkLocalFiles) yield break;
+        
+        cancellationToken.ThrowIfCancellationRequested();
 
         this.OnResolve("开始进行游戏资源(Library)检查", ProgressValue.Start);
         if (resolvedGame.Natives.Count == 0 && resolvedGame.Libraries.Count == 0)
@@ -44,71 +49,129 @@ public sealed class LibraryInfoResolver : ResolverBase
 
         if (!libDi.Exists) libDi.Create();
 
+        // Process libraries in parallel
+        var channel = System.Threading.Channels.Channel.CreateUnbounded<IGameResource>();
         var checkedLib = 0;
-        var libCount = resolvedGame.Libraries.Count;
-
-        foreach (var lib in resolvedGame.Libraries)
+        var parallelOptions = new ParallelOptions
         {
-            var libPath = GamePathHelper.GetLibraryPath(lib.Path!);
-            var filePath = Path.Combine(basePath, libPath);
+            MaxDegreeOfParallelism = Math.Min(Environment.ProcessorCount * 2, 16),
+            CancellationToken = cancellationToken
+        };
 
-            var addedCheckedLib = Interlocked.Increment(ref checkedLib);
-            var progress = ProgressValue.Create(addedCheckedLib, libCount);
+        var processingTask = Task.WhenAll(
+            ProcessLibraries(resolvedGame.Libraries),
+            ProcessNatives(resolvedGame.Natives)
+        );
 
-            this.OnResolve(string.Empty, progress);
+        // Complete channel when processing is done
+        _ = processingTask.ContinueWith(_ => channel.Writer.Complete(), TaskScheduler.Default);
 
-            if (File.Exists(filePath))
-            {
-                if (string.IsNullOrEmpty(lib.Sha1)) continue;
-
-                await using var fs = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-                var computedHash = Convert.ToHexString(await SHA1.HashDataAsync(fs).ConfigureAwait(false));
-
-                if (computedHash.Equals(lib.Sha1, StringComparison.OrdinalIgnoreCase)) continue;
-            }
-
-            var downloadFile = this.GetDownloadFile(basePath, lib);
-
-            if (downloadFile.Urls.Count == 0)
-                continue;
-
-            yield return downloadFile;
+        await foreach (var item in channel.Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false))
+        {
+            yield return item;
         }
 
-        this.OnResolve("检索并验证 Library", ProgressValue.Start);
-
-        checkedLib = 0;
-        libCount = resolvedGame.Natives.Count;
-
-        foreach (var native in resolvedGame.Natives)
-        {
-            var nativePath = GamePathHelper.GetLibraryPath(native.FileInfo.Path!);
-            var filePath = Path.Combine(basePath, nativePath);
-
-            if (File.Exists(filePath))
-            {
-                if (string.IsNullOrEmpty(native.FileInfo.Sha1)) continue;
-
-                var addedCheckedLib = Interlocked.Increment(ref checkedLib);
-                var progress = ProgressValue.Create(addedCheckedLib, libCount);
-
-                this.OnResolve(string.Empty, progress);
-
-                await using var fs = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-                var computedHash = Convert.ToHexString(await SHA1.HashDataAsync(fs).ConfigureAwait(false));
-
-                if (computedHash.Equals(native.FileInfo.Sha1, StringComparison.OrdinalIgnoreCase)) continue;
-            }
-
-            var downloadFile = this.GetDownloadFile(basePath, native.FileInfo);
-
-            if (downloadFile.Urls.Count == 0)
-                continue;
-
-            yield return downloadFile;
-        }
+        await processingTask.ConfigureAwait(false);
 
         this.OnResolve("检查Library完成", ProgressValue.Finished);
+        
+        async Task ProcessLibraries(IReadOnlyList<FileInfo> libraries)
+        {
+            var libCount = libraries.Count;
+            
+            await Parallel.ForEachAsync(libraries, parallelOptions, async (lib, ct) =>
+            {
+                var libPath = GamePathHelper.GetLibraryPath(lib.Path!);
+                var filePath = Path.Combine(basePath, libPath);
+
+                var addedCheckedLib = Interlocked.Increment(ref checkedLib);
+                
+                if (addedCheckedLib % 10 == 0 || addedCheckedLib == libCount)
+                {
+                    var progress = ProgressValue.Create(addedCheckedLib, libCount);
+                    this.OnResolve(string.Empty, progress);
+                }
+
+                var needsDownload = !File.Exists(filePath);
+
+                if (!needsDownload && !string.IsNullOrEmpty(lib.Sha1))
+                {
+                    using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                    cts.CancelAfter(TimeSpan.FromSeconds(5));
+                    
+                    try
+                    {
+                        await using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, useAsync: true);
+                        var computedHash = Convert.ToHexString(await SHA1.HashDataAsync(fs, cts.Token).ConfigureAwait(false));
+                        needsDownload = !computedHash.Equals(lib.Sha1, StringComparison.OrdinalIgnoreCase);
+                    }
+                    catch
+                    {
+                        needsDownload = true;
+                    }
+                }
+
+                if (needsDownload)
+                {
+                    var downloadFile = this.GetDownloadFile(basePath, lib);
+                    if (downloadFile.Urls.Count > 0)
+                    {
+                        await channel.Writer.WriteAsync(downloadFile, ct).ConfigureAwait(false);
+                    }
+                }
+            }).ConfigureAwait(false);
+        }
+
+        async Task ProcessNatives(IReadOnlyList<NativeFileInfo> natives)
+        {
+            if (natives.Count == 0) return;
+            
+            this.OnResolve("检索并验证 Native Libraries", ProgressValue.Start);
+            var nativeChecked = 0;
+            var libCount = natives.Count;
+            
+            await Parallel.ForEachAsync(natives, parallelOptions, async (native, ct) =>
+            {
+                var nativePath = GamePathHelper.GetLibraryPath(native.FileInfo.Path!);
+                var filePath = Path.Combine(basePath, nativePath);
+
+                var addedCheckedLib = Interlocked.Increment(ref nativeChecked);
+                
+                if (addedCheckedLib % 10 == 0 || addedCheckedLib == libCount)
+                {
+                    var progress = ProgressValue.Create(addedCheckedLib, libCount);
+                    this.OnResolve(string.Empty, progress);
+                }
+
+                var needsDownload = !File.Exists(filePath);
+
+                if (!needsDownload && !string.IsNullOrEmpty(native.FileInfo.Sha1))
+                {
+                    using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                    cts.CancelAfter(TimeSpan.FromSeconds(5));
+                    
+                    try
+                    {
+                        await using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, useAsync: true);
+                        var computedHash = Convert.ToHexString(await SHA1.HashDataAsync(fs, cts.Token).ConfigureAwait(false));
+                        needsDownload = !computedHash.Equals(native.FileInfo.Sha1, StringComparison.OrdinalIgnoreCase);
+                    }
+                    catch
+                    {
+                        needsDownload = true;
+                    }
+                }
+
+                if (needsDownload)
+                {
+                    var downloadFile = this.GetDownloadFile(basePath, native.FileInfo);
+                    if (downloadFile.Urls.Count > 0)
+                    {
+                        await channel.Writer.WriteAsync(downloadFile, ct).ConfigureAwait(false);
+                    }
+                }
+            }).ConfigureAwait(false);
+        }
     }
 
     LibraryDownloadInfo GetDownloadFile(string basePath, FileInfo lL)
