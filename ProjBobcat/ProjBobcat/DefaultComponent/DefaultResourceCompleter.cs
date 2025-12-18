@@ -50,7 +50,8 @@ public class DefaultResourceCompleter : IResourceCompleter
         bool checkLocalFiles,
         ResolvedGameVersion resolvedGame)
     {
-        return this.CheckAndDownloadTaskAsync(basePath, checkLocalFiles, resolvedGame, CancellationToken.None).GetAwaiter().GetResult();
+        return this.CheckAndDownloadTaskAsync(basePath, checkLocalFiles, resolvedGame, CancellationToken.None)
+            .GetAwaiter().GetResult();
     }
 
     public Task<TaskResult<ResourceCompleterCheckResult?>> CheckAndDownloadTaskAsync(
@@ -65,7 +66,7 @@ public class DefaultResourceCompleter : IResourceCompleter
         string basePath,
         bool checkLocalFiles,
         ResolvedGameVersion resolvedGame,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
         if ((this.ResourceInfoResolvers?.Count ?? 0) == 0)
             return new TaskResult<ResourceCompleterCheckResult?>(TaskResultStatus.Success, value: null);
@@ -116,11 +117,11 @@ public class DefaultResourceCompleter : IResourceCompleter
             checkBlock.Post(new CheckFileInfo(r, basePath, checkLocalFiles, resolvedGame, cancellationToken));
 
         checkBlock.Complete();
-        
+
         // Add timeout to prevent infinite wait
         using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeoutCts.CancelAfter(ResolverTimeout);
-        
+
         try
         {
             await downloadBlock.Completion.WaitAsync(timeoutCts.Token).ConfigureAwait(false);
@@ -133,8 +134,8 @@ public class DefaultResourceCompleter : IResourceCompleter
                 Progress = ProgressValue.Start,
                 Status = "资源检查超时"
             });
-            
-            return new TaskResult<ResourceCompleterCheckResult?>(TaskResultStatus.Error, 
+
+            return new TaskResult<ResourceCompleterCheckResult?>(TaskResultStatus.Error,
                 message: "Resource check timed out",
                 value: new ResourceCompleterCheckResult
                 {
@@ -168,45 +169,16 @@ public class DefaultResourceCompleter : IResourceCompleter
 
     async IAsyncEnumerable<AbstractDownloadBase> TransformCheckFiles(CheckFileInfo arg)
     {
-        void FireResolveEvent(object? sender, GameResourceInfoResolveEventArgs e) => this.OnResolveComplete(sender, e);
-        
         arg.Resolver.GameResourceInfoResolveEvent += FireResolveEvent;
-
-        IAsyncEnumerator<IGameResource>? enumerator = null;
 
         try
         {
-            enumerator = arg.Resolver.ResolveResourceAsync(
-                arg.BasePath,
-                arg.CheckLocalFiles,
-                arg.ResolvedGame,
-                arg.CancellationToken).GetAsyncEnumerator(arg.CancellationToken);
-
-            while (true)
+            await foreach (var element in arg.Resolver.ResolveResourceAsync(
+                               arg.BasePath,
+                               arg.CheckLocalFiles,
+                               arg.ResolvedGame,
+                               arg.CancellationToken))
             {
-                IGameResource element;
-
-                try
-                {
-                    if (!await enumerator.MoveNextAsync())
-                        break;
-
-                    element = enumerator.Current;
-                }
-                catch (OperationCanceledException)
-                {
-                    break;
-                }
-                catch (Exception ex)
-                {
-                    this.OnResolveComplete(this, new GameResourceInfoResolveEventArgs
-                    {
-                        Progress = ProgressValue.Start,
-                        Status = $"资源解析错误: {ex.Message}"
-                    });
-                    continue;
-                }
-
                 var dF = new MultiSourceDownloadFile
                 {
                     DownloadPath = element.Path,
@@ -225,11 +197,12 @@ public class DefaultResourceCompleter : IResourceCompleter
         }
         finally
         {
-            if (enumerator != null)
-                await enumerator.DisposeAsync();
-
             arg.Resolver.GameResourceInfoResolveEvent -= FireResolveEvent;
         }
+
+        yield break;
+
+        void FireResolveEvent(object? sender, GameResourceInfoResolveEventArgs e) => this.OnResolveComplete(sender, e);
     }
 
     public void Dispose()
