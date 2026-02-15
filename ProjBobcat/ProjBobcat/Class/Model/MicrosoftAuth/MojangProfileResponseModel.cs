@@ -37,6 +37,3 @@ public class MojangProfileResponseModel
         return this.Capes?.FirstOrDefault(x => x.State?.Equals("ACTIVE", StringComparison.OrdinalIgnoreCase) ?? false);
     }
 }
-
-[JsonSerializable(typeof(MojangProfileResponseModel))]
-partial class MojangProfileResponseModelContext : JsonSerializerContext;

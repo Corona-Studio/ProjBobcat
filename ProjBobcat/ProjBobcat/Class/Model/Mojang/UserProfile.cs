@@ -17,6 +17,3 @@ public class UserProfile
     [JsonPropertyName("name")] public string? Name { get; set; }
     [JsonPropertyName("properties")] public UserProfileProperty[]? Properties { get; set; }
 }
-
-[JsonSerializable(typeof(UserProfile))]
-public partial class UserProfileContext : JsonSerializerContext;

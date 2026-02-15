@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Fabric;
-using ProjBobcat.Class.Model.JsonContexts;
 using ProjBobcat.Interface;
 
 namespace ProjBobcat.DefaultComponent.Installer;
@@ -56,8 +55,8 @@ public class FabricInstaller : InstallerBase, IFabricInstaller
         var mainClassJObject = this.LoaderArtifact.LauncherMeta.MainClass;
         var mainClass = mainClassJObject.ValueKind switch
         {
-            JsonValueKind.String => mainClassJObject.Deserialize(StringContext.Default.String),
-            JsonValueKind.Object => mainClassJObject.Deserialize(DictionaryContext.Default.DictionaryStringString)
+            JsonValueKind.String => mainClassJObject.Deserialize(SerializerContext.Default.String),
+            JsonValueKind.Object => mainClassJObject.Deserialize(SerializerContext.Default.DictionaryStringString)
                 ?.TryGetValue("client", out var outMainClass) ?? false
                 ? outMainClass
                 : string.Empty,
@@ -91,7 +90,7 @@ public class FabricInstaller : InstallerBase, IFabricInstaller
 
         var jsonPath = GamePathHelper.GetGameJsonPath(this.RootPath, id);
         var jsonContent = JsonSerializer.Serialize(resultModel, typeof(RawVersionModel),
-            new RawVersionModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
+            new SerializerContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
         this.InvokeStatusChangedEvent("将版本 Json 写入文件", ProgressValue.FromDisplay(95));
 

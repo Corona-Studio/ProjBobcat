@@ -8,6 +8,3 @@ public class QuiltSupportGameModel
 
     [JsonPropertyName("stable")] public bool Stable { get; set; }
 }
-
-[JsonSerializable(typeof(QuiltSupportGameModel[]))]
-public partial class QuiltSupportGameModelContext : JsonSerializerContext;

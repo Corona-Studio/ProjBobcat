@@ -6,7 +6,6 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
-using ProjBobcat.Class.Model.JsonContexts;
 using ProjBobcat.Class.Model.LiteLoader;
 using ProjBobcat.DefaultComponent.Launch;
 using ProjBobcat.Exceptions;
@@ -96,8 +95,8 @@ public class LiteLoaderInstaller : InstallerBase, ILiteLoaderInstaller
             {
                 Game =
                 [
-                    JsonSerializer.SerializeToElement("--tweakClass", StringContext.Default.String),
-                    JsonSerializer.SerializeToElement(this.VersionModel.Build.TweakClass, StringContext.Default.String)
+                    JsonSerializer.SerializeToElement("--tweakClass", SerializerContext.Default.String),
+                    JsonSerializer.SerializeToElement(this.VersionModel.Build.TweakClass, SerializerContext.Default.String)
                 ]
             };
         else
@@ -114,7 +113,7 @@ public class LiteLoaderInstaller : InstallerBase, ILiteLoaderInstaller
 
         var jsonPath = GamePathHelper.GetGameJsonPath(this.RootPath, id);
         var jsonContent = JsonSerializer.Serialize(resultModel, typeof(RawVersionModel),
-            new RawVersionModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
+            new SerializerContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
         await File.WriteAllTextAsync(jsonPath, jsonContent);
 

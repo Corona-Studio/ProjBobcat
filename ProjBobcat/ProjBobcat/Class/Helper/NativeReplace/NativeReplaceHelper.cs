@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using ProjBobcat.Class.Model;
-using ProjBobcat.Class.Model.JsonContexts;
 
 namespace ProjBobcat.Class.Helper.NativeReplace;
 
@@ -13,7 +12,7 @@ public static partial class NativeReplaceHelper
 
     static NativeReplaceHelper()
     {
-        var model = JsonSerializer.Deserialize(ReplaceDicJson, NativeReplaceModelContext.Default.NativeReplaceModel);
+        var model = JsonSerializer.Deserialize(ReplaceDicJson, SerializerContext.Default.NativeReplaceModel);
 
         ArgumentNullException.ThrowIfNull(model);
 

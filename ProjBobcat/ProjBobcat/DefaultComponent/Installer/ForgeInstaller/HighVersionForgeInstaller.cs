@@ -85,7 +85,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
         await using var stream = await versionJsonEntry.OpenAsync();
         var versionJsonModel =
-            await JsonSerializer.DeserializeAsync(stream, RawVersionModelContext.Default.RawVersionModel);
+            await JsonSerializer.DeserializeAsync(stream, SerializerContext.Default.RawVersionModel);
 
         if (versionJsonModel == null)
             return GetCorruptedFileResult();
@@ -99,7 +99,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
         var jsonPath = GamePathHelper.GetGameJsonPath(this.RootPath, id);
         var jsonContent = JsonSerializer.Serialize(versionJsonModel, typeof(RawVersionModel),
-            new RawVersionModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
+            new SerializerContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
         await File.WriteAllTextAsync(jsonPath, jsonContent);
 
@@ -118,7 +118,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
         await using var ipStream = await installProfileEntry.OpenAsync();
         var ipModel =
-            await JsonSerializer.DeserializeAsync(ipStream, ForgeInstallProfileContext.Default.ForgeInstallProfile);
+            await JsonSerializer.DeserializeAsync(ipStream, SerializerContext.Default.ForgeInstallProfile);
 
         #endregion
 

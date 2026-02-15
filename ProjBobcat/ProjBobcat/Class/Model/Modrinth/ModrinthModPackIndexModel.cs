@@ -21,6 +21,3 @@ public class ModrinthModPackIndexModel
     [JsonPropertyName("dependencies")]
     public IReadOnlyDictionary<string, string> Dependencies { get; set; } = ImmutableDictionary<string, string>.Empty;
 }
-
-[JsonSerializable(typeof(ModrinthModPackIndexModel))]
-public partial class ModrinthModPackIndexModelContext : JsonSerializerContext;

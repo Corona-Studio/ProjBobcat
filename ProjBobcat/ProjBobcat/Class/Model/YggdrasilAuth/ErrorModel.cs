@@ -30,6 +30,3 @@ public class ErrorModel
         return sb.AppendLine().ToString();
     }
 }
-
-[JsonSerializable(typeof(ErrorModel))]
-partial class ErrorModelContext : JsonSerializerContext;

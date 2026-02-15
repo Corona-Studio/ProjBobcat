@@ -20,6 +20,3 @@ public class CurseForgeManifestModel
 
     [JsonPropertyName("overrides")] public string? Overrides { get; set; }
 }
-
-[JsonSerializable(typeof(CurseForgeManifestModel))]
-public partial class CurseForgeManifestModelContext : JsonSerializerContext;

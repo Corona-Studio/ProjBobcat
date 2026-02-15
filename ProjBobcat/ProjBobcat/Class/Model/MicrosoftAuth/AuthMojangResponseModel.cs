@@ -15,6 +15,3 @@ public class AuthMojangResponseModel
 
     [JsonPropertyName("expires_in")] public long ExpiresIn { get; set; }
 }
-
-[JsonSerializable(typeof(AuthMojangResponseModel))]
-partial class AuthMojangResponseModelContext : JsonSerializerContext;

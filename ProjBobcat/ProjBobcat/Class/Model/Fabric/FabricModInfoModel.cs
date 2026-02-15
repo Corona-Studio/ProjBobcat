@@ -51,6 +51,3 @@ public class FabricModInfoModel
 
     [JsonPropertyName("jars")] public FabricFileInfo[]? Jars { get; set; }
 }
-
-[JsonSerializable(typeof(FabricModInfoModel))]
-partial class FabricModInfoModelContext : JsonSerializerContext;

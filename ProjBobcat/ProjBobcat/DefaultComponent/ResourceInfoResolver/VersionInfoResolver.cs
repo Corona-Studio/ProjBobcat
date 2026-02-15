@@ -33,7 +33,7 @@ public sealed class VersionInfoResolver : ResolverBase
         if (!File.Exists(versionJson)) yield break;
 
         await using var fs = File.OpenRead(versionJson);
-        var rawVersionModel = await JsonSerializer.DeserializeAsync(fs, RawVersionModelContext.Default.RawVersionModel, cancellationToken).ConfigureAwait(false);
+        var rawVersionModel = await JsonSerializer.DeserializeAsync(fs, SerializerContext.Default.RawVersionModel, cancellationToken).ConfigureAwait(false);
 
         if (rawVersionModel?.Downloads?.Client == null) yield break;
 

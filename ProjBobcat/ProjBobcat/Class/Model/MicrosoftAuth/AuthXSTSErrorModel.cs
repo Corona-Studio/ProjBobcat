@@ -9,6 +9,3 @@ public class AuthXSTSErrorModel
     public string? Message { get; set; }
     public string? Redirect { get; set; }
 }
-
-[JsonSerializable(typeof(AuthXSTSErrorModel))]
-partial class AuthXSTSErrorModelContext : JsonSerializerContext;

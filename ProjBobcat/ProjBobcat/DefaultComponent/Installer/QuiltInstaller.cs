@@ -44,7 +44,7 @@ public class QuiltInstaller : InstallerBase, IQuiltInstaller
         {
             Converters = { new DateTimeConverterUsingDateTimeParse() }
         };
-        var versionModel = await res.Content.ReadFromJsonAsync(new RawVersionModelContext(jsonOption).RawVersionModel);
+        var versionModel = await res.Content.ReadFromJsonAsync(new SerializerContext(jsonOption).RawVersionModel);
 
         this.InvokeStatusChangedEvent("生成版本总成", ProgressValue.FromDisplay(50));
 
@@ -80,7 +80,7 @@ public class QuiltInstaller : InstallerBase, IQuiltInstaller
 
         var jsonPath = GamePathHelper.GetGameJsonPath(this.RootPath, id);
         var jsonContent = JsonSerializer.Serialize(versionModel, typeof(RawVersionModel),
-            new RawVersionModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
+            new SerializerContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
         this.InvokeStatusChangedEvent("将版本 Json 写入文件", ProgressValue.FromDisplay(90));
 

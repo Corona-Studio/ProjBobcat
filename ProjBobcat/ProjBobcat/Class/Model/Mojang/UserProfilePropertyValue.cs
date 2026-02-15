@@ -15,6 +15,3 @@ public class UserProfilePropertyValue
     [JsonPropertyName("profileName")] public string? ProfileName { get; set; }
     [JsonPropertyName("textures")] public IReadOnlyDictionary<string, UrlModel>? Textures { get; set; }
 }
-
-[JsonSerializable(typeof(UserProfilePropertyValue))]
-public partial class UserProfilePropertyValueContext : JsonSerializerContext;

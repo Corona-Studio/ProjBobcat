@@ -20,6 +20,3 @@ public class GraphResponseErrorModel
 
     [JsonPropertyName("error_uri")] public string? ErrorUri { get; set; }
 }
-
-[JsonSerializable(typeof(GraphResponseErrorModel))]
-partial class GraphResponseErrorModelContext : JsonSerializerContext;

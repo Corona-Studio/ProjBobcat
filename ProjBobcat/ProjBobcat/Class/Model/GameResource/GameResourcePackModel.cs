@@ -14,6 +14,3 @@ public class GameResourcePackModel
 {
     [JsonPropertyName("pack")] public Pack? Pack { get; set; }
 }
-
-[JsonSerializable(typeof(GameResourcePackModel))]
-partial class GameResourcePackModelContext : JsonSerializerContext;

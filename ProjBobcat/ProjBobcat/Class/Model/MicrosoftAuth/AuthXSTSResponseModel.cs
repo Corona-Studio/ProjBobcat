@@ -11,6 +11,3 @@ public class AuthXSTSResponseModel
     public required string Token { get; set; }
     public JsonElement DisplayClaims { get; set; }
 }
-
-[JsonSerializable(typeof(AuthXSTSResponseModel))]
-partial class AuthXSTSResponseModelContext : JsonSerializerContext;

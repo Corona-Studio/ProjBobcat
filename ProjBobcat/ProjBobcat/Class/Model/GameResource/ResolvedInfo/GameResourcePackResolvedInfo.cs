@@ -24,6 +24,3 @@ public record GameResourcePackResolvedInfo(
     IResourcePackDescription[]? Descriptions,
     int Version,
     byte[]? IconBytes);
-
-[JsonSerializable(typeof(ObjectResourcePackDescription[]))]
-partial class GameResourcePackDescriptionModelContext : JsonSerializerContext;

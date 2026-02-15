@@ -8,6 +8,3 @@ public class AuthTokenRequestModel
 
     [JsonPropertyName("clientToken")] public required string ClientToken { get; init; }
 }
-
-[JsonSerializable(typeof(AuthTokenRequestModel))]
-partial class AuthTokenRequestModelContext : JsonSerializerContext;

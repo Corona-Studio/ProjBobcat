@@ -54,6 +54,3 @@ public class ForgeInstallProfile
 
     [JsonPropertyName("libraries")] public Library[] Libraries { get; set; } = [];
 }
-
-[JsonSerializable(typeof(ForgeInstallProfile))]
-partial class ForgeInstallProfileContext : JsonSerializerContext;

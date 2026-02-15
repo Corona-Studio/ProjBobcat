@@ -32,6 +32,3 @@ public class AssetObjectModel
     [JsonPropertyName("objects")]
     public required IReadOnlyDictionary<string, AssetFileInfo> Objects { get; init; }
 }
-
-[JsonSerializable(typeof(AssetObjectModel))]
-public partial class AssetObjectModelContext : JsonSerializerContext;

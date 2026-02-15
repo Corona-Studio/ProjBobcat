@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Downloading;
 using ProjBobcat.Class.Model.Modrinth;
 using ProjBobcat.Interface;
@@ -48,7 +49,7 @@ public class ModrinthApiService(
 
         using var res = await this.Get(reqUrl);
         var resModel =
-            await res.Content.ReadFromJsonAsync(ModrinthCategoryInfoContext.Default.ModrinthCategoryInfoArray);
+            await res.Content.ReadFromJsonAsync(SerializerContext.Default.ModrinthCategoryInfoArray);
 
         return resModel;
     }
@@ -59,8 +60,7 @@ public class ModrinthApiService(
 
         using var res = await this.Get(reqUrl);
         var resModel =
-            await res.Content.ReadFromJsonAsync(ModrinthProjectDependencyInfoContext.Default
-                .ModrinthProjectDependencyInfo);
+            await res.Content.ReadFromJsonAsync(SerializerContext.Default.ModrinthProjectDependencyInfo);
 
         return resModel;
     }
@@ -70,18 +70,18 @@ public class ModrinthApiService(
         var reqUrl = $"{this.GetApiRoot()}/project/{projectId}";
 
         using var res = await this.Get(reqUrl, ct);
-        var resModel = await res.Content.ReadFromJsonAsync(ModrinthProjectInfoContext.Default.ModrinthProjectInfo, ct);
+        var resModel = await res.Content.ReadFromJsonAsync(SerializerContext.Default.ModrinthProjectInfo, ct);
 
         return resModel;
     }
 
     public async Task<ModrinthProjectInfo[]?> GetProjects(string[] projectIds, CancellationToken ct)
     {
-        var ids = JsonSerializer.Serialize(projectIds, ModrinthProjectInfoContext.Default.StringArray);
+        var ids = JsonSerializer.Serialize(projectIds, SerializerContext.Default.StringArray);
         var reqUrl = $"{this.GetApiRoot()}/projects?ids={Uri.EscapeDataString(ids)}";
 
         using var res = await this.Get(reqUrl, ct);
-        var resModel = await res.Content.ReadFromJsonAsync(ModrinthProjectInfoContext.Default.ModrinthProjectInfoArray, ct);
+        var resModel = await res.Content.ReadFromJsonAsync(SerializerContext.Default.ModrinthProjectInfoArray, ct);
 
         return resModel;
     }
@@ -91,7 +91,7 @@ public class ModrinthApiService(
         var reqUrl = $"{this.GetApiRoot()}/search";
 
         using var res = await this.Get(reqUrl);
-        var resModel = await res.Content.ReadFromJsonAsync(ModrinthSearchResultContext.Default.ModrinthSearchResult);
+        var resModel = await res.Content.ReadFromJsonAsync(SerializerContext.Default.ModrinthSearchResult);
 
         return resModel;
     }
@@ -105,7 +105,7 @@ public class ModrinthApiService(
         if (!res.IsSuccessStatusCode)
             return null;
 
-        return await res.Content.ReadFromJsonAsync(ModrinthSearchResultContext.Default.ModrinthSearchResult, ct);
+        return await res.Content.ReadFromJsonAsync(SerializerContext.Default.ModrinthSearchResult, ct);
     }
 
     public async Task<ModrinthVersionInfo[]?> GetProjectVersions(string projectId)
@@ -113,7 +113,7 @@ public class ModrinthApiService(
         var reqUrl = $"{this.GetApiRoot()}/project/{projectId}/version";
 
         using var res = await this.Get(reqUrl);
-        var resModel = await res.Content.ReadFromJsonAsync(ModrinthVersionInfoContext.Default.ModrinthVersionInfoArray);
+        var resModel = await res.Content.ReadFromJsonAsync(SerializerContext.Default.ModrinthVersionInfoArray);
 
         return resModel;
     }
@@ -131,7 +131,7 @@ public class ModrinthApiService(
         var reqUrl = $"{this.GetApiRoot()}/version_file/{hash}{para}";
 
         using var res = await this.Get(reqUrl);
-        var resModel = await res.Content.ReadFromJsonAsync(ModrinthVersionInfoContext.Default.ModrinthVersionInfo);
+        var resModel = await res.Content.ReadFromJsonAsync(SerializerContext.Default.ModrinthVersionInfo);
 
         return resModel;
     }
@@ -141,7 +141,7 @@ public class ModrinthApiService(
         var reqUrl = $"{this.GetApiRoot()}/project/{projectId}/version/{versionId}";
 
         using var res = await this.Get(reqUrl);
-        var resModel = await res.Content.ReadFromJsonAsync(ModrinthVersionInfoContext.Default.ModrinthVersionInfo);
+        var resModel = await res.Content.ReadFromJsonAsync(SerializerContext.Default.ModrinthVersionInfo);
 
         return resModel;
     }
@@ -151,7 +151,7 @@ public class ModrinthApiService(
         var reqUrl = $"{this.GetApiRoot()}/version/{versionId}";
 
         using var res = await this.Get(reqUrl);
-        var resModel = await res.Content.ReadFromJsonAsync(ModrinthVersionInfoContext.Default.ModrinthVersionInfo);
+        var resModel = await res.Content.ReadFromJsonAsync(SerializerContext.Default.ModrinthVersionInfo);
 
         return resModel;
     }
@@ -169,7 +169,7 @@ public class ModrinthApiService(
         if (!res.IsSuccessStatusCode) return null;
 
         return await res.Content.ReadFromJsonAsync(
-            ModrinthVersionInfoContext.Default.IReadOnlyDictionaryStringModrinthVersionInfo);
+            SerializerContext.Default.IReadOnlyDictionaryStringModrinthVersionInfo);
     }
 
     public async Task<IReadOnlyDictionary<string, ModrinthVersionInfo>?> TryMatchFile(
@@ -187,7 +187,7 @@ public class ModrinthApiService(
         if (!res.IsSuccessStatusCode) return null;
 
         return await res.Content.ReadFromJsonAsync(
-            ModrinthVersionInfoContext.Default.IReadOnlyDictionaryStringModrinthVersionInfo);
+            SerializerContext.Default.IReadOnlyDictionaryStringModrinthVersionInfo);
     }
 
     private string GetApiRoot()

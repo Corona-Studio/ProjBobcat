@@ -2,14 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
-using System.Text.Json.Serialization;
+using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.YggdrasilAuth;
 
 namespace ProjBobcat.Class.Helper;
-
-[JsonSerializable(typeof(Dictionary<string, string[]>))]
-partial class UserPropertiesContext : JsonSerializerContext;
 
 /// <summary>
 ///     AuthProperty工具类
@@ -30,7 +27,7 @@ public static class AuthPropertyHelper
                 item => item.Name,
                 item => new[] { item.Value });
 
-        return JsonSerializer.Serialize(keyValues, UserPropertiesContext.Default.DictionaryStringStringArray);
+        return JsonSerializer.Serialize(keyValues, SerializerContext.Default.DictionaryStringStringArray);
     }
 
 

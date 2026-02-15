@@ -17,6 +17,3 @@ public class MojangOwnershipResponseModel
 
     [JsonPropertyName("keyId")] public string? KeyId { get; set; }
 }
-
-[JsonSerializable(typeof(MojangOwnershipResponseModel))]
-partial class MojangOwnershipResponseModelContext : JsonSerializerContext;

@@ -9,7 +9,6 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
-using ProjBobcat.Class.Model.JsonContexts;
 using ProjBobcat.Class.Model.Optifine;
 using ProjBobcat.Interface;
 
@@ -79,8 +78,8 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
             {
                 Game =
                 [
-                    JsonSerializer.SerializeToElement("--tweakClass", StringContext.Default.String),
-                    JsonSerializer.SerializeToElement("optifine.OptiFineTweaker", StringContext.Default.String)
+                    JsonSerializer.SerializeToElement("--tweakClass", SerializerContext.Default.String),
+                    JsonSerializer.SerializeToElement("optifine.OptiFineTweaker", SerializerContext.Default.String)
                 ],
                 Jvm = []
             },
@@ -106,7 +105,7 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
 
         var versionJsonPath = GamePathHelper.GetGameJsonPath(this.RootPath, id);
         var jsonStr = JsonSerializer.Serialize(versionModel, typeof(RawVersionModel),
-            new RawVersionModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
+            new SerializerContext(JsonHelper.CamelCasePropertyNamesSettings()));
         await File.WriteAllTextAsync(versionJsonPath, jsonStr);
 
         var librariesPath = Path.Combine(this.RootPath, GamePathHelper.GetLibraryRootPath(), "optifine",

@@ -8,6 +8,3 @@ public class FabricLoaderArtifactModel
     [JsonPropertyName("intermediary")] public required FabricArtifactModel Intermediary { get; init; }
     [JsonPropertyName("launcherMeta")] public required FabricLauncherMeta LauncherMeta { get; init; }
 }
-
-[JsonSerializable(typeof(FabricLoaderArtifactModel))]
-public partial class FabricLoaderArtifactModelContext : JsonSerializerContext;

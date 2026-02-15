@@ -28,7 +28,3 @@ public class GameModInfoModel
 
     [JsonPropertyName("dependencies")] public string[]? Dependencies { get; set; }
 }
-
-[JsonSerializable(typeof(GameModInfoModel))]
-[JsonSerializable(typeof(GameModInfoModel[]))]
-partial class GameModInfoModelContext : JsonSerializerContext;

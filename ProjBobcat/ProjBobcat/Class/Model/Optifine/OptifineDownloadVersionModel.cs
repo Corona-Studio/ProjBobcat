@@ -16,6 +16,3 @@ public class OptifineDownloadVersionModel
 
     [JsonPropertyName("filename")] public required string FileName { get; init; }
 }
-
-[JsonSerializable(typeof(OptifineDownloadVersionModel))]
-public partial class OptifineDownloadVersionModelContext : JsonSerializerContext;

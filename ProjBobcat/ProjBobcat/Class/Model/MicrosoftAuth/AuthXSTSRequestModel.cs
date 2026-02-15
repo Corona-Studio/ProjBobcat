@@ -28,6 +28,3 @@ public class AuthXSTSRequestModel
         };
     }
 }
-
-[JsonSerializable(typeof(AuthXSTSRequestModel))]
-partial class AuthXSTSRequestModelContext : JsonSerializerContext;

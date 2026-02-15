@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Auth;
-using ProjBobcat.Class.Model.JsonContexts;
 using ProjBobcat.Class.Model.LauncherAccount;
 using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.YggdrasilAuth;
@@ -105,7 +104,7 @@ public class YggdrasilAuthenticator : IAuthenticator
         var client = this.HttpClientFactory.CreateClient();
 
         using var authReq = new HttpRequestMessage(HttpMethod.Post, this.LoginAddress);
-        authReq.Content = JsonContent.Create(requestModel, AuthRequestModelContext.Default.AuthRequestModel);
+        authReq.Content = JsonContent.Create(requestModel, SerializerContext.Default.AuthRequestModel);
 
         using var resultJson = await client.SendAsync(authReq);
 
@@ -120,11 +119,11 @@ public class YggdrasilAuthenticator : IAuthenticator
                 }
             };
 
-        var result = await resultJson.Content.ReadFromJsonAsync(AuthResponseModelContext.Default.AuthResponseModel);
+        var result = await resultJson.Content.ReadFromJsonAsync(SerializerContext.Default.AuthResponseModel);
 
         if (result == null || string.IsNullOrEmpty(result.AccessToken))
         {
-            var error = await resultJson.Content.ReadFromJsonAsync(ErrorModelContext.Default.ErrorModel);
+            var error = await resultJson.Content.ReadFromJsonAsync(SerializerContext.Default.ErrorModel);
 
             if (error is null)
                 return new YggdrasilAuthResult
@@ -338,14 +337,14 @@ public class YggdrasilAuthenticator : IAuthenticator
 
         using var refreshReq = new HttpRequestMessage(HttpMethod.Post, this.RefreshAddress);
         refreshReq.Content =
-            JsonContent.Create(requestModel, AuthRefreshRequestModelContext.Default.AuthRefreshRequestModel);
+            JsonContent.Create(requestModel, SerializerContext.Default.AuthRefreshRequestModel);
 
         using var refreshRes = await client.SendAsync(refreshReq);
-        var resultJsonElement = await refreshRes.Content.ReadFromJsonAsync(JsonElementContext.Default.JsonElement);
+        var resultJsonElement = await refreshRes.Content.ReadFromJsonAsync(SerializerContext.Default.JsonElement);
 
         object? result = resultJsonElement.TryGetProperty("cause", out _)
-            ? resultJsonElement.Deserialize(ErrorModelContext.Default.ErrorModel)
-            : resultJsonElement.Deserialize(AuthResponseModelContext.Default.AuthResponseModel);
+            ? resultJsonElement.Deserialize(SerializerContext.Default.ErrorModel)
+            : resultJsonElement.Deserialize(SerializerContext.Default.AuthResponseModel);
 
         switch (result)
         {
@@ -462,8 +461,7 @@ public class YggdrasilAuthenticator : IAuthenticator
         var client = this.HttpClientFactory.CreateClient();
 
         using var validationReq = new HttpRequestMessage(HttpMethod.Post, this.ValidateAddress);
-        validationReq.Content =
-            JsonContent.Create(requestModel, AuthTokenRequestModelContext.Default.AuthTokenRequestModel);
+        validationReq.Content = JsonContent.Create(requestModel, SerializerContext.Default.AuthTokenRequestModel);
 
         using var validationRes = await client.SendAsync(validationReq);
 
@@ -487,7 +485,7 @@ public class YggdrasilAuthenticator : IAuthenticator
         var client = this.HttpClientFactory.CreateClient();
 
         using var signoutReq = new HttpRequestMessage(HttpMethod.Post, this.SignOutAddress);
-        signoutReq.Content = JsonContent.Create(requestModel, SignOutRequestModelContext.Default.SignOutRequestModel);
+        signoutReq.Content = JsonContent.Create(requestModel, SerializerContext.Default.SignOutRequestModel);
 
         using var signoutRes = await client.SendAsync(signoutReq);
 

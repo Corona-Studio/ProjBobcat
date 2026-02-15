@@ -7,7 +7,6 @@ using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Helper.NativeReplace;
 using ProjBobcat.Class.Model;
-using ProjBobcat.Class.Model.JsonContexts;
 using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.Version;
 using ProjBobcat.Interface;
@@ -86,14 +85,14 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             }
 
             if (jvmRule.TryGetProperty("rules", out var rules))
-                if (!(rules.Deserialize(JvmRulesContext.Default.JvmRulesArray)?.CheckAllow() ?? false))
+                if (!(rules.Deserialize(SerializerContext.Default.JvmRulesArray)?.CheckAllow() ?? false))
                     continue;
             if (!jvmRule.TryGetProperty("value", out var value)) continue;
 
             switch (value.ValueKind)
             {
                 case JsonValueKind.Array:
-                    var values = value.Deserialize(StringContext.Default.StringArray);
+                    var values = value.Deserialize(SerializerContext.Default.StringArray);
 
                     if (values == null || values.Length == 0) continue;
 
@@ -148,7 +147,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             var ruleKey = string.Empty;
             var ruleValue = string.Empty;
 
-            var rulesArr = rules.Deserialize(GameRulesContext.Default.GameRulesArray);
+            var rulesArr = rules.Deserialize(SerializerContext.Default.GameRulesArray);
 
             if (rulesArr == null || rulesArr.Length == 0) continue;
 
@@ -166,7 +165,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                 {
                     JsonValueKind.String => value.GetString(),
                     JsonValueKind.Array => string.Join(' ',
-                        value.Deserialize(StringContext.Default.StringArray) ?? []),
+                        value.Deserialize(SerializerContext.Default.StringArray) ?? []),
                     _ => string.Empty
                 };
             }
@@ -353,7 +352,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                     }
                 };
                 var versionJsonObj = JsonSerializer.Deserialize(
-                    fs, typeof(RawVersionModel), new RawVersionModelContext(options));
+                    fs, typeof(RawVersionModel), new SerializerContext(options));
 
                 if (versionJsonObj is not RawVersionModel versionJson)
                     continue;

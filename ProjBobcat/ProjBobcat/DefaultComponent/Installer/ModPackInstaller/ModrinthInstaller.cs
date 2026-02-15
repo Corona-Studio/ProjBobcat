@@ -38,8 +38,7 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
 
         await using var stream = await manifestEntry.OpenAsync();
 
-        var manifestModel = await JsonSerializer.DeserializeAsync(stream,
-            ModrinthModPackIndexModelContext.Default.ModrinthModPackIndexModel);
+        var manifestModel = await JsonSerializer.DeserializeAsync(stream, SerializerContext.Default.ModrinthModPackIndexModel);
 
         return manifestModel;
     }

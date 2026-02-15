@@ -8,6 +8,3 @@ public class ModrinthProjectDependencyInfo
 
     [JsonPropertyName("versions")] public ModrinthVersionInfo[] Versions { get; set; } = [];
 }
-
-[JsonSerializable(typeof(ModrinthProjectDependencyInfo))]
-partial class ModrinthProjectDependencyInfoContext : JsonSerializerContext;

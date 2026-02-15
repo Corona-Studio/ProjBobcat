@@ -12,6 +12,3 @@ public class ModrinthSearchResult
 
     [JsonPropertyName("total_hits")] public int TotalHits { get; set; }
 }
-
-[JsonSerializable(typeof(ModrinthSearchResult))]
-partial class ModrinthSearchResultContext : JsonSerializerContext;

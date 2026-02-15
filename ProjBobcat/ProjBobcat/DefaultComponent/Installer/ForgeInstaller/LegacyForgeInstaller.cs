@@ -83,8 +83,7 @@ public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
 
             this.InvokeStatusChangedEvent("解析安装文档", ProgressValue.FromDisplay(35));
 
-            var profileModel = await JsonSerializer.DeserializeAsync(stream,
-                LegacyForgeInstallProfileContext.Default.LegacyForgeInstallProfile);
+            var profileModel = await JsonSerializer.DeserializeAsync(stream, SerializerContext.Default.LegacyForgeInstallProfile);
 
             ArgumentNullException.ThrowIfNull(profileModel);
 
@@ -121,7 +120,7 @@ public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
             await legacyJarEntryStream.CopyToAsync(fs);
 
             var versionJsonString = JsonSerializer.Serialize(profileModel.VersionInfo, typeof(VersionInfo),
-                new LegacyForgeInstallVersionInfoContext(JsonHelper.CamelCasePropertyNamesSettings()));
+                new SerializerContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
             await File.WriteAllTextAsync(jsonPath, versionJsonString);
             this.InvokeStatusChangedEvent("文件写入完成", ProgressValue.Finished);

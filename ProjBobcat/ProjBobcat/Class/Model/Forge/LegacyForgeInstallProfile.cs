@@ -98,9 +98,3 @@ public class LegacyForgeInstallProfile
 
     [JsonPropertyName("optionals")] public Optional[]? OptionalList { get; set; }
 }
-
-[JsonSerializable(typeof(VersionInfo))]
-partial class LegacyForgeInstallVersionInfoContext : JsonSerializerContext;
-
-[JsonSerializable(typeof(LegacyForgeInstallProfile))]
-partial class LegacyForgeInstallProfileContext : JsonSerializerContext;

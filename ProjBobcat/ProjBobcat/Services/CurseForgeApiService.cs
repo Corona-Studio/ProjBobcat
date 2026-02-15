@@ -5,6 +5,7 @@ using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.CurseForge;
 using ProjBobcat.Class.Model.CurseForge.API;
 using ProjBobcat.Exceptions;
@@ -15,31 +16,17 @@ namespace ProjBobcat.Services;
 
 #region Temp Models
 
-record AddonInfoReqModel(
+public record AddonInfoReqModel(
     [property: JsonPropertyName("modIds")]
     IReadOnlyList<long> ModIds);
 
-record FileInfoReqModel(
+public record FileInfoReqModel(
     [property: JsonPropertyName("fileIds")]
     IReadOnlyList<long> FileIds);
 
-record FuzzyFingerPrintReqModel(
+public record FuzzyFingerPrintReqModel(
     [property: JsonPropertyName("fingerprints")]
     IReadOnlyList<long> Fingerprints);
-
-[JsonSerializable(typeof(AddonInfoReqModel))]
-[JsonSerializable(typeof(FileInfoReqModel))]
-[JsonSerializable(typeof(FuzzyFingerPrintReqModel))]
-[JsonSerializable(typeof(DataModelWithPagination<CurseForgeAddonInfo[]>))]
-[JsonSerializable(typeof(DataModel<CurseForgeAddonInfo>))]
-[JsonSerializable(typeof(DataModel<CurseForgeAddonInfo[]>))]
-[JsonSerializable(typeof(DataModel<CurseForgeLatestFileModel[]>))]
-[JsonSerializable(typeof(DataModelWithPagination<CurseForgeLatestFileModel[]>))]
-[JsonSerializable(typeof(DataModel<CurseForgeSearchCategoryModel[]>))]
-[JsonSerializable(typeof(DataModel<CurseForgeFeaturedAddonModel>))]
-[JsonSerializable(typeof(DataModel<CurseForgeFuzzySearchResponseModel>))]
-[JsonSerializable(typeof(DataModel<string>))]
-partial class CurseForgeModelContext : JsonSerializerContext;
 
 #endregion
 
@@ -59,8 +46,7 @@ public class CurseForgeApiService(
         if (!res.IsSuccessStatusCode)
             return null;
 
-        return await res.Content.ReadFromJsonAsync(CurseForgeModelContext.Default
-            .DataModelWithPaginationCurseForgeAddonInfoArray, ct);
+        return await res.Content.ReadFromJsonAsync(SerializerContext.Default.DataModelWithPaginationCurseForgeAddonInfoArray, ct);
     }
 
     public async Task<CurseForgeAddonInfo?> GetAddon(long addonId)
@@ -69,7 +55,7 @@ public class CurseForgeApiService(
 
         using var res = await httpClient.GetAsync(reqUrl);
 
-        return (await res.Content.ReadFromJsonAsync(CurseForgeModelContext.Default.DataModelCurseForgeAddonInfo))
+        return (await res.Content.ReadFromJsonAsync(SerializerContext.Default.DataModelCurseForgeAddonInfo))
             ?.Data;
     }
 
@@ -82,9 +68,7 @@ public class CurseForgeApiService(
             : this.GetApiRoot();
 
         var reqUrl = $"{apiRoot}/mods";
-        var content = JsonContent.Create(
-            new AddonInfoReqModel(addonIds),
-            CurseForgeModelContext.Default.AddonInfoReqModel);
+        var content = JsonContent.Create(new AddonInfoReqModel(addonIds), SerializerContext.Default.AddonInfoReqModel);
 
         using var res = await httpClient.PostAsync(reqUrl, content);
 
@@ -99,8 +83,7 @@ public class CurseForgeApiService(
             throw new CurseForgeAddonResolveException(message);
         }
 
-        return (await res.Content.ReadFromJsonAsync(CurseForgeModelContext.Default
-            .DataModelCurseForgeAddonInfoArray))?.Data;
+        return (await res.Content.ReadFromJsonAsync(SerializerContext.Default.DataModelCurseForgeAddonInfoArray))?.Data;
     }
 
     public async Task<DataModelWithPagination<CurseForgeLatestFileModel[]>?> GetAddonFiles(
@@ -114,8 +97,7 @@ public class CurseForgeApiService(
 
         res.EnsureSuccessStatusCode();
 
-        return await res.Content.ReadFromJsonAsync(CurseForgeModelContext.Default
-            .DataModelWithPaginationCurseForgeLatestFileModelArray);
+        return await res.Content.ReadFromJsonAsync(SerializerContext.Default.DataModelWithPaginationCurseForgeLatestFileModelArray);
     }
 
     public async Task<CurseForgeLatestFileModel[]?> GetFiles(
@@ -127,9 +109,7 @@ public class CurseForgeApiService(
             : this.GetApiRoot();
 
         var reqUrl = $"{apiRoot}/mods/files";
-        var content = JsonContent.Create(
-            new FileInfoReqModel(fileIds),
-            CurseForgeModelContext.Default.FileInfoReqModel);
+        var content = JsonContent.Create(new FileInfoReqModel(fileIds), SerializerContext.Default.FileInfoReqModel);
 
         using var res = await httpClient.PostAsync(reqUrl, content);
 
@@ -144,8 +124,7 @@ public class CurseForgeApiService(
             throw new CurseForgeFileResolveException(message);
         }
 
-        return (await res.Content.ReadFromJsonAsync(CurseForgeModelContext.Default
-            .DataModelCurseForgeLatestFileModelArray))?.Data;
+        return (await res.Content.ReadFromJsonAsync(SerializerContext.Default.DataModelCurseForgeLatestFileModelArray))?.Data;
     }
 
     public async Task<CurseForgeSearchCategoryModel[]?> GetCategories(int gameId = 432)
@@ -154,20 +133,19 @@ public class CurseForgeApiService(
 
         using var res = await httpClient.GetAsync(reqUrl);
 
-        return (await res.Content.ReadFromJsonAsync(CurseForgeModelContext.Default
-            .DataModelCurseForgeSearchCategoryModelArray))?.Data;
+        return (await res.Content.ReadFromJsonAsync(SerializerContext.Default.DataModelCurseForgeSearchCategoryModelArray))?.Data;
     }
 
     public async Task<CurseForgeFeaturedAddonModel?> GetFeaturedAddons(FeaturedQueryOptions options)
     {
         const string reqUrl = "https://api.curseforge.com/v1/mods/featured";
 
-        var content = JsonContent.Create(options, FeaturedQueryOptionsContext.Default.FeaturedQueryOptions);
+        var content = JsonContent.Create(options, SerializerContext.Default.FeaturedQueryOptions);
 
         using var res = await httpClient.PostAsync(reqUrl, content);
         res.EnsureSuccessStatusCode();
 
-        return (await res.Content.ReadFromJsonAsync(CurseForgeModelContext.Default
+        return (await res.Content.ReadFromJsonAsync(SerializerContext.Default
             .DataModelCurseForgeFeaturedAddonModel))?.Data;
     }
 
@@ -180,7 +158,7 @@ public class CurseForgeApiService(
         if (!res.IsSuccessStatusCode)
             throw new CurseForgeModResolveException(addonId, fileId);
 
-        return (await res.Content.ReadFromJsonAsync(CurseForgeModelContext.Default.DataModelString))?.Data;
+        return (await res.Content.ReadFromJsonAsync(SerializerContext.Default.DataModelString))?.Data;
     }
 
     public async Task<string?> GetAddonDescriptionHtml(long addonId)
@@ -190,7 +168,7 @@ public class CurseForgeApiService(
         using var res = await httpClient.GetAsync(reqUrl);
         res.EnsureSuccessStatusCode();
 
-        return (await res.Content.ReadFromJsonAsync(CurseForgeModelContext.Default.DataModelString))?.Data;
+        return (await res.Content.ReadFromJsonAsync(SerializerContext.Default.DataModelString))?.Data;
     }
 
     public async Task<CurseForgeFuzzySearchResponseModel?> TryFuzzySearchFile(
@@ -201,12 +179,12 @@ public class CurseForgeApiService(
 
         var content = JsonContent.Create(
             new FuzzyFingerPrintReqModel(fingerprint),
-            CurseForgeModelContext.Default.FuzzyFingerPrintReqModel);
+            SerializerContext.Default.FuzzyFingerPrintReqModel);
 
         using var res = await httpClient.PostAsync(reqUrl, content);
         res.EnsureSuccessStatusCode();
 
-        return (await res.Content.ReadFromJsonAsync(CurseForgeModelContext.Default
+        return (await res.Content.ReadFromJsonAsync(SerializerContext.Default
             .DataModelCurseForgeFuzzySearchResponseModel))?.Data;
     }
 

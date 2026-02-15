@@ -8,6 +8,3 @@ public class NeoForgeVersionModel
     [JsonPropertyName("version")] public string? Version { get; set; }
     [JsonPropertyName("mcversion")] public required string MineCraftVersion { get; init; }
 }
-
-[JsonSerializable(typeof(NeoForgeVersionModel))]
-public partial class NeoForgeVersionsModelContext : JsonSerializerContext;

@@ -46,6 +46,3 @@ public class ModrinthProjectInfo : ModrinthProjectInfoBase
 
     //[JsonPropertyName("donation_urls")] public JsonElement[]? DonationUrls { get; set; }
 }
-
-[JsonSerializable(typeof(ModrinthProjectInfo[]))]
-partial class ModrinthProjectInfoContext : JsonSerializerContext;

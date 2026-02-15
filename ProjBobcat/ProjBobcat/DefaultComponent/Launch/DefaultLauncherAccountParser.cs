@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.Json;
 using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
+using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.LauncherAccount;
 using ProjBobcat.Interface;
 using ProjBobcat.JsonConverter;
@@ -52,7 +53,7 @@ public sealed class DefaultLauncherAccountParser : LauncherParserBase, ILauncher
             var val = JsonSerializer.Deserialize(
                 launcherProfileJson,
                 typeof(LauncherAccountModel),
-                new LauncherAccountModelContext(options));
+                new SerializerContext(options));
 
             if (val is not LauncherAccountModel accounts)
             {
@@ -183,7 +184,7 @@ public sealed class DefaultLauncherAccountParser : LauncherParserBase, ILauncher
     {
         var launcherProfileJson =
             JsonSerializer.Serialize(this.LauncherAccount, typeof(LauncherAccountModel),
-                new LauncherAccountModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
+                new SerializerContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
         for (var i = 0; i < 3; i++)
             try
@@ -207,7 +208,7 @@ public sealed class DefaultLauncherAccountParser : LauncherParserBase, ILauncher
 
         var launcherProfileJson =
             JsonSerializer.Serialize(launcherAccount, typeof(LauncherAccountModel),
-                new LauncherAccountModelContext(JsonHelper.CamelCasePropertyNamesSettings()));
+                new SerializerContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
         if (!Directory.Exists(this.RootPath))
             Directory.CreateDirectory(this.RootPath);

@@ -15,6 +15,3 @@ public class PingPayload
 
     [JsonPropertyName("favicon")] public string? Icon { get; set; }
 }
-
-[JsonSerializable(typeof(PingPayload))]
-partial class PingPayloadContext : JsonSerializerContext;

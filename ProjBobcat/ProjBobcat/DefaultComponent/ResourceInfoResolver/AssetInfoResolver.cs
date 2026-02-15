@@ -75,7 +75,7 @@ public sealed class AssetInfoResolver : ResolverBase
                 new HttpRequestMessage(HttpMethod.Get, VersionManifestUrl ?? DefaultVersionManifestUrl);
             using var vmJsonRes = await client.SendAsync(vmJsonReq, cancellationToken).ConfigureAwait(false);
 
-            var vm = await vmJsonRes.Content.ReadFromJsonAsync(VersionManifestContext.Default.VersionManifest, cancellationToken).ConfigureAwait(false);
+            var vm = await vmJsonRes.Content.ReadFromJsonAsync(SerializerContext.Default.VersionManifest, cancellationToken).ConfigureAwait(false);
 
             versions = vm?.Versions?.ToList();
 
@@ -128,7 +128,7 @@ public sealed class AssetInfoResolver : ResolverBase
                     {
                         using var jsonRes = await client.GetAsync(url.DownloadUri, cancellationToken).ConfigureAwait(false);
                         var versionModel =
-                            await jsonRes.Content.ReadFromJsonAsync(RawVersionModelContext.Default.RawVersionModel, cancellationToken).ConfigureAwait(false);
+                            await jsonRes.Content.ReadFromJsonAsync(SerializerContext.Default.RawVersionModel, cancellationToken).ConfigureAwait(false);
 
                         if (versionModel == null) yield break;
 
@@ -202,7 +202,7 @@ public sealed class AssetInfoResolver : ResolverBase
         {
             await using var assetFs = File.OpenRead(assetIndexesPath);
             assetObject =
-                await JsonSerializer.DeserializeAsync(assetFs, AssetObjectModelContext.Default.AssetObjectModel);
+                await JsonSerializer.DeserializeAsync(assetFs, SerializerContext.Default.AssetObjectModel);
         }
         catch (Exception ex)
         {

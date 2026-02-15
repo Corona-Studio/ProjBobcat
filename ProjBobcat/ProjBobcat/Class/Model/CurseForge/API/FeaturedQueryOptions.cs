@@ -23,6 +23,3 @@ public class FeaturedQueryOptions
         UpdatedCount = 150
     };
 }
-
-[JsonSerializable(typeof(FeaturedQueryOptions))]
-partial class FeaturedQueryOptionsContext : JsonSerializerContext;

@@ -121,13 +121,13 @@ public static class GameResourcesResolveHelper
                         goto case JsonValueKind.Array;
                     }
 
-                    var val = element.Deserialize(GameModInfoModelContext.Default.GameModInfoModel);
+                    var val = element.Deserialize(SerializerContext.Default.GameModInfoModel);
 
                     if (val != null) model = [val];
 
                     break;
                 case JsonValueKind.Array:
-                    model = element.Deserialize(GameModInfoModelContext.Default.GameModInfoModelArray) ?? [];
+                    model = element.Deserialize(SerializerContext.Default.GameModInfoModelArray) ?? [];
                     break;
             }
 
@@ -178,8 +178,7 @@ public static class GameResourcesResolveHelper
         try
         {
             await using var stream = await entry.OpenAsync(ct);
-            var tempModel = await JsonSerializer.DeserializeAsync(stream,
-                FabricModInfoModelContext.Default.FabricModInfoModel, ct);
+            var tempModel = await JsonSerializer.DeserializeAsync(stream, SerializerContext.Default.FabricModInfoModel, ct);
 
             var author = tempModel?.Authors is { Length: > 0 }
                 ? string.Join(',', tempModel.Authors)
@@ -358,16 +357,14 @@ public static class GameResourcesResolveHelper
 
     static async Task<(IResourcePackDescription[]?, int)> ResolveResPackAsync(Stream stream, CancellationToken ct)
     {
-        var model = await JsonSerializer.DeserializeAsync(stream,
-            GameResourcePackModelContext.Default.GameResourcePackModel, ct);
+        var model = await JsonSerializer.DeserializeAsync(stream, SerializerContext.Default.GameResourcePackModel, ct);
 
         IResourcePackDescription[]? descriptions = model?.Pack?.Description?.ValueKind switch
         {
             JsonValueKind.String when !string.IsNullOrEmpty(model.Pack?.Description.Value.GetString()) =>
                 [new PlainTextResourcePackDescription(model.Pack?.Description.Value.GetString()!)],
             // ReSharper disable once CoVariantArrayConversion
-            JsonValueKind.Array => model.Pack?.Description.Value.Deserialize(GameResourcePackDescriptionModelContext
-                .Default.ObjectResourcePackDescriptionArray),
+            JsonValueKind.Array => model.Pack?.Description.Value.Deserialize(SerializerContext.Default.ObjectResourcePackDescriptionArray),
             _ => null
         };
         var version = model?.Pack?.PackFormat ?? -1;

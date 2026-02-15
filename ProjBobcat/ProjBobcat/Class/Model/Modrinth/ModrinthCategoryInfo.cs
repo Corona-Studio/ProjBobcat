@@ -10,7 +10,3 @@ public class ModrinthCategoryInfo
 
     [JsonPropertyName("project_type")] public string? ProjectType { get; set; }
 }
-
-[JsonSerializable(typeof(ModrinthCategoryInfo))]
-[JsonSerializable(typeof(ModrinthCategoryInfo[]))]
-partial class ModrinthCategoryInfoContext : JsonSerializerContext;

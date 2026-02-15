@@ -144,7 +144,7 @@ public class ServerPingService : ProgressReportBase
         this.InvokeStatusChangedEvent($"收到包 0x{packet:X2} ， 长度为 {length}", ProgressValue.FromDisplay(80));
 
         var json = this.ReadString(buffer, jsonLength);
-        var ping = JsonSerializer.Deserialize(json, PingPayloadContext.Default.PingPayload);
+        var ping = JsonSerializer.Deserialize(json, SerializerContext.Default.PingPayload);
 
         if (ping == null)
             return null;

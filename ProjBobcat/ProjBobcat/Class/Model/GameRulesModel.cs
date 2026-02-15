@@ -11,7 +11,3 @@ public class GameRules
     [JsonPropertyName("features")]
     public IReadOnlyDictionary<string, bool> Features { get; set; } = ImmutableDictionary<string, bool>.Empty;
 }
-
-[JsonSerializable(typeof(GameRules))]
-[JsonSerializable(typeof(GameRules[]))]
-partial class GameRulesContext : JsonSerializerContext;

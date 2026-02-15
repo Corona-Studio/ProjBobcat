@@ -375,9 +375,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
         await using var stream = await manifestEntry.OpenAsync();
 
-        var manifestModel =
-            await JsonSerializer.DeserializeAsync(stream,
-                CurseForgeManifestModelContext.Default.CurseForgeManifestModel);
+        var manifestModel = await JsonSerializer.DeserializeAsync(stream, SerializerContext.Default.CurseForgeManifestModel);
 
         return manifestModel;
     }
