@@ -341,12 +341,10 @@ public class TomlDateTime : TomlNode, IFormattable
 
 public class TomlArray : TomlNode
 {
-    List<TomlNode> values;
-
     public override bool HasValue { get; } = true;
     public override bool IsArray { get; } = true;
     public bool IsTableArray { get; set; }
-    public List<TomlNode> RawArray => this.values ??= new List<TomlNode>();
+    public List<TomlNode> RawArray => field ??= new List<TomlNode>();
 
     public override TomlNode this[int index]
     {
@@ -457,12 +455,10 @@ public class TomlArray : TomlNode
 
 public class TomlTable : TomlNode
 {
-    Dictionary<string, TomlNode> children;
-
     public override bool HasValue { get; } = false;
     public override bool IsTable { get; } = true;
     public bool IsInline { get; set; }
-    public Dictionary<string, TomlNode> RawTable => this.children ??= new Dictionary<string, TomlNode>();
+    public Dictionary<string, TomlNode> RawTable => field ??= new Dictionary<string, TomlNode>();
 
     public override TomlNode this[string key]
     {

@@ -26,21 +26,19 @@ namespace ProjBobcat.DefaultComponent.Launch.GameCore;
 /// </summary>
 public sealed partial class DefaultGameCore : GameCoreBase
 {
-    readonly string _rootPath = null!;
-
     /// <summary>
     ///     .minecraft 目录
     /// </summary>
     public override required string RootPath
     {
-        get => this._rootPath;
+        get;
         init
         {
             ArgumentException.ThrowIfNullOrEmpty(value);
 
-            this._rootPath = Path.GetFullPath(value.TrimEnd('/'));
+            field = Path.GetFullPath(value.TrimEnd('/'));
         }
-    }
+    } = null!;
 
     [GeneratedRegex(@"\r\n|\r|\n")]
     private static partial Regex CrLfRegex();

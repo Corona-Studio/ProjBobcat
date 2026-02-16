@@ -19,8 +19,8 @@ public readonly record struct ProgressValue(double NormalizedValue) : IFormattab
     /// </summary>
     public double DisplayValue => this.NormalizedValue * 100;
 
-    public static ProgressValue Start => new(0);
-    public static ProgressValue Finished => new(1);
+    public static ProgressValue Start { get; } = new(0);
+    public static ProgressValue Finished { get; } = new(1);
 
     public string ToString(string? format, IFormatProvider? formatProvider)
     {

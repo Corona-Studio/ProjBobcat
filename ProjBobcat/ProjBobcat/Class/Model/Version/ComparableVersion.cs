@@ -52,7 +52,6 @@ public class ComparableVersion : IComparable<ComparableVersion>
 
     readonly ListItem _items = [];
 
-    string? _canonical;
     string _value = null!;
 
     public ComparableVersion(string version)
@@ -62,7 +61,7 @@ public class ComparableVersion : IComparable<ComparableVersion>
 
     public string Canonical
     {
-        get { return this._canonical ??= this._items.ToString(); }
+        get { return field ??= this._items.ToString(); }
     }
 
     public int CompareTo(ComparableVersion? other)
