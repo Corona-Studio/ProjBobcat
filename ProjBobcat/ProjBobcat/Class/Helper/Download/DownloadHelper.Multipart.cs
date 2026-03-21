@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -389,8 +389,6 @@ public static partial class DownloadHelper
 
             if (!chunkState.IsTooSlow()) continue;
 
-            // Cancel this chunk and retry
-            chunkManager.HandleSlowChunk(range, chunkState);
             throw new OperationCanceledException("Chunk download too slow, retrying");
         }
 

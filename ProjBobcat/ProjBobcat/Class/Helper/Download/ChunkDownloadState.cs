@@ -128,6 +128,17 @@ internal sealed class ChunkDownloadState : IDisposable
     }
 
     /// <summary>
+    ///     Transfer temp file ownership from another state (used when splitting partially downloaded chunks)
+    /// </summary>
+    internal void AdoptTempFile(ChunkDownloadState source)
+    {
+        TempFilePath = source.TempFilePath;
+        TempFileStream = source.TempFileStream;
+        source.TempFilePath = null;
+        source.TempFileStream = null;
+    }
+
+    /// <summary>
     ///     Update expected speed for slow speed detection
     /// </summary>
     public void UpdateExpectedSpeed(double expectedSpeed)

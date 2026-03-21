@@ -42,23 +42,26 @@ internal sealed class ChunkManager(DownloadSettings settings) : IDisposable
     {
         while (true)
         {
-            // First, try to get a pending chunk
-            if (_pendingChunks.TryDequeue(out range))
+            if (!_pendingChunks.TryDequeue(out range))
             {
-                state = new ChunkDownloadState(range, GlobalAverageSpeed);
-
-                if (_chunks.TryAdd(range, state)) return true;
-
-                // Race condition, chunk already added
-                state.Dispose();
-                continue;
+                range = default;
+                state = null!;
+                return false;
             }
 
-            // No more pending chunks
-            range = default;
-            state = null!;
+            state = new ChunkDownloadState(range, GlobalAverageSpeed);
 
-            return false;
+            if (_chunks.TryAdd(range, state)) return true;
+
+            // Range already in _chunks (retry case) — replace the old state
+            if (_chunks.TryRemove(range, out var oldState))
+            {
+                oldState.Dispose();
+
+                if (_chunks.TryAdd(range, state)) return true;
+            }
+
+            state.Dispose();
         }
     }
 
@@ -88,7 +91,6 @@ internal sealed class ChunkManager(DownloadSettings settings) : IDisposable
             var remainingRange = state.GetRemainingRange();
             if (remainingRange != null)
             {
-                // Split remaining into smaller chunks (max 4 parts to avoid too many tiny chunks)
                 var splitCount = Math.Min(4, settings.DownloadParts);
                 var splitRanges = SplitRange(remainingRange.Value, splitCount);
                 foreach (var splitRange in splitRanges)
@@ -96,16 +98,13 @@ internal sealed class ChunkManager(DownloadSettings settings) : IDisposable
                     _pendingChunks.Enqueue(splitRange);
                 }
 
-                // Mark the downloaded portion as completed
-                if (state.BytesDownloaded > 0)
-                {
-                    var downloadedRange = state.GetDownloadedRange();
-                    var completedState = new ChunkDownloadState(downloadedRange, GlobalAverageSpeed);
-                    completedState.UpdateProgress(state.BytesDownloaded);
+                // Mark the downloaded portion as completed, preserving the temp file data
+                var downloadedRange = state.GetDownloadedRange();
+                var completedState = new ChunkDownloadState(downloadedRange, GlobalAverageSpeed);
+                completedState.UpdateProgress(state.BytesDownloaded);
+                completedState.AdoptTempFile(state);
 
-                    // Replace the failed chunk state with completed portion
-                    _chunks.TryUpdate(range, completedState, state);
-                }
+                _chunks.TryUpdate(range, completedState, state);
 
                 return true;
             }
@@ -114,7 +113,10 @@ internal sealed class ChunkManager(DownloadSettings settings) : IDisposable
         // Retry the chunk if under retry limit
         if (failCount < settings.RetryCount || settings.RetryCount <= 0)
         {
-            // Re-queue for retry at the front (higher priority for retries)
+            // Remove old entry so TryGetNextChunk can re-add it
+            _chunks.TryRemove(range, out var oldState);
+            oldState?.Dispose();
+
             _pendingChunks.Enqueue(range);
             return true;
         }
