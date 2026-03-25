@@ -131,25 +131,28 @@ public static partial class DownloadHelper
 
         var filePath = Path.Combine(downloadFile.DownloadPath, downloadFile.FileName);
         var trials = downloadSettings.RetryCount <= 0 ? 1 : downloadSettings.RetryCount;
-        var downloadUrl = downloadFile.GetDownloadUrl();
-
-        // Check if server supports partial downloads
-        using var checkCts = new CancellationTokenSource(TimeSpan.FromSeconds(8));
-        var urlInfo = await CheckPartialDownloadSupportAsync(downloadUrl, downloadSettings, checkCts.Token);
-
-        // Fallback to normal download if not supported or file too small
-        if (urlInfo is not { SupportsRangeRequests: true } || urlInfo.FileLength < MinimumChunkSize)
-        {
-            downloadFile.RetryCount = 0;
-            await DownloadData(downloadFile, downloadSettings);
-            return;
-        }
 
         var exceptions = new List<Exception>();
 
         // Retry loop for multipart download
         while (downloadFile.RetryCount < trials)
         {
+            // Pick URL per attempt so MultiSourceDownloadFile can rotate mirrors when RetryCount advances.
+            var downloadUrl = downloadFile.GetDownloadUrl();
+
+            using var checkCts = new CancellationTokenSource(TimeSpan.FromSeconds(8));
+            var urlInfo = await CheckPartialDownloadSupportAsync(downloadUrl, downloadSettings, checkCts.Token);
+
+            // Fallback to normal download if not supported or file too small
+            if (urlInfo is not { SupportsRangeRequests: true } || urlInfo.FileLength < MinimumChunkSize)
+            {
+                downloadFile.RetryCount = 0;
+                await DownloadData(downloadFile, downloadSettings);
+                return;
+            }
+
+            exceptions.Clear();
+
             // Initialize for multipart download
             var globalSpeedCalculator = new DownloadSpeedCalculator();
             using var chunkManager = new ChunkManager(downloadSettings);

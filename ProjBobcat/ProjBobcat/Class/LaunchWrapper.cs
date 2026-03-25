@@ -89,57 +89,45 @@ public class LaunchWrapper(AuthResultBase authResult, LaunchSettings launchSetti
     void ProcessOnErrorDataReceived(object sender, DataReceivedEventArgs e)
     {
         if (string.IsNullOrEmpty(e.Data)) return;
+        if (this.GameCore is not GameCoreBase coreBase) return;
 
-        if (this.GameCore is GameCoreBase coreBase)
+        if (this.GameCore.GameLogResolver != null)
+        {
+            var entry = this.GameCore.GameLogResolver.Resolve(e.Data);
+            coreBase.OnLogGameData(sender, EntryToEventArgs(entry));
+        }
+        else
+        {
             coreBase.OnLogGameData(sender, new GameLogEventArgs
             {
                 LogType = GameLogType.Unknown,
                 RawContent = e.Data
             });
+        }
     }
 
     void ProcessOnOutputDataReceived(object sender, DataReceivedEventArgs e)
     {
         if (string.IsNullOrEmpty(e.Data)) return;
         if (this.GameCore.GameLogResolver == null) return;
+        if (this.GameCore is not GameCoreBase coreBase) return;
 
-        var totalPrefix = this.GameCore.GameLogResolver.ResolveTotalPrefix(e.Data);
-        var type = this.GameCore.GameLogResolver.ResolveLogType(string.IsNullOrEmpty(totalPrefix)
-            ? e.Data
-            : totalPrefix);
-
-        if (type is GameLogType.ExceptionMessage or GameLogType.StackTrace)
-        {
-            var exceptionMsg = this.GameCore.GameLogResolver.ResolveExceptionMsg(e.Data);
-            var stackTrace = this.GameCore.GameLogResolver.ResolveStackTrace(e.Data);
-
-            if (this.GameCore is GameCoreBase gameCoreBase)
-                gameCoreBase.OnLogGameData(sender, new GameLogEventArgs
-                {
-                    LogType = type,
-                    RawContent = e.Data,
-                    StackTrace = stackTrace,
-                    ExceptionMsg = exceptionMsg
-                });
-
-            return;
-        }
-
-        var time = this.GameCore.GameLogResolver.ResolveTime(totalPrefix);
-        var source = this.GameCore.GameLogResolver.ResolveSource(totalPrefix);
-
-
-        if (this.GameCore is GameCoreBase coreBase)
-            coreBase.OnLogGameData(sender, new GameLogEventArgs
-            {
-                GameId = this.LaunchSettings.Version,
-                LogType = type,
-                RawContent = e.Data,
-                Content = e.Data[totalPrefix.Length..],
-                Source = source,
-                Time = time
-            });
+        var entry = this.GameCore.GameLogResolver.Resolve(e.Data);
+        coreBase.OnLogGameData(sender, EntryToEventArgs(entry));
     }
+
+    GameLogEventArgs EntryToEventArgs(GameLogEntry entry) => new()
+    {
+        GameId = this.LaunchSettings.Version,
+        LogType = entry.LogType,
+        RawContent = entry.RawContent,
+        Content = entry.Content,
+        Source = entry.Source,
+        Thread = entry.Thread,
+        Time = entry.Time,
+        ExceptionMsg = entry.ExceptionMsg,
+        StackTrace = entry.StackTrace
+    };
 
     void Dispose(bool disposing)
     {

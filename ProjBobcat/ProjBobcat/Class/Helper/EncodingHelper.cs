@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace ProjBobcat.Class.Helper;
@@ -75,11 +76,12 @@ public static class EncodingHelper
 
     public static Encoding GetUtf8NoBomOrAnsi(bool preferUtf8)
     {
-        var encoding = preferUtf8
-            ? new UTF8Encoding(false)
-            : Encoding.GetEncoding(CultureInfo.CurrentCulture.TextInfo.ANSICodePage);
+        // macOS and Linux use UTF-8 natively, and Java 18+ defaults to UTF-8 output.
+        // ANSI code pages are only meaningful on Windows.
+        if (preferUtf8 || !RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            return new UTF8Encoding(false);
 
-        return encoding;
+        return Encoding.GetEncoding(CultureInfo.CurrentCulture.TextInfo.ANSICodePage);
     }
 
     public static string GetJavaCharsetForAnsi(int cp)
