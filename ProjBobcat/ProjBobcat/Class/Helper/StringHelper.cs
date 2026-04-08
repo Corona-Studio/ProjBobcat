@@ -23,14 +23,28 @@ public static class StringHelper
     /// <returns></returns>
     public static string FixArgument(string arg)
     {
-        if (string.IsNullOrWhiteSpace(arg) || !arg.Contains('='))
+        if (string.IsNullOrWhiteSpace(arg))
             return arg;
 
-        var para = arg.Split('=');
-        if (para[1].Contains(' '))
-            para[1] = $"\"{para[1]}\"";
+        var eqIndex = arg.IndexOf('=');
+        if (eqIndex < 0)
+        {
+            if (arg.Contains(' ') && !(arg.StartsWith('"') && arg.EndsWith('"')))
+                return $"\"{arg}\"";
 
-        return string.Join("=", para);
+            return arg;
+        }
+
+        var key = arg[..eqIndex];
+        var value = arg[(eqIndex + 1)..];
+
+        if (value.Length > 1 && value[0] == '"' && value[^1] == '"')
+            return arg;
+
+        if (value.Contains(' '))
+            value = $"\"{value}\"";
+
+        return $"{key}={value}";
     }
 
     /// <summary>

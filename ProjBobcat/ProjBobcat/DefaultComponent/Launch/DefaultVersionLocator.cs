@@ -200,6 +200,8 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             // Different versions of Minecraft have different library JSON's structure.
 
             // Fix for new native format introduced in 1.19
+            // Native JARs are also added to the classpath so that
+            // LWJGL 3.4+ can self-extract from them at runtime.
             if (lib.IsNewNativeLib())
             {
                 result.Item1.Add(new NativeFileInfo
@@ -207,8 +209,6 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                     Extract = lib.Extract,
                     FileInfo = lib.Downloads!.Artifact!
                 });
-
-                continue;
             }
 
             var isNative = (lib.Natives?.Count ?? 0) > 0;

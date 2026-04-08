@@ -112,14 +112,14 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
 
         var jvmArgumentsDic = new Dictionary<string, string>
         {
-            { "${natives_directory}", $"\"{nativeRoot}\"" },
-            { "${launcher_name}", $"\"{launchSettings.LauncherName}\"" },
+            { "${natives_directory}", nativeRoot },
+            { "${launcher_name}", launchSettings.LauncherName ?? "ProjBobcat" },
             { "${launcher_version}", "32" },
-            { "${classpath}", $"\"{sb}\"" },
+            { "${classpath}", sb.ToString() },
             { "${classpath_separator}", Path.PathSeparator.ToString() },
-            { "${library_directory}", $"\"{Path.Combine(this.RootPath, GamePathHelper.GetLibraryRootPath())}\"" },
-            { "${version_name}", $"\"{versionName}\"" },
-            { "${primary_jar_name}", $"\"{version.Id}.jar\"" }
+            { "${library_directory}", Path.Combine(this.RootPath, GamePathHelper.GetLibraryRootPath()) },
+            { "${version_name}", versionName },
+            { "${primary_jar_name}", $"{version.Id}.jar" }
         };
 
         #region Old 1.16.5 game multiplayer fix apply
@@ -170,17 +170,17 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
                 if (jvmArg.Equals("-DFabricMcEmu= net.minecraft.client.main.Main ", StringComparison.OrdinalIgnoreCase))
                     arg = "-DFabricMcEmu=net.minecraft.client.main.Main";
 
-                yield return StringHelper.ReplaceByDic(arg, jvmArgumentsDic);
+                yield return StringHelper.FixArgument(StringHelper.ReplaceByDic(arg, jvmArgumentsDic));
             }
         }
         else
         {
-            yield return StringHelper.ReplaceByDic("-Djava.library.path=${natives_directory}", jvmArgumentsDic);
-            yield return StringHelper.ReplaceByDic("-Dminecraft.launcher.brand=${launcher_name}", jvmArgumentsDic);
-            yield return StringHelper.ReplaceByDic("-Dminecraft.launcher.version=${launcher_version}", jvmArgumentsDic);
+            yield return StringHelper.FixArgument(StringHelper.ReplaceByDic("-Djava.library.path=${natives_directory}", jvmArgumentsDic));
+            yield return StringHelper.FixArgument(StringHelper.ReplaceByDic("-Dminecraft.launcher.brand=${launcher_name}", jvmArgumentsDic));
+            yield return StringHelper.FixArgument(StringHelper.ReplaceByDic("-Dminecraft.launcher.version=${launcher_version}", jvmArgumentsDic));
 
             yield return "-cp";
-            yield return StringHelper.ReplaceByDic("${classpath}", jvmArgumentsDic);
+            yield return StringHelper.FixArgument(StringHelper.ReplaceByDic("${classpath}", jvmArgumentsDic));
         }
     }
 
@@ -294,10 +294,10 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
 
         var argumentsDic = new Dictionary<string, string>
         {
-            { "${path}", $"\"{filePath}\"" }
+            { "${path}", filePath }
         };
 
-        yield return StringHelper.ReplaceByDic(version.Logging.Client.Argument, argumentsDic);
+        yield return StringHelper.FixArgument(StringHelper.ReplaceByDic(version.Logging.Client.Argument, argumentsDic));
     }
 
     /// <summary>
