@@ -69,6 +69,7 @@ resolved the issue that LaunchWrapper may not return the correct exit code
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.5" />
     <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="10.0.5" />
     <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="3.0.1" />
+    <PackageReference Include="SharpJsonRepair" Version="0.1.0" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="System.Management" Version="10.0.5" />
@@ -76,9 +77,6 @@ resolved the issue that LaunchWrapper may not return the correct exit code
     <PackageReference Include="Microsoft.Windows.CsWin32" Version="0.3.269">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\JsonRepairSharp\JsonRepairSharp\JsonRepairSharp.csproj" />
   </ItemGroup>
   <!-- Dependencies -->
   

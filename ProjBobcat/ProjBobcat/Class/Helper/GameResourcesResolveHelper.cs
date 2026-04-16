@@ -10,7 +10,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using JsonRepairSharp.Class;
+using SharpJsonRepair.Class;
 using ProjBobcat.Class.Helper.TOMLParser;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Fabric;
