@@ -48,7 +48,7 @@ jobs:
         run: dotnet build ProjBobcat/ProjBobcat/ProjBobcat.csproj -c Release --no-restore
         
       - name: Create the package
-        run: $tag=${{ github.ref }}.replace("v",""); dotnet pack ProjBobcat/ProjBobcat/ProjBobcat.csproj -c Release -p:PackageVersion=$tag --no-build --no-restore -o .
+        run: $tag="${{ github.ref_name }}".Replace("v",""); dotnet pack ProjBobcat/ProjBobcat/ProjBobcat.csproj -c Release -p:PackageVersion=$tag --no-build --no-restore -o .
       
       - name: Publish the package to NuGet.org
         run: dotnet nuget push *.nupkg -k ${{secrets.NUGET_KEY}} -s https://api.nuget.org/v3/index.json
