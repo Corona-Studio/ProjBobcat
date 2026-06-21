@@ -37,7 +37,7 @@ public static partial class DownloadHelper
         DownloadSettings downloadSettings,
         CancellationToken ct)
     {
-        var client = downloadSettings.HttpClientFactory.CreateClient(DefaultDownloadClientName);
+        var client = downloadSettings.HttpClientFactory.CreateClient(downloadSettings.HttpClientName ?? DefaultDownloadClientName);
 
         try
         {
@@ -348,7 +348,7 @@ public static partial class DownloadHelper
         DownloadSpeedCalculator globalSpeedCalculator,
         CancellationToken ct)
     {
-        var client = downloadSettings.HttpClientFactory.CreateClient(DefaultDownloadClientName);
+        var client = downloadSettings.HttpClientFactory.CreateClient(downloadSettings.HttpClientName ?? DefaultDownloadClientName);
         var tempFilePath = GetTempFilePath();
         chunkState.CreateTempFile(tempFilePath);
 

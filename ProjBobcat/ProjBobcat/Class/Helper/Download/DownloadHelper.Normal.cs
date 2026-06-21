@@ -32,7 +32,7 @@ public static partial class DownloadHelper
             Directory.CreateDirectory(downloadFile.DownloadPath);
 
         var timeout = downloadSettings.Timeout;
-        var client = downloadSettings.HttpClientFactory.CreateClient(DefaultDownloadClientName);
+        var client = downloadSettings.HttpClientFactory.CreateClient(downloadSettings.HttpClientName ?? DefaultDownloadClientName);
         var trials = downloadSettings.RetryCount <= 0 ? 1 : downloadSettings.RetryCount;
         var filePath = Path.Combine(downloadFile.DownloadPath, downloadFile.FileName);
         var exceptions = new List<Exception>();

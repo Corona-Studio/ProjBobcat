@@ -13,7 +13,8 @@ namespace ProjBobcat.Class.Helper.Download;
 
 public static partial class DownloadHelper
 {
-    internal const string DefaultDownloadClientName = nameof(DownloadHelper);
+    public const string DefaultDownloadClientName = nameof(DownloadHelper);
+    public const string DefaultCurseForgeDownloadClientName = "CurseForgeDownloader";
     private const int DefaultCopyBufferSize = 1024 * 8 * 10;
     internal const int MinimumChunkSize = 1_000_000; // 1 MB
 

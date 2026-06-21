@@ -23,6 +23,12 @@ public static class InitHelper
 
         services.AddHttpClient(DownloadHelper.DefaultDownloadClientName,
             client => { client.DefaultRequestHeaders.Add("User-Agent", userAgent); });
+        services.AddHttpClient(DownloadHelper.DefaultCurseForgeDownloadClientName,
+            client =>
+            {
+                client.DefaultRequestHeaders.Add("x-api-key", coreSettings.CurseForgeApiKey);
+                client.DefaultRequestHeaders.Add("User-Agent", userAgent);
+            });
 
         services.AddHttpClient<IModrinthApiService, ModrinthApiService>(client =>
         {

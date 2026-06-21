@@ -26,6 +26,7 @@ public class DownloadSettings
     public HashType HashType { get; init; }
     public bool ShowDownloadProgress { get; init; }
     public required IHttpClientFactory HttpClientFactory { get; init; }
+    public string? HttpClientName { get; init; }
 
     /// <summary>
     ///     认证
@@ -47,18 +48,6 @@ public class DownloadSettings
             HashType.SHA384 => SHA384.Create(),
             HashType.SHA512 => SHA512.Create(),
             _ => throw new NotSupportedException()
-        };
-    }
-
-    public static DownloadSettings FromDefault(IHttpClientFactory httpClientFactory)
-    {
-        return new DownloadSettings
-        {
-            RetryCount = 0,
-            CheckFile = false,
-            Timeout = TimeSpan.FromMinutes(1),
-            DownloadParts = 16,
-            HttpClientFactory = httpClientFactory
         };
     }
 }
