@@ -13,15 +13,24 @@ namespace ProjBobcat.Class.Helper.Download;
 internal sealed class ChunkManager(DownloadSettings settings) : IDisposable
 {
     private readonly ConcurrentDictionary<DownloadRange, ChunkDownloadState> _chunks = [];
-    private readonly ConcurrentQueue<DownloadRange> _pendingChunks = [];
     private readonly ConcurrentDictionary<DownloadRange, int> _failedChunks = [];
-    private long _globalAverageSpeedBits; // Store double as long bits for atomic operations
+    private readonly ConcurrentQueue<DownloadRange> _pendingChunks = [];
     private int _completedCount;
-    
+    private long _globalAverageSpeedBits; // Store double as long bits for atomic operations
+
     private double GlobalAverageSpeed
     {
-        get => BitConverter.Int64BitsToDouble(Interlocked.Read(ref _globalAverageSpeedBits));
-        set => Interlocked.Exchange(ref _globalAverageSpeedBits, BitConverter.DoubleToInt64Bits(value));
+        get => BitConverter.Int64BitsToDouble(Interlocked.Read(ref this._globalAverageSpeedBits));
+        set => Interlocked.Exchange(ref this._globalAverageSpeedBits, BitConverter.DoubleToInt64Bits(value));
+    }
+
+    public void Dispose()
+    {
+        foreach (var chunk in this._chunks.Values) chunk?.Dispose();
+
+        this._chunks.Clear();
+        this._pendingChunks.Clear();
+        this._failedChunks.Clear();
     }
 
     /// <summary>
@@ -29,10 +38,7 @@ internal sealed class ChunkManager(DownloadSettings settings) : IDisposable
     /// </summary>
     public void InitializeChunks(IEnumerable<DownloadRange> ranges)
     {
-        foreach (var range in ranges)
-        {
-            _pendingChunks.Enqueue(range);
-        }
+        foreach (var range in ranges) this._pendingChunks.Enqueue(range);
     }
 
     /// <summary>
@@ -42,23 +48,23 @@ internal sealed class ChunkManager(DownloadSettings settings) : IDisposable
     {
         while (true)
         {
-            if (!_pendingChunks.TryDequeue(out range))
+            if (!this._pendingChunks.TryDequeue(out range))
             {
                 range = default;
                 state = null!;
                 return false;
             }
 
-            state = new ChunkDownloadState(range, GlobalAverageSpeed);
+            state = new ChunkDownloadState(range, this.GlobalAverageSpeed);
 
-            if (_chunks.TryAdd(range, state)) return true;
+            if (this._chunks.TryAdd(range, state)) return true;
 
             // Range already in _chunks (retry case) — replace the old state
-            if (_chunks.TryRemove(range, out var oldState))
+            if (this._chunks.TryRemove(range, out var oldState))
             {
                 oldState.Dispose();
 
-                if (_chunks.TryAdd(range, state)) return true;
+                if (this._chunks.TryAdd(range, state)) return true;
             }
 
             state.Dispose();
@@ -72,8 +78,8 @@ internal sealed class ChunkManager(DownloadSettings settings) : IDisposable
     {
         if (state.IsCompleted)
         {
-            Interlocked.Increment(ref _completedCount);
-            UpdateGlobalSpeed();
+            Interlocked.Increment(ref this._completedCount);
+            this.UpdateGlobalSpeed();
         }
     }
 
@@ -82,7 +88,7 @@ internal sealed class ChunkManager(DownloadSettings settings) : IDisposable
     /// </summary>
     public bool HandleChunkFailure(DownloadRange range, ChunkDownloadState state, bool canSplit)
     {
-        var failCount = _failedChunks.AddOrUpdate(range, 1, (_, count) => count + 1);
+        var failCount = this._failedChunks.AddOrUpdate(range, 1, (_, count) => count + 1);
         state.IncrementRetry();
 
         // If we have some progress and can split, split the remaining part
@@ -93,18 +99,15 @@ internal sealed class ChunkManager(DownloadSettings settings) : IDisposable
             {
                 var splitCount = Math.Min(4, settings.DownloadParts);
                 var splitRanges = SplitRange(remainingRange.Value, splitCount);
-                foreach (var splitRange in splitRanges)
-                {
-                    _pendingChunks.Enqueue(splitRange);
-                }
+                foreach (var splitRange in splitRanges) this._pendingChunks.Enqueue(splitRange);
 
                 // Mark the downloaded portion as completed, preserving the temp file data
                 var downloadedRange = state.GetDownloadedRange();
-                var completedState = new ChunkDownloadState(downloadedRange, GlobalAverageSpeed);
+                var completedState = new ChunkDownloadState(downloadedRange, this.GlobalAverageSpeed);
                 completedState.UpdateProgress(state.BytesDownloaded);
                 completedState.AdoptTempFile(state);
 
-                _chunks.TryUpdate(range, completedState, state);
+                this._chunks.TryUpdate(range, completedState, state);
 
                 return true;
             }
@@ -114,10 +117,10 @@ internal sealed class ChunkManager(DownloadSettings settings) : IDisposable
         if (failCount < settings.RetryCount || settings.RetryCount <= 0)
         {
             // Remove old entry so TryGetNextChunk can re-add it
-            _chunks.TryRemove(range, out var oldState);
+            this._chunks.TryRemove(range, out var oldState);
             oldState?.Dispose();
 
-            _pendingChunks.Enqueue(range);
+            this._pendingChunks.Enqueue(range);
             return true;
         }
 
@@ -138,14 +141,11 @@ internal sealed class ChunkManager(DownloadSettings settings) : IDisposable
             if (state.BytesDownloaded > 0)
             {
                 var remainingRange = state.GetRemainingRange();
-                if (remainingRange != null)
-                {
-                    _pendingChunks.Enqueue(remainingRange.Value);
-                }
+                if (remainingRange != null) this._pendingChunks.Enqueue(remainingRange.Value);
             }
             else
             {
-                _pendingChunks.Enqueue(range);
+                this._pendingChunks.Enqueue(range);
             }
         }
     }
@@ -155,7 +155,7 @@ internal sealed class ChunkManager(DownloadSettings settings) : IDisposable
     /// </summary>
     public IEnumerable<ChunkDownloadState> GetCompletedChunksInOrder()
     {
-        return _chunks.Values
+        return this._chunks.Values
             .Where(c => c.IsCompleted)
             .OrderBy(c => c.Range.Start);
     }
@@ -165,7 +165,7 @@ internal sealed class ChunkManager(DownloadSettings settings) : IDisposable
     /// </summary>
     public long GetTotalDownloadedBytes()
     {
-        return _chunks.Values.Sum(c => c.BytesDownloaded);
+        return this._chunks.Values.Sum(c => c.BytesDownloaded);
     }
 
     /// <summary>
@@ -173,8 +173,7 @@ internal sealed class ChunkManager(DownloadSettings settings) : IDisposable
     /// </summary>
     public bool AreAllChunksCompleted()
     {
-        return _pendingChunks.IsEmpty &&
-               _chunks.Values.All(c => c.IsCompleted);
+        return this._pendingChunks.IsEmpty && this._chunks.Values.All(c => c.IsCompleted);
     }
 
     /// <summary>
@@ -182,7 +181,7 @@ internal sealed class ChunkManager(DownloadSettings settings) : IDisposable
     /// </summary>
     public ChunkDownloadState? GetChunkState(DownloadRange range)
     {
-        _chunks.TryGetValue(range, out var state);
+        this._chunks.TryGetValue(range, out var state);
         return state;
     }
 
@@ -191,11 +190,11 @@ internal sealed class ChunkManager(DownloadSettings settings) : IDisposable
     /// </summary>
     private void UpdateGlobalSpeed()
     {
-        var completedChunks = _chunks.Values.Where(c => c.IsCompleted).ToList();
+        var completedChunks = this._chunks.Values.Where(c => c.IsCompleted).ToList();
         if (completedChunks.Count == 0) return;
 
         var totalSpeed = completedChunks.Sum(c => c.GetAverageSpeed());
-        GlobalAverageSpeed = totalSpeed / completedChunks.Count;
+        this.GlobalAverageSpeed = totalSpeed / completedChunks.Count;
     }
 
     /// <summary>
@@ -220,17 +219,5 @@ internal sealed class ChunkManager(DownloadSettings settings) : IDisposable
 
             currentStart += currentPartSize;
         }
-    }
-
-    public void Dispose()
-    {
-        foreach (var chunk in _chunks.Values)
-        {
-            chunk?.Dispose();
-        }
-
-        _chunks.Clear();
-        _pendingChunks.Clear();
-        _failedChunks.Clear();
     }
 }

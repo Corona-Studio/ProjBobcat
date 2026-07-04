@@ -39,10 +39,11 @@ public sealed class GameLoggingInfoResolver : ResolverBase
 
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             cts.CancelAfter(TimeSpan.FromSeconds(5));
-            
+
             try
             {
-                await using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, useAsync: true);
+                await using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096,
+                    true);
                 var computedHash = Convert.ToHexString(await SHA1.HashDataAsync(fs, cts.Token).ConfigureAwait(false));
 
                 if (computedHash.Equals(resolvedGame.Logging?.Client?.File?.Sha1, StringComparison.OrdinalIgnoreCase))

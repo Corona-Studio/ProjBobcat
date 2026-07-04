@@ -2046,6 +2046,26 @@ static partial class TomlSyntax
 
 static class StringUtils
 {
+    public static bool TryParseDateTime(string s,
+        string[] formats,
+        DateTimeStyles styles,
+        out DateTime dateTime,
+        out int parsedFormat)
+    {
+        parsedFormat = 0;
+        dateTime = new DateTime();
+
+        for (var i = 0; i < formats.Length; i++)
+        {
+            var format = formats[i];
+            if (!DateTime.TryParseExact(s, format, CultureInfo.InvariantCulture, styles, out dateTime)) continue;
+            parsedFormat = i;
+            return true;
+        }
+
+        return false;
+    }
+
     extension(string key)
     {
         public string AsKey()
@@ -2068,26 +2088,6 @@ static class StringUtils
 
             return sb.ToString();
         }
-    }
-
-    public static bool TryParseDateTime(string s,
-        string[] formats,
-        DateTimeStyles styles,
-        out DateTime dateTime,
-        out int parsedFormat)
-    {
-        parsedFormat = 0;
-        dateTime = new DateTime();
-
-        for (var i = 0; i < formats.Length; i++)
-        {
-            var format = formats[i];
-            if (!DateTime.TryParseExact(s, format, CultureInfo.InvariantCulture, styles, out dateTime)) continue;
-            parsedFormat = i;
-            return true;
-        }
-
-        return false;
     }
 
     extension(string self)

@@ -178,16 +178,11 @@ public static class SystemInfoHelper
         {
             var lines = File.ReadAllLines("/proc/cpuinfo");
             foreach (var line in lines)
-            {
                 if (line.StartsWith("model name", StringComparison.OrdinalIgnoreCase))
                 {
                     var parts = line.Split(':', 2);
-                    if (parts.Length == 2)
-                    {
-                        return parts[1].Trim();
-                    }
+                    if (parts.Length == 2) return parts[1].Trim();
                 }
-            }
         }
         catch
         {

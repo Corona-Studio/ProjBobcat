@@ -1,15 +1,14 @@
-﻿using ProjBobcat.Class;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
+using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Auth;
 using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.Version;
 using ProjBobcat.Interface;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
-using System.Text;
 
 namespace ProjBobcat.DefaultComponent.Launch;
 
@@ -175,9 +174,12 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
         }
         else
         {
-            yield return StringHelper.FixArgument(StringHelper.ReplaceByDic("-Djava.library.path=${natives_directory}", jvmArgumentsDic));
-            yield return StringHelper.FixArgument(StringHelper.ReplaceByDic("-Dminecraft.launcher.brand=${launcher_name}", jvmArgumentsDic));
-            yield return StringHelper.FixArgument(StringHelper.ReplaceByDic("-Dminecraft.launcher.version=${launcher_version}", jvmArgumentsDic));
+            yield return StringHelper.FixArgument(StringHelper.ReplaceByDic("-Djava.library.path=${natives_directory}",
+                jvmArgumentsDic));
+            yield return StringHelper.FixArgument(
+                StringHelper.ReplaceByDic("-Dminecraft.launcher.brand=${launcher_name}", jvmArgumentsDic));
+            yield return StringHelper.FixArgument(
+                StringHelper.ReplaceByDic("-Dminecraft.launcher.version=${launcher_version}", jvmArgumentsDic));
 
             yield return "-cp";
             yield return StringHelper.FixArgument(StringHelper.ReplaceByDic("${classpath}", jvmArgumentsDic));
@@ -252,7 +254,7 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
     {
         var gameProfile = this.LauncherProfileParser.GetGameProfile(launchSettings.GameName);
 
-        ArgumentOutOfRangeException.ThrowIfEqual(resolvedVersion, null, nameof(resolvedVersion));
+        ArgumentOutOfRangeException.ThrowIfEqual(resolvedVersion, null);
 
         var arguments = new List<string>();
 

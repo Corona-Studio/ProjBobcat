@@ -16,17 +16,15 @@ public sealed class MultiSourceDownloadFile : AbstractDownloadBase
         var index = 0;
 
         foreach (var t in this.DownloadUris)
-        {
             for (var w = 0; w < t.Weight; w++)
                 list[index++] = t.DownloadUri;
-        }
 
         return list;
     });
 
     public override string GetDownloadUrl()
     {
-        var weightedList = WeightedUriPool.Value;
-        return weightedList[RetryCount % weightedList.Length];
+        var weightedList = this.WeightedUriPool.Value;
+        return weightedList[this.RetryCount % weightedList.Length];
     }
 }

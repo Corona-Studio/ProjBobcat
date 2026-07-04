@@ -10,13 +10,11 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using SharpJsonRepair.Class;
 using ProjBobcat.Class.Helper.TOMLParser;
 using ProjBobcat.Class.Model;
-using ProjBobcat.Class.Model.Fabric;
 using ProjBobcat.Class.Model.GameResource;
 using ProjBobcat.Class.Model.GameResource.ResolvedInfo;
-using FileInfo = System.IO.FileInfo;
+using SharpJsonRepair.Class;
 
 namespace ProjBobcat.Class.Helper;
 
@@ -178,7 +176,8 @@ public static class GameResourcesResolveHelper
         try
         {
             await using var stream = await entry.OpenAsync(ct);
-            var tempModel = await JsonSerializer.DeserializeAsync(stream, SerializerContext.Default.FabricModInfoModel, ct);
+            var tempModel =
+                await JsonSerializer.DeserializeAsync(stream, SerializerContext.Default.FabricModInfoModel, ct);
 
             var author = tempModel?.Authors is { Length: > 0 }
                 ? string.Join(',', tempModel.Authors)
@@ -364,7 +363,8 @@ public static class GameResourcesResolveHelper
             JsonValueKind.String when !string.IsNullOrEmpty(model.Pack?.Description.Value.GetString()) =>
                 [new PlainTextResourcePackDescription(model.Pack?.Description.Value.GetString()!)],
             // ReSharper disable once CoVariantArrayConversion
-            JsonValueKind.Array => model.Pack?.Description.Value.Deserialize(SerializerContext.Default.ObjectResourcePackDescriptionArray),
+            JsonValueKind.Array => model.Pack?.Description.Value.Deserialize(SerializerContext.Default
+                .ObjectResourcePackDescriptionArray),
             _ => null
         };
         var version = model?.Pack?.PackFormat ?? -1;

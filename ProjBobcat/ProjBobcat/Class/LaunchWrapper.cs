@@ -94,7 +94,7 @@ public class LaunchWrapper(AuthResultBase authResult, LaunchSettings launchSetti
         if (this.GameCore.GameLogResolver != null)
         {
             var entry = this.GameCore.GameLogResolver.Resolve(e.Data);
-            coreBase.OnLogGameData(sender, EntryToEventArgs(entry));
+            coreBase.OnLogGameData(sender, this.EntryToEventArgs(entry));
         }
         else
         {
@@ -113,21 +113,24 @@ public class LaunchWrapper(AuthResultBase authResult, LaunchSettings launchSetti
         if (this.GameCore is not GameCoreBase coreBase) return;
 
         var entry = this.GameCore.GameLogResolver.Resolve(e.Data);
-        coreBase.OnLogGameData(sender, EntryToEventArgs(entry));
+        coreBase.OnLogGameData(sender, this.EntryToEventArgs(entry));
     }
 
-    GameLogEventArgs EntryToEventArgs(GameLogEntry entry) => new()
+    GameLogEventArgs EntryToEventArgs(GameLogEntry entry)
     {
-        GameId = this.LaunchSettings.Version,
-        LogType = entry.LogType,
-        RawContent = entry.RawContent,
-        Content = entry.Content,
-        Source = entry.Source,
-        Thread = entry.Thread,
-        Time = entry.Time,
-        ExceptionMsg = entry.ExceptionMsg,
-        StackTrace = entry.StackTrace
-    };
+        return new GameLogEventArgs
+        {
+            GameId = this.LaunchSettings.Version,
+            LogType = entry.LogType,
+            RawContent = entry.RawContent,
+            Content = entry.Content,
+            Source = entry.Source,
+            Thread = entry.Thread,
+            Time = entry.Time,
+            ExceptionMsg = entry.ExceptionMsg,
+            StackTrace = entry.StackTrace
+        };
+    }
 
     void Dispose(bool disposing)
     {

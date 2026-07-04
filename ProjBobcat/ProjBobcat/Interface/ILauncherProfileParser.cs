@@ -1,5 +1,5 @@
-﻿using ProjBobcat.Class.Model.LauncherProfile;
-using System;
+﻿using System;
+using ProjBobcat.Class.Model.LauncherProfile;
 
 namespace ProjBobcat.Interface;
 

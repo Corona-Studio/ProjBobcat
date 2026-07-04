@@ -57,8 +57,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
         CurseForgeLatestFileModel[]? files = null;
 
-        for (var i = 0; i < RetryCount; i++)
-        {
+        for (var i = 0; i < this.RetryCount; i++)
             try
             {
                 files = await GetModPackFiles(this.CurseForgeApiService, fileIds);
@@ -68,15 +67,13 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
             {
                 // Ignore
             }
-        }
 
         ArgumentNullException.ThrowIfNull(files, "无法获取 CurseForge 的文件列表");
 
         var missingFileIds = fileIds.Except(files.Select(file => file.Id)).ToArray();
 
         // Fetch missing files if any
-        for (var i = 0; i < RetryCount; i++)
-        {
+        for (var i = 0; i < this.RetryCount; i++)
             try
             {
                 files =
@@ -90,7 +87,6 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
             {
                 // Ignore
             }
-        }
 
         var projectIds = manifest.Files
             ?.Where(file => file.ProjectId != 0 && file.FileId != 0)
@@ -99,8 +95,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
         CurseForgeAddonInfo[]? modProjectDetails = null;
 
-        for (var i = 0; i < RetryCount; i++)
-        {
+        for (var i = 0; i < this.RetryCount; i++)
             try
             {
                 modProjectDetails = await GetModProjectDetails(this.CurseForgeApiService, projectIds);
@@ -110,7 +105,6 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
             {
                 // Ignore
             }
-        }
 
         ArgumentNullException.ThrowIfNull(modProjectDetails, "无法获取 CurseForge 的模组列表");
         ArgumentOutOfRangeException.ThrowIfLessThan(fileIds.Length, files.Length);
@@ -118,8 +112,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         var missingProjectIds = projectIds.Except(modProjectDetails.Select(mod => mod.Id)).ToArray();
 
         // Fetch missing projects if any
-        for (var i = 0; i < RetryCount; i++)
-        {
+        for (var i = 0; i < this.RetryCount; i++)
             try
             {
                 modProjectDetails =
@@ -133,7 +126,6 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
             {
                 // Ignore
             }
-        }
 
         var fileDic = files.ToDictionary(k => k.Id, v => v);
         var projectDic = modProjectDetails.ToDictionary(k => k.Id, v => v);
@@ -168,9 +160,13 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
             if (string.IsNullOrEmpty(downloadUrl))
             {
                 var fallbackUrls = GeneratePossibleDownloadUrls(file.Id, file.FileName);
-                var proceededUrls = DownloadUriReplacer == null
+                var proceededUrls = this.DownloadUriReplacer == null
                     ? GeneratePossibleDownloadUrls(file.Id, file.FileName)
-                    : [.. DownloadUriReplacer(GeneratePossibleDownloadUrls(file.Id, file.FileName)), ..fallbackUrls];
+                    :
+                    [
+                        .. this.DownloadUriReplacer(GeneratePossibleDownloadUrls(file.Id, file.FileName)),
+                        ..fallbackUrls
+                    ];
 
                 var guessDownloadFile = new MultiSourceDownloadFile
                 {
@@ -184,15 +180,14 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
                 continue;
             }
 
-            IEnumerable<string> urls = DownloadUriReplacer == null
+            IEnumerable<string> urls = this.DownloadUriReplacer == null
                 ? [downloadUrl]
-                : [.. DownloadUriReplacer([downloadUrl]), downloadUrl];
+                : [.. this.DownloadUriReplacer([downloadUrl]), downloadUrl];
 
             var fileDownloadPath = Path.Combine(di.FullName, file.FileName);
             var fileHash = file.Hashes?.FirstOrDefault(h => h.Algorithm == 1)?.Value;
 
             if (File.Exists(fileDownloadPath) && !string.IsNullOrEmpty(fileHash))
-            {
                 try
                 {
                     // Check local file
@@ -205,7 +200,6 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
                 {
                     // ignored
                 }
-            }
 
 
             var downloadFile = new MultiSourceDownloadFile
@@ -224,7 +218,6 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         this.TotalDownloaded = 0;
 
         if (downloadFiles.Count > 0)
-        {
             await DownloadHelper.AdvancedDownloadListFile(downloadFiles, new DownloadSettings
             {
                 DownloadParts = 2,
@@ -232,7 +225,6 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
                 Timeout = TimeSpan.FromMinutes(5),
                 HttpClientFactory = this.HttpClientFactory
             });
-        }
 
         var modPackFullPath = Path.GetFullPath(this.ModPackPath);
         var gbk = Encoding.GetEncoding("GBK");
@@ -282,13 +274,10 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
         this.InvokeStatusChangedEvent("安装完成", ProgressValue.Finished);
 
-        if (this.FailedFiles.IsEmpty &&
-            TotalDownloaded == 0 &&
+        if (this.FailedFiles.IsEmpty && this.TotalDownloaded == 0 &&
             downloadFiles.Count != 0)
-        {
             throw new Exception(
                 "我们无法下载这个整合包中的模组，这可能是因为您和 CurseForge 的网络连接不稳定导致的。尽管如此，我们还是完成了整合包安装的其他步骤。您可以稍后尝试重新安装或是手动下载整合包模组。");
-        }
 
         if (!this.FailedFiles.IsEmpty)
         {
@@ -375,7 +364,8 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
         await using var stream = await manifestEntry.OpenAsync();
 
-        var manifestModel = await JsonSerializer.DeserializeAsync(stream, SerializerContext.Default.CurseForgeManifestModel);
+        var manifestModel =
+            await JsonSerializer.DeserializeAsync(stream, SerializerContext.Default.CurseForgeManifestModel);
 
         return manifestModel;
     }

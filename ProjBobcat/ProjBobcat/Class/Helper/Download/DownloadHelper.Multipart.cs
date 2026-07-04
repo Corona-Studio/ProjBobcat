@@ -17,8 +17,6 @@ namespace ProjBobcat.Class.Helper.Download;
 
 public static partial class DownloadHelper
 {
-    private record UrlInfo(long FileLength, bool SupportsRangeRequests);
-
     private const int MaxConcurrentChunkDownloads = 16;
     private const int ChunkDownloadBufferSize = 1024 * 1024; // 1 MB buffer
 
@@ -37,7 +35,9 @@ public static partial class DownloadHelper
         DownloadSettings downloadSettings,
         CancellationToken ct)
     {
-        var client = downloadSettings.HttpClientFactory.CreateClient(downloadSettings.HttpClientName ?? DefaultDownloadClientName);
+        var client =
+            downloadSettings.HttpClientFactory.CreateClient(
+                downloadSettings.HttpClientName ?? DefaultDownloadClientName);
 
         try
         {
@@ -104,7 +104,7 @@ public static partial class DownloadHelper
     }
 
     /// <summary>
-    /// Multipart download with smart retry, resume, and speed monitoring
+    ///     Multipart download with smart retry, resume, and speed monitoring
     /// </summary>
     /// <param name="downloadFile">Download file information</param>
     /// <param name="downloadSettings">Download settings</param>
@@ -228,20 +228,15 @@ public static partial class DownloadHelper
                             catch (OperationCanceledException) when (!cts.Token.IsCancellationRequested)
                             {
                                 // Chunk timeout - retry with split if possible
-                                var canRetry = chunkManager.HandleChunkFailure(range, chunkState, canSplit: true);
+                                var canRetry = chunkManager.HandleChunkFailure(range, chunkState, true);
                                 if (!canRetry)
-                                {
                                     exceptions.Add(new TimeoutException($"Chunk {range.Start}-{range.End} timed out"));
-                                }
                             }
                             catch (Exception ex)
                             {
                                 // Handle chunk failure
-                                var canRetry = chunkManager.HandleChunkFailure(range, chunkState, canSplit: true);
-                                if (!canRetry)
-                                {
-                                    exceptions.Add(ex);
-                                }
+                                var canRetry = chunkManager.HandleChunkFailure(range, chunkState, true);
+                                if (!canRetry) exceptions.Add(ex);
                             }
                             finally
                             {
@@ -270,9 +265,7 @@ public static partial class DownloadHelper
 
                 // Check if all chunks completed successfully
                 if (!chunkManager.AreAllChunksCompleted() || exceptions.Count > 0)
-                {
                     throw new AggregateException("Some chunks failed to download", exceptions);
-                }
 
                 // Merge chunks and verify hash
                 await MergeChunksAndVerifyAsync(
@@ -313,10 +306,8 @@ public static partial class DownloadHelper
                 exceptions.Add(e);
 
                 if (e.StatusCode == HttpStatusCode.NotFound)
-                {
                     // Don't retry on 404
                     break;
-                }
 
                 var delay = CalculateRetryDelay(downloadFile.RetryCount);
                 await Task.Delay(delay, CancellationToken.None);
@@ -348,7 +339,9 @@ public static partial class DownloadHelper
         DownloadSpeedCalculator globalSpeedCalculator,
         CancellationToken ct)
     {
-        var client = downloadSettings.HttpClientFactory.CreateClient(downloadSettings.HttpClientName ?? DefaultDownloadClientName);
+        var client =
+            downloadSettings.HttpClientFactory.CreateClient(
+                downloadSettings.HttpClientName ?? DefaultDownloadClientName);
         var tempFilePath = GetTempFilePath();
         chunkState.CreateTempFile(tempFilePath);
 
@@ -363,9 +356,7 @@ public static partial class DownloadHelper
         using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
 
         if (!response.IsSuccessStatusCode || !CanUsePartialDownload(response, range.Start, range.End))
-        {
             throw new HttpRequestException($"Failed to download chunk {range.Start}-{range.End}");
-        }
 
         await using var stream = await response.Content.ReadAsStreamAsync(ct);
         using var buffer = MemoryPool<byte>.Shared.Rent(ChunkDownloadBufferSize);
@@ -397,10 +388,8 @@ public static partial class DownloadHelper
 
         // Verify chunk completion
         if (chunkState.BytesDownloaded != range.Length)
-        {
             throw new InvalidOperationException(
                 $"Chunk incomplete: expected {range.Length}, got {chunkState.BytesDownloaded}");
-        }
 
         await chunkState.TempFileStream!.FlushAsync(ct);
     }
@@ -426,7 +415,7 @@ public static partial class DownloadHelper
         {
             // Use CryptoStream with leaveOpen = true to prevent it from disposing outputStream
             var cryptoStream = hashCheckFile
-                ? new CryptoStream(outputStream, hashProvider, CryptoStreamMode.Write, leaveOpen: true)
+                ? new CryptoStream(outputStream, hashProvider, CryptoStreamMode.Write, true)
                 : null;
 
             try
@@ -458,9 +447,7 @@ public static partial class DownloadHelper
                 var checkSum = Convert.ToHexString(hashProvider.Hash!.AsSpan());
 
                 if (!checkSum.Equals(expectedCheckSum, StringComparison.OrdinalIgnoreCase))
-                {
                     throw new InvalidDataException($"Hash mismatch: expected {expectedCheckSum}, got {checkSum}");
-                }
 
                 // Hash verified, write to final file
                 await using var fs = File.Create(filePath);
@@ -474,4 +461,6 @@ public static partial class DownloadHelper
             await outputStream.DisposeAsync();
         }
     }
+
+    private record UrlInfo(long FileLength, bool SupportsRangeRequests);
 }

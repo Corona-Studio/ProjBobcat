@@ -33,7 +33,8 @@ public sealed class VersionInfoResolver : ResolverBase
         if (!File.Exists(versionJson)) yield break;
 
         await using var fs = File.OpenRead(versionJson);
-        var rawVersionModel = await JsonSerializer.DeserializeAsync(fs, SerializerContext.Default.RawVersionModel, cancellationToken).ConfigureAwait(false);
+        var rawVersionModel = await JsonSerializer
+            .DeserializeAsync(fs, SerializerContext.Default.RawVersionModel, cancellationToken).ConfigureAwait(false);
 
         if (rawVersionModel?.Downloads?.Client == null) yield break;
 
@@ -47,11 +48,13 @@ public sealed class VersionInfoResolver : ResolverBase
 
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             cts.CancelAfter(TimeSpan.FromSeconds(10)); // Version jars can be large
-            
+
             try
             {
-                await using var jarFs = new FileStream(jarPath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, useAsync: true);
-                var computedHash = Convert.ToHexString(await SHA1.HashDataAsync(jarFs, cts.Token).ConfigureAwait(false));
+                await using var jarFs =
+                    new FileStream(jarPath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true);
+                var computedHash =
+                    Convert.ToHexString(await SHA1.HashDataAsync(jarFs, cts.Token).ConfigureAwait(false));
 
                 if (computedHash.Equals(clientDownload.Sha1, StringComparison.OrdinalIgnoreCase))
                     yield break;
@@ -65,12 +68,11 @@ public sealed class VersionInfoResolver : ResolverBase
         if (string.IsNullOrEmpty(clientDownload.Url))
             yield break;
 
-        var fallbackUrls = new List<DownloadUriInfo>(VersionUriRoots?.Count ?? 1);
+        var fallbackUrls = new List<DownloadUriInfo>(this.VersionUriRoots?.Count ?? 1);
         var initUrl = new DownloadUriInfo(clientDownload.Url, 1);
-        
-        if (VersionUriRoots is { Count: > 0 })
-        {
-            foreach (var uriRoot in VersionUriRoots)
+
+        if (this.VersionUriRoots is { Count: > 0 })
+            foreach (var uriRoot in this.VersionUriRoots)
             {
                 var replacedUrl = initUrl with
                 {
@@ -82,11 +84,8 @@ public sealed class VersionInfoResolver : ResolverBase
 
                 fallbackUrls.Add(replacedUrl);
             }
-        }
         else
-        {
             fallbackUrls.Add(initUrl);
-        }
 
         yield return new VersionJarDownloadInfo
         {

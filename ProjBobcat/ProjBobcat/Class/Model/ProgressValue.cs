@@ -55,6 +55,6 @@ public readonly record struct ProgressValue(double NormalizedValue) : IFormattab
 
     public override string ToString()
     {
-        return NormalizedValue.ToString(CultureInfo.CurrentCulture);
+        return this.NormalizedValue.ToString(CultureInfo.CurrentCulture);
     }
 }

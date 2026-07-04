@@ -203,13 +203,11 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             // Native JARs are also added to the classpath so that
             // LWJGL 3.4+ can self-extract from them at runtime.
             if (lib.IsNewNativeLib())
-            {
                 result.Item1.Add(new NativeFileInfo
                 {
                     Extract = lib.Extract,
                     FileInfo = lib.Downloads!.Artifact!
                 });
-            }
 
             var isNative = (lib.Natives?.Count ?? 0) > 0;
             if (isNative)

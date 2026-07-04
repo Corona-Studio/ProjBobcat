@@ -1,11 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
-using ProjBobcat.Class;
-using ProjBobcat.Class.Helper;
-using ProjBobcat.Class.Model;
-using ProjBobcat.Class.Model.YggdrasilAuth;
-using ProjBobcat.DefaultComponent.Authenticator;
-using ProjBobcat.Event;
-using System;
+﻿using System;
 using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -17,6 +10,13 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Windows.Win32;
 using Windows.Win32.Foundation;
+using Microsoft.Extensions.Configuration;
+using ProjBobcat.Class;
+using ProjBobcat.Class.Helper;
+using ProjBobcat.Class.Model;
+using ProjBobcat.Class.Model.YggdrasilAuth;
+using ProjBobcat.DefaultComponent.Authenticator;
+using ProjBobcat.Event;
 using FileInfo = System.IO.FileInfo;
 
 namespace ProjBobcat.DefaultComponent.Launch.GameCore;
@@ -416,9 +416,7 @@ public sealed partial class DefaultGameCore : GameCoreBase
                 psi.EnvironmentVariables.Remove("JAVA_TOOL_OPTIONS");
 
                 foreach (var (k, v) in ParseGameEnv(settings.GameEnvironmentVariables))
-                {
                     psi.EnvironmentVariables.Add(k, v);
-                }
             }
 
             #region log4j 缓解措施

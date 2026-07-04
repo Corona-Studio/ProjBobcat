@@ -1,6 +1,4 @@
-﻿using System.Text.Json.Serialization;
-
-namespace ProjBobcat.Class.Model.MicrosoftAuth;
+﻿namespace ProjBobcat.Class.Model.MicrosoftAuth;
 
 public class XSTSProperties
 {

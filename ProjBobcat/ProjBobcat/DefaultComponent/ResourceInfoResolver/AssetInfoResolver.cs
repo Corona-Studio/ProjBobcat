@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -9,6 +8,7 @@ using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text.Json;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Helper.Download;
@@ -41,7 +41,7 @@ public sealed class AssetInfoResolver : ResolverBase
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         if (!checkLocalFiles) yield break;
-        
+
         cancellationToken.ThrowIfCancellationRequested();
 
         this.OnResolve("开始进行游戏资源(Asset)检查", ProgressValue.Start);
@@ -72,10 +72,11 @@ public sealed class AssetInfoResolver : ResolverBase
             this.OnResolve("没有提供 Version Manifest， 开始下载", ProgressValue.Start);
 
             using var vmJsonReq =
-                new HttpRequestMessage(HttpMethod.Get, VersionManifestUrl ?? DefaultVersionManifestUrl);
+                new HttpRequestMessage(HttpMethod.Get, this.VersionManifestUrl ?? DefaultVersionManifestUrl);
             using var vmJsonRes = await client.SendAsync(vmJsonReq, cancellationToken).ConfigureAwait(false);
 
-            var vm = await vmJsonRes.Content.ReadFromJsonAsync(SerializerContext.Default.VersionManifest, cancellationToken).ConfigureAwait(false);
+            var vm = await vmJsonRes.Content
+                .ReadFromJsonAsync(SerializerContext.Default.VersionManifest, cancellationToken).ConfigureAwait(false);
 
             versions = vm?.Versions?.ToList();
 
@@ -99,36 +100,36 @@ public sealed class AssetInfoResolver : ResolverBase
 
                 if (versionObject == null) yield break;
 
-                var fallbackUrls = new List<DownloadUriInfo>(AssetIndexUriRoots?.Count ?? 1);
+                var fallbackUrls = new List<DownloadUriInfo>(this.AssetIndexUriRoots?.Count ?? 1);
                 var initUrl = new DownloadUriInfo(versionObject.Url, 1);
-                
-                if (AssetIndexUriRoots is { Count: > 0 })
-                {
-                    foreach (var uriRoot in AssetIndexUriRoots)
+
+                if (this.AssetIndexUriRoots is { Count: > 0 })
+                    foreach (var uriRoot in this.AssetIndexUriRoots)
                     {
                         var replacedUrl = initUrl with
                         {
                             DownloadUri = initUrl.DownloadUri
-                                .Replace("https://piston-meta.mojang.com", uriRoot.DownloadUri, StringComparison.Ordinal)
-                                .Replace("https://launchermeta.mojang.com", uriRoot.DownloadUri, StringComparison.Ordinal)
+                                .Replace("https://piston-meta.mojang.com", uriRoot.DownloadUri,
+                                    StringComparison.Ordinal)
+                                .Replace("https://launchermeta.mojang.com", uriRoot.DownloadUri,
+                                    StringComparison.Ordinal)
                                 .Replace("https://launcher.mojang.com", uriRoot.DownloadUri, StringComparison.Ordinal)
                         };
 
                         fallbackUrls.Add(replacedUrl);
                     }
-                }
                 else
-                {
                     fallbackUrls.Add(initUrl);
-                }
 
                 foreach (var url in fallbackUrls)
-                {
                     try
                     {
-                        using var jsonRes = await client.GetAsync(url.DownloadUri, cancellationToken).ConfigureAwait(false);
+                        using var jsonRes =
+                            await client.GetAsync(url.DownloadUri, cancellationToken).ConfigureAwait(false);
                         var versionModel =
-                            await jsonRes.Content.ReadFromJsonAsync(SerializerContext.Default.RawVersionModel, cancellationToken).ConfigureAwait(false);
+                            await jsonRes.Content
+                                .ReadFromJsonAsync(SerializerContext.Default.RawVersionModel, cancellationToken)
+                                .ConfigureAwait(false);
 
                         if (versionModel == null) yield break;
 
@@ -139,18 +140,17 @@ public sealed class AssetInfoResolver : ResolverBase
                     {
                         // Try next fallback URL
                     }
-                }
             }
 
             if (string.IsNullOrEmpty(assetIndexDownloadUri)) yield break;
 
-            var urls = new List<DownloadUriInfo>(AssetIndexUriRoots?.Count ?? 1);
-            
-            if (AssetIndexUriRoots is { Count: > 0 })
+            var urls = new List<DownloadUriInfo>(this.AssetIndexUriRoots?.Count ?? 1);
+
+            if (this.AssetIndexUriRoots is { Count: > 0 })
             {
                 var initUrl = new DownloadUriInfo(assetIndexDownloadUri, 1);
 
-                foreach (var uriRoot in AssetIndexUriRoots)
+                foreach (var uriRoot in this.AssetIndexUriRoots)
                 {
                     var replacedUrl = initUrl with
                     {
@@ -165,7 +165,7 @@ public sealed class AssetInfoResolver : ResolverBase
             }
             else
             {
-                urls.Add(new(assetIndexDownloadUri, 1));
+                urls.Add(new DownloadUriInfo(assetIndexDownloadUri, 1));
             }
 
             var dp = new MultiSourceDownloadFile
@@ -183,7 +183,7 @@ public sealed class AssetInfoResolver : ResolverBase
                     CheckFile = false,
                     Timeout = TimeSpan.FromMinutes(1),
                     DownloadParts = 1,
-                    HttpClientFactory = HttpClientFactory
+                    HttpClientFactory = this.HttpClientFactory
                 });
             }
             catch (Exception e)
@@ -239,7 +239,7 @@ public sealed class AssetInfoResolver : ResolverBase
 
         this.OnResolve("检索并验证 Asset 资源", ProgressValue.Start);
 
-        var channel = System.Threading.Channels.Channel.CreateUnbounded<IGameResource>();
+        var channel = Channel.CreateUnbounded<IGameResource>();
         var parallelOptions = new ParallelOptions
         {
             MaxDegreeOfParallelism = Math.Min(Environment.ProcessorCount * 2, 16),
@@ -255,7 +255,7 @@ public sealed class AssetInfoResolver : ResolverBase
             var filePath = Path.Combine(path, fi.Hash);
 
             var addedCheckedObject = Interlocked.Increment(ref checkedObject);
-            
+
             // Report progress every 100 files to reduce overhead
             if (addedCheckedObject % 100 == 0 || addedCheckedObject == objectCount)
             {
@@ -264,16 +264,18 @@ public sealed class AssetInfoResolver : ResolverBase
             }
 
             var needsDownload = !File.Exists(filePath);
-            
+
             if (!needsDownload && !string.IsNullOrEmpty(fi.Hash))
             {
                 using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
                 cts.CancelAfter(TimeSpan.FromSeconds(5));
-                
+
                 try
                 {
-                    await using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, useAsync: true);
-                    var computedHash = Convert.ToHexString(await SHA1.HashDataAsync(fs, cts.Token).ConfigureAwait(false));
+                    await using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096,
+                        true);
+                    var computedHash =
+                        Convert.ToHexString(await SHA1.HashDataAsync(fs, cts.Token).ConfigureAwait(false));
                     needsDownload = !computedHash.Equals(fi.Hash, StringComparison.OrdinalIgnoreCase);
                 }
                 catch
@@ -289,7 +291,11 @@ public sealed class AssetInfoResolver : ResolverBase
                     Title = hash,
                     Path = path,
                     Type = ResourceType.Asset,
-                    Urls = [.. this.AssetUriRoots.Select(r => r with { DownloadUri = $"{r.DownloadUri}{twoDigitsHash}/{fi.Hash}" })],
+                    Urls =
+                    [
+                        .. this.AssetUriRoots.Select(r =>
+                            r with { DownloadUri = $"{r.DownloadUri}{twoDigitsHash}/{fi.Hash}" })
+                    ],
                     FileSize = fi.Size,
                     CheckSum = hash,
                     FileName = hash
@@ -302,9 +308,7 @@ public sealed class AssetInfoResolver : ResolverBase
         _ = processingTask.ContinueWith(_ => channel.Writer.Complete(), TaskScheduler.Default);
 
         await foreach (var item in channel.Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false))
-        {
             yield return item;
-        }
 
         await processingTask.ConfigureAwait(false);
 

@@ -16,6 +16,26 @@ public static class ArchiveHelper
         return entry.Length == 0 && entry.FullName.EndsWith('/');
     }
 
+    public static bool TryOpenRead(Stream stream, [MaybeNullWhen(false)] out ZipArchive archive)
+    {
+        try
+        {
+            archive = new ZipArchive(stream, ZipArchiveMode.Read);
+        }
+        catch (ArgumentException)
+        {
+            archive = null;
+            return false;
+        }
+        catch (InvalidDataException)
+        {
+            archive = null;
+            return false;
+        }
+
+        return true;
+    }
+
     extension(ZipArchive archive)
     {
         public void AddEntry(string entryName, Stream stream, DateTime time,
@@ -62,25 +82,5 @@ public static class ArchiveHelper
 
             await stream.CopyToAsync(entryStream);
         }
-    }
-
-    public static bool TryOpenRead(Stream stream, [MaybeNullWhen(false)] out ZipArchive archive)
-    {
-        try
-        {
-            archive = new ZipArchive(stream, ZipArchiveMode.Read);
-        }
-        catch (ArgumentException)
-        {
-            archive = null;
-            return false;
-        }
-        catch (InvalidDataException)
-        {
-            archive = null;
-            return false;
-        }
-
-        return true;
     }
 }

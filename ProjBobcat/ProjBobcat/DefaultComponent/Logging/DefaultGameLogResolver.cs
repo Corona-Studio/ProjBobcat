@@ -45,32 +45,32 @@ public partial class DefaultGameLogResolver : IGameLogResolver
         // [25Mar2023 20:15:33.123] [Server thread/INFO] [net.minecraft/MinecraftServer]: message
         var match = ForgeTimestampRegex().Match(log);
         if (match.Success)
-            return BuildEntry(match, log, useSource: true);
+            return BuildEntry(match, log, true);
 
         // Fabric / Quilt log4j2 with parenthesized logger name
         // [14:32:01] [main/INFO] (FabricLoader) Loading 127 mods
         // [14:32:01] [Render thread/WARN] (minecraft): Missing texture
         match = FabricQuiltRegex().Match(log);
         if (match.Success)
-            return BuildEntry(match, log, useSource: true);
+            return BuildEntry(match, log, true);
 
         // Standard vanilla log4j2 (1.7+)
         // [20:15:33] [Server thread/INFO]: message
         match = VanillaRegex().Match(log);
         if (match.Success)
-            return BuildEntry(match, log, useSource: false);
+            return BuildEntry(match, log, false);
 
         // Legacy with ISO date (pre-1.7 / some server wrappers)
         // 2023-03-25 20:15:33 [INFO] [STDOUT] message
         match = LegacyDateRegex().Match(log);
         if (match.Success)
-            return BuildEntry(match, log, useSource: false);
+            return BuildEntry(match, log, false);
 
         // Bare level prefix (very old or custom launchers)
         // [INFO] message  or  [WARN]: message
         match = SimpleLevelRegex().Match(log);
         if (match.Success)
-            return BuildEntry(match, log, useSource: false);
+            return BuildEntry(match, log, false);
 
         return new GameLogEntry
         {
@@ -79,25 +79,6 @@ public partial class DefaultGameLogResolver : IGameLogResolver
             RawContent = log
         };
     }
-
-    #region Backward-compatible legacy methods
-
-    public GameLogType ResolveLogType(string log) => Resolve(log).LogType;
-    public string ResolveStackTrace(string log) => Resolve(log).StackTrace ?? string.Empty;
-    public string ResolveExceptionMsg(string log) => Resolve(log).ExceptionMsg ?? string.Empty;
-    public string ResolveSource(string log) => Resolve(log).Source ?? string.Empty;
-    public string ResolveTime(string log) => Resolve(log).Time ?? string.Empty;
-
-    public string ResolveTotalPrefix(string log)
-    {
-        var entry = Resolve(log);
-        if (entry.Content == null || entry.RawContent == null) return string.Empty;
-
-        var idx = entry.RawContent.IndexOf(entry.Content, StringComparison.Ordinal);
-        return idx > 0 ? entry.RawContent[..idx] : string.Empty;
-    }
-
-    #endregion
 
     static GameLogEntry BuildEntry(Match match, string rawLog, bool useSource)
     {
@@ -122,16 +103,57 @@ public partial class DefaultGameLogResolver : IGameLogResolver
         };
     }
 
-    static GameLogType ParseLogLevel(string level) => level.ToUpperInvariant() switch
+    static GameLogType ParseLogLevel(string level)
     {
-        "FATAL" => GameLogType.Fatal,
-        "ERROR" => GameLogType.Error,
-        "WARN" or "WARNING" => GameLogType.Warning,
-        "INFO" => GameLogType.Info,
-        "DEBUG" => GameLogType.Debug,
-        "TRACE" => GameLogType.Debug,
-        _ => GameLogType.Unknown
-    };
+        return level.ToUpperInvariant() switch
+        {
+            "FATAL" => GameLogType.Fatal,
+            "ERROR" => GameLogType.Error,
+            "WARN" or "WARNING" => GameLogType.Warning,
+            "INFO" => GameLogType.Info,
+            "DEBUG" => GameLogType.Debug,
+            "TRACE" => GameLogType.Debug,
+            _ => GameLogType.Unknown
+        };
+    }
+
+    #region Backward-compatible legacy methods
+
+    public GameLogType ResolveLogType(string log)
+    {
+        return this.Resolve(log).LogType;
+    }
+
+    public string ResolveStackTrace(string log)
+    {
+        return this.Resolve(log).StackTrace ?? string.Empty;
+    }
+
+    public string ResolveExceptionMsg(string log)
+    {
+        return this.Resolve(log).ExceptionMsg ?? string.Empty;
+    }
+
+    public string ResolveSource(string log)
+    {
+        return this.Resolve(log).Source ?? string.Empty;
+    }
+
+    public string ResolveTime(string log)
+    {
+        return this.Resolve(log).Time ?? string.Empty;
+    }
+
+    public string ResolveTotalPrefix(string log)
+    {
+        var entry = this.Resolve(log);
+        if (entry.Content == null || entry.RawContent == null) return string.Empty;
+
+        var idx = entry.RawContent.IndexOf(entry.Content, StringComparison.Ordinal);
+        return idx > 0 ? entry.RawContent[..idx] : string.Empty;
+    }
+
+    #endregion
 
     #region Source-generated regex patterns
 

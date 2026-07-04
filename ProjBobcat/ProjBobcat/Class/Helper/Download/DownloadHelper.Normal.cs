@@ -32,7 +32,9 @@ public static partial class DownloadHelper
             Directory.CreateDirectory(downloadFile.DownloadPath);
 
         var timeout = downloadSettings.Timeout;
-        var client = downloadSettings.HttpClientFactory.CreateClient(downloadSettings.HttpClientName ?? DefaultDownloadClientName);
+        var client =
+            downloadSettings.HttpClientFactory.CreateClient(
+                downloadSettings.HttpClientName ?? DefaultDownloadClientName);
         var trials = downloadSettings.RetryCount <= 0 ? 1 : downloadSettings.RetryCount;
         var filePath = Path.Combine(downloadFile.DownloadPath, downloadFile.FileName);
         var exceptions = new List<Exception>();
@@ -67,13 +69,13 @@ public static partial class DownloadHelper
 
                 var ms = hashCheckFile
                     ? MemoryStreamManager.GetStream()
-                    : (tempFileStream = File.Create(tempFilePath));
+                    : tempFileStream = File.Create(tempFilePath);
 
                 try
                 {
                     // Use CryptoStream with leaveOpen = true to prevent disposing ms
                     var cryptoStream = hashCheckFile
-                        ? new CryptoStream(ms, hashProvider, CryptoStreamMode.Write, leaveOpen: true)
+                        ? new CryptoStream(ms, hashProvider, CryptoStreamMode.Write, true)
                         : null;
 
                     // Reset speed calculator
@@ -191,10 +193,8 @@ public static partial class DownloadHelper
                 CleanupTempFile(tempFileStream, tempFilePath);
 
                 if (e.StatusCode == HttpStatusCode.NotFound)
-                {
                     // Don't retry on 404
                     break;
-                }
 
                 var delay = CalculateRetryDelay(downloadFile.RetryCount);
                 await Task.Delay(delay, CancellationToken.None);

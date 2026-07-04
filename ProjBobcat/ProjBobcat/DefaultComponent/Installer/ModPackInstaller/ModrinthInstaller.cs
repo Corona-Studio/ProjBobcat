@@ -38,7 +38,8 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
 
         await using var stream = await manifestEntry.OpenAsync();
 
-        var manifestModel = await JsonSerializer.DeserializeAsync(stream, SerializerContext.Default.ModrinthModPackIndexModel);
+        var manifestModel =
+            await JsonSerializer.DeserializeAsync(stream, SerializerContext.Default.ModrinthModPackIndexModel);
 
         return manifestModel;
     }
@@ -78,7 +79,6 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
             var fileDownloadPath = Path.Combine(downloadDir, fileName);
 
             if (File.Exists(fileDownloadPath) && !string.IsNullOrEmpty(checkSum))
-            {
                 try
                 {
                     // Check local file
@@ -92,11 +92,10 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
                 {
                     // ignored
                 }
-            }
 
-            IEnumerable<string> urls = DownloadUriReplacer == null
+            IEnumerable<string> urls = this.DownloadUriReplacer == null
                 ? file.Downloads
-                : [.. DownloadUriReplacer(file.Downloads), .. file.Downloads];
+                : [.. this.DownloadUriReplacer(file.Downloads), .. file.Downloads];
 
             var df = new MultiSourceDownloadFile
             {
@@ -115,7 +114,6 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
         this.NeedToDownload = downloadFiles.Count;
 
         if (downloadFiles.Count > 0)
-        {
             await DownloadHelper.AdvancedDownloadListFile(downloadFiles, new DownloadSettings
             {
                 DownloadParts = 8,
@@ -125,7 +123,6 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
                 HashType = HashType.SHA1,
                 HttpClientFactory = this.HttpClientFactory
             });
-        }
 
         ArgumentOutOfRangeException.ThrowIfEqual(this.FailedFiles.IsEmpty, false);
 

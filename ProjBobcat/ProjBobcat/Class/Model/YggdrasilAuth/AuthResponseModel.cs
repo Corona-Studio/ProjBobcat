@@ -4,18 +4,14 @@ namespace ProjBobcat.Class.Model.YggdrasilAuth;
 
 public class AuthResponseModel
 {
-    [JsonPropertyName("accessToken")]
-    public string? AccessToken { get; set; }
+    [JsonPropertyName("accessToken")] public string? AccessToken { get; set; }
 
-    [JsonPropertyName("clientToken")]
-    public string? ClientToken { get; set; }
+    [JsonPropertyName("clientToken")] public string? ClientToken { get; set; }
 
     [JsonPropertyName("availableProfiles")]
     public ProfileInfoModel[]? AvailableProfiles { get; set; }
 
-    [JsonPropertyName("selectedProfile")]
-    public ProfileInfoModel? SelectedProfile { get; set; }
+    [JsonPropertyName("selectedProfile")] public ProfileInfoModel? SelectedProfile { get; set; }
 
-    [JsonPropertyName("user")]
-    public UserInfoModel? User { get; set; }
+    [JsonPropertyName("user")] public UserInfoModel? User { get; set; }
 }

@@ -8,7 +8,8 @@ namespace ProjBobcat.Interface.Services;
 
 public interface ICurseForgeApiService
 {
-    Task<DataModelWithPagination<CurseForgeAddonInfo[]>?> SearchAddons(CurseForgeSearchOptions options, CancellationToken ct);
+    Task<DataModelWithPagination<CurseForgeAddonInfo[]>?> SearchAddons(CurseForgeSearchOptions options,
+        CancellationToken ct);
 
     Task<CurseForgeAddonInfo?> GetAddon(long addonId);
 

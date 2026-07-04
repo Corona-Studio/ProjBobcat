@@ -12,30 +12,30 @@ public class DownloadSpeedCalculator
 {
     private const double SmoothingFactor = 0.3; // EMA smoothing factor (0-1)
     private const long MinUpdateIntervalTicks = 500_000; // 50ms in ticks (100ns units)
+    private double _currentSpeed;
+    private long _lastSampleBytes;
+    private long _lastUpdateTicks;
+    private long _startTicks;
 
     private long _totalBytes;
-    private double _currentSpeed;
-    private long _lastUpdateTicks;
-    private long _lastSampleBytes;
-    private long _startTicks;
 
     /// <summary>
     ///     Initialize download speed calculator
     /// </summary>
     public DownloadSpeedCalculator()
     {
-        Reset();
+        this.Reset();
     }
 
     /// <summary>
     ///     Get total received bytes (thread-safe)
     /// </summary>
-    public long TotalBytes => Interlocked.Read(ref _totalBytes);
+    public long TotalBytes => Interlocked.Read(ref this._totalBytes);
 
     /// <summary>
     ///     Get current speed in bytes/second (thread-safe)
     /// </summary>
-    public double CurrentSpeed => Interlocked.CompareExchange(ref _currentSpeed, 0, 0);
+    public double CurrentSpeed => Interlocked.CompareExchange(ref this._currentSpeed, 0, 0);
 
     /// <summary>
     ///     Get average speed since start
@@ -44,8 +44,8 @@ public class DownloadSpeedCalculator
     {
         get
         {
-            var elapsed = GetElapsedSeconds();
-            return elapsed > 0 ? TotalBytes / elapsed : 0;
+            var elapsed = this.GetElapsedSeconds();
+            return elapsed > 0 ? this.TotalBytes / elapsed : 0;
         }
     }
 
@@ -58,40 +58,40 @@ public class DownloadSpeedCalculator
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public double AddSample(long bytesReceived)
     {
-        if (bytesReceived <= 0) return CurrentSpeed;
+        if (bytesReceived <= 0) return this.CurrentSpeed;
 
         var now = Stopwatch.GetTimestamp();
 
         // Update total bytes atomically
-        Interlocked.Add(ref _totalBytes, bytesReceived);
-        Interlocked.Add(ref _lastSampleBytes, bytesReceived);
+        Interlocked.Add(ref this._totalBytes, bytesReceived);
+        Interlocked.Add(ref this._lastSampleBytes, bytesReceived);
 
         // Throttle speed calculation updates
-        var lastUpdate = Interlocked.Read(ref _lastUpdateTicks);
+        var lastUpdate = Interlocked.Read(ref this._lastUpdateTicks);
         var ticksSinceUpdate = now - lastUpdate;
 
         if (ticksSinceUpdate < MinUpdateIntervalTicks)
-            return CurrentSpeed;
+            return this.CurrentSpeed;
 
         // Try to acquire update lock via CAS
-        if (Interlocked.CompareExchange(ref _lastUpdateTicks, now, lastUpdate) != lastUpdate)
-            return CurrentSpeed;
+        if (Interlocked.CompareExchange(ref this._lastUpdateTicks, now, lastUpdate) != lastUpdate)
+            return this.CurrentSpeed;
 
         // Calculate instantaneous speed
-        var sampleBytes = Interlocked.Exchange(ref _lastSampleBytes, 0);
+        var sampleBytes = Interlocked.Exchange(ref this._lastSampleBytes, 0);
         var elapsedSeconds = (double)ticksSinceUpdate / Stopwatch.Frequency;
 
-        if (elapsedSeconds <= 0.001) return CurrentSpeed;
+        if (elapsedSeconds <= 0.001) return this.CurrentSpeed;
 
         var instantSpeed = sampleBytes / elapsedSeconds;
 
         // Apply EMA smoothing
-        var oldSpeed = Interlocked.CompareExchange(ref _currentSpeed, 0, 0);
+        var oldSpeed = Interlocked.CompareExchange(ref this._currentSpeed, 0, 0);
         var newSpeed = oldSpeed == 0
             ? instantSpeed
-            : (SmoothingFactor * instantSpeed) + ((1 - SmoothingFactor) * oldSpeed);
+            : SmoothingFactor * instantSpeed + (1 - SmoothingFactor) * oldSpeed;
 
-        Interlocked.Exchange(ref _currentSpeed, newSpeed);
+        Interlocked.Exchange(ref this._currentSpeed, newSpeed);
 
         return newSpeed;
     }
@@ -101,11 +101,11 @@ public class DownloadSpeedCalculator
     /// </summary>
     public double Recalculate()
     {
-        var elapsed = GetElapsedSeconds();
+        var elapsed = this.GetElapsedSeconds();
         if (elapsed <= 0) return 0;
 
-        var avgSpeed = TotalBytes / elapsed;
-        Interlocked.Exchange(ref _currentSpeed, avgSpeed);
+        var avgSpeed = this.TotalBytes / elapsed;
+        Interlocked.Exchange(ref this._currentSpeed, avgSpeed);
         return avgSpeed;
     }
 
@@ -114,18 +114,18 @@ public class DownloadSpeedCalculator
     /// </summary>
     public void Reset()
     {
-        Interlocked.Exchange(ref _totalBytes, 0);
-        Interlocked.Exchange(ref _currentSpeed, 0);
-        Interlocked.Exchange(ref _lastSampleBytes, 0);
+        Interlocked.Exchange(ref this._totalBytes, 0);
+        Interlocked.Exchange(ref this._currentSpeed, 0);
+        Interlocked.Exchange(ref this._lastSampleBytes, 0);
         var now = Stopwatch.GetTimestamp();
-        Interlocked.Exchange(ref _startTicks, now);
-        Interlocked.Exchange(ref _lastUpdateTicks, now);
+        Interlocked.Exchange(ref this._startTicks, now);
+        Interlocked.Exchange(ref this._lastUpdateTicks, now);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private double GetElapsedSeconds()
     {
-        var start = Interlocked.Read(ref _startTicks);
+        var start = Interlocked.Read(ref this._startTicks);
         var elapsed = Stopwatch.GetTimestamp() - start;
         return (double)elapsed / Stopwatch.Frequency;
     }

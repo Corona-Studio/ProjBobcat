@@ -506,7 +506,8 @@ public class MicrosoftAuthenticator : IAuthenticator
             using var userAuthResultRes = await client.SendAsync(userAuthResultReq);
 
             var userAuthResultContent = await userAuthResultRes.Content.ReadAsStringAsync();
-            var userAuthResultModel = ResolveMSGraphResult(userAuthResultContent, SerializerContext.Default.GraphAuthResultModel);
+            var userAuthResultModel =
+                ResolveMSGraphResult(userAuthResultContent, SerializerContext.Default.GraphAuthResultModel);
 
             if (userAuthResultModel is not GraphAuthResultModel)
                 if (userAuthResultModel is GraphResponseErrorModel error)

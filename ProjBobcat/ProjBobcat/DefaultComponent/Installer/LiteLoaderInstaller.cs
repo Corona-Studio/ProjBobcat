@@ -96,7 +96,8 @@ public class LiteLoaderInstaller : InstallerBase, ILiteLoaderInstaller
                 Game =
                 [
                     JsonSerializer.SerializeToElement("--tweakClass", SerializerContext.Default.String),
-                    JsonSerializer.SerializeToElement(this.VersionModel.Build.TweakClass, SerializerContext.Default.String)
+                    JsonSerializer.SerializeToElement(this.VersionModel.Build.TweakClass,
+                        SerializerContext.Default.String)
                 ]
             };
         else

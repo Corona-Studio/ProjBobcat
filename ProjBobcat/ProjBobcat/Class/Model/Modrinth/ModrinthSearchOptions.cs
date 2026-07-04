@@ -32,7 +32,7 @@ public class ModrinthSearchOptions
         if (!string.IsNullOrEmpty(this.GameVersion))
             facets.Add($"[\"versions:{this.GameVersion}\"]");
 
-        var filteredCategories = Categories?
+        var filteredCategories = this.Categories?
             .Distinct()
             .Where(c => !string.IsNullOrEmpty(c))
             .Select(c => $"\"categories:{c}\"")

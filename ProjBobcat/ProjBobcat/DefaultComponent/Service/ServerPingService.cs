@@ -8,6 +8,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using DnsClient;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.ServerPing;
 
@@ -32,17 +33,14 @@ public class ServerPingService : ProgressReportBase
     {
         return this.RunAsync().Result;
     }
-    
+
     private static async Task<(string Host, ushort Port)> ResolveMinecraftSrvAsync(string domain)
     {
-        var lookup = new DnsClient.LookupClient();
-        var result = await lookup.QueryAsync($"_minecraft._tcp.{domain}", DnsClient.QueryType.SRV);
+        var lookup = new LookupClient();
+        var result = await lookup.QueryAsync($"_minecraft._tcp.{domain}", QueryType.SRV);
 
         var srvRecord = result.Answers.SrvRecords().FirstOrDefault();
-        if (srvRecord != null)
-        {
-            return (srvRecord.Target.Value.TrimEnd('.'), (ushort)srvRecord.Port);
-        }
+        if (srvRecord != null) return (srvRecord.Target.Value.TrimEnd('.'), srvRecord.Port);
 
         return (domain, 25565); // default port
     }
@@ -52,11 +50,8 @@ public class ServerPingService : ProgressReportBase
         var resolvedHost = this.Address;
         var resolvedPort = this.Port;
 
-        if (resolvedPort == 0)
-        {
-            (resolvedHost, resolvedPort) = await ResolveMinecraftSrvAsync(this.Address);
-        }
-        
+        if (resolvedPort == 0) (resolvedHost, resolvedPort) = await ResolveMinecraftSrvAsync(this.Address);
+
         using var client = new TcpClient();
 
         client.SendTimeout = 5000;

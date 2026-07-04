@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Management;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Security;
@@ -12,7 +13,6 @@ using Windows.Win32.Foundation;
 using Windows.Win32.System.SystemInformation;
 using Microsoft.Win32;
 using ProjBobcat.Class.Model;
-using System.Management;
 
 namespace ProjBobcat.Platforms.Windows;
 
@@ -301,7 +301,6 @@ public static class SystemInfoHelper
     public static MemoryInfo GetWindowsMemoryStatus()
     {
         if (_freeMemCounter == null)
-        {
             try
             {
                 _freeMemCounter = new PerformanceCounter("Memory", "Available MBytes", true);
@@ -311,10 +310,8 @@ public static class SystemInfoHelper
             {
                 return new MemoryInfo(0, 0, 0, 0);
             }
-        }
 
         if (_memUsagePercentageCounter == null)
-        {
             try
             {
                 _memUsagePercentageCounter = new PerformanceCounter("Memory", "% Committed Bytes In Use", true);
@@ -324,7 +321,6 @@ public static class SystemInfoHelper
             {
                 return new MemoryInfo(0, 0, 0, 0);
             }
-        }
 
         try
         {
@@ -350,7 +346,6 @@ public static class SystemInfoHelper
         const string name = "Total %";
 
         if (_cpuCounter == null)
-        {
             try
             {
                 _cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total", true);
@@ -360,7 +355,6 @@ public static class SystemInfoHelper
             {
                 return new CPUInfo(0, name);
             }
-        }
 
         try
         {

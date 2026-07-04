@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
-using ProjBobcat.Class.Model.Forge;
 using ProjBobcat.Class.Model.YggdrasilAuth;
 using ProjBobcat.Interface;
 using VersionInfo = ProjBobcat.Class.Model.Forge.VersionInfo;
@@ -83,7 +82,8 @@ public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
 
             this.InvokeStatusChangedEvent("解析安装文档", ProgressValue.FromDisplay(35));
 
-            var profileModel = await JsonSerializer.DeserializeAsync(stream, SerializerContext.Default.LegacyForgeInstallProfile);
+            var profileModel =
+                await JsonSerializer.DeserializeAsync(stream, SerializerContext.Default.LegacyForgeInstallProfile);
 
             ArgumentNullException.ThrowIfNull(profileModel);
 

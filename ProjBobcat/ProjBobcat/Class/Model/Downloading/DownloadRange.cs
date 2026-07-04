@@ -50,6 +50,7 @@ public readonly struct DownloadRange : IComparable<DownloadRange>, IEquatable<Do
     {
         return this.Start == other.Start && this.End == other.End;
     }
+
     public static bool operator ==(DownloadRange left, DownloadRange right)
     {
         return left.Equals(right);

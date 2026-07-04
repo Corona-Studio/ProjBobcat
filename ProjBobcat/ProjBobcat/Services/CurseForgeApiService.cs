@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
@@ -17,8 +16,7 @@ namespace ProjBobcat.Services;
 #region Temp Models
 
 public record AddonInfoReqModel(
-    [property: JsonPropertyName("modIds")]
-    IReadOnlyList<long> ModIds);
+    [property: JsonPropertyName("modIds")] IReadOnlyList<long> ModIds);
 
 public record FileInfoReqModel(
     [property: JsonPropertyName("fileIds")]
@@ -46,7 +44,8 @@ public class CurseForgeApiService(
         if (!res.IsSuccessStatusCode)
             return null;
 
-        return await res.Content.ReadFromJsonAsync(SerializerContext.Default.DataModelWithPaginationCurseForgeAddonInfoArray, ct);
+        return await res.Content.ReadFromJsonAsync(
+            SerializerContext.Default.DataModelWithPaginationCurseForgeAddonInfoArray, ct);
     }
 
     public async Task<CurseForgeAddonInfo?> GetAddon(long addonId)
@@ -97,7 +96,8 @@ public class CurseForgeApiService(
 
         res.EnsureSuccessStatusCode();
 
-        return await res.Content.ReadFromJsonAsync(SerializerContext.Default.DataModelWithPaginationCurseForgeLatestFileModelArray);
+        return await res.Content.ReadFromJsonAsync(SerializerContext.Default
+            .DataModelWithPaginationCurseForgeLatestFileModelArray);
     }
 
     public async Task<CurseForgeLatestFileModel[]?> GetFiles(
@@ -124,7 +124,8 @@ public class CurseForgeApiService(
             throw new CurseForgeFileResolveException(message);
         }
 
-        return (await res.Content.ReadFromJsonAsync(SerializerContext.Default.DataModelCurseForgeLatestFileModelArray))?.Data;
+        return (await res.Content.ReadFromJsonAsync(SerializerContext.Default.DataModelCurseForgeLatestFileModelArray))
+            ?.Data;
     }
 
     public async Task<CurseForgeSearchCategoryModel[]?> GetCategories(int gameId = 432)
@@ -133,7 +134,8 @@ public class CurseForgeApiService(
 
         using var res = await httpClient.GetAsync(reqUrl);
 
-        return (await res.Content.ReadFromJsonAsync(SerializerContext.Default.DataModelCurseForgeSearchCategoryModelArray))?.Data;
+        return (await res.Content.ReadFromJsonAsync(SerializerContext.Default
+            .DataModelCurseForgeSearchCategoryModelArray))?.Data;
     }
 
     public async Task<CurseForgeFeaturedAddonModel?> GetFeaturedAddons(FeaturedQueryOptions options)

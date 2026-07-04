@@ -23,27 +23,20 @@ public class DefaultResourceCompleter : IResourceCompleter
 
     ulong _needToDownload, _totalDownloaded;
     public required IHttpClientFactory HttpClientFactory { get; init; }
+    public TimeSpan ResolverTimeout { get; set; } = TimeSpan.FromMinutes(30);
+    public bool RandomizeDownloadOrder { get; set; } = true;
 
     public TimeSpan TimeoutPerFile { get; set; } = TimeSpan.FromSeconds(8);
-    public TimeSpan ResolverTimeout { get; set; } = TimeSpan.FromMinutes(30);
     public int DownloadParts { get; set; } = 16;
     public int DownloadThread { get; set; } = 16;
     public int MaxDegreeOfParallelism { get; set; } = 1;
     public int TotalRetry { get; set; } = 2;
     public bool CheckFile { get; set; } = true;
-    public bool RandomizeDownloadOrder { get; set; } = true;
     public IReadOnlyList<IResourceInfoResolver>? ResourceInfoResolvers { get; set; }
 
     public event EventHandler<GameResourceInfoResolveEventArgs>? GameResourceInfoResolveStatus;
     public event EventHandler<DownloadFileChangedEventArgs>? DownloadFileChangedEvent;
     public event EventHandler<GameResourceDownloadedEventArgs>? DownloadFileCompletedEvent;
-
-    record CheckFileInfo(
-        IResourceInfoResolver Resolver,
-        string BasePath,
-        bool CheckLocalFiles,
-        ResolvedGameVersion ResolvedGame,
-        CancellationToken CancellationToken);
 
     public TaskResult<ResourceCompleterCheckResult?> CheckAndDownload(
         string basePath,
@@ -60,6 +53,10 @@ public class DefaultResourceCompleter : IResourceCompleter
         ResolvedGameVersion resolvedGame)
     {
         return this.CheckAndDownloadTaskAsync(basePath, checkLocalFiles, resolvedGame, CancellationToken.None);
+    }
+
+    public void Dispose()
+    {
     }
 
     public async Task<TaskResult<ResourceCompleterCheckResult?>> CheckAndDownloadTaskAsync(
@@ -79,12 +76,12 @@ public class DefaultResourceCompleter : IResourceCompleter
         Interlocked.Exchange(ref this._totalDownloaded, 0);
         this._failedFiles.Clear();
 
-        var numBatches = Math.Min(MaxDegreeOfParallelism, Environment.ProcessorCount);
+        var numBatches = Math.Min(this.MaxDegreeOfParallelism, Environment.ProcessorCount);
         var downloadSettings = new DownloadSettings
         {
             CheckFile = this.CheckFile,
             DownloadParts = this.DownloadParts,
-            DownloadThread = DownloadThread,
+            DownloadThread = this.DownloadThread,
             HashType = HashType.SHA1,
             RetryCount = this.TotalRetry,
             Timeout = this.TimeoutPerFile,
@@ -103,7 +100,7 @@ public class DefaultResourceCompleter : IResourceCompleter
             ? DownloadHelper.BuildRandomizingDownloadTplBlock(downloadSettings)
             : DownloadHelper.BuildAdvancedDownloadTplBlock(downloadSettings);
 
-        var checkBlock = new TransformManyBlock<CheckFileInfo, AbstractDownloadBase>(TransformCheckFiles,
+        var checkBlock = new TransformManyBlock<CheckFileInfo, AbstractDownloadBase>(this.TransformCheckFiles,
             new ExecutionDataflowBlockOptions
             {
                 MaxDegreeOfParallelism = numBatches,
@@ -120,7 +117,7 @@ public class DefaultResourceCompleter : IResourceCompleter
 
         // Add timeout to prevent infinite wait
         using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        timeoutCts.CancelAfter(ResolverTimeout);
+        timeoutCts.CancelAfter(this.ResolverTimeout);
 
         try
         {
@@ -136,8 +133,8 @@ public class DefaultResourceCompleter : IResourceCompleter
             });
 
             return new TaskResult<ResourceCompleterCheckResult?>(TaskResultStatus.Error,
-                message: "Resource check timed out",
-                value: new ResourceCompleterCheckResult
+                "Resource check timed out",
+                new ResourceCompleterCheckResult
                 {
                     IsLibDownloadFailed = true,
                     FailedFiles = [.. this._failedFiles]
@@ -202,11 +199,10 @@ public class DefaultResourceCompleter : IResourceCompleter
 
         yield break;
 
-        void FireResolveEvent(object? sender, GameResourceInfoResolveEventArgs e) => this.OnResolveComplete(sender, e);
-    }
-
-    public void Dispose()
-    {
+        void FireResolveEvent(object? sender, GameResourceInfoResolveEventArgs e)
+        {
+            this.OnResolveComplete(sender, e);
+        }
     }
 
     void OnResolveComplete(object? sender, GameResourceInfoResolveEventArgs e)
@@ -246,4 +242,11 @@ public class DefaultResourceCompleter : IResourceCompleter
             DownloadEventArgs = e
         });
     }
+
+    record CheckFileInfo(
+        IResourceInfoResolver Resolver,
+        string BasePath,
+        bool CheckLocalFiles,
+        ResolvedGameVersion ResolvedGame,
+        CancellationToken CancellationToken);
 }

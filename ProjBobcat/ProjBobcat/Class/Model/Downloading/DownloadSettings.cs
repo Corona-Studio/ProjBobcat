@@ -6,7 +6,6 @@ using System.Security.Cryptography;
 namespace ProjBobcat.Class.Model.Downloading;
 
 // ReSharper disable InconsistentNaming
-
 public enum HashType
 {
     MD5,

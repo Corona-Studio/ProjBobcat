@@ -6,17 +6,17 @@ public interface IGameLogResolver
 {
     GameLogEntry Resolve(string rawLog)
     {
-        var logType = ResolveLogType(rawLog);
-        var totalPrefix = ResolveTotalPrefix(rawLog);
+        var logType = this.ResolveLogType(rawLog);
+        var totalPrefix = this.ResolveTotalPrefix(rawLog);
 
         return new GameLogEntry
         {
             LogType = logType,
-            Time = ResolveTime(rawLog),
-            Source = ResolveSource(rawLog),
+            Time = this.ResolveTime(rawLog),
+            Source = this.ResolveSource(rawLog),
             Content = string.IsNullOrEmpty(totalPrefix) ? rawLog : rawLog[totalPrefix.Length..],
-            ExceptionMsg = logType == GameLogType.ExceptionMessage ? ResolveExceptionMsg(rawLog) : null,
-            StackTrace = logType == GameLogType.StackTrace ? ResolveStackTrace(rawLog) : null,
+            ExceptionMsg = logType == GameLogType.ExceptionMessage ? this.ResolveExceptionMsg(rawLog) : null,
+            StackTrace = logType == GameLogType.StackTrace ? this.ResolveStackTrace(rawLog) : null,
             RawContent = rawLog
         };
     }

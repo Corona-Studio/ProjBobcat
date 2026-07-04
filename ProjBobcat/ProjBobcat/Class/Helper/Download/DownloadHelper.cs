@@ -218,36 +218,36 @@ public static partial class DownloadHelper
     }
 
     /// <summary>
-    /// Wrapper class that delegates input operations to one block and completion tracking to another
+    ///     Wrapper class that delegates input operations to one block and completion tracking to another
     /// </summary>
     private sealed class TargetBlockWrapper<T> : ITargetBlock<T>
     {
-        private readonly ITargetBlock<T> _inputBlock;
         private readonly IDataflowBlock _completionBlock;
+        private readonly ITargetBlock<T> _inputBlock;
 
         public TargetBlockWrapper(ITargetBlock<T> inputBlock, IDataflowBlock completionBlock)
         {
-            _inputBlock = inputBlock;
-            _completionBlock = completionBlock;
+            this._inputBlock = inputBlock;
+            this._completionBlock = completionBlock;
         }
 
         public DataflowMessageStatus OfferMessage(DataflowMessageHeader messageHeader, T messageValue,
             ISourceBlock<T>? source, bool consumeToAccept)
         {
-            return _inputBlock.OfferMessage(messageHeader, messageValue, source, consumeToAccept);
+            return this._inputBlock.OfferMessage(messageHeader, messageValue, source, consumeToAccept);
         }
 
         public void Complete()
         {
-            _inputBlock.Complete();
+            this._inputBlock.Complete();
         }
 
         public void Fault(Exception exception)
         {
-            _inputBlock.Fault(exception);
+            this._inputBlock.Fault(exception);
         }
 
-        public Task Completion => _completionBlock.Completion;
+        public Task Completion => this._completionBlock.Completion;
     }
 
     /// <summary>

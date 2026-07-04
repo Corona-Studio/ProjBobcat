@@ -10,9 +10,7 @@ public class ProfileInfoModel
     [JsonConverter(typeof(GuidJsonConverter))]
     public required Guid Id { get; init; }
 
-    [JsonPropertyName("name")]
-    public required string Name { get; init; }
+    [JsonPropertyName("name")] public required string Name { get; init; }
 
-    [JsonPropertyName("properties")]
-    public PropertyModel[]? Properties { get; init; }
+    [JsonPropertyName("properties")] public PropertyModel[]? Properties { get; init; }
 }

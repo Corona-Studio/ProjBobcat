@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
@@ -38,7 +38,7 @@ public sealed class LibraryInfoResolver : ResolverBase
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         if (!checkLocalFiles) yield break;
-        
+
         cancellationToken.ThrowIfCancellationRequested();
 
         this.OnResolve("开始进行游戏资源(Library)检查", ProgressValue.Start);
@@ -50,7 +50,7 @@ public sealed class LibraryInfoResolver : ResolverBase
         if (!libDi.Exists) libDi.Create();
 
         // Process libraries in parallel
-        var channel = System.Threading.Channels.Channel.CreateUnbounded<IGameResource>();
+        var channel = Channel.CreateUnbounded<IGameResource>();
         var checkedLib = 0;
         var parallelOptions = new ParallelOptions
         {
@@ -67,25 +67,23 @@ public sealed class LibraryInfoResolver : ResolverBase
         _ = processingTask.ContinueWith(_ => channel.Writer.Complete(), TaskScheduler.Default);
 
         await foreach (var item in channel.Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false))
-        {
             yield return item;
-        }
 
         await processingTask.ConfigureAwait(false);
 
         this.OnResolve("检查Library完成", ProgressValue.Finished);
-        
+
         async Task ProcessLibraries(IReadOnlyList<FileInfo> libraries)
         {
             var libCount = libraries.Count;
-            
+
             await Parallel.ForEachAsync(libraries, parallelOptions, async (lib, ct) =>
             {
                 var libPath = GamePathHelper.GetLibraryPath(lib.Path!);
                 var filePath = Path.Combine(basePath, libPath);
 
                 var addedCheckedLib = Interlocked.Increment(ref checkedLib);
-                
+
                 if (addedCheckedLib % 10 == 0 || addedCheckedLib == libCount)
                 {
                     var progress = ProgressValue.Create(addedCheckedLib, libCount);
@@ -98,11 +96,13 @@ public sealed class LibraryInfoResolver : ResolverBase
                 {
                     using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
                     cts.CancelAfter(TimeSpan.FromSeconds(5));
-                    
+
                     try
                     {
-                        await using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, useAsync: true);
-                        var computedHash = Convert.ToHexString(await SHA1.HashDataAsync(fs, cts.Token).ConfigureAwait(false));
+                        await using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read,
+                            4096, true);
+                        var computedHash =
+                            Convert.ToHexString(await SHA1.HashDataAsync(fs, cts.Token).ConfigureAwait(false));
                         needsDownload = !computedHash.Equals(lib.Sha1, StringComparison.OrdinalIgnoreCase);
                     }
                     catch
@@ -115,9 +115,7 @@ public sealed class LibraryInfoResolver : ResolverBase
                 {
                     var downloadFile = this.GetDownloadFile(basePath, lib);
                     if (downloadFile.Urls.Count > 0)
-                    {
                         await channel.Writer.WriteAsync(downloadFile, ct).ConfigureAwait(false);
-                    }
                 }
             }).ConfigureAwait(false);
         }
@@ -125,18 +123,18 @@ public sealed class LibraryInfoResolver : ResolverBase
         async Task ProcessNatives(IReadOnlyList<NativeFileInfo> natives)
         {
             if (natives.Count == 0) return;
-            
+
             this.OnResolve("检索并验证 Native Libraries", ProgressValue.Start);
             var nativeChecked = 0;
             var libCount = natives.Count;
-            
+
             await Parallel.ForEachAsync(natives, parallelOptions, async (native, ct) =>
             {
                 var nativePath = GamePathHelper.GetLibraryPath(native.FileInfo.Path!);
                 var filePath = Path.Combine(basePath, nativePath);
 
                 var addedCheckedLib = Interlocked.Increment(ref nativeChecked);
-                
+
                 if (addedCheckedLib % 10 == 0 || addedCheckedLib == libCount)
                 {
                     var progress = ProgressValue.Create(addedCheckedLib, libCount);
@@ -149,11 +147,13 @@ public sealed class LibraryInfoResolver : ResolverBase
                 {
                     using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
                     cts.CancelAfter(TimeSpan.FromSeconds(5));
-                    
+
                     try
                     {
-                        await using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, useAsync: true);
-                        var computedHash = Convert.ToHexString(await SHA1.HashDataAsync(fs, cts.Token).ConfigureAwait(false));
+                        await using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read,
+                            4096, true);
+                        var computedHash =
+                            Convert.ToHexString(await SHA1.HashDataAsync(fs, cts.Token).ConfigureAwait(false));
                         needsDownload = !computedHash.Equals(native.FileInfo.Sha1, StringComparison.OrdinalIgnoreCase);
                     }
                     catch
@@ -166,9 +166,7 @@ public sealed class LibraryInfoResolver : ResolverBase
                 {
                     var downloadFile = this.GetDownloadFile(basePath, native.FileInfo);
                     if (downloadFile.Urls.Count > 0)
-                    {
                         await channel.Writer.WriteAsync(downloadFile, ct).ConfigureAwait(false);
-                    }
                 }
             }).ConfigureAwait(false);
         }

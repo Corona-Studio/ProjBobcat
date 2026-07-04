@@ -71,7 +71,7 @@ public static class EncodingHelper
 
         // KOI8 (not “ANSI”, but Java supports these charsets)
         [20866] = "KOI8-R",
-        [21866] = "KOI8-U",
+        [21866] = "KOI8-U"
     }.ToFrozenDictionary();
 
     public static Encoding GetUtf8NoBomOrAnsi(bool preferUtf8)
