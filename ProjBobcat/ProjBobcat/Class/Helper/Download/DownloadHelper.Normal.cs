@@ -20,10 +20,10 @@ namespace ProjBobcat.Class.Helper.Download;
 
 public static partial class DownloadHelper
 {
-    const int CopyBufferSize = 128 * 1024;
+    const int CopyBufferSize = 256 * 1024;
+    const int RangeBufferSize = 1024 * 1024;
     const int DefaultMaxParts = 16;
-    const int MaxConcurrentConnections = 64;
-    const int MaxConcurrentFileDownloads = 16;
+    const int MaxConcurrentConnections = 256;
 
     static async Task DownloadFileCoreAsync(
         AbstractDownloadBase downloadFile,
@@ -46,9 +46,14 @@ public static partial class DownloadHelper
         {
             cancellationToken.ThrowIfCancellationRequested();
             var sources = GetDownloadSources(downloadFile);
-            var capabilities = await ProbeSourcesAsync(downloadFile, sources, downloadFile.FileSize, settings,
-                    connectionGate, cancellationToken)
-                .ConfigureAwait(false);
+            // A known-size, single-part transfer does not need a separate range probe. This is the common path for
+            // Minecraft assets and avoids doubling their request count before the actual download starts.
+            var capabilities = downloadFile.FileSize > 0 &&
+                               CalculateAdaptivePartCount(downloadFile.FileSize, settings) == 1
+                ? new ServerCapabilities(sources[0], downloadFile.FileSize, false)
+                : await ProbeSourcesAsync(downloadFile, sources, downloadFile.FileSize, settings,
+                        connectionGate, cancellationToken)
+                    .ConfigureAwait(false);
             sources = [capabilities.Url, .. sources.Where(source => !SourceEquals(source, capabilities.Url))];
 
             progress = new DownloadProgressReporter(
@@ -70,7 +75,7 @@ public static partial class DownloadHelper
                 });
 
             var validationAttempts = settings.CheckFile && !string.IsNullOrWhiteSpace(downloadFile.CheckSum)
-                ? Math.Min(2, GetMaxAttempts(settings))
+                ? Math.Max(sources.Length, Math.Min(2, GetMaxAttempts(settings)))
                 : 1;
             Exception? validationError = null;
 
@@ -81,10 +86,7 @@ public static partial class DownloadHelper
 
                 if (capabilities.SupportsRanges && capabilities.FileLength > 0)
                 {
-                    var partCount = CalculateAdaptivePartCount(
-                        capabilities.FileLength,
-                        capabilities.ResponseTime,
-                        settings);
+                    var partCount = CalculateAdaptivePartCount(capabilities.FileLength, settings);
                     try
                     {
                         await DownloadRangesAsync(downloadFile, tempPath, capabilities.FileLength, partCount, sources,
@@ -189,7 +191,7 @@ public static partial class DownloadHelper
     {
         var errors = new List<Exception>();
 
-        var attempts = Math.Max(sources.Count, GetMaxAttempts(settings));
+        var attempts = GetTransferAttemptCount(settings, sources.Count);
         for (var attempt = 0; attempt < attempts; attempt++)
         {
             var source = sources[attempt % sources.Count];
@@ -224,8 +226,6 @@ public static partial class DownloadHelper
         CancellationToken cancellationToken)
     {
         await connectionGate.WaitAsync(cancellationToken).ConfigureAwait(false);
-        var stopwatch = Stopwatch.StartNew();
-
         try
         {
             var client = settings.HttpClientFactory.CreateClient(settings.HttpClientName ?? DefaultDownloadClientName);
@@ -236,7 +236,7 @@ public static partial class DownloadHelper
 
             if (response.StatusCode == HttpStatusCode.RequestedRangeNotSatisfiable &&
                 response.Content.Headers.ContentRange?.Length == 0)
-                return new ServerCapabilities(source, 0, false, stopwatch.Elapsed);
+                return new ServerCapabilities(source, 0, false);
 
             if (!response.IsSuccessStatusCode)
                 throw CreateResponseException(response, source);
@@ -248,7 +248,7 @@ public static partial class DownloadHelper
                 ? contentRange?.Length ?? declaredFileSize
                 : response.Content.Headers.ContentLength ?? declaredFileSize;
 
-            return new ServerCapabilities(source, Math.Max(0, fileLength), supportsRanges, stopwatch.Elapsed);
+            return new ServerCapabilities(source, Math.Max(0, fileLength), supportsRanges);
         }
         finally
         {
@@ -256,27 +256,16 @@ public static partial class DownloadHelper
         }
     }
 
-    static int CalculateAdaptivePartCount(long fileLength, TimeSpan responseTime, DownloadSettings settings)
+    static int CalculateAdaptivePartCount(long fileLength, DownloadSettings settings)
     {
-        var desired = fileLength switch
-        {
-            < 4L * 1024 * 1024 => 1,
-            < 16L * 1024 * 1024 => 2,
-            < 64L * 1024 * 1024 => 4,
-            < 256L * 1024 * 1024 => 8,
-            _ => 16
-        };
-
-        // A high first-byte latency usually means an overloaded or distant endpoint. Ramp up conservatively.
-        if (responseTime >= TimeSpan.FromSeconds(2)) desired = Math.Min(desired, 2);
-        else if (responseTime >= TimeSpan.FromMilliseconds(800)) desired = Math.Min(desired, 4);
-
         var configuredMaximum = settings.DownloadParts > 0 ? settings.DownloadParts : DefaultMaxParts;
         var maximum = Math.Clamp(configuredMaximum, 1, DefaultMaxParts);
-        desired = Math.Min(desired, maximum);
+        if (maximum == 1 || fileLength < MinimumChunkSize) return 1;
 
-        while (desired > 1 && fileLength / desired < MinimumChunkSize) desired /= 2;
-        return Math.Max(1, desired);
+        // First-byte latency mostly measures DNS/TCP/TLS setup and is not a useful estimate of sustained bandwidth.
+        // Keep parts large enough to avoid request overhead, but otherwise honor the configured connection budget.
+        var usefulParts = Math.Clamp(fileLength / MinimumChunkSize, 1, maximum);
+        return (int)usefulParts;
     }
 
     static async Task DownloadWholeFileAsync(
@@ -291,7 +280,7 @@ public static partial class DownloadHelper
         CancellationToken cancellationToken)
     {
         var errors = new List<Exception>();
-        var maxAttempts = GetMaxAttempts(settings);
+        var maxAttempts = GetTransferAttemptCount(settings, sources.Count);
 
         for (var attempt = 0; attempt < maxAttempts; attempt++)
         {
@@ -322,11 +311,13 @@ public static partial class DownloadHelper
                     await using var output = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.Read,
                         CopyBufferSize, FileOptions.Asynchronous | FileOptions.SequentialScan);
                     using var buffer = MemoryPool<byte>.Shared.Rent(CopyBufferSize);
+                    using var stallTimeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
                     long received = 0;
 
                     while (true)
                     {
-                        var read = await ReadWithStallTimeoutAsync(input, buffer.Memory, settings, cancellationToken)
+                        var read = await ReadWithStallTimeoutAsync(input, buffer.Memory, settings, stallTimeout,
+                                cancellationToken)
                             .ConfigureAwait(false);
                         if (read == 0) break;
                         await output.WriteAsync(buffer.Memory[..read], cancellationToken).ConfigureAwait(false);
@@ -354,8 +345,9 @@ public static partial class DownloadHelper
                 downloadFile.IncrementRetryCount();
             }
 
-            if (attempt + 1 < maxAttempts)
-                await Task.Delay(CalculateRetryDelay(attempt + 1), cancellationToken).ConfigureAwait(false);
+            if (attempt + 1 < maxAttempts && HasCompletedSourceCycle(attempt + 1, sources.Count))
+                await Task.Delay(CalculateRetryDelay((attempt + 1) / sources.Count), cancellationToken)
+                    .ConfigureAwait(false);
         }
 
         throw new AggregateException("The complete-file download failed.", errors);
@@ -414,7 +406,8 @@ public static partial class DownloadHelper
                     {
                         segment.Attempts++;
                         downloadFile.IncrementRetryCount();
-                        if (segment.Attempts >= GetMaxAttempts(settings))
+                        var maxAttempts = GetTransferAttemptCount(settings, sources.Count);
+                        if (segment.Attempts >= maxAttempts)
                         {
                             errors.Enqueue(ex);
                             channel.Writer.TryComplete(ex);
@@ -422,7 +415,9 @@ public static partial class DownloadHelper
                             throw;
                         }
 
-                        await Task.Delay(CalculateRetryDelay(segment.Attempts), abort.Token).ConfigureAwait(false);
+                        if (HasCompletedSourceCycle(segment.Attempts, sources.Count))
+                            await Task.Delay(CalculateRetryDelay(segment.Attempts / sources.Count), abort.Token)
+                                .ConfigureAwait(false);
                         await channel.Writer.WriteAsync(segment, abort.Token).ConfigureAwait(false);
                     }
                 }
@@ -495,13 +490,14 @@ public static partial class DownloadHelper
 
             await using var input = await response.Content.ReadAsStreamAsync(cancellationToken)
                 .ConfigureAwait(false);
-            using var buffer = MemoryPool<byte>.Shared.Rent(CopyBufferSize);
+            using var buffer = MemoryPool<byte>.Shared.Rent(RangeBufferSize);
+            using var stallTimeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
             while (segment.NextOffset <= segment.End)
             {
                 var maximumRead = (int)Math.Min(buffer.Memory.Length, segment.End - segment.NextOffset + 1);
                 var read = await ReadWithStallTimeoutAsync(input, buffer.Memory[..maximumRead], settings,
-                        cancellationToken)
+                        stallTimeout, cancellationToken)
                     .ConfigureAwait(false);
                 if (read == 0)
                     throw new IOException($"Range {segment.Start}-{segment.End} ended at {segment.NextOffset}.");
@@ -525,8 +521,9 @@ public static partial class DownloadHelper
                range is { HasRange: true } &&
                range.From == start &&
                range.To == end &&
-               range.Length == fileLength &&
-               response.Content.Headers.ContentLength == end - start + 1;
+               (range.Length == null || range.Length == fileLength) &&
+               (response.Content.Headers.ContentLength == null ||
+                response.Content.Headers.ContentLength == end - start + 1);
     }
 
     static HttpRequestMessage CreateRequest(HttpMethod method, string source, DownloadSettings settings)
@@ -565,18 +562,21 @@ public static partial class DownloadHelper
         Stream stream,
         Memory<byte> buffer,
         DownloadSettings settings,
+        CancellationTokenSource stallTimeoutSource,
         CancellationToken cancellationToken)
     {
         var stallTimeout = NormalizeTimeout(settings.StallTimeout, TimeSpan.FromSeconds(12));
         if (settings.Timeout > TimeSpan.Zero && settings.Timeout != Timeout.InfiniteTimeSpan)
             stallTimeout = stallTimeout < settings.Timeout ? stallTimeout : settings.Timeout;
+
+        stallTimeoutSource.CancelAfter(stallTimeout);
         try
         {
-            return await stream.ReadAsync(buffer, cancellationToken).AsTask()
-                .WaitAsync(stallTimeout, cancellationToken)
-                .ConfigureAwait(false);
+            var read = await stream.ReadAsync(buffer, stallTimeoutSource.Token).ConfigureAwait(false);
+            stallTimeoutSource.CancelAfter(Timeout.InfiniteTimeSpan);
+            return read;
         }
-        catch (TimeoutException ex)
+        catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
         {
             throw new TimeoutException($"No download data was received for {stallTimeout.TotalSeconds:F0} seconds.", ex);
         }
@@ -591,6 +591,16 @@ public static partial class DownloadHelper
     static int GetMaxAttempts(DownloadSettings settings)
     {
         return settings.RetryCount > 0 ? Math.Clamp(settings.RetryCount, 1, 32) : 4;
+    }
+
+    static int GetTransferAttemptCount(DownloadSettings settings, int sourceCount)
+    {
+        return Math.Max(sourceCount, GetMaxAttempts(settings));
+    }
+
+    static bool HasCompletedSourceCycle(int attemptCount, int sourceCount)
+    {
+        return attemptCount % sourceCount == 0;
     }
 
     static HttpRequestException CreateResponseException(
@@ -632,7 +642,7 @@ public static partial class DownloadHelper
         }
     }
 
-    sealed record ServerCapabilities(string Url, long FileLength, bool SupportsRanges, TimeSpan ResponseTime);
+    sealed record ServerCapabilities(string Url, long FileLength, bool SupportsRanges);
 
     sealed class DownloadSegment(long start, long end)
     {

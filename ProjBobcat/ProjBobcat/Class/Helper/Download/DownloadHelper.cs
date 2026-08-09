@@ -116,7 +116,7 @@ public static partial class DownloadHelper
             MaxConcurrentConnections);
         using var connectionGate = new SemaphoreSlim(connectionCount, connectionCount);
         var progress = new AggregateDownloadProgress(downloadFiles, downloadSettings.ProgressInterval);
-        var fileConcurrency = Math.Min(downloadFiles.Count, Math.Min(connectionCount, MaxConcurrentFileDownloads));
+        var fileConcurrency = Math.Min(downloadFiles.Count, connectionCount);
 
         await Parallel.ForEachAsync(
                 downloadFiles,

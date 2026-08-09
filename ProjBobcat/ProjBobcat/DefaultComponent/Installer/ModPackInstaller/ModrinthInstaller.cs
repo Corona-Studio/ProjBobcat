@@ -6,6 +6,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Helper.Download;
@@ -56,6 +57,18 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
 
         this.InvokeStatusChangedEvent("开始安装", ProgressValue.Start);
 
+        await this.DownloadModsTaskAsync();
+        await this.InstallOverridesTaskAsync();
+
+        this.InvokeStatusChangedEvent("安装完成", ProgressValue.Finished);
+    }
+
+    public override async Task DownloadModsTaskAsync(CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(this.GameId);
+        ArgumentException.ThrowIfNullOrEmpty(this.RootPath);
+        cancellationToken.ThrowIfCancellationRequested();
+
         var index = await this.ReadIndexTask() ?? throw new Exception("无法读取到 Modrinth 的 manifest 文件");
         var idPath = Path.Combine(this.RootPath, GamePathHelper.GetGamePath(this.GameId));
         var downloadPath = Path.Combine(Path.GetFullPath(idPath), "mods");
@@ -105,26 +118,29 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
                 FileName = fileName,
                 FileSize = file.Size
             };
-            df.Completed += this.WhenCompleted;
-
             downloadFiles.Add(df);
         }
 
-        this.TotalDownloaded = 0;
-        this.NeedToDownload = downloadFiles.Count;
+        await this.DownloadFilesTaskAsync(downloadFiles, new DownloadSettings
+        {
+            DownloadParts = 8,
+            RetryCount = this.GetDownloadRetryCount(downloadFiles),
+            Timeout = TimeSpan.FromMinutes(1),
+            CheckFile = true,
+            HashType = HashType.SHA1,
+            HttpClientFactory = this.HttpClientFactory
+        }, cancellationToken);
 
-        if (downloadFiles.Count > 0)
-            await DownloadHelper.DownloadAsync(downloadFiles, new DownloadSettings
-            {
-                DownloadParts = 8,
-                RetryCount = downloadFiles.MaxBy(u => u.DownloadUris.Count)!.DownloadUris.Count,
-                Timeout = TimeSpan.FromMinutes(1),
-                CheckFile = true,
-                HashType = HashType.SHA1,
-                HttpClientFactory = this.HttpClientFactory
-            });
+        this.ThrowIfDownloadsFailed();
+    }
 
-        ArgumentOutOfRangeException.ThrowIfEqual(this.FailedFiles.IsEmpty, false);
+    public override async Task InstallOverridesTaskAsync(CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(this.GameId);
+        ArgumentException.ThrowIfNullOrEmpty(this.RootPath);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var idPath = Path.Combine(this.RootPath, GamePathHelper.GetGamePath(this.GameId));
 
         var modPackFullPath = Path.GetFullPath(this.ModPackPath);
 
@@ -141,6 +157,8 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
 
         foreach (var entry in archive.Entries)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             if (!entry.FullName.StartsWith(decompressPrefix, StringComparison.OrdinalIgnoreCase)) continue;
 
             var subPath = entry.FullName[(decompressPrefix.Length + 1)..];
@@ -170,11 +188,9 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
             await using var fs = File.OpenWrite(path);
             await using var entryStream = await entry.OpenAsync();
 
-            await entryStream.CopyToAsync(fs);
+            await entryStream.CopyToAsync(fs, cancellationToken);
 
             this.TotalDownloaded++;
         }
-
-        this.InvokeStatusChangedEvent("安装完成", ProgressValue.Finished);
     }
 }

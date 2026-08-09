@@ -10,6 +10,7 @@ using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Helper.Download;
@@ -24,7 +25,6 @@ namespace ProjBobcat.DefaultComponent.Installer.ModPackInstaller;
 
 public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInstaller
 {
-    public required int RetryCount { get; init; } = 6;
     public required ICurseForgeApiService CurseForgeApiService { get; init; }
     public override string RootPath { get; init; } = string.Empty;
     public required string ModPackPath { get; init; }
@@ -42,11 +42,24 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
         this.InvokeStatusChangedEvent("开始安装", ProgressValue.Start);
 
+        await this.DownloadModsTaskAsync();
+        await this.InstallOverridesTaskAsync();
+
+        this.InvokeStatusChangedEvent("安装完成", ProgressValue.Finished);
+    }
+
+    public override async Task DownloadModsTaskAsync(CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(this.GameId);
+        ArgumentException.ThrowIfNullOrEmpty(this.RootPath);
+        cancellationToken.ThrowIfCancellationRequested();
+
         var manifest = await ReadManifestTask(this.ModPackPath);
 
         ArgumentNullException.ThrowIfNull(manifest, "无法读取到 CurseForge 的 manifest 文件");
 
         var idPath = Path.Combine(this.RootPath, GamePathHelper.GetGamePath(this.GameId));
+        var retryCount = Math.Max(1, this.RetryCount);
 
         this.NeedToDownload = manifest.Files?.Length ?? 0;
 
@@ -57,7 +70,10 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
         CurseForgeLatestFileModel[]? files = null;
 
-        for (var i = 0; i < this.RetryCount; i++)
+        for (var i = 0; i < retryCount; i++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
             try
             {
                 files = await GetModPackFiles(this.CurseForgeApiService, fileIds);
@@ -67,13 +83,17 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
             {
                 // Ignore
             }
+        }
 
         ArgumentNullException.ThrowIfNull(files, "无法获取 CurseForge 的文件列表");
 
         var missingFileIds = fileIds.Except(files.Select(file => file.Id)).ToArray();
 
         // Fetch missing files if any
-        for (var i = 0; i < this.RetryCount; i++)
+        for (var i = 0; i < retryCount; i++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
             try
             {
                 files =
@@ -87,6 +107,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
             {
                 // Ignore
             }
+        }
 
         var projectIds = manifest.Files
             ?.Where(file => file.ProjectId != 0 && file.FileId != 0)
@@ -95,7 +116,10 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
         CurseForgeAddonInfo[]? modProjectDetails = null;
 
-        for (var i = 0; i < this.RetryCount; i++)
+        for (var i = 0; i < retryCount; i++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
             try
             {
                 modProjectDetails = await GetModProjectDetails(this.CurseForgeApiService, projectIds);
@@ -105,6 +129,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
             {
                 // Ignore
             }
+        }
 
         ArgumentNullException.ThrowIfNull(modProjectDetails, "无法获取 CurseForge 的模组列表");
         ArgumentOutOfRangeException.ThrowIfLessThan(fileIds.Length, files.Length);
@@ -112,7 +137,10 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         var missingProjectIds = projectIds.Except(modProjectDetails.Select(mod => mod.Id)).ToArray();
 
         // Fetch missing projects if any
-        for (var i = 0; i < this.RetryCount; i++)
+        for (var i = 0; i < retryCount; i++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
             try
             {
                 modProjectDetails =
@@ -126,6 +154,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
             {
                 // Ignore
             }
+        }
 
         var fileDic = files.ToDictionary(k => k.Id, v => v);
         var projectDic = modProjectDetails.ToDictionary(k => k.Id, v => v);
@@ -175,7 +204,6 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
                     FileName = file.FileName
                 };
 
-                guessDownloadFile.Completed += this.WhenCompleted;
                 downloadFiles.Add(guessDownloadFile);
                 continue;
             }
@@ -209,22 +237,33 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
                 FileName = file.FileName
             };
 
-            downloadFile.Completed += this.WhenCompleted;
             downloadFiles.Add(downloadFile);
         }
 
         this.InvokeStatusChangedEvent("成功解析整合包模组的下载地址", ProgressValue.Finished);
 
-        this.TotalDownloaded = 0;
+        await this.DownloadFilesTaskAsync(downloadFiles, new DownloadSettings
+        {
+            DownloadParts = 2,
+            RetryCount = this.GetDownloadRetryCount(downloadFiles),
+            Timeout = TimeSpan.FromMinutes(5),
+            HttpClientFactory = this.HttpClientFactory
+        }, cancellationToken);
 
-        if (downloadFiles.Count > 0)
-            await DownloadHelper.DownloadAsync(downloadFiles, new DownloadSettings
-            {
-                DownloadParts = 2,
-                RetryCount = downloadFiles.MaxBy(u => u.DownloadUris.Count)!.DownloadUris.Count,
-                Timeout = TimeSpan.FromMinutes(5),
-                HttpClientFactory = this.HttpClientFactory
-            });
+        this.ThrowIfDownloadsFailed();
+    }
+
+    public override async Task InstallOverridesTaskAsync(CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(this.GameId);
+        ArgumentException.ThrowIfNullOrEmpty(this.RootPath);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var manifest = await ReadManifestTask(this.ModPackPath);
+
+        ArgumentNullException.ThrowIfNull(manifest, "无法读取到 CurseForge 的 manifest 文件");
+
+        var idPath = Path.Combine(this.RootPath, GamePathHelper.GetGamePath(this.GameId));
 
         var modPackFullPath = Path.GetFullPath(this.ModPackPath);
         var gbk = Encoding.GetEncoding("GBK");
@@ -237,6 +276,8 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
         foreach (var entry in archive.Entries)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             if (string.IsNullOrEmpty(manifest.Overrides) ||
                 !entry.FullName.StartsWith(manifest.Overrides, StringComparison.OrdinalIgnoreCase)) continue;
 
@@ -267,40 +308,9 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
             await using var fs = File.OpenWrite(path);
             await using var entryStream = await entry.OpenAsync();
 
-            await entryStream.CopyToAsync(fs);
+            await entryStream.CopyToAsync(fs, cancellationToken);
 
             this.TotalDownloaded++;
-        }
-
-        this.InvokeStatusChangedEvent("安装完成", ProgressValue.Finished);
-
-        if (this.FailedFiles.IsEmpty && this.TotalDownloaded == 0 &&
-            downloadFiles.Count != 0)
-            throw new Exception(
-                "我们无法下载这个整合包中的模组，这可能是因为您和 CurseForge 的网络连接不稳定导致的。尽管如此，我们还是完成了整合包安装的其他步骤。您可以稍后尝试重新安装或是手动下载整合包模组。");
-
-        if (!this.FailedFiles.IsEmpty)
-        {
-            var failedFileExList = new List<Exception>();
-
-            foreach (var failedFile in this.FailedFiles)
-            {
-                var urls = failedFile switch
-                {
-                    SimpleDownloadFile sd => [sd.DownloadUri],
-                    MultiSourceDownloadFile msd => msd.DownloadUris.Select(d => d.DownloadUri).ToArray(),
-                    _ => throw new ArgumentOutOfRangeException(nameof(failedFile))
-                };
-
-                failedFileExList.Add(new Exception($"""
-                                                    文件名：{failedFile.FileName}
-                                                    下载链接：[{string.Join(',', urls)}]
-                                                    """));
-            }
-
-            throw new AggregateException(
-                "整合包已经成功安装，但是部分文件还是下载失败了。这不一定会影响游戏的启动。您可以选择稍后手动下载这些文件。",
-                failedFileExList);
         }
     }
 
