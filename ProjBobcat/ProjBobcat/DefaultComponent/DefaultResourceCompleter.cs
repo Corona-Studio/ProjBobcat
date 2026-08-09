@@ -1,11 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
 using ProjBobcat.Class.Helper.Download;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Downloading;
@@ -20,8 +20,11 @@ namespace ProjBobcat.DefaultComponent;
 public class DefaultResourceCompleter : IResourceCompleter
 {
     readonly ConcurrentBag<MultiSourceDownloadFile> _failedFiles = [];
+    readonly SemaphoreSlim _operationLock = new(1, 1);
+    readonly object _progressLock = new();
 
-    ulong _needToDownload, _totalDownloaded;
+    ulong _needToDownload;
+    double _lastReportedProgress;
     public required IHttpClientFactory HttpClientFactory { get; init; }
     public TimeSpan ResolverTimeout { get; set; } = TimeSpan.FromMinutes(30);
     public bool RandomizeDownloadOrder { get; set; } = true;
@@ -69,14 +72,37 @@ public class DefaultResourceCompleter : IResourceCompleter
             return new TaskResult<ResourceCompleterCheckResult?>(TaskResultStatus.Success, value: null);
 
         cancellationToken.ThrowIfCancellationRequested();
+        await this._operationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+        try
+        {
+            return await this.CheckAndDownloadCoreAsync(basePath, checkLocalFiles, resolvedGame, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        finally
+        {
+            this._operationLock.Release();
+        }
+    }
+
+    async Task<TaskResult<ResourceCompleterCheckResult?>> CheckAndDownloadCoreAsync(
+        string basePath,
+        bool checkLocalFiles,
+        ResolvedGameVersion resolvedGame,
+        CancellationToken cancellationToken)
+    {
+        var resolvers = this.ResourceInfoResolvers!;
 
         this.DownloadThread = this.DownloadThread <= 1 ? 16 : this.DownloadThread;
 
         Interlocked.Exchange(ref this._needToDownload, 0);
-        Interlocked.Exchange(ref this._totalDownloaded, 0);
+        this._lastReportedProgress = 0;
         this._failedFiles.Clear();
 
-        var numBatches = Math.Min(this.MaxDegreeOfParallelism, Environment.ProcessorCount);
+        var maxResolverParallelism = Math.Clamp(
+            this.MaxDegreeOfParallelism,
+            1,
+            Math.Min(resolvers.Count, Environment.ProcessorCount));
         var downloadSettings = new DownloadSettings
         {
             CheckFile = this.CheckFile,
@@ -94,38 +120,60 @@ public class DefaultResourceCompleter : IResourceCompleter
             Status = "正在进行资源检查"
         });
 
-        var linkOption = new DataflowLinkOptions { PropagateCompletion = true };
-
-        var downloadBlock = this.RandomizeDownloadOrder
-            ? DownloadHelper.BuildRandomizingDownloadTplBlock(downloadSettings)
-            : DownloadHelper.BuildAdvancedDownloadTplBlock(downloadSettings);
-
-        var checkBlock = new TransformManyBlock<CheckFileInfo, AbstractDownloadBase>(this.TransformCheckFiles,
-            new ExecutionDataflowBlockOptions
-            {
-                MaxDegreeOfParallelism = numBatches,
-                EnsureOrdered = false,
-                CancellationToken = cancellationToken
-            });
-
-        checkBlock.LinkTo(downloadBlock, linkOption);
-
-        foreach (var r in this.ResourceInfoResolvers!)
-            checkBlock.Post(new CheckFileInfo(r, basePath, checkLocalFiles, resolvedGame, cancellationToken));
-
-        checkBlock.Complete();
-
-        // Add timeout to prevent infinite wait
         using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        timeoutCts.CancelAfter(this.ResolverTimeout);
+        if (this.ResolverTimeout != Timeout.InfiniteTimeSpan)
+            timeoutCts.CancelAfter(this.ResolverTimeout);
+
+        var operationToken = timeoutCts.Token;
 
         try
         {
-            await downloadBlock.Completion.WaitAsync(timeoutCts.Token).ConfigureAwait(false);
+            // Finish discovery before downloading. Mixing random reads for hashing with download writes makes both
+            // phases slower, and it causes download totals to change while completion events are already arriving.
+            var files = await this.ResolveFilesAsync(
+                    resolvers,
+                    basePath,
+                    checkLocalFiles,
+                    resolvedGame,
+                    maxResolverParallelism,
+                    operationToken)
+                .ConfigureAwait(false);
+
+            if (this.RandomizeDownloadOrder)
+                Random.Shared.Shuffle(files);
+
+            Interlocked.Exchange(ref this._needToDownload, (ulong)files.Length);
+
+            this.OnResolveComplete(this, new GameResourceInfoResolveEventArgs
+            {
+                Progress = files.Length == 0 ? ProgressValue.Finished : ProgressValue.FromNormalized(0.5),
+                Status = files.Length == 0 ? "资源检查完成" : $"资源检查完成，发现 {files.Length} 个文件需要修复"
+            });
+
+            if (files.Length > 0)
+            {
+                foreach (var file in files)
+                {
+                    file.Changed += this.WhenChanged;
+                    file.Completed += this.WhenCompleted;
+                }
+
+                try
+                {
+                    await DownloadHelper.DownloadAsync(files, downloadSettings, operationToken).ConfigureAwait(false);
+                }
+                finally
+                {
+                    foreach (var file in files)
+                    {
+                        file.Changed -= this.WhenChanged;
+                        file.Completed -= this.WhenCompleted;
+                    }
+                }
+            }
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
-            // Timeout occurred
             this.OnResolveComplete(this, new GameResourceInfoResolveEventArgs
             {
                 Progress = ProgressValue.Start,
@@ -140,12 +188,26 @@ public class DefaultResourceCompleter : IResourceCompleter
                     FailedFiles = [.. this._failedFiles]
                 });
         }
-
-        this.OnResolveComplete(this, new GameResourceInfoResolveEventArgs
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            Progress = ProgressValue.Finished,
-            Status = "资源检查完成"
-        });
+            throw;
+        }
+        catch (Exception ex)
+        {
+            this.OnResolveComplete(this, new GameResourceInfoResolveEventArgs
+            {
+                Progress = ProgressValue.Start,
+                Status = $"资源检查失败：{ex.Message}"
+            });
+
+            return new TaskResult<ResourceCompleterCheckResult?>(TaskResultStatus.Error,
+                ex.Message,
+                new ResourceCompleterCheckResult
+                {
+                    IsLibDownloadFailed = true,
+                    FailedFiles = [.. this._failedFiles]
+                });
+        }
 
         var isLibraryFailed = this._failedFiles.Any(d => d.FileType == ResourceType.LibraryOrNative);
         var result = isLibraryFailed switch
@@ -161,47 +223,98 @@ public class DefaultResourceCompleter : IResourceCompleter
             FailedFiles = [.. this._failedFiles]
         };
 
+        this.OnResolveComplete(this, new GameResourceInfoResolveEventArgs
+        {
+            Progress = ProgressValue.Finished,
+            Status = Interlocked.Read(ref this._needToDownload) == 0
+                ? "资源检查完成"
+                : result == TaskResultStatus.Success
+                    ? "资源修复完成"
+                    : "资源修复完成，但有文件下载失败"
+        });
+
         return new TaskResult<ResourceCompleterCheckResult?>(result, value: resultArgs);
     }
 
-    async IAsyncEnumerable<AbstractDownloadBase> TransformCheckFiles(CheckFileInfo arg)
+    async Task<MultiSourceDownloadFile[]> ResolveFilesAsync(
+        IReadOnlyList<IResourceInfoResolver> resolvers,
+        string basePath,
+        bool checkLocalFiles,
+        ResolvedGameVersion resolvedGame,
+        int maxDegreeOfParallelism,
+        CancellationToken cancellationToken)
     {
-        arg.Resolver.GameResourceInfoResolveEvent += FireResolveEvent;
+        var pathComparer = OperatingSystem.IsWindows() || OperatingSystem.IsMacOS()
+            ? StringComparer.OrdinalIgnoreCase
+            : StringComparer.Ordinal;
+        var files = new ConcurrentDictionary<string, MultiSourceDownloadFile>(pathComparer);
+        var resolverProgress = new ConcurrentDictionary<IResourceInfoResolver, double>();
+        foreach (var resolver in resolvers)
+            resolverProgress.TryAdd(resolver, 0);
 
-        try
-        {
-            await foreach (var element in arg.Resolver.ResolveResourceAsync(
-                               arg.BasePath,
-                               arg.CheckLocalFiles,
-                               arg.ResolvedGame,
-                               arg.CancellationToken))
+        await Parallel.ForEachAsync(resolvers, new ParallelOptions
             {
-                var dF = new MultiSourceDownloadFile
+                MaxDegreeOfParallelism = maxDegreeOfParallelism,
+                CancellationToken = cancellationToken
+            }, async (resolver, token) =>
+            {
+                resolver.GameResourceInfoResolveEvent += FireResolveEvent;
+
+                try
                 {
-                    DownloadPath = element.Path,
-                    DownloadUris = element.Urls,
-                    FileName = element.FileName,
-                    FileSize = element.FileSize,
-                    CheckSum = element.CheckSum,
-                    FileType = element.Type
-                };
-                dF.Completed += this.WhenCompleted;
+                    await foreach (var element in resolver.ResolveResourceAsync(
+                                           basePath,
+                                           checkLocalFiles,
+                                           resolvedGame,
+                                           token)
+                                       .WithCancellation(token)
+                                       .ConfigureAwait(false))
+                    {
+                        var file = new MultiSourceDownloadFile
+                        {
+                            DownloadPath = element.Path,
+                            DownloadUris = element.Urls,
+                            FileName = element.FileName,
+                            FileSize = element.FileSize,
+                            CheckSum = element.CheckSum,
+                            FileType = element.Type
+                        };
 
-                Interlocked.Increment(ref this._needToDownload);
+                        var fullPath = Path.GetFullPath(Path.Combine(file.DownloadPath, file.FileName));
+                        files.TryAdd(fullPath, file);
+                    }
+                }
+                finally
+                {
+                    resolver.GameResourceInfoResolveEvent -= FireResolveEvent;
+                }
+            }).ConfigureAwait(false);
 
-                yield return dF;
-            }
-        }
-        finally
-        {
-            arg.Resolver.GameResourceInfoResolveEvent -= FireResolveEvent;
-        }
-
-        yield break;
+        return [.. files.Values];
 
         void FireResolveEvent(object? sender, GameResourceInfoResolveEventArgs e)
         {
-            this.OnResolveComplete(sender, e);
+            if (e.Progress.NormalizedValue < 0 || sender is not IResourceInfoResolver resolver)
+            {
+                this.OnResolveComplete(sender, e);
+                return;
+            }
+
+            lock (this._progressLock)
+            {
+                resolverProgress.AddOrUpdate(
+                    resolver,
+                    Math.Clamp(e.Progress.NormalizedValue, 0, 1),
+                    (_, current) => Math.Max(current, Math.Clamp(e.Progress.NormalizedValue, 0, 1)));
+                var scanProgress = resolverProgress.Values.Average() * 0.5;
+                this._lastReportedProgress = Math.Max(this._lastReportedProgress, scanProgress);
+
+                this.OnResolveComplete(sender, new GameResourceInfoResolveEventArgs
+                {
+                    Progress = ProgressValue.FromNormalized(this._lastReportedProgress),
+                    Status = e.Status
+                });
+            }
         }
     }
 
@@ -215,13 +328,21 @@ public class DefaultResourceCompleter : IResourceCompleter
         this.DownloadFileCompletedEvent?.Invoke(sender, e);
     }
 
-    void OnChanged(ProgressValue progress, double speed)
+    void WhenChanged(object? sender, DownloadFileChangedEventArgs e)
     {
-        this.DownloadFileChangedEvent?.Invoke(this, new DownloadFileChangedEventArgs
+        lock (this._progressLock)
         {
-            ProgressPercentage = progress,
-            Speed = speed
-        });
+            var progress = 0.5 + Math.Clamp(e.ProgressPercentage.NormalizedValue, 0, 1) * 0.5;
+            this._lastReportedProgress = Math.Max(this._lastReportedProgress, progress);
+
+            this.DownloadFileChangedEvent?.Invoke(this, new DownloadFileChangedEventArgs
+            {
+                ProgressPercentage = ProgressValue.FromNormalized(this._lastReportedProgress),
+                Speed = e.Speed,
+                BytesReceived = e.BytesReceived,
+                TotalBytes = e.TotalBytes
+            });
+        }
     }
 
     void WhenCompleted(object? sender, DownloadFileCompletedEventArgs e)
@@ -230,23 +351,12 @@ public class DefaultResourceCompleter : IResourceCompleter
         if (!e.Success || e.Error != null)
             this._failedFiles.Add(df);
 
-        df.Completed -= this.WhenCompleted;
-
-        var downloaded = Interlocked.Increment(ref this._totalDownloaded);
         var needToDownload = Interlocked.Read(ref this._needToDownload);
 
-        this.OnChanged(ProgressValue.Create(downloaded, needToDownload), e.AverageSpeed);
         this.OnCompleted(sender, new GameResourceDownloadedEventArgs
         {
             TotalNeedToDownload = needToDownload,
             DownloadEventArgs = e
         });
     }
-
-    record CheckFileInfo(
-        IResourceInfoResolver Resolver,
-        string BasePath,
-        bool CheckLocalFiles,
-        ResolvedGameVersion ResolvedGame,
-        CancellationToken CancellationToken);
 }

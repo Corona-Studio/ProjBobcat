@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Concurrent;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
-using Microsoft.IO;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Downloading;
 
@@ -15,29 +13,27 @@ public static partial class DownloadHelper
 {
     public const string DefaultDownloadClientName = nameof(DownloadHelper);
     public const string DefaultCurseForgeDownloadClientName = "CurseForgeDownloader";
-    private const int DefaultCopyBufferSize = 1024 * 8 * 10;
-    internal const int MinimumChunkSize = 1_000_000; // 1 MB
-
-    private static readonly RecyclableMemoryStreamManager MemoryStreamManager = new();
+    internal const int MinimumChunkSize = 1_000_000;
 
     internal static string DefaultUserAgent => $"ProjBobcat {typeof(DownloadHelper).Assembly.GetName().Version}";
 
     public static string GetTempDownloadPath()
     {
-        var lxTempDir = Path.Combine(Path.GetTempPath(), "LauncherX");
-
-        return lxTempDir;
+        return Path.Combine(Path.GetTempPath(), "LauncherX");
     }
 
     public static string GetTempFilePath()
     {
-        return Path.Combine(GetTempDownloadPath(), Path.GetRandomFileName());
+        var tempPath = GetTempDownloadPath();
+        Directory.CreateDirectory(tempPath);
+        return Path.Combine(tempPath, Path.GetRandomFileName());
     }
 
-    internal static int CalculateRetryDelay(int retryCount)
+    internal static TimeSpan CalculateRetryDelay(int retryCount)
     {
-        // Exponential backoff: 1s, 2s, 4s, 8s, max 10s
-        return (int)Math.Min(1000 * Math.Pow(2, retryCount - 1), 10000);
+        // IDM-like short backoff. Mirrors are rotated on every attempt, so long waits only make recovery worse.
+        var exponentialMs = Math.Min(200 * Math.Pow(2, Math.Max(0, retryCount - 1)), 3_000);
+        return TimeSpan.FromMilliseconds(exponentialMs + Random.Shared.Next(25, 175));
     }
 
     public static string AutoFormatSpeedString(double speedInBytePerSecond)
@@ -63,7 +59,6 @@ public static partial class DownloadHelper
         const double gbNum = baseNum * mbNum;
         const double tbNum = baseNum * gbNum;
 
-        // Auto choose the unit
         var unit = transferSpeed switch
         {
             >= tbNum => SizeUnit.Tb,
@@ -85,218 +80,118 @@ public static partial class DownloadHelper
         return (convertedSpeed, unit);
     }
 
-    #region Download a list of files
-
     /// <summary>
-    ///     Advanced file download impl with retry support
+    ///     Downloads one file. Range support, connection count, mirror switching and retries are selected automatically.
     /// </summary>
-    /// <param name="df"></param>
-    /// <param name="downloadSettings"></param>
-    /// <param name="failureTracker"></param>
-    private static async Task AdvancedDownloadFileWithRetry(
-        AbstractDownloadBase df,
+    public static Task DownloadAsync(
+        AbstractDownloadBase downloadFile,
         DownloadSettings downloadSettings,
-        ConcurrentDictionary<AbstractDownloadBase, int> failureTracker)
+        CancellationToken cancellationToken = default)
     {
-        var lxTempPath = GetTempDownloadPath();
+        ArgumentNullException.ThrowIfNull(downloadFile);
+        ArgumentNullException.ThrowIfNull(downloadSettings);
 
-        if (!Directory.Exists(lxTempPath))
-            Directory.CreateDirectory(lxTempPath);
-
-        if (!Directory.Exists(df.DownloadPath))
-            Directory.CreateDirectory(df.DownloadPath);
-
-        var maxRetries = downloadSettings.RetryCount > 0 ? downloadSettings.RetryCount : 3;
-
-        try
-        {
-            if (df.FileSize is >= MinimumChunkSize or 0)
-                await MultiPartDownloadTaskAsync(df, downloadSettings).ConfigureAwait(false);
-            else
-                await DownloadData(df, downloadSettings).ConfigureAwait(false);
-
-            // Success - remove from failure tracker
-            failureTracker.TryRemove(df, out _);
-        }
-        catch (Exception ex)
-        {
-            // Increment failure count
-            var newAttemptCount = failureTracker.AddOrUpdate(df, 1, (_, count) => count + 1);
-
-            if (newAttemptCount <= maxRetries)
-            {
-                // Will be retried - don't report as error yet
-                df.OnChanged(0, ProgressValue.Create(0, 100), 0, 100);
-            }
-            else
-            {
-                // Max retries exceeded - report failure
-                df.OnCompleted(false, ex, 0);
-                failureTracker.TryRemove(df, out _);
-            }
-        }
+        var requestedParts = downloadSettings.DownloadParts > 0 ? downloadSettings.DownloadParts : DefaultMaxParts;
+        var connectionCount = Math.Clamp(Math.Max(downloadSettings.DownloadThread, requestedParts), 1,
+            MaxConcurrentConnections);
+        var connectionGate = new SemaphoreSlim(connectionCount, connectionCount);
+        return DownloadAndDisposeGateAsync(downloadFile, downloadSettings, connectionGate, cancellationToken);
     }
 
-    public static ITargetBlock<AbstractDownloadBase> BuildAdvancedDownloadTplBlock(
+    /// <summary>
+    ///     Downloads a list using a shared connection budget. Progress raised by each file is the aggregate, monotonic
+    ///     progress of the list, which prevents concurrent files from making a UI progress bar jump backwards.
+    /// </summary>
+    public static async Task DownloadAsync(
+        IReadOnlyList<AbstractDownloadBase> downloadFiles,
         DownloadSettings downloadSettings,
-        ConcurrentDictionary<AbstractDownloadBase, int>? failureTracker = null)
+        CancellationToken cancellationToken = default)
     {
-        var lxTempPath = GetTempDownloadPath();
+        ArgumentNullException.ThrowIfNull(downloadFiles);
+        ArgumentNullException.ThrowIfNull(downloadSettings);
+        if (downloadFiles.Count == 0) return;
 
-        if (!Directory.Exists(lxTempPath))
-            Directory.CreateDirectory(lxTempPath);
+        var requestedParts = downloadSettings.DownloadParts > 0 ? downloadSettings.DownloadParts : DefaultMaxParts;
+        var connectionCount = Math.Clamp(Math.Max(downloadSettings.DownloadThread, requestedParts), 1,
+            MaxConcurrentConnections);
+        using var connectionGate = new SemaphoreSlim(connectionCount, connectionCount);
+        var progress = new AggregateDownloadProgress(downloadFiles, downloadSettings.ProgressInterval);
+        var fileConcurrency = Math.Min(downloadFiles.Count, Math.Min(connectionCount, MaxConcurrentFileDownloads));
 
-        failureTracker ??= new ConcurrentDictionary<AbstractDownloadBase, int>();
-
-        var actionBlock = new ActionBlock<AbstractDownloadBase>(
-            async d =>
-            {
-                await AdvancedDownloadFileWithRetry(d, downloadSettings, failureTracker).ConfigureAwait(false);
-            },
-            new ExecutionDataflowBlockOptions
-            {
-                MaxDegreeOfParallelism = downloadSettings.DownloadThread,
-                EnsureOrdered = false,
-                BoundedCapacity = DataflowBlockOptions.Unbounded
-            });
-
-        return actionBlock;
+        await Parallel.ForEachAsync(
+                downloadFiles,
+                new ParallelOptions
+                {
+                    MaxDegreeOfParallelism = fileConcurrency,
+                    CancellationToken = cancellationToken
+                },
+                async (file, ct) =>
+                    await DownloadFileCoreAsync(file, downloadSettings, connectionGate, progress.Report, ct)
+                        .ConfigureAwait(false))
+            .ConfigureAwait(false);
     }
 
-    /// <summary>
-    ///     Builds a randomizing TPL block that randomly selects files to download.
-    ///     This prevents large files from all being queued at the end.
-    /// </summary>
-    public static ITargetBlock<AbstractDownloadBase> BuildRandomizingDownloadTplBlock(
+    static async Task DownloadAndDisposeGateAsync(
+        AbstractDownloadBase downloadFile,
         DownloadSettings downloadSettings,
-        ConcurrentDictionary<AbstractDownloadBase, int>? failureTracker = null)
+        SemaphoreSlim connectionGate,
+        CancellationToken cancellationToken)
     {
-        var lxTempPath = GetTempDownloadPath();
-
-        if (!Directory.Exists(lxTempPath))
-            Directory.CreateDirectory(lxTempPath);
-
-        failureTracker ??= new ConcurrentDictionary<AbstractDownloadBase, int>();
-
-        var batchBlock = new BatchBlock<AbstractDownloadBase>(downloadSettings.DownloadThread,
-            new GroupingDataflowBlockOptions
-            {
-                BoundedCapacity = DataflowBlockOptions.Unbounded
-            });
-
-        var shuffleBlock = new TransformManyBlock<AbstractDownloadBase[], AbstractDownloadBase>(
-            batch =>
-            {
-                Random.Shared.Shuffle(batch);
-                return batch;
-            },
-            new ExecutionDataflowBlockOptions
-            {
-                MaxDegreeOfParallelism = 1,
-                EnsureOrdered = false,
-                BoundedCapacity = DataflowBlockOptions.Unbounded
-            });
-
-        var downloadBlock = new ActionBlock<AbstractDownloadBase>(
-            async d =>
-            {
-                await AdvancedDownloadFileWithRetry(d, downloadSettings, failureTracker).ConfigureAwait(false);
-            },
-            new ExecutionDataflowBlockOptions
-            {
-                MaxDegreeOfParallelism = downloadSettings.DownloadThread,
-                EnsureOrdered = false,
-                BoundedCapacity = DataflowBlockOptions.Unbounded
-            });
-
-        batchBlock.LinkTo(shuffleBlock, new DataflowLinkOptions { PropagateCompletion = true });
-        shuffleBlock.LinkTo(downloadBlock, new DataflowLinkOptions { PropagateCompletion = true });
-
-        // Return a wrapper that exposes the batch block's input interface
-        // but completes when the download block completes
-        return new TargetBlockWrapper<AbstractDownloadBase>(batchBlock, downloadBlock);
+        using (connectionGate)
+            await DownloadFileCoreAsync(downloadFile, downloadSettings, connectionGate, null, cancellationToken)
+                .ConfigureAwait(false);
     }
 
-    /// <summary>
-    ///     Wrapper class that delegates input operations to one block and completion tracking to another
-    /// </summary>
-    private sealed class TargetBlockWrapper<T> : ITargetBlock<T>
+    sealed class AggregateDownloadProgress
     {
-        private readonly IDataflowBlock _completionBlock;
-        private readonly ITargetBlock<T> _inputBlock;
+        readonly Dictionary<AbstractDownloadBase, FileProgress> _files;
+        readonly long _minimumIntervalTicks;
+        readonly object _sync = new();
+        long _lastReportTimestamp;
 
-        public TargetBlockWrapper(ITargetBlock<T> inputBlock, IDataflowBlock completionBlock)
+        public AggregateDownloadProgress(IEnumerable<AbstractDownloadBase> files, TimeSpan interval)
         {
-            this._inputBlock = inputBlock;
-            this._completionBlock = completionBlock;
+            this._files = files.ToDictionary(file => file, file => new FileProgress(file.FileSize));
+            this._minimumIntervalTicks = Math.Max(1,
+                (long)(Math.Max(0.05, interval.TotalSeconds) * System.Diagnostics.Stopwatch.Frequency));
         }
 
-        public DataflowMessageStatus OfferMessage(DataflowMessageHeader messageHeader, T messageValue,
-            ISourceBlock<T>? source, bool consumeToAccept)
+        public void Report(AbstractDownloadBase file, double speed, long bytesReceived, long totalBytes, bool finished)
         {
-            return this._inputBlock.OfferMessage(messageHeader, messageValue, source, consumeToAccept);
-        }
+            var shouldReport = finished;
 
-        public void Complete()
-        {
-            this._inputBlock.Complete();
-        }
-
-        public void Fault(Exception exception)
-        {
-            this._inputBlock.Fault(exception);
-        }
-
-        public Task Completion => this._completionBlock.Completion;
-    }
-
-    /// <summary>
-    ///     File download method with automatic retry for failed files
-    /// </summary>
-    /// <param name="fileEnumerable">文件列表</param>
-    /// <param name="downloadSettings"></param>
-    public static async Task AdvancedDownloadListFile(
-        IReadOnlyList<AbstractDownloadBase> fileEnumerable,
-        DownloadSettings downloadSettings)
-    {
-        var lxTempPath = GetTempDownloadPath();
-
-        if (!Directory.Exists(lxTempPath))
-            Directory.CreateDirectory(lxTempPath);
-
-        var failureTracker = new ConcurrentDictionary<AbstractDownloadBase, int>();
-        var maxRetries = downloadSettings.RetryCount > 0 ? downloadSettings.RetryCount : 3;
-
-        // Retry loop: keep downloading until all files succeed or max retries reached
-        for (var retryRound = 0; retryRound <= maxRetries; retryRound++)
-        {
-            var block = BuildAdvancedDownloadTplBlock(downloadSettings, failureTracker);
-
-            if (retryRound == 0)
+            lock (this._sync)
             {
-                foreach (var downloadFile in fileEnumerable)
-                    block.Post(downloadFile);
+                var state = this._files[file];
+                state.Bytes = Math.Max(state.Bytes, bytesReceived);
+                state.Total = Math.Max(state.Total, totalBytes);
+                state.Speed = finished ? 0 : speed;
+                var fraction = finished ? 1 : state.Total > 0 ? Math.Clamp((double)state.Bytes / state.Total, 0, 1) : 0;
+                state.Fraction = Math.Max(state.Fraction, fraction);
+
+                var now = System.Diagnostics.Stopwatch.GetTimestamp();
+                if (!shouldReport && now - this._lastReportTimestamp >= this._minimumIntervalTicks)
+                    shouldReport = true;
+                if (!shouldReport) return;
+
+                this._lastReportTimestamp = now;
+                var progress = ProgressValue.FromNormalized(this._files.Values.Average(item => item.Fraction));
+                var allBytes = this._files.Values.Sum(item => item.Bytes);
+                var allTotal = this._files.Values.Sum(item => item.Total);
+                var allSpeed = this._files.Values.Sum(item => item.Speed);
+
+                // Keep invocation inside the serialization lock. Concurrent reporters must never deliver an older
+                // snapshot after a newer one and make a UI progress bar jump backwards.
+                file.OnChanged(allSpeed, progress, allBytes, allTotal);
             }
-            else
-            {
-                var failedFiles = failureTracker.Where(kvp => kvp.Value == retryRound).Select(kvp => kvp.Key).ToList();
+        }
 
-                if (failedFiles.Count == 0)
-                    break;
-
-                await Task.Delay(CalculateRetryDelay(retryRound));
-
-                foreach (var failedFile in failedFiles)
-                    block.Post(failedFile);
-            }
-
-            block.Complete();
-            await block.Completion;
-
-            if (failureTracker.IsEmpty)
-                break;
+        sealed class FileProgress(long total)
+        {
+            public long Bytes { get; set; }
+            public long Total { get; set; } = total;
+            public double Fraction { get; set; }
+            public double Speed { get; set; }
         }
     }
-
-    #endregion
 }

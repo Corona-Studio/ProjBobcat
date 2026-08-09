@@ -54,7 +54,8 @@ public sealed class LibraryInfoResolver : ResolverBase
         var checkedLib = 0;
         var parallelOptions = new ParallelOptions
         {
-            MaxDegreeOfParallelism = Math.Min(Environment.ProcessorCount * 2, 16),
+            // Hashing libraries is storage-bound; high fan-out is much slower on rotational and busy disks.
+            MaxDegreeOfParallelism = Math.Clamp(Environment.ProcessorCount / 2, 1, 4),
             CancellationToken = cancellationToken
         };
 
@@ -100,7 +101,7 @@ public sealed class LibraryInfoResolver : ResolverBase
                     try
                     {
                         await using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read,
-                            4096, true);
+                            128 * 1024, FileOptions.Asynchronous | FileOptions.SequentialScan);
                         var computedHash =
                             Convert.ToHexString(await SHA1.HashDataAsync(fs, cts.Token).ConfigureAwait(false));
                         needsDownload = !computedHash.Equals(lib.Sha1, StringComparison.OrdinalIgnoreCase);
@@ -151,7 +152,7 @@ public sealed class LibraryInfoResolver : ResolverBase
                     try
                     {
                         await using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read,
-                            4096, true);
+                            128 * 1024, FileOptions.Asynchronous | FileOptions.SequentialScan);
                         var computedHash =
                             Convert.ToHexString(await SHA1.HashDataAsync(fs, cts.Token).ConfigureAwait(false));
                         needsDownload = !computedHash.Equals(native.FileInfo.Sha1, StringComparison.OrdinalIgnoreCase);

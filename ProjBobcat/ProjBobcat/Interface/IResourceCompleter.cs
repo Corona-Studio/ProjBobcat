@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Event;
@@ -54,6 +55,15 @@ public interface IResourceCompleter : IDisposable
         string basePath,
         bool checkLocalFiles,
         ResolvedGameVersion resolvedGame);
+
+    /// <summary>
+    ///     检查并下载（异步，可取消）
+    /// </summary>
+    Task<TaskResult<ResourceCompleterCheckResult?>> CheckAndDownloadTaskAsync(
+        string basePath,
+        bool checkLocalFiles,
+        ResolvedGameVersion resolvedGame,
+        CancellationToken cancellationToken);
 
     /// <summary>
     ///     解析状态事件

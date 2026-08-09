@@ -287,7 +287,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             if (!Directory.Exists(mappingPath))
                 Directory.CreateDirectory(mappingPath);
 
-            await DownloadHelper.DownloadData(mappingDf, new DownloadSettings
+            await DownloadHelper.DownloadAsync(mappingDf, new DownloadSettings
             {
                 CheckFile = true,
                 DownloadParts = 1,
@@ -465,7 +465,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
         this._needToDownload = libDownloadInfo.Count;
 
-        await DownloadHelper.AdvancedDownloadListFile(libDownloadInfo, new DownloadSettings
+        await DownloadHelper.DownloadAsync(libDownloadInfo, new DownloadSettings
         {
             CheckFile = true,
             DownloadParts = 4,

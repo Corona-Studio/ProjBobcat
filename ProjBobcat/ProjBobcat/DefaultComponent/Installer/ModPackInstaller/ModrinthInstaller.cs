@@ -114,7 +114,7 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
         this.NeedToDownload = downloadFiles.Count;
 
         if (downloadFiles.Count > 0)
-            await DownloadHelper.AdvancedDownloadListFile(downloadFiles, new DownloadSettings
+            await DownloadHelper.DownloadAsync(downloadFiles, new DownloadSettings
             {
                 DownloadParts = 8,
                 RetryCount = downloadFiles.MaxBy(u => u.DownloadUris.Count)!.DownloadUris.Count,

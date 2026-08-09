@@ -17,13 +17,33 @@ public enum HashType
 
 public class DownloadSettings
 {
+    /// <summary>
+    ///     Maximum number of attempts for a request. Values less than one use the adaptive default.
+    /// </summary>
     public int RetryCount { get; init; }
     public bool CheckFile { get; init; }
+
+    /// <summary>
+    ///     Maximum inactivity timeout. It no longer limits the duration of the complete file download.
+    /// </summary>
     public TimeSpan Timeout { get; init; } = TimeSpan.FromSeconds(30);
+
+    /// <summary>
+    ///     Maximum connections for one file. The downloader automatically selects the actual count.
+    ///     Zero uses the default maximum of 16.
+    /// </summary>
     public int DownloadParts { get; init; }
+
+    /// <summary>
+    ///     Connection budget shared by a list download.
+    /// </summary>
     public int DownloadThread { get; init; } = Environment.ProcessorCount;
     public HashType HashType { get; init; }
     public bool ShowDownloadProgress { get; init; }
+
+    public TimeSpan ProgressInterval { get; init; } = TimeSpan.FromMilliseconds(100);
+    public TimeSpan ConnectionTimeout { get; init; } = TimeSpan.FromSeconds(8);
+    public TimeSpan StallTimeout { get; init; } = TimeSpan.FromSeconds(12);
     public required IHttpClientFactory HttpClientFactory { get; init; }
     public string? HttpClientName { get; init; }
 

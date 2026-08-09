@@ -65,6 +65,9 @@ public sealed class AssetInfoResolver : ResolverBase
         if (!assetObjectsDi.Exists) assetObjectsDi.Create();
 
         var assetIndexesPath = Path.Combine(assetIndexesDi.FullName, $"{id}.json");
+        var retriedCorruptAssetIndex = false;
+
+    RetryAssetIndex:
         var isAssetsIndexExists = File.Exists(assetIndexesPath);
 
         if ((this.Versions?.Count ?? 0) == 0 && !isAssetsIndexExists)
@@ -177,14 +180,18 @@ public sealed class AssetInfoResolver : ResolverBase
 
             try
             {
-                await DownloadHelper.DownloadData(dp, new DownloadSettings
+                await DownloadHelper.DownloadAsync(dp, new DownloadSettings
                 {
                     RetryCount = 6,
                     CheckFile = false,
                     Timeout = TimeSpan.FromMinutes(1),
                     DownloadParts = 1,
                     HttpClientFactory = this.HttpClientFactory
-                });
+                }, cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
             }
             catch (Exception e)
             {
@@ -202,7 +209,13 @@ public sealed class AssetInfoResolver : ResolverBase
         {
             await using var assetFs = File.OpenRead(assetIndexesPath);
             assetObject =
-                await JsonSerializer.DeserializeAsync(assetFs, SerializerContext.Default.AssetObjectModel);
+                await JsonSerializer
+                    .DeserializeAsync(assetFs, SerializerContext.Default.AssetObjectModel, cancellationToken)
+                    .ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Exception ex)
         {
@@ -216,7 +229,13 @@ public sealed class AssetInfoResolver : ResolverBase
             {
             }
 
-            yield break;
+            if (!retriedCorruptAssetIndex)
+            {
+                retriedCorruptAssetIndex = true;
+                goto RetryAssetIndex;
+            }
+
+            throw new InvalidDataException("Asset Indexes 文件重新下载后仍无法解析。", ex);
         }
 
         if (assetObject == null)
@@ -231,7 +250,13 @@ public sealed class AssetInfoResolver : ResolverBase
             {
             }
 
-            yield break;
+            if (!retriedCorruptAssetIndex)
+            {
+                retriedCorruptAssetIndex = true;
+                goto RetryAssetIndex;
+            }
+
+            throw new InvalidDataException("Asset Indexes 文件重新下载后仍为空或已损坏。");
         }
 
         var checkedObject = 0;
@@ -242,7 +267,8 @@ public sealed class AssetInfoResolver : ResolverBase
         var channel = Channel.CreateUnbounded<IGameResource>();
         var parallelOptions = new ParallelOptions
         {
-            MaxDegreeOfParallelism = Math.Min(Environment.ProcessorCount * 2, 16),
+            // Asset verification is dominated by random disk reads; excessive fan-out hurts HDDs badly.
+            MaxDegreeOfParallelism = Math.Clamp(Environment.ProcessorCount / 2, 1, 4),
             CancellationToken = cancellationToken
         };
 
@@ -272,8 +298,8 @@ public sealed class AssetInfoResolver : ResolverBase
 
                 try
                 {
-                    await using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096,
-                        true);
+                    await using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read,
+                        128 * 1024, FileOptions.Asynchronous | FileOptions.SequentialScan);
                     var computedHash =
                         Convert.ToHexString(await SHA1.HashDataAsync(fs, cts.Token).ConfigureAwait(false));
                     needsDownload = !computedHash.Equals(fi.Hash, StringComparison.OrdinalIgnoreCase);
