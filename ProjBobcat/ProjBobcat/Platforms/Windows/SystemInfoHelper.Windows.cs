@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Management;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Security;
@@ -434,35 +433,10 @@ public static class SystemInfoHelper
     public static string GetCpuName()
     {
         // Try each method in sequence until we get a valid result
-        var cpuName = TryGetCpuNameFromWmi() ??
-                      TryGetCpuNameFromRegistry() ??
+        var cpuName = TryGetCpuNameFromRegistry() ??
                       TryGetCpuNameFromEnvironment();
 
         return cpuName?.Trim() ?? "Unknown CPU";
-    }
-
-    /// <summary>
-    ///     Try to get the CPU name using Windows Management Instrumentation (WMI)
-    /// </summary>
-    /// <returns>CPU name if successful, null otherwise</returns>
-    private static string? TryGetCpuNameFromWmi()
-    {
-        try
-        {
-            using var searcher = new ManagementObjectSearcher("SELECT Name FROM Win32_Processor");
-            foreach (var obj in searcher.Get())
-            {
-                var name = obj["Name"]?.ToString();
-                if (!string.IsNullOrWhiteSpace(name))
-                    return name;
-            }
-        }
-        catch
-        {
-            // Ignore and return null
-        }
-
-        return null;
     }
 
     /// <summary>
