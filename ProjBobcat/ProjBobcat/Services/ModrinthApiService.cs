@@ -30,7 +30,8 @@ record FileMatchRequestModel(
     [property: JsonPropertyName("game_versions")]
     string[] GameVersions);
 
-[JsonSerializable(typeof(string[]))]
+// JsonContent writes request bodies asynchronously, which requires metadata even for request-only models.
+[JsonSourceGenerationOptions(GenerationMode = JsonSourceGenerationMode.Metadata)]
 [JsonSerializable(typeof(FileMatchRequestModel))]
 [JsonSerializable(typeof(VersionMatchByHashRequestModel))]
 partial class ModrinthModelContext : JsonSerializerContext;

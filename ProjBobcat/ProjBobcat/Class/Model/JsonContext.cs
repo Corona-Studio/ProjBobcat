@@ -21,19 +21,25 @@ using ProjBobcat.Class.Model.ServerPing;
 using ProjBobcat.Class.Model.YggdrasilAuth;
 using ProjBobcat.DefaultComponent.Authenticator;
 using ProjBobcat.Services;
-using AuthTokenRequestModel = ProjBobcat.Class.Model.MicrosoftAuth.AuthTokenRequestModel;
+using AuthTokenRequestModel = ProjBobcat.Class.Model.YggdrasilAuth.AuthTokenRequestModel;
 
 namespace ProjBobcat.Class.Model;
 
-[JsonSerializable(typeof(string[]))]
+// Metadata also supports JsonContent's asynchronous write path. Only models serialized synchronously opt into
+// the fast path below.
+[JsonSourceGenerationOptions(GenerationMode = JsonSourceGenerationMode.Metadata)]
+[JsonSerializable(typeof(string[]),
+    GenerationMode = JsonSourceGenerationMode.Metadata | JsonSourceGenerationMode.Serialization)]
 [JsonSerializable(typeof(JsonElement[]))]
 [JsonSerializable(typeof(Dictionary<string, string>))]
-[JsonSerializable(typeof(Dictionary<string, string[]>))]
+[JsonSerializable(typeof(Dictionary<string, string[]>), GenerationMode = JsonSourceGenerationMode.Serialization)]
 [JsonSerializable(typeof(AssetObjectModel))]
-[JsonSerializable(typeof(RawVersionModel))]
+[JsonSerializable(typeof(RawVersionModel),
+    GenerationMode = JsonSourceGenerationMode.Metadata | JsonSourceGenerationMode.Serialization)]
 [JsonSerializable(typeof(GameRules[]))]
 [JsonSerializable(typeof(JvmRules[]))]
-[JsonSerializable(typeof(CurseForgeManifestModel))]
+[JsonSerializable(typeof(CurseForgeManifestModel),
+    GenerationMode = JsonSourceGenerationMode.Metadata | JsonSourceGenerationMode.Serialization)]
 [JsonSerializable(typeof(FeaturedQueryOptions))]
 [JsonSerializable(typeof(FabricLoaderArtifactModel))]
 [JsonSerializable(typeof(FabricModInfoModel))]
@@ -43,8 +49,10 @@ namespace ProjBobcat.Class.Model;
 [JsonSerializable(typeof(GameResourcePackModel))]
 [JsonSerializable(typeof(ObjectResourcePackDescription[]))]
 [JsonSerializable(typeof(NativeReplaceModel))]
-[JsonSerializable(typeof(LauncherAccountModel))]
-[JsonSerializable(typeof(LauncherProfileModel))]
+[JsonSerializable(typeof(LauncherAccountModel),
+    GenerationMode = JsonSourceGenerationMode.Metadata | JsonSourceGenerationMode.Serialization)]
+[JsonSerializable(typeof(LauncherProfileModel),
+    GenerationMode = JsonSourceGenerationMode.Metadata | JsonSourceGenerationMode.Serialization)]
 [JsonSerializable(typeof(LiteLoaderDownloadVersionModel))]
 [JsonSerializable(typeof(DeviceIdResponseModel))]
 [JsonSerializable(typeof(GraphAuthResultModel))]
@@ -58,7 +66,8 @@ namespace ProjBobcat.Class.Model;
 [JsonSerializable(typeof(MojangOwnershipResponseModel))]
 [JsonSerializable(typeof(MojangProfileResponseModel))]
 [JsonSerializable(typeof(ModrinthCategoryInfo[]))]
-[JsonSerializable(typeof(ModrinthModPackIndexModel))]
+[JsonSerializable(typeof(ModrinthModPackIndexModel),
+    GenerationMode = JsonSourceGenerationMode.Metadata | JsonSourceGenerationMode.Serialization)]
 [JsonSerializable(typeof(ModrinthProjectDependencyInfo))]
 [JsonSerializable(typeof(ModrinthProjectInfo[]))]
 [JsonSerializable(typeof(ModrinthSearchResult))]
