@@ -32,7 +32,7 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
         ArgumentException.ThrowIfNullOrEmpty(this.OptifineJarPath);
         ArgumentNullException.ThrowIfNull(this.OptifineDownloadVersion);
 
-        this.InvokeStatusChangedEvent("开始安装 Optifine", ProgressValue.Start);
+        this.InvokeStatusChangedEvent("Starting OptiFine installation", ProgressValue.Start);
         var mcVersion = this.OptifineDownloadVersion.McVersion;
         var edition = this.OptifineDownloadVersion.Type;
         var release = this.OptifineDownloadVersion.Patch;
@@ -47,7 +47,7 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
         if (!di.Exists)
             di.Create();
 
-        this.InvokeStatusChangedEvent("读取 Optifine 数据", ProgressValue.FromDisplay(20));
+        this.InvokeStatusChangedEvent("Reading OptiFine data", ProgressValue.FromDisplay(20));
 
         await using var fs = File.OpenRead(this.OptifineJarPath);
         await using var archive = new ZipArchive(fs, ZipArchiveMode.Read);
@@ -68,7 +68,7 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
         var launchWrapperEntry =
             entries.FirstOrDefault(x => x.FullName.Equals($"launchwrapper-of-{launchWrapperVersion}.jar"));
 
-        this.InvokeStatusChangedEvent("生成版本总成", ProgressValue.FromDisplay(40));
+        this.InvokeStatusChangedEvent("Generating version metadata", ProgressValue.FromDisplay(40));
 
         var versionModel = new RawVersionModel
         {
@@ -113,7 +113,7 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
             launchWrapperVersion);
         var libDi = new DirectoryInfo(librariesPath);
 
-        this.InvokeStatusChangedEvent("写入 Optifine 数据", ProgressValue.FromDisplay(60));
+        this.InvokeStatusChangedEvent("Writing OptiFine data", ProgressValue.FromDisplay(60));
 
         if (!libDi.Exists)
             libDi.Create();
@@ -122,7 +122,7 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
             $"launchwrapper-of-{launchWrapperVersion}.jar");
         if (!File.Exists(launchWrapperPath) && launchWrapperEntry != null)
         {
-            this.InvokeStatusChangedEvent($"解压 launcherwrapper-{launchWrapperVersion} 数据",
+            this.InvokeStatusChangedEvent($"Extracting launcherwrapper-{launchWrapperVersion} data",
                 ProgressValue.FromDisplay(65));
 
             await using var launchWrapperFs = File.OpenWrite(launchWrapperPath);
@@ -141,7 +141,7 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
         if (!optifineLibPathDi.Exists)
             optifineLibPathDi.Create();
 
-        this.InvokeStatusChangedEvent("执行安装脚本", ProgressValue.FromDisplay(80));
+        this.InvokeStatusChangedEvent("Running the installation script", ProgressValue.FromDisplay(80));
 
         var ps = new ProcessStartInfo(this.JavaExecutablePath)
         {
@@ -176,11 +176,11 @@ public class OptifineInstaller : InstallerBase, IOptifineInstaller
         };
 
         await p.WaitForExitAsync();
-        this.InvokeStatusChangedEvent("安装即将完成", ProgressValue.FromDisplay(95));
+        this.InvokeStatusChangedEvent("Finishing installation", ProgressValue.FromDisplay(95));
 
         ArgumentOutOfRangeException.ThrowIfGreaterThan(errList.Count, 0);
 
-        this.InvokeStatusChangedEvent("Optifine 安装完成", ProgressValue.Finished);
+        this.InvokeStatusChangedEvent("OptiFine installation completed", ProgressValue.Finished);
 
         return id;
 

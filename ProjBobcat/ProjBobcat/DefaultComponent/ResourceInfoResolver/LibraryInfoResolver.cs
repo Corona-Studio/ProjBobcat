@@ -41,7 +41,7 @@ public sealed class LibraryInfoResolver : ResolverBase
 
         cancellationToken.ThrowIfCancellationRequested();
 
-        this.OnResolve("开始进行游戏资源(Library)检查", ProgressValue.Start);
+        this.OnResolve("Checking game libraries", ProgressValue.Start);
         if (resolvedGame.Natives.Count == 0 && resolvedGame.Libraries.Count == 0)
             yield break;
 
@@ -72,7 +72,7 @@ public sealed class LibraryInfoResolver : ResolverBase
 
         await processingTask.ConfigureAwait(false);
 
-        this.OnResolve("检查Library完成", ProgressValue.Finished);
+        this.OnResolve("Library check completed", ProgressValue.Finished);
 
         async Task ProcessLibraries(IReadOnlyList<FileInfo> libraries)
         {
@@ -125,7 +125,7 @@ public sealed class LibraryInfoResolver : ResolverBase
         {
             if (natives.Count == 0) return;
 
-            this.OnResolve("检索并验证 Native Libraries", ProgressValue.Start);
+            this.OnResolve("Retrieving and validating native libraries", ProgressValue.Start);
             var nativeChecked = 0;
             var libCount = natives.Count;
 

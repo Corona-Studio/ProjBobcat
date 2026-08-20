@@ -117,7 +117,7 @@ public class DefaultResourceCompleter : IResourceCompleter
         this.OnResolveComplete(this, new GameResourceInfoResolveEventArgs
         {
             Progress = ProgressValue.Start,
-            Status = "正在进行资源检查"
+            Status = "Checking game resources"
         });
 
         using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -147,7 +147,9 @@ public class DefaultResourceCompleter : IResourceCompleter
             this.OnResolveComplete(this, new GameResourceInfoResolveEventArgs
             {
                 Progress = files.Length == 0 ? ProgressValue.Finished : ProgressValue.FromNormalized(0.5),
-                Status = files.Length == 0 ? "资源检查完成" : $"资源检查完成，发现 {files.Length} 个文件需要修复"
+                Status = files.Length == 0
+                    ? "Resource check completed"
+                    : $"Resource check completed; {files.Length} file(s) need to be repaired"
             });
 
             if (files.Length > 0)
@@ -177,7 +179,7 @@ public class DefaultResourceCompleter : IResourceCompleter
             this.OnResolveComplete(this, new GameResourceInfoResolveEventArgs
             {
                 Progress = ProgressValue.Start,
-                Status = "资源检查超时"
+                Status = "Resource check timed out"
             });
 
             return new TaskResult<ResourceCompleterCheckResult?>(TaskResultStatus.Error,
@@ -197,7 +199,7 @@ public class DefaultResourceCompleter : IResourceCompleter
             this.OnResolveComplete(this, new GameResourceInfoResolveEventArgs
             {
                 Progress = ProgressValue.Start,
-                Status = $"资源检查失败：{ex.Message}"
+                Status = $"Resource check failed: {ex.Message}"
             });
 
             return new TaskResult<ResourceCompleterCheckResult?>(TaskResultStatus.Error,
@@ -227,10 +229,10 @@ public class DefaultResourceCompleter : IResourceCompleter
         {
             Progress = ProgressValue.Finished,
             Status = Interlocked.Read(ref this._needToDownload) == 0
-                ? "资源检查完成"
+                ? "Resource check completed"
                 : result == TaskResultStatus.Success
-                    ? "资源修复完成"
-                    : "资源修复完成，但有文件下载失败"
+                    ? "Resource repair completed"
+                    : "Resource repair completed, but some files failed to download"
         });
 
         return new TaskResult<ResourceCompleterCheckResult?>(result, value: resultArgs);

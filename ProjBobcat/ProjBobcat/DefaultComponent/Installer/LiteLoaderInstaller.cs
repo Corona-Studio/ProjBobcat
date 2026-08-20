@@ -33,12 +33,12 @@ public class LiteLoaderInstaller : InstallerBase, ILiteLoaderInstaller
         ArgumentNullException.ThrowIfNull(this.InheritVersion);
         ArgumentNullException.ThrowIfNull(this.VersionModel);
 
-        this.InvokeStatusChangedEvent("开始安装 LiteLoader", ProgressValue.Start);
+        this.InvokeStatusChangedEvent("Starting LiteLoader installation", ProgressValue.Start);
 
         var vl = new DefaultVersionLocator(this.RootPath, Guid.Empty);
         var wrappedRawVersion = vl.ParseRawVersion(this.VersionModel.McVersion);
 
-        this.InvokeStatusChangedEvent("解析版本", ProgressValue.FromDisplay(10));
+        this.InvokeStatusChangedEvent("Resolving version", ProgressValue.FromDisplay(10));
 
         if (wrappedRawVersion.Item1 != null || wrappedRawVersion.Item2 == null)
             throw new UnknownGameNameException(this.VersionModel.McVersion);
@@ -46,7 +46,7 @@ public class LiteLoaderInstaller : InstallerBase, ILiteLoaderInstaller
         var rawVersion = wrappedRawVersion.Item2;
 
         if (rawVersion.Id != this.VersionModel.McVersion)
-            throw new NotSupportedException("LiteLoader 并不支持这个 MineCraft 版本");
+            throw new NotSupportedException("LiteLoader does not support this Minecraft version.");
 
         var id = string.IsNullOrEmpty(this.CustomId)
             ? $"{this.VersionModel.McVersion}-LiteLoader{this.VersionModel.McVersion}-{this.VersionModel.Version}"
@@ -55,7 +55,7 @@ public class LiteLoaderInstaller : InstallerBase, ILiteLoaderInstaller
         var timeStamp = long.TryParse(this.VersionModel.Build.Timestamp, out var timeResult) ? timeResult : 0;
         var time = TimeHelper.Unix11ToDateTime(timeStamp);
 
-        this.InvokeStatusChangedEvent("解析 Libraries", ProgressValue.FromDisplay(30));
+        this.InvokeStatusChangedEvent("Resolving libraries", ProgressValue.FromDisplay(30));
 
         var libraries = new List<Library>
         {
@@ -75,7 +75,7 @@ public class LiteLoaderInstaller : InstallerBase, ILiteLoaderInstaller
 
         libraries.AddRange(this.VersionModel.Build.Libraries);
 
-        this.InvokeStatusChangedEvent("Libraries 解析完成", ProgressValue.FromDisplay(60));
+        this.InvokeStatusChangedEvent("Library resolution completed", ProgressValue.FromDisplay(60));
 
         const string mainClass = "net.minecraft.launchwrapper.Launch";
         var resultModel = new RawVersionModel
@@ -118,7 +118,7 @@ public class LiteLoaderInstaller : InstallerBase, ILiteLoaderInstaller
 
         await File.WriteAllTextAsync(jsonPath, jsonContent);
 
-        this.InvokeStatusChangedEvent("LiteLoader 安装完成", ProgressValue.Finished);
+        this.InvokeStatusChangedEvent("LiteLoader installation completed", ProgressValue.Finished);
 
         return id;
     }

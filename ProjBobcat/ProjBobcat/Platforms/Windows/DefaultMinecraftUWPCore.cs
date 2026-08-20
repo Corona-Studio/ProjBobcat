@@ -28,8 +28,8 @@ public class DefaultMineCraftUWPCore : GameCoreBase
                 ErrorType = LaunchErrorType.OperationFailed,
                 Error = new ErrorModel
                 {
-                    Error = "找不到游戏",
-                    ErrorMessage = "没有找到UWP版本的Minecraft"
+                    Error = "Game not found",
+                    ErrorMessage = "No UWP version of Minecraft was found."
                 }
             };
 
@@ -52,7 +52,7 @@ public class DefaultMineCraftUWPCore : GameCoreBase
         };
         launchWrapper.Do();
 
-        this.InvokeLaunchLogThenStart(string.Empty, "启动游戏", ref timestamp);
+        this.InvokeLaunchLogThenStart(string.Empty, "Launching game", ref timestamp);
 
         Task.Run(launchWrapper.Process.WaitForExit)
             .ContinueWith(task =>

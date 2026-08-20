@@ -194,7 +194,7 @@ public static class GameResourcesResolveHelper
         {
             var errorList = new[]
             {
-                "[!] 数据包 JSON 异常",
+                "[!] Invalid resource pack JSON",
                 e.Message
             };
             return new GameModResolvedInfo(null, file, errorList.ToImmutableList(), Path.GetFileName(file), null,
@@ -338,7 +338,7 @@ public static class GameResourcesResolveHelper
             result ??= new GameModResolvedInfo(
                 null,
                 file,
-                ["[!] 未知的数据包类型"],
+                ["[!] Unknown resource pack type"],
                 Path.GetFileName(file),
                 null,
                 "Unknown",
@@ -416,7 +416,7 @@ public static class GameResourcesResolveHelper
         }
         catch (JsonException e)
         {
-            descriptions = [new PlainTextResourcePackDescription($"[!] 数据包 JSON 异常: {e.Message}")];
+            descriptions = [new PlainTextResourcePackDescription($"[!] Invalid resource pack JSON: {e.Message}")];
             version = -1;
         }
 
@@ -447,7 +447,7 @@ public static class GameResourcesResolveHelper
         }
         catch (JsonException e)
         {
-            descriptions = [new PlainTextResourcePackDescription($"[!] 数据包 JSON 异常: {e.Message}")];
+            descriptions = [new PlainTextResourcePackDescription($"[!] Invalid resource pack JSON: {e.Message}")];
             version = -1;
         }
 

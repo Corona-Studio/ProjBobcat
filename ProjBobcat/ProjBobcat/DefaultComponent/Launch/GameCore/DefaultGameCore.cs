@@ -178,9 +178,9 @@ public sealed partial class DefaultGameCore : GameCoreBase
                     ErrorType = LaunchErrorType.OperationFailed,
                     Error = new ErrorModel
                     {
-                        Error = "解析游戏失败",
-                        ErrorMessage = "我们在解析游戏时出现了错误",
-                        Cause = $"[{brokenVersion.BrokenReason}] 这有可能是因为您的游戏JSON文件损坏所导致的问题"
+                        Error = "Failed to resolve the game.",
+                        ErrorMessage = "An error occurred while resolving the game.",
+                        Cause = $"[{brokenVersion.BrokenReason}] The game JSON file may be corrupted."
                     }
                 };
 
@@ -188,13 +188,13 @@ public sealed partial class DefaultGameCore : GameCoreBase
 
             //在以下方法中，我们存储前一个步骤的时间并且重置秒表，以此逐步测量启动时间。
             //In the method InvokeLaunchLogThenStart(args), we storage the time span of the previous process and restart the watch in order that the time used in each step is recorded.
-            this.InvokeLaunchLogThenStart(settings.Version, "解析游戏", ref currentTimestamp);
+            this.InvokeLaunchLogThenStart(settings.Version, "Resolving game", ref currentTimestamp);
 
             #endregion
 
             #region 验证账户凭据 Legal Account Verifier
 
-            this.InvokeLaunchLogThenStart(settings.Version, "正在验证账户凭据", ref currentTimestamp);
+            this.InvokeLaunchLogThenStart(settings.Version, "Validating account credentials", ref currentTimestamp);
 
             //以下代码实现了账户模式从离线到在线的切换。
             //The following code switches account mode between offline and yggdrasil.
@@ -206,7 +206,7 @@ public sealed partial class DefaultGameCore : GameCoreBase
                 _ => null
             };
 
-            this.InvokeLaunchLogThenStart(settings.Version, "账户凭据验证完成", ref currentTimestamp);
+            this.InvokeLaunchLogThenStart(settings.Version, "Account credential validation completed", ref currentTimestamp);
 
             //错误处理
             //Error processor
@@ -218,16 +218,16 @@ public sealed partial class DefaultGameCore : GameCoreBase
                     ErrorType = LaunchErrorType.AuthFailed,
                     Error = new ErrorModel
                     {
-                        Error = "验证失败",
+                        Error = "Authentication failed.",
                         Cause = authResult == null
-                            ? "未知的验证器"
+                            ? "Unknown authenticator."
                             : authResult.AuthStatus switch
                             {
-                                AuthStatus.Failed => "可能是因为用户名或密码错误，或是验证服务器暂时未响应",
-                                AuthStatus.Unknown => "未知错误",
-                                _ => "未知错误"
+                                AuthStatus.Failed => "The username or password may be incorrect, or the authentication server may be unavailable.",
+                                AuthStatus.Unknown => "Unknown error.",
+                                _ => "Unknown error."
                             },
-                        ErrorMessage = "无法验证凭据的有效性"
+                        ErrorMessage = "Failed to validate the credentials."
                     }
                 };
 
@@ -238,9 +238,9 @@ public sealed partial class DefaultGameCore : GameCoreBase
                     ErrorType = LaunchErrorType.OperationFailed,
                     Error = new ErrorModel
                     {
-                        Error = "验证失败",
-                        Cause = "没有选择用于启动游戏的Profile",
-                        ErrorMessage = "没有选择任何Profile"
+                        Error = "Authentication failed.",
+                        Cause = "No profile was selected for launching the game.",
+                        ErrorMessage = "No profile was selected."
                     }
                 };
 
@@ -260,9 +260,9 @@ public sealed partial class DefaultGameCore : GameCoreBase
                     ErrorType = LaunchErrorType.NoJava,
                     Error = new ErrorModel
                     {
-                        Cause = "未找到JRE运行时，可能是输入的路径为空或出错，亦或是指定的文件并不存在。",
-                        Error = "未找到JRE运行时",
-                        ErrorMessage = "输入的路径为空或出错，亦或是指定的文件并不存在"
+                        Cause = "The JRE runtime was not found. The supplied path may be empty or invalid, or the specified file may not exist.",
+                        Error = "JRE runtime not found.",
+                        ErrorMessage = "The supplied path is empty or invalid, or the specified file does not exist."
                     }
                 };
 
@@ -284,16 +284,16 @@ public sealed partial class DefaultGameCore : GameCoreBase
                     ErrorType = LaunchErrorType.OperationFailed,
                     Error = new ErrorModel
                     {
-                        Error = "解析游戏失败",
-                        ErrorMessage = "我们在解析游戏时出现了错误",
-                        Cause = "这有可能是因为您的游戏JSON文件损坏所导致的问题"
+                        Error = "Failed to resolve the game.",
+                        ErrorMessage = "An error occurred while resolving the game.",
+                        Cause = "The game JSON file may be corrupted."
                     }
                 };
 
             var nativeRoot = Path.Combine(this.RootPath, GamePathHelper.CreateNativeRoot(settings.Version));
             var arguments =
                 argumentParser.GenerateLaunchArguments(nativeRoot, version, resolvedVersion, settings, authResult);
-            this.InvokeLaunchLogThenStart(settings.Version, "解析启动参数", ref currentTimestamp);
+            this.InvokeLaunchLogThenStart(settings.Version, "Resolving launch arguments", ref currentTimestamp);
 
             //通过String Builder格式化参数。（转化成字符串）
             //Format the arguments using string builder.(Convert to string)
@@ -340,7 +340,7 @@ public sealed partial class DefaultGameCore : GameCoreBase
                             continue;
                         }
 
-                        this.InvokeLaunchLogThenStart(settings.Version, $"[解压 Natives] - {entry.FullName}",
+                        this.InvokeLaunchLogThenStart(settings.Version, $"[Extracting natives] - {entry.FullName}",
                             ref currentTimestamp);
 
                         var fi = new FileInfo(extractPath);
@@ -443,7 +443,7 @@ public sealed partial class DefaultGameCore : GameCoreBase
                 }
             });
 
-            this.InvokeLaunchLogThenStart(settings.Version, "设置 log4j 缓解措施", ref currentTimestamp);
+            this.InvokeLaunchLogThenStart(settings.Version, "Applying log4j mitigation", ref currentTimestamp);
 
             #endregion
 
@@ -456,7 +456,7 @@ public sealed partial class DefaultGameCore : GameCoreBase
             };
 
             launchWrapper.Do();
-            this.InvokeLaunchLogThenStart(settings.Version, "启动游戏", ref currentTimestamp);
+            this.InvokeLaunchLogThenStart(settings.Version, "Launching game", ref currentTimestamp);
 
             if (launchWrapper.Process == null)
             {

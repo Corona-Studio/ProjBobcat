@@ -44,7 +44,7 @@ public sealed class AssetInfoResolver : ResolverBase
 
         cancellationToken.ThrowIfCancellationRequested();
 
-        this.OnResolve("开始进行游戏资源(Asset)检查", ProgressValue.Start);
+        this.OnResolve("Checking game assets", ProgressValue.Start);
 
         if (resolvedGame.AssetInfo == null) yield break;
 
@@ -72,7 +72,7 @@ public sealed class AssetInfoResolver : ResolverBase
 
         if ((this.Versions?.Count ?? 0) == 0 && !isAssetsIndexExists)
         {
-            this.OnResolve("没有提供 Version Manifest， 开始下载", ProgressValue.Start);
+            this.OnResolve("No version manifest was provided; downloading it", ProgressValue.Start);
 
             using var vmJsonReq =
                 new HttpRequestMessage(HttpMethod.Get, this.VersionManifestUrl ?? DefaultVersionManifestUrl);
@@ -92,7 +92,7 @@ public sealed class AssetInfoResolver : ResolverBase
 
         if (!isAssetsIndexExists)
         {
-            this.OnResolve("没有发现 Asset Indexes 文件， 开始下载", ProgressValue.Start);
+            this.OnResolve("No asset index file was found; downloading it", ProgressValue.Start);
 
             var assetIndexDownloadUri = resolvedGame.AssetInfo?.Url;
 
@@ -195,14 +195,14 @@ public sealed class AssetInfoResolver : ResolverBase
             }
             catch (Exception e)
             {
-                this.OnResolve($"解析Asset Indexes 文件失败！原因：{e.Message}", ProgressValue.Start);
+                this.OnResolve($"Failed to parse the asset index file. Reason: {e.Message}", ProgressValue.Start);
                 yield break;
             }
 
-            this.OnResolve("Asset Indexes 文件下载完成", ProgressValue.Finished);
+            this.OnResolve("Asset index download completed", ProgressValue.Finished);
         }
 
-        this.OnResolve("开始解析Asset Indexes 文件...", ProgressValue.Start);
+        this.OnResolve("Parsing the asset index file...", ProgressValue.Start);
 
         AssetObjectModel? assetObject;
         try
@@ -219,7 +219,7 @@ public sealed class AssetInfoResolver : ResolverBase
         }
         catch (Exception ex)
         {
-            this.OnResolve($"解析Asset Indexes 文件失败！原因：{ex.Message}", ProgressValue.Start);
+            this.OnResolve($"Failed to parse the asset index file. Reason: {ex.Message}", ProgressValue.Start);
 
             try
             {
@@ -235,12 +235,12 @@ public sealed class AssetInfoResolver : ResolverBase
                 goto RetryAssetIndex;
             }
 
-            throw new InvalidDataException("Asset Indexes 文件重新下载后仍无法解析。", ex);
+            throw new InvalidDataException("The asset index file could not be parsed after being downloaded again.", ex);
         }
 
         if (assetObject == null)
         {
-            this.OnResolve("解析Asset Indexes 文件失败！原因：文件可能损坏或为空", ProgressValue.Start);
+            this.OnResolve("Failed to parse the asset index file because it may be empty or corrupted", ProgressValue.Start);
 
             try
             {
@@ -256,13 +256,13 @@ public sealed class AssetInfoResolver : ResolverBase
                 goto RetryAssetIndex;
             }
 
-            throw new InvalidDataException("Asset Indexes 文件重新下载后仍为空或已损坏。");
+            throw new InvalidDataException("The asset index file is still empty or corrupted after being downloaded again.");
         }
 
         var checkedObject = 0;
         var objectCount = assetObject.Objects.Count;
 
-        this.OnResolve("检索并验证 Asset 资源", ProgressValue.Start);
+        this.OnResolve("Retrieving and validating assets", ProgressValue.Start);
 
         var channel = Channel.CreateUnbounded<IGameResource>();
         var parallelOptions = new ParallelOptions
@@ -338,6 +338,6 @@ public sealed class AssetInfoResolver : ResolverBase
 
         await processingTask.ConfigureAwait(false);
 
-        this.OnResolve("Assets 解析完成", ProgressValue.Finished);
+        this.OnResolve("Asset resolution completed", ProgressValue.Finished);
     }
 }

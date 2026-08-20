@@ -11,9 +11,9 @@ public sealed class HashMismatchException(
     static string GetMessage(string filePath, string expectedHash, string actualHash)
     {
         return $"""
-                文件 {filePath} 的哈希值不匹配。
-                期望哈希值：{expectedHash}
-                实际哈希值：{actualHash}
+                The hash of file {filePath} does not match.
+                Expected hash: {expectedHash}
+                Actual hash: {actualHash}
                 """;
     }
 }

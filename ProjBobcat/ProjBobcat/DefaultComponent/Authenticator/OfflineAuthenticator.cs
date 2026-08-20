@@ -69,9 +69,9 @@ public class OfflineAuthenticator : IAuthenticator
                 AuthStatus = AuthStatus.Failed,
                 Error = new ErrorModel
                 {
-                    Cause = "添加记录时出现错误",
-                    Error = "无法添加账户",
-                    ErrorMessage = "请检查 launcher_accounts.json 的权限"
+                    Cause = "An error occurred while adding the record.",
+                    Error = "Failed to add the account.",
+                    ErrorMessage = "Check the permissions for launcher_accounts.json."
                 }
             };
 
@@ -116,7 +116,7 @@ public class OfflineAuthenticator : IAuthenticator
     ///     验证凭据。
     /// </summary>
     /// <returns>验证结果。</returns>
-    [Obsolete("此方法已过时，请使用 Auth(bool) 代替。")]
+    [Obsolete("This method is obsolete. Use Auth(bool) instead.")]
     public AuthResultBase GetLastAuthResult()
     {
         return this.Auth();

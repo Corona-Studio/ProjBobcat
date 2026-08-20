@@ -23,7 +23,7 @@ public class FabricInstaller : InstallerBase, IFabricInstaller
 
     public async Task<string> InstallTaskAsync()
     {
-        this.InvokeStatusChangedEvent("开始安装", ProgressValue.Start);
+        this.InvokeStatusChangedEvent("Starting installation", ProgressValue.Start);
 
         ArgumentException.ThrowIfNullOrEmpty(this.RootPath);
 
@@ -75,7 +75,7 @@ public class FabricInstaller : InstallerBase, IFabricInstaller
         else
             DirectoryHelper.CleanDirectory(di.FullName);
 
-        this.InvokeStatusChangedEvent("生成版本总成", ProgressValue.FromDisplay(70));
+        this.InvokeStatusChangedEvent("Generating version metadata", ProgressValue.FromDisplay(70));
 
         var resultModel = new RawVersionModel
         {
@@ -92,11 +92,11 @@ public class FabricInstaller : InstallerBase, IFabricInstaller
         var jsonContent = JsonSerializer.Serialize(resultModel, typeof(RawVersionModel),
             new SerializerContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
-        this.InvokeStatusChangedEvent("将版本 Json 写入文件", ProgressValue.FromDisplay(95));
+        this.InvokeStatusChangedEvent("Writing the version JSON file", ProgressValue.FromDisplay(95));
 
         await File.WriteAllTextAsync(jsonPath, jsonContent);
 
-        this.InvokeStatusChangedEvent("安装完成", ProgressValue.Finished);
+        this.InvokeStatusChangedEvent("Installation completed", ProgressValue.Finished);
 
         return id;
     }

@@ -40,12 +40,12 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         ArgumentException.ThrowIfNullOrEmpty(this.GameId);
         ArgumentException.ThrowIfNullOrEmpty(this.RootPath);
 
-        this.InvokeStatusChangedEvent("开始安装", ProgressValue.Start);
+        this.InvokeStatusChangedEvent("Starting installation", ProgressValue.Start);
 
         await this.DownloadModsTaskAsync();
         await this.InstallOverridesTaskAsync();
 
-        this.InvokeStatusChangedEvent("安装完成", ProgressValue.Finished);
+        this.InvokeStatusChangedEvent("Installation completed", ProgressValue.Finished);
     }
 
     public override async Task DownloadModsTaskAsync(CancellationToken cancellationToken = default)
@@ -56,7 +56,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
         var manifest = await ReadManifestTask(this.ModPackPath);
 
-        ArgumentNullException.ThrowIfNull(manifest, "无法读取到 CurseForge 的 manifest 文件");
+        ArgumentNullException.ThrowIfNull(manifest, "Failed to read the CurseForge manifest file.");
 
         var idPath = Path.Combine(this.RootPath, GamePathHelper.GetGamePath(this.GameId));
         var retryCount = Math.Max(1, this.RetryCount);
@@ -85,7 +85,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
             }
         }
 
-        ArgumentNullException.ThrowIfNull(files, "无法获取 CurseForge 的文件列表");
+        ArgumentNullException.ThrowIfNull(files, "Failed to retrieve the CurseForge file list.");
 
         var missingFileIds = fileIds.Except(files.Select(file => file.Id)).ToArray();
 
@@ -131,7 +131,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
             }
         }
 
-        ArgumentNullException.ThrowIfNull(modProjectDetails, "无法获取 CurseForge 的模组列表");
+        ArgumentNullException.ThrowIfNull(modProjectDetails, "Failed to retrieve the CurseForge mod list.");
         ArgumentOutOfRangeException.ThrowIfLessThan(fileIds.Length, files.Length);
 
         var missingProjectIds = projectIds.Except(modProjectDetails.Select(mod => mod.Id)).ToArray();
@@ -240,7 +240,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
             downloadFiles.Add(downloadFile);
         }
 
-        this.InvokeStatusChangedEvent("成功解析整合包模组的下载地址", ProgressValue.Finished);
+        this.InvokeStatusChangedEvent("Successfully resolved the modpack mod download URLs", ProgressValue.Finished);
 
         await this.DownloadFilesTaskAsync(downloadFiles, new DownloadSettings
         {
@@ -261,7 +261,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
         var manifest = await ReadManifestTask(this.ModPackPath);
 
-        ArgumentNullException.ThrowIfNull(manifest, "无法读取到 CurseForge 的 manifest 文件");
+        ArgumentNullException.ThrowIfNull(manifest, "Failed to read the CurseForge manifest file.");
 
         var idPath = Path.Combine(this.RootPath, GamePathHelper.GetGamePath(this.GameId));
 
@@ -303,7 +303,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
 
             var progress = ProgressValue.Create(this.TotalDownloaded, this.NeedToDownload);
 
-            this.InvokeStatusChangedEvent($"解压缩安装文件：{subPathName}", progress);
+            this.InvokeStatusChangedEvent($"Extracting installation file: {subPathName}", progress);
 
             await using var fs = File.OpenWrite(path);
             await using var entryStream = await entry.OpenAsync();

@@ -36,13 +36,13 @@ public abstract class ModPackInstallerBase : InstallerBase
         this.TotalDownloaded++;
 
         var progress = ProgressValue.Create(this.TotalDownloaded, this.NeedToDownload);
-        var retryStr = file.RetryCount > 0 ? $"[重试 - {file.RetryCount}] " : string.Empty;
+        var retryStr = file.RetryCount > 0 ? $"[Retry - {file.RetryCount}] " : string.Empty;
         var fileName = file.FileName.Length > 20
             ? $"{file.FileName[..20]}..."
             : file.FileName;
 
         this.InvokeStatusChangedEvent(
-            $"{retryStr}下载整合包中的 Mods - {fileName} ({this.TotalDownloaded} / {this.NeedToDownload})",
+            $"{retryStr}Downloading modpack mods - {fileName} ({this.TotalDownloaded} / {this.NeedToDownload})",
             progress);
     }
 
@@ -81,7 +81,7 @@ public abstract class ModPackInstallerBase : InstallerBase
         if (failedFiles.Length == 0) return;
 
         this.InvokeStatusChangedEvent(
-            $"自动重试下载失败的 Mods（{failedFiles.Length}）",
+            $"Automatically retrying failed mod downloads ({failedFiles.Length})",
             ProgressValue.Start);
 
         await Task.Delay(DownloadHelper.CalculateRetryDelay(1), cancellationToken).ConfigureAwait(false);
@@ -104,14 +104,14 @@ public abstract class ModPackInstallerBase : InstallerBase
             };
 
             return new Exception($"""
-                                 文件名：{failedFile.FileName}
-                                 下载链接：[{string.Join(',', urls)}]
-                                 重试次数：{failedFile.RetryCount}
+                                 File name: {failedFile.FileName}
+                                 Download URLs: [{string.Join(',', urls)}]
+                                 Retry count: {failedFile.RetryCount}
                                  """);
         });
 
         throw new AggregateException(
-            "整合包中的部分文件在自动重试后仍然下载失败。请检查网络后重试。",
+            "Some modpack files still failed to download after automatic retries. Check the network connection and try again.",
             failedFileExceptions);
     }
 }

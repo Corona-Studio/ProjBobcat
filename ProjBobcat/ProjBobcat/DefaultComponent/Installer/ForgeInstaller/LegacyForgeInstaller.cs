@@ -41,7 +41,7 @@ public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
     {
         try
         {
-            this.InvokeStatusChangedEvent("解压安装文件", ProgressValue.Start);
+            this.InvokeStatusChangedEvent("Extracting installation files", ProgressValue.Start);
 
             await using var forgeFs = File.OpenRead(this.ForgeExecutablePath);
             await using var reader = new ZipArchive(forgeFs, ZipArchiveMode.Read);
@@ -57,9 +57,9 @@ public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
                 {
                     Error = new ErrorModel
                     {
-                        Cause = "未找到 install_profile.json",
-                        Error = "未找到 install_profile.json",
-                        ErrorMessage = "未找到 install_profile.json"
+                        Cause = "install_profile.json was not found.",
+                        Error = "install_profile.json was not found.",
+                        ErrorMessage = "install_profile.json was not found."
                     },
                     Succeeded = false
                 };
@@ -69,25 +69,25 @@ public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
                 {
                     Error = new ErrorModel
                     {
-                        Cause = "未找到 Forge Jar",
-                        Error = "未找到 Forge Jar",
-                        ErrorMessage = "未找到 Forge Jar"
+                        Cause = "The Forge JAR was not found.",
+                        Error = "The Forge JAR was not found.",
+                        ErrorMessage = "The Forge JAR was not found."
                     },
                     Succeeded = false
                 };
 
-            this.InvokeStatusChangedEvent("解压完成", ProgressValue.FromDisplay(5));
+            this.InvokeStatusChangedEvent("Extraction completed", ProgressValue.FromDisplay(5));
 
             await using var stream = await profileEntry.OpenAsync();
 
-            this.InvokeStatusChangedEvent("解析安装文档", ProgressValue.FromDisplay(35));
+            this.InvokeStatusChangedEvent("Parsing the installation profile", ProgressValue.FromDisplay(35));
 
             var profileModel =
                 await JsonSerializer.DeserializeAsync(stream, SerializerContext.Default.LegacyForgeInstallProfile);
 
             ArgumentNullException.ThrowIfNull(profileModel);
 
-            this.InvokeStatusChangedEvent("解析完成", ProgressValue.FromDisplay(75));
+            this.InvokeStatusChangedEvent("Parsing completed", ProgressValue.FromDisplay(75));
 
             var id = string.IsNullOrEmpty(this.CustomId) ? profileModel.VersionInfo.Id : this.CustomId;
 
@@ -123,7 +123,7 @@ public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
                 new SerializerContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
             await File.WriteAllTextAsync(jsonPath, versionJsonString);
-            this.InvokeStatusChangedEvent("文件写入完成", ProgressValue.Finished);
+            this.InvokeStatusChangedEvent("File writing completed", ProgressValue.Finished);
 
             return new ForgeInstallResult
             {
@@ -136,7 +136,7 @@ public class LegacyForgeInstaller : InstallerBase, IForgeInstaller
             {
                 Error = new ErrorModel
                 {
-                    Error = "安装失败",
+                    Error = "Installation failed.",
                     Exception = ex
                 },
                 Succeeded = false

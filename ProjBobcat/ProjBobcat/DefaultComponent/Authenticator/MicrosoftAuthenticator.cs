@@ -84,9 +84,9 @@ public class MicrosoftAuthenticator : IAuthenticator
                 AuthStatus = AuthStatus.Failed,
                 Error = new ErrorModel
                 {
-                    Cause = "缺少重要凭据",
-                    Error = "未提供有效的数据",
-                    ErrorMessage = "缺失重要的登陆参数"
+                    Cause = "Required credentials are missing.",
+                    Error = "No valid data was provided.",
+                    ErrorMessage = "Required sign-in parameters are missing."
                 }
             };
 
@@ -105,9 +105,9 @@ public class MicrosoftAuthenticator : IAuthenticator
                 AuthStatus = AuthStatus.Failed,
                 Error = new ErrorModel
                 {
-                    Cause = "无法获取认证 Token",
-                    Error = "XBox Live 验证失败",
-                    ErrorMessage = "XBox Live 验证失败"
+                    Cause = "Failed to obtain an authentication token.",
+                    Error = "Xbox Live authentication failed.",
+                    ErrorMessage = "Xbox Live authentication failed."
                 }
             };
 
@@ -128,9 +128,9 @@ public class MicrosoftAuthenticator : IAuthenticator
                 AuthStatus = AuthStatus.Failed,
                 Error = new ErrorModel
                 {
-                    Cause = "无法获取认证 Token",
-                    Error = "XBox Live 验证失败",
-                    ErrorMessage = "XBox Live 验证失败"
+                    Cause = "Failed to obtain an authentication token.",
+                    Error = "Xbox Live authentication failed.",
+                    ErrorMessage = "Xbox Live authentication failed."
                 }
             };
 
@@ -153,19 +153,19 @@ public class MicrosoftAuthenticator : IAuthenticator
                 await xStsMessage.Content.ReadFromJsonAsync(SerializerContext.Default.AuthXSTSErrorModel);
             var reason = (errModel?.XErr ?? 0) switch
             {
-                2148916233 => "未创建 XBox 账户",
-                2148916238 => "未成年人账户",
-                _ => "未知"
+                2148916233 => "No Xbox account has been created.",
+                2148916238 => "The account belongs to a minor.",
+                _ => "Unknown"
             };
 
-            var errorMessage = errModel?.Message ?? "未知";
+            var errorMessage = errModel?.Message ?? "Unknown";
             if (!string.IsNullOrEmpty(errModel?.Redirect))
-                errorMessage += $"，相关链接：{errModel.Redirect}";
+                errorMessage += $", related link: {errModel.Redirect}";
 
             var err = new ErrorModel
             {
                 Cause = reason,
-                Error = $"XSTS 认证失败，原因：{reason}",
+                Error = $"XSTS authentication failed. Reason: {reason}",
                 ErrorMessage = errorMessage
             };
 
@@ -220,8 +220,8 @@ public class MicrosoftAuthenticator : IAuthenticator
                 AuthStatus = AuthStatus.Failed,
                 Error = new ErrorModel
                 {
-                    Cause = "无法从认证结果中获取 UHS 值",
-                    Error = "XSTS 认证失败，原因：无法从认证结果中获取 UHS 值"
+                    Cause = "Failed to obtain the UHS value from the authentication result.",
+                    Error = "XSTS authentication failed because the UHS value could not be obtained from the authentication result."
                 }
             };
 
@@ -238,9 +238,9 @@ public class MicrosoftAuthenticator : IAuthenticator
                 AuthStatus = AuthStatus.Failed,
                 Error = new ErrorModel
                 {
-                    Error = "Mojang 服务器返回了无效的响应",
-                    ErrorMessage = "XSTS 认证失败，可能是网络原因导致的",
-                    Cause = "XSTS 认证失败"
+                    Error = "The Mojang server returned an invalid response.",
+                    ErrorMessage = "XSTS authentication failed, possibly due to a network problem.",
+                    Cause = "XSTS authentication failed."
                 }
             };
 
@@ -261,9 +261,9 @@ public class MicrosoftAuthenticator : IAuthenticator
                 AuthStatus = AuthStatus.Failed,
                 Error = new ErrorModel
                 {
-                    Error = "您没有购买游戏",
-                    ErrorMessage = "该账户没有找到 MineCraft 正版拷贝，登录终止",
-                    Cause = "没有购买游戏"
+                    Error = "You do not own the game.",
+                    ErrorMessage = "No licensed copy of Minecraft was found for this account. Sign-in was aborted.",
+                    Cause = "The game has not been purchased."
                 }
             };
 
@@ -292,7 +292,7 @@ public class MicrosoftAuthenticator : IAuthenticator
                 Error = new ErrorModel
                 {
                     Cause = "NOPROFILE",
-                    Error = "无法从服务器拉取用户档案，用户还没有建立 Mojang Profile",
+                    Error = "Failed to retrieve the user profile because no Mojang profile has been created.",
                     ErrorMessage = e.ToString()
                 }
             };
@@ -309,8 +309,8 @@ public class MicrosoftAuthenticator : IAuthenticator
                 Error = new ErrorModel
                 {
                     Cause = "NOPROFILE",
-                    Error = $"无法从服务器拉取用户档案，原因：{errModel?.Error ?? "未知"}",
-                    ErrorMessage = errModel?.ErrorMessage ?? "未知"
+                    Error = $"Failed to retrieve the user profile. Reason: {errModel?.Error ?? "Unknown"}",
+                    ErrorMessage = errModel?.ErrorMessage ?? "Unknown"
                 }
             };
         }
@@ -346,9 +346,9 @@ public class MicrosoftAuthenticator : IAuthenticator
                 AuthStatus = AuthStatus.Failed,
                 Error = new ErrorModel
                 {
-                    Cause = "添加记录时出现错误",
-                    Error = "无法添加账户",
-                    ErrorMessage = "请检查 launcher_accounts.json 的权限"
+                    Cause = "An error occurred while adding the record.",
+                    Error = "Failed to add the account.",
+                    ErrorMessage = "Check the permissions for launcher_accounts.json."
                 }
             };
 
@@ -372,9 +372,9 @@ public class MicrosoftAuthenticator : IAuthenticator
                     AuthStatus = AuthStatus.Failed,
                     Error = new ErrorModel
                     {
-                        Cause = "您需要在 scope 中添加：openid，email 和 profile 字段",
-                        Error = "Azure应用配置错误",
-                        ErrorMessage = "您需要在 scope 中添加：openid，email 和 profile 字段"
+                        Cause = "Add the openid, email, and profile fields to the scope.",
+                        Error = "Invalid Azure application configuration.",
+                        ErrorMessage = "Add the openid, email, and profile fields to the scope."
                     }
                 };
         }

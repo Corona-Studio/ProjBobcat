@@ -29,7 +29,7 @@ public class QuiltInstaller : InstallerBase, IQuiltInstaller
 
     public async Task<string> InstallTaskAsync()
     {
-        this.InvokeStatusChangedEvent("开始安装", ProgressValue.Start);
+        this.InvokeStatusChangedEvent("Starting installation", ProgressValue.Start);
 
         var url =
             $"{DefaultMetaUrl}/v3/versions/loader/{this.MineCraftVersion}/{this.LoaderArtifact.Version}/profile/json";
@@ -46,7 +46,7 @@ public class QuiltInstaller : InstallerBase, IQuiltInstaller
         };
         var versionModel = await res.Content.ReadFromJsonAsync(new SerializerContext(jsonOption).RawVersionModel);
 
-        this.InvokeStatusChangedEvent("生成版本总成", ProgressValue.FromDisplay(50));
+        this.InvokeStatusChangedEvent("Generating version metadata", ProgressValue.FromDisplay(50));
 
         ArgumentNullException.ThrowIfNull(versionModel);
 
@@ -82,11 +82,11 @@ public class QuiltInstaller : InstallerBase, IQuiltInstaller
         var jsonContent = JsonSerializer.Serialize(versionModel, typeof(RawVersionModel),
             new SerializerContext(JsonHelper.CamelCasePropertyNamesSettings()));
 
-        this.InvokeStatusChangedEvent("将版本 Json 写入文件", ProgressValue.FromDisplay(90));
+        this.InvokeStatusChangedEvent("Writing the version JSON file", ProgressValue.FromDisplay(90));
 
         await File.WriteAllTextAsync(jsonPath, jsonContent);
 
-        this.InvokeStatusChangedEvent("安装完成", ProgressValue.Finished);
+        this.InvokeStatusChangedEvent("Installation completed", ProgressValue.Finished);
 
         return id;
     }

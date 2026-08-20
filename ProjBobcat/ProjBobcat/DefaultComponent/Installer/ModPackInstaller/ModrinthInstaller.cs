@@ -55,12 +55,12 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
         ArgumentException.ThrowIfNullOrEmpty(this.GameId);
         ArgumentException.ThrowIfNullOrEmpty(this.RootPath);
 
-        this.InvokeStatusChangedEvent("开始安装", ProgressValue.Start);
+        this.InvokeStatusChangedEvent("Starting installation", ProgressValue.Start);
 
         await this.DownloadModsTaskAsync();
         await this.InstallOverridesTaskAsync();
 
-        this.InvokeStatusChangedEvent("安装完成", ProgressValue.Finished);
+        this.InvokeStatusChangedEvent("Installation completed", ProgressValue.Finished);
     }
 
     public override async Task DownloadModsTaskAsync(CancellationToken cancellationToken = default)
@@ -69,7 +69,7 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
         ArgumentException.ThrowIfNullOrEmpty(this.RootPath);
         cancellationToken.ThrowIfCancellationRequested();
 
-        var index = await this.ReadIndexTask() ?? throw new Exception("无法读取到 Modrinth 的 manifest 文件");
+        var index = await this.ReadIndexTask() ?? throw new Exception("Failed to read the Modrinth manifest file.");
         var idPath = Path.Combine(this.RootPath, GamePathHelper.GetGamePath(this.GameId));
         var downloadPath = Path.Combine(Path.GetFullPath(idPath), "mods");
 
@@ -183,7 +183,7 @@ public sealed class ModrinthInstaller : ModPackInstallerBase, IModrinthInstaller
 
             var progress = ProgressValue.Create(this.TotalDownloaded, this.NeedToDownload);
 
-            this.InvokeStatusChangedEvent($"解压缩安装文件：{subPathName}", progress);
+            this.InvokeStatusChangedEvent($"Extracting installation file: {subPathName}", progress);
 
             await using var fs = File.OpenWrite(path);
             await using var entryStream = await entry.OpenAsync();

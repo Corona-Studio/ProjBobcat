@@ -114,8 +114,8 @@ public class YggdrasilAuthenticator : IAuthenticator
                 AuthStatus = AuthStatus.Failed,
                 Error = new ErrorModel
                 {
-                    Cause = "网络请求失败",
-                    Error = $"验证请求返回了失败的状态码：{resultJson.StatusCode}"
+                    Cause = "The network request failed.",
+                    Error = $"The authentication request returned an unsuccessful status code: {resultJson.StatusCode}."
                 }
             };
 
@@ -145,9 +145,9 @@ public class YggdrasilAuthenticator : IAuthenticator
                 AuthStatus = AuthStatus.Failed,
                 Error = new ErrorModel
                 {
-                    Error = "没有发现档案",
-                    ErrorMessage = "没有在返回消息中发现任何可用的档案",
-                    Cause = "可能是因为您还没有购买正版游戏或是账户服务器出现了问题！"
+                    Error = "No profile found.",
+                    ErrorMessage = "No available profile was found in the response.",
+                    Cause = "You may not own the game, or the account server may be unavailable."
                 }
             };
 
@@ -157,9 +157,9 @@ public class YggdrasilAuthenticator : IAuthenticator
                 AuthStatus = AuthStatus.Failed,
                 Error = new ErrorModel
                 {
-                    Error = "没有发现档案",
-                    ErrorMessage = "没有在返回消息中发现任何可用的档案",
-                    Cause = "可能是因为您还没有购买正版游戏或是账户服务器出现了问题！"
+                    Error = "No profile found.",
+                    ErrorMessage = "No available profile was found in the response.",
+                    Cause = "You may not own the game, or the account server may be unavailable."
                 }
             };
 
@@ -169,9 +169,9 @@ public class YggdrasilAuthenticator : IAuthenticator
                 AuthStatus = AuthStatus.Failed,
                 Error = new ErrorModel
                 {
-                    Error = "没有发现档案",
-                    ErrorMessage = "没有在返回消息中发现任何可用的档案",
-                    Cause = "可能是因为您还没有购买正版游戏或是账户服务器出现了问题！"
+                    Error = "No profile found.",
+                    ErrorMessage = "No available profile was found in the response.",
+                    Cause = "You may not own the game, or the account server may be unavailable."
                 }
             };
 
@@ -244,9 +244,9 @@ public class YggdrasilAuthenticator : IAuthenticator
                 AuthStatus = AuthStatus.Failed,
                 Error = new ErrorModel
                 {
-                    Cause = "添加记录时出现错误",
-                    Error = "无法添加账户",
-                    ErrorMessage = "请检查 launcher_accounts.json 的权限"
+                    Cause = "An error occurred while adding the record.",
+                    Error = "Failed to add the account.",
+                    ErrorMessage = "Check the permissions for launcher_accounts.json."
                 }
             };
 
@@ -278,9 +278,9 @@ public class YggdrasilAuthenticator : IAuthenticator
                 AuthStatus = AuthStatus.Failed,
                 Error = new ErrorModel
                 {
-                    Error = "没有找到该账户对应的验证信息！",
-                    ErrorMessage = "没有找到该账户",
-                    Cause = "可能是因为该账户还没有进行过验证，凭据已被吊销或失效"
+                    Error = "No authentication data was found for this account.",
+                    ErrorMessage = "The account was not found.",
+                    Cause = "The account may not have been authenticated, or its credentials may have been revoked or expired."
                 }
             };
 
@@ -314,7 +314,7 @@ public class YggdrasilAuthenticator : IAuthenticator
             AuthStatus = AuthStatus.Unknown,
             Error = new ErrorModel
             {
-                Error = "未知错误"
+                Error = "Unknown error."
             }
         };
     }
@@ -362,8 +362,8 @@ public class YggdrasilAuthenticator : IAuthenticator
                         AuthStatus = AuthStatus.Failed,
                         Error = new ErrorModel
                         {
-                            Error = "无效的用户字段",
-                            ErrorMessage = "用户字段缺少了部分重要数据，请联系开发者"
+                            Error = "Invalid user properties.",
+                            ErrorMessage = "Required user property data is missing. Contact the developer."
                         }
                     };
 
@@ -374,9 +374,9 @@ public class YggdrasilAuthenticator : IAuthenticator
                         AuthStatus = AuthStatus.Failed,
                         Error = new ErrorModel
                         {
-                            Error = "没有发现已选择的档案",
-                            ErrorMessage = "没有在返回消息中发现SelectedProfile字段",
-                            Cause = "可能是因为您还没有购买正版游戏！"
+                            Error = "No selected profile found.",
+                            ErrorMessage = "The response does not contain a SelectedProfile field.",
+                            Cause = "You may not own the game."
                         }
                     };
 
@@ -427,9 +427,9 @@ public class YggdrasilAuthenticator : IAuthenticator
                         AuthStatus = AuthStatus.Failed,
                         Error = new ErrorModel
                         {
-                            Cause = "添加记录时出现错误",
-                            Error = "无法添加账户",
-                            ErrorMessage = "请检查 launcher_accounts.json 的权限"
+                            Cause = "An error occurred while adding the record.",
+                            Error = "Failed to add the account.",
+                            ErrorMessage = "Check the permissions for launcher_accounts.json."
                         }
                     };
 

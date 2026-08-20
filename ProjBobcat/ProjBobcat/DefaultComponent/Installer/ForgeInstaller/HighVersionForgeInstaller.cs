@@ -52,9 +52,9 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
                 Succeeded = false,
                 Error = new ErrorModel
                 {
-                    Cause = "找不到Java可执行文件",
-                    Error = "Headless安装工具安装前准备失败",
-                    ErrorMessage = "找不到Java可执行文件，请确认您的路径是否正确"
+                    Cause = "The Java executable was not found.",
+                    Error = "Failed to prepare the headless installer.",
+                    ErrorMessage = "The Java executable was not found. Verify that the path is correct."
                 }
             };
 
@@ -64,9 +64,9 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
                 Succeeded = false,
                 Error = new ErrorModel
                 {
-                    Cause = "找不到Forge可执行文件",
-                    Error = "安装前准备失败",
-                    ErrorMessage = "找不到Forge可执行文件，请确认您的路径是否正确"
+                    Cause = "The Forge executable was not found.",
+                    Error = "Failed to prepare the installation.",
+                    ErrorMessage = "The Forge executable was not found. Verify that the path is correct."
                 }
             };
 
@@ -75,7 +75,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
         #region 解析 Version.json
 
-        this.InvokeStatusChangedEvent("解析 Version.json", ProgressValue.FromDisplay(10));
+        this.InvokeStatusChangedEvent("Parsing version.json", ProgressValue.FromDisplay(10));
 
         var versionJsonEntry =
             archive.Entries.FirstOrDefault(e => e.FullName.Equals("version.json", StringComparison.OrdinalIgnoreCase));
@@ -107,7 +107,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
         #region 解析 Install_profile.json
 
-        this.InvokeStatusChangedEvent("解析 Install_profile.json", ProgressValue.FromDisplay(20));
+        this.InvokeStatusChangedEvent("Parsing install_profile.json", ProgressValue.FromDisplay(20));
 
         var installProfileEntry =
             archive.Entries.FirstOrDefault(e =>
@@ -126,7 +126,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
         #region 解析 Lzma
 
-        this.InvokeStatusChangedEvent("解析 Lzma", ProgressValue.FromDisplay(40));
+        this.InvokeStatusChangedEvent("Parsing LZMA data", ProgressValue.FromDisplay(40));
 
         var serverLzma = archive.Entries.FirstOrDefault(e =>
             e.FullName.Equals("data/server.lzma", StringComparison.OrdinalIgnoreCase));
@@ -179,7 +179,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
         #region 解压 Forge Jar
 
-        this.InvokeStatusChangedEvent("解压 Forge Jar", ProgressValue.Finished);
+        this.InvokeStatusChangedEvent("Extracting the Forge JAR", ProgressValue.Finished);
 
         var forgeJar = archive.Entries.FirstOrDefault(e =>
             e.FullName.Equals($"maven/net/minecraftforge/forge/{forgeVersion}/forge-{forgeVersion}.jar",
@@ -202,7 +202,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
                     {
                         Error = new ErrorModel
                         {
-                            ErrorMessage = "不支持的格式"
+                            ErrorMessage = "Unsupported format."
                         },
                         Succeeded = false
                     };
@@ -246,7 +246,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             !string.IsNullOrEmpty(mapsVal.Client) && this.CustomMojangClientMappings != null &&
             !string.IsNullOrEmpty(this.CustomMojangClientMappings.Url))
         {
-            this.InvokeStatusChangedEvent("预下载 MOJMAP...", ProgressValue.Start);
+            this.InvokeStatusChangedEvent("Pre-downloading Mojmap...", ProgressValue.Start);
 
             var clientMavenStr = mapsVal.Client.TrimStart('[').TrimEnd(']');
             var resolvedMappingMaven = clientMavenStr.ResolveMavenString();
@@ -274,7 +274,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             mappingDf.Changed += (_, args) =>
             {
                 this.InvokeStatusChangedEvent(
-                    $"下载 - {mappingFileName} ( {args.ProgressPercentage.DisplayValue:F} / 100 )",
+                    $"Downloading - {mappingFileName} ( {args.ProgressPercentage.DisplayValue:F} / 100 )",
                     args.ProgressPercentage);
             };
 
@@ -306,7 +306,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
 
         #region 解析 Processor
 
-        this.InvokeStatusChangedEvent("解析 Processor", ProgressValue.Finished);
+        this.InvokeStatusChangedEvent("Parsing processors", ProgressValue.Finished);
 
         string? ResolvePathRegex(string? val)
         {
@@ -481,9 +481,9 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
                 Succeeded = false,
                 Error = new ErrorModel
                 {
-                    Cause = "未能下载全部依赖",
-                    Error = "未能下载全部依赖",
-                    ErrorMessage = "未能下载全部依赖"
+                    Cause = "Failed to download all dependencies.",
+                    Error = "Failed to download all dependencies.",
+                    ErrorMessage = "Failed to download all dependencies."
                 }
             };
 
@@ -554,8 +554,8 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
                 {
                     Error = new ErrorModel
                     {
-                        Cause = "无法启动安装进程导致安装失败",
-                        ErrorMessage = "安装过程中出现了错误"
+                        Cause = "Installation failed because the installer process could not be started.",
+                        ErrorMessage = "An error occurred during installation."
                     },
                     Succeeded = false
                 };
@@ -574,7 +574,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
                 var progress = ProgressValue.Create(this._totalProcessed, this._needToProcess);
                 var dataStr = data.CropStr(40);
 
-                this.InvokeStatusChangedEvent($"{dataStr} <安装信息> ( {this._totalProcessed} / {this._needToProcess} )",
+                this.InvokeStatusChangedEvent($"{dataStr} <Installation info> ( {this._totalProcessed} / {this._needToProcess} )",
                     progress);
             };
 
@@ -588,7 +588,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
                 var progress = ProgressValue.Create(this._totalProcessed, this._needToProcess);
                 var dataStr = data.CropStr(40);
 
-                this.InvokeStatusChangedEvent($"{dataStr} <错误> ( {this._totalProcessed} / {this._needToProcess} )",
+                this.InvokeStatusChangedEvent($"{dataStr} <Error> ( {this._totalProcessed} / {this._needToProcess} )",
                     progress);
             };
 
@@ -614,9 +614,9 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
                 {
                     Error = new ErrorModel
                     {
-                        Cause = "执行 Forge 安装脚本时出现了错误",
+                        Cause = "An error occurred while running the Forge installation script.",
                         Error = errSb.ToString(),
-                        ErrorMessage = "安装过程中出现了错误"
+                        ErrorMessage = "An error occurred during installation."
                     },
                     Succeeded = false
                 };
@@ -643,9 +643,9 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             Succeeded = false,
             Error = new ErrorModel
             {
-                Cause = "损坏的 Forge 可执行文件",
-                Error = "安装前准备失败",
-                ErrorMessage = "损坏的 Forge 可执行文件，请确认您的路径是否正确"
+                Cause = "The Forge executable is corrupted.",
+                Error = "Failed to prepare the installation.",
+                ErrorMessage = "The Forge executable is corrupted. Verify that the path is correct."
             }
         };
     }
@@ -660,10 +660,10 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
         this._totalDownloaded++;
 
         var progress = ProgressValue.Create(this._totalDownloaded, this._needToDownload);
-        var retryStr = file.RetryCount > 0 ? $"[重试 - {file.RetryCount}] " : string.Empty;
+        var retryStr = file.RetryCount > 0 ? $"[Retry - {file.RetryCount}] " : string.Empty;
 
         this.InvokeStatusChangedEvent(
-            $"{retryStr}下载 - {file.FileName} ( {this._totalDownloaded} / {this._needToDownload} )",
+            $"{retryStr}Downloading - {file.FileName} ( {this._totalDownloaded} / {this._needToDownload} )",
             progress);
     }
 }
