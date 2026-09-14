@@ -329,10 +329,21 @@ public static class GameResourcesResolveHelper
                     goto ReturnResult;
                 }
             }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
+            }
             catch (Exception e)
             {
                 Console.WriteLine(e);
-                goto ReturnResult;
+                result = new GameModResolvedInfo(
+                    null,
+                    file,
+                    ["[!] Failed to read mod metadata", e.Message],
+                    Path.GetFileName(file),
+                    null,
+                    "Unknown",
+                    isEnabled);
             }
 
             result ??= new GameModResolvedInfo(
