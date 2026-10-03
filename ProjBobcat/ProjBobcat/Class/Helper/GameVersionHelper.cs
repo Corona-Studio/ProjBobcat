@@ -9,7 +9,7 @@ namespace ProjBobcat.Class.Helper;
 
 public static partial class GameVersionHelper
 {
-    [GeneratedRegex(@"1.\d{1,2}(.\d{1,2})*")]
+    [GeneratedRegex(@"\A(?:(?:1\.\d+|[2-9]\d\.\d+)(?:\.\d+)*(?:-(?:pre|rc|snapshot)-?\d+| (?:Pre-Release|Release Candidate) \d+)?|\d{2}w\d{2}[a-z])\z")]
     private static partial Regex McVersionMatch();
 
     public static ModLoaderType TryGetGameModLoaderType(RawVersionModel version)
@@ -32,17 +32,21 @@ public static partial class GameVersionHelper
     {
         foreach (var version in versions)
         {
-            var mcVersion = TryGetMcVersionByForgeGameArgs(version) ??
-                            TryGetMcVersionByFabric(version) ??
-                            TryGetMcVersionByOptifine(version) ??
-                            TryGetMcVersionByInheritFrom(version) ??
-                            TryGetMcVersionByClientVersion(version) ??
-                            TryGetMcVersionById(version);
+            string?[] candidates =
+            [
+                TryGetMcVersionByForgeGameArgs(version),
+                TryGetMcVersionByClientVersion(version),
+                TryGetMcVersionByFabric(version),
+                TryGetMcVersionByOptifine(version),
+                TryGetMcVersionByInheritFrom(version),
+                TryGetMcVersionById(version)
+            ];
 
-            if (string.IsNullOrEmpty(mcVersion)) continue;
-            if (!McVersionMatch().IsMatch(mcVersion)) continue;
-
-            return mcVersion;
+            // An invalid candidate (e.g. intermediary 0.0.0 or a custom parent ID)
+            // must not prevent trying the remaining metadata and inherited versions.
+            foreach (var mcVersion in candidates)
+                if (!string.IsNullOrEmpty(mcVersion) && McVersionMatch().IsMatch(mcVersion))
+                    return mcVersion;
         }
 
         return null;

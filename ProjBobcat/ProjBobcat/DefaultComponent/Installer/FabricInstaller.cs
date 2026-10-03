@@ -27,7 +27,11 @@ public class FabricInstaller : InstallerBase, IFabricInstaller
 
         ArgumentException.ThrowIfNullOrEmpty(this.RootPath);
 
-        var mcVersion = this.LoaderArtifact.Intermediary.Version;
+        // Unobfuscated Minecraft releases use the placeholder intermediary 0.0.0.
+        // The requested game version, rather than the mapping artifact, identifies Minecraft.
+        var mcVersion = this.LoaderArtifact.Loader.GameVersion ?? this.InheritsFrom ??
+                        this.LoaderArtifact.Intermediary.Version;
+        ArgumentException.ThrowIfNullOrEmpty(mcVersion);
         var fabricVersion = this.LoaderArtifact.Loader.Separator == "."
             ? this.LoaderArtifact.Loader.Version
             : this.LoaderArtifact.Loader.Version.Replace(this.LoaderArtifact.Loader.Separator ?? "+build.", ".build.");
@@ -80,6 +84,7 @@ public class FabricInstaller : InstallerBase, IFabricInstaller
         var resultModel = new RawVersionModel
         {
             Id = id,
+            ClientVersion = mcVersion,
             InheritsFrom = inheritsFrom,
             MainClass = mainClass,
             Libraries = [.. libraries],
