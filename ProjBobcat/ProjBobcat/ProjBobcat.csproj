@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Library</OutputType>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
@@ -69,11 +69,11 @@ resolved the issue that LaunchWrapper may not return the correct exit code
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.12" />
     <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="10.0.12" />
     <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="3.0.1" />
-    <PackageReference Include="SharpJsonRepair" Version="0.1.0" />
+    <ProjectReference Include="..\SharpJsonRepair\SharpJsonRepair.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="10.0.12" />
-    <PackageReference Include="Microsoft.Windows.CsWin32" Version="0.3.333">
+    <PackageReference Include="Microsoft.Windows.CsWin32" Version="0.3.346">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
   </ItemGroup>
