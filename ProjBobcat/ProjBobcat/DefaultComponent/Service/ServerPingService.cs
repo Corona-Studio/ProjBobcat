@@ -45,12 +45,12 @@ public class ServerPingService : ProgressReportBase
         return (domain, 25565); // default port
     }
 
-    public async Task<ServerPingResult?> RunAsync()
+    public async Task<ServerPingResult?> RunAsync(CancellationToken cancellationToken = default)
     {
         var resolvedHost = this.Address;
         var resolvedPort = this.Port;
 
-        if (resolvedPort == 0) (resolvedHost, resolvedPort) = await ResolveMinecraftSrvAsync(this.Address);
+        if (resolvedPort == 0) (resolvedHost, resolvedPort) = await ResolveMinecraftSrvAsync(this.Address).WaitAsync(cancellationToken);
 
         using var client = new TcpClient();
 
@@ -59,7 +59,7 @@ public class ServerPingService : ProgressReportBase
 
         var timestamp = Stopwatch.GetTimestamp();
         var timeOut = TimeSpan.FromSeconds(3);
-        using var cts = new CancellationTokenSource(timeOut);
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
         cts.CancelAfter(timeOut);
 
@@ -91,7 +91,7 @@ public class ServerPingService : ProgressReportBase
          */
         this.WriteVarInt(this.VersionId == 0 ? 47 : this.VersionId);
         this.WriteString(this.Address);
-        this.WriteShort(this.Port);
+        this.WriteShort(resolvedPort);
         this.WriteVarInt(1);
         await this.Flush(0);
 
@@ -106,35 +106,27 @@ public class ServerPingService : ProgressReportBase
          * see link for explanation and a motd to HTML snippet
          * https://gist.github.com/csh/2480d14fbbb33b4bbae3#gistcomment-2672658
          */
-        var batch = new byte[1024];
-        await using var ms = new MemoryStream();
-        var remaining = 0;
-        var flag = false;
-
-        var latency = (long)Stopwatch.GetElapsedTime(timestamp).TotalMilliseconds;
-
-        do
+        // TCP reads can split both the length prefix and the JSON payload.
+        var length = 0;
+        var singleByte = new byte[1];
+        for (var index = 0; ; index++)
         {
-            var readLength = await this._stream.ReadAsync(batch.AsMemory(), cts.Token);
-            await ms.WriteAsync(batch.AsMemory(0, readLength), cts.Token);
-            if (!flag)
-            {
-                var packetLength = this.ReadVarInt(ms.ToArray());
-                remaining = packetLength - this._offset;
-                flag = true;
-            }
-
-            if (readLength == 0 && remaining != 0)
-                continue;
-
-            remaining -= readLength;
-        } while (remaining > 0);
-
-        var buffer = ms.ToArray();
+            if (index == 5) throw new InvalidDataException("Invalid status packet length.");
+            await this._stream.ReadExactlyAsync(singleByte, cts.Token);
+            var value = singleByte[0];
+            length |= (value & 0x7f) << (index * 7);
+            if ((value & 0x80) == 0) break;
+        }
+        if (length is <= 0 or > 2 * 1024 * 1024)
+            throw new InvalidDataException("Invalid status packet length.");
+        var buffer = new byte[length];
+        await this._stream.ReadExactlyAsync(buffer, cts.Token);
+        var latency = (long)Stopwatch.GetElapsedTime(timestamp).TotalMilliseconds;
         this._offset = 0;
-        var length = this.ReadVarInt(buffer);
         var packet = this.ReadVarInt(buffer);
         var jsonLength = this.ReadVarInt(buffer);
+        if (packet != 0 || jsonLength < 0 || jsonLength != buffer.Length - this._offset)
+            throw new InvalidDataException("Invalid server status response.");
 
         this.InvokeStatusChangedEvent($"Received packet 0x{packet:X2} with length {length}", ProgressValue.FromDisplay(80));
 
@@ -192,7 +184,7 @@ public class ServerPingService : ProgressReportBase
 
     void WriteVarInt(int value)
     {
-        while ((value & 128) != 0)
+        while ((value & ~127) != 0)
         {
             this._buffer.Add((byte)((value & 127) | 128));
             value = (int)(uint)value >> 7;
@@ -203,7 +195,8 @@ public class ServerPingService : ProgressReportBase
 
     void WriteShort(ushort value)
     {
-        this._buffer.AddRange(BitConverter.GetBytes(value));
+        this._buffer.Add((byte)(value >> 8));
+        this._buffer.Add((byte)value);
     }
 
     void WriteString(string data)
