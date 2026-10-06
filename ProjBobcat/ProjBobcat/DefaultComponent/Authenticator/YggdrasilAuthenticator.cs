@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -46,31 +46,31 @@ public class YggdrasilAuthenticator : IAuthenticator
     ///     获取登录Api地址。
     /// </summary>
     string LoginAddress =>
-        $"{this.AuthServer}{(string.IsNullOrEmpty(this.AuthServer) ? OfficialAuthServer : "/authserver")}/authenticate";
+        $"{this.AuthServer?.TrimEnd('/')}{(string.IsNullOrEmpty(this.AuthServer) ? OfficialAuthServer : "/authserver")}/authenticate";
 
     /// <summary>
     ///     获取令牌刷新Api地址。
     /// </summary>
     string RefreshAddress =>
-        $"{this.AuthServer}{(string.IsNullOrEmpty(this.AuthServer) ? OfficialAuthServer : "/authserver")}/refresh";
+        $"{this.AuthServer?.TrimEnd('/')}{(string.IsNullOrEmpty(this.AuthServer) ? OfficialAuthServer : "/authserver")}/refresh";
 
     /// <summary>
     ///     获取令牌验证Api地址。
     /// </summary>
     string ValidateAddress =>
-        $"{this.AuthServer}{(string.IsNullOrEmpty(this.AuthServer) ? OfficialAuthServer : "/authserver")}/validate";
+        $"{this.AuthServer?.TrimEnd('/')}{(string.IsNullOrEmpty(this.AuthServer) ? OfficialAuthServer : "/authserver")}/validate";
 
     /// <summary>
     ///     获取令牌吊销Api地址。
     /// </summary>
     string RevokeAddress =>
-        $"{this.AuthServer}{(string.IsNullOrEmpty(this.AuthServer) ? OfficialAuthServer : "/authserver")}/invalidate";
+        $"{this.AuthServer?.TrimEnd('/')}{(string.IsNullOrEmpty(this.AuthServer) ? OfficialAuthServer : "/authserver")}/invalidate";
 
     /// <summary>
     ///     获取登出Api地址。
     /// </summary>
     string SignOutAddress =>
-        $"{this.AuthServer}{(string.IsNullOrEmpty(this.AuthServer) ? OfficialAuthServer : "/authserver")}/signout";
+        $"{this.AuthServer?.TrimEnd('/')}{(string.IsNullOrEmpty(this.AuthServer) ? OfficialAuthServer : "/authserver")}/signout";
 
     public required IHttpClientFactory HttpClientFactory { get; init; }
 
@@ -319,12 +319,34 @@ public class YggdrasilAuthenticator : IAuthenticator
         };
     }
 
+    public async Task<AuthResultBase> AuthForProfileTaskAsync(ProfileInfoModel? selectedProfile, bool userField = true)
+    {
+        var result = await AuthTaskAsync(userField);
+        if (result is not YggdrasilAuthResult { AuthStatus: AuthStatus.Succeeded } authenticated) return result;
+
+        // Assigning SelectedProfile locally does not bind an unbound token on the server.
+        var selected = selectedProfile == null
+            ? authenticated.SelectedProfile ?? (authenticated.Profiles?.Length == 1 ? authenticated.Profiles[0] : null)
+            : authenticated.Profiles?.FirstOrDefault(p => p.Id == selectedProfile.Id);
+        if (selected == null)
+            return new AuthResultBase { AuthStatus = AuthStatus.Failed, Error = new ErrorModel
+            { Error = "No selected profile found.", ErrorMessage = "Select an available account profile before launching." } };
+        if (authenticated.SelectedProfile?.Id == selected.Id) return authenticated;
+        return await AuthRefreshTaskAsync(new AuthResponseModel
+        {
+            AccessToken = authenticated.AccessToken,
+            ClientToken = LauncherAccountParser.LauncherAccount.MojangClientToken,
+            SelectedProfile = selected,
+            AvailableProfiles = authenticated.Profiles,
+            User = authenticated.User
+        }, userField);
+    }
+
     public async Task<AuthResultBase> AuthRefreshTaskAsync(AuthResponseModel response, bool userField = false)
     {
         ArgumentException.ThrowIfNullOrEmpty(response.AccessToken);
         ArgumentException.ThrowIfNullOrEmpty(response.ClientToken);
         ArgumentNullException.ThrowIfNull(response.SelectedProfile);
-
         var requestModel = new AuthRefreshRequestModel
         {
             AccessToken = response.AccessToken,
@@ -332,122 +354,49 @@ public class YggdrasilAuthenticator : IAuthenticator
             RequestUser = userField,
             SelectedProfile = response.SelectedProfile
         };
-
-        var client = this.HttpClientFactory.CreateClient();
-
-        using var refreshReq = new HttpRequestMessage(HttpMethod.Post, this.RefreshAddress);
-        refreshReq.Content =
-            JsonContent.Create(requestModel, SerializerContext.Default.AuthRefreshRequestModel);
-
+        var client = HttpClientFactory.CreateClient();
+        using var refreshReq = new HttpRequestMessage(HttpMethod.Post, RefreshAddress);
+        refreshReq.Content = JsonContent.Create(requestModel, SerializerContext.Default.AuthRefreshRequestModel);
         using var refreshRes = await client.SendAsync(refreshReq);
-        var resultJsonElement = await refreshRes.Content.ReadFromJsonAsync(SerializerContext.Default.JsonElement);
+        if (!refreshRes.IsSuccessStatusCode)
+            return new AuthResultBase { AuthStatus = AuthStatus.Failed, Error = new ErrorModel
+            { Error = "Profile binding failed.", ErrorMessage = $"The authentication refresh returned {refreshRes.StatusCode}." } };
+        var result = await refreshRes.Content.ReadFromJsonAsync(SerializerContext.Default.AuthResponseModel);
+        if (string.IsNullOrEmpty(result?.AccessToken) || result.SelectedProfile?.Id != response.SelectedProfile.Id)
+            return new AuthResultBase { AuthStatus = AuthStatus.Failed, Error = new ErrorModel
+            { Error = "Invalid profile binding response.", ErrorMessage = "The refresh response did not bind the selected profile." } };
 
-        object? result = resultJsonElement.TryGetProperty("cause", out _)
-            ? resultJsonElement.Deserialize(SerializerContext.Default.ErrorModel)
-            : resultJsonElement.Deserialize(SerializerContext.Default.AuthResponseModel);
-
-        switch (result)
+        // Refresh responses need not repeat availableProfiles or user.
+        var profiles = result.AvailableProfiles ?? response.AvailableProfiles ?? [result.SelectedProfile];
+        var user = result.User ?? response.User;
+        var localId = Guid.NewGuid().ToString("N");
+        var account = new AccountModel
         {
-            case ErrorModel error:
-                return new AuthResultBase
-                {
-                    AuthStatus = AuthStatus.Failed,
-                    Error = error
-                };
-            case AuthResponseModel authResponse:
-                if (authResponse.User == null ||
-                    string.IsNullOrEmpty(authResponse.AccessToken))
-                    return new AuthResultBase
-                    {
-                        AuthStatus = AuthStatus.Failed,
-                        Error = new ErrorModel
-                        {
-                            Error = "Invalid user properties.",
-                            ErrorMessage = "Required user property data is missing. Contact the developer."
-                        }
-                    };
-
-                if (authResponse.SelectedProfile == null ||
-                    authResponse.AvailableProfiles == null || authResponse.AvailableProfiles.Length == 0)
-                    return new AuthResultBase
-                    {
-                        AuthStatus = AuthStatus.Failed,
-                        Error = new ErrorModel
-                        {
-                            Error = "No selected profile found.",
-                            ErrorMessage = "The response does not contain a SelectedProfile field.",
-                            Cause = "You may not own the game."
-                        }
-                    };
-
-                var profiles =
-                    authResponse.AvailableProfiles
-                        .ToDictionary(
-                            profile => profile.Id,
-                            profile => new AuthProfileModel { DisplayName = profile.Name })
-                        .AsReadOnly();
-
-                var uuid = authResponse.User.Id.ToString();
-                var (_, value) = this.LauncherAccountParser.LauncherAccount.Accounts!.FirstOrDefault(a =>
-                    (a.Value.MinecraftProfile?.Name.Equals(authResponse.User.UserName,
-                        StringComparison.OrdinalIgnoreCase) ?? false) &&
-                    (a.Value.MinecraftProfile?.Id.Equals(uuid, StringComparison.OrdinalIgnoreCase) ?? false));
-
-                if (value != null) this.LauncherAccountParser.RemoveAccount(value.Id);
-
-                var rUuid = Guid.NewGuid().ToString("N");
-                var profile = new AccountModel
-                {
-                    AccessToken = authResponse.AccessToken,
-                    AccessTokenExpiresAt = DateTime.Now.AddHours(48),
-                    EligibleForMigration = false,
-                    HasMultipleProfiles = profiles.Count > 1,
-                    Legacy = false,
-                    LocalId = rUuid,
-                    Persistent = true,
-                    RemoteId = authResponse.User?.Id.ToString() ?? Guid.Empty.ToString(),
-                    Type = "Mojang",
-                    UserProperites = authResponse.User?.Properties?.ToAuthProperties(profiles).ToArray() ?? [],
-                    Username = this.Email
-                };
-
-                if (authResponse.SelectedProfile != null)
-                {
-                    profile.Id = authResponse.SelectedProfile.Id;
-                    profile.MinecraftProfile = new AccountProfileModel
-                    {
-                        Id = authResponse.SelectedProfile.Id.ToString(),
-                        Name = authResponse.SelectedProfile.Name
-                    };
-                }
-
-                if (!this.LauncherAccountParser.AddOrReplaceAccount(rUuid, profile, out var id))
-                    return new YggdrasilAuthResult
-                    {
-                        AuthStatus = AuthStatus.Failed,
-                        Error = new ErrorModel
-                        {
-                            Cause = "An error occurred while adding the record.",
-                            Error = "Failed to add the account.",
-                            ErrorMessage = "Check the permissions for launcher_accounts.json."
-                        }
-                    };
-
-                return new YggdrasilAuthResult
-                {
-                    Id = id ?? Guid.Empty,
-                    AccessToken = authResponse.AccessToken,
-                    AuthStatus = AuthStatus.Succeeded,
-                    Profiles = authResponse.AvailableProfiles,
-                    SelectedProfile = authResponse.SelectedProfile,
-                    User = authResponse.User
-                };
-            default:
-                return new AuthResultBase
-                {
-                    AuthStatus = AuthStatus.Unknown
-                };
-        }
+            Id = result.SelectedProfile.Id,
+            AccessToken = result.AccessToken,
+            AccessTokenExpiresAt = DateTime.Now.AddHours(48),
+            HasMultipleProfiles = profiles.Length > 1,
+            LocalId = localId,
+            Persistent = true,
+            RemoteId = user?.Id.ToString() ?? Guid.Empty.ToString(),
+            Type = "Mojang",
+            Username = Email,
+            MinecraftProfile = new AccountProfileModel
+            { Id = result.SelectedProfile.Id.ToString(), Name = result.SelectedProfile.Name }
+        };
+        foreach (var old in LauncherAccountParser.LauncherAccount.Accounts!.Values
+                     .Where(a => a.Username.Equals(Email, StringComparison.OrdinalIgnoreCase) &&
+                         a.MinecraftProfile?.Id == result.SelectedProfile.Id.ToString()).ToArray())
+            LauncherAccountParser.RemoveAccount(old.Id);
+        if (!LauncherAccountParser.AddOrReplaceAccount(localId, account, out var id))
+            return new AuthResultBase { AuthStatus = AuthStatus.Failed, Error = new ErrorModel
+            { Error = "Failed to save the refreshed account." } };
+        return new YggdrasilAuthResult
+        {
+            Id = id ?? Guid.Empty, AccessToken = result.AccessToken, AuthStatus = AuthStatus.Succeeded,
+            Profiles = profiles, SelectedProfile = result.SelectedProfile, User = user,
+            LocalId = localId, RemoteId = account.RemoteId
+        };
     }
 
     public async Task<bool> ValidateTokenTaskAsync(string accessToken)

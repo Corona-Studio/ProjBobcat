@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -19,6 +19,6 @@ public class GuidJsonConverter : JsonConverter<Guid>
         Guid value,
         JsonSerializerOptions options)
     {
-        writer.WriteStringValue(value.ToString());
+        writer.WriteStringValue(value.ToString("N"));
     }
 }

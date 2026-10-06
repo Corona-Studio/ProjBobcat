@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -42,6 +42,12 @@ public sealed partial class DefaultGameCore : GameCoreBase
 
     [GeneratedRegex(@"\r\n|\r|\n")]
     private static partial Regex CrLfRegex();
+
+    public static void ApplyEnvironmentVariables(ProcessStartInfo process, string[] environmentVariables)
+    {
+        foreach (var (key, value) in ParseGameEnv(environmentVariables))
+            process.EnvironmentVariables[key] = value;
+    }
 
     private void CleanupOldNatives(LaunchSettings settings)
     {
@@ -201,7 +207,7 @@ public sealed partial class DefaultGameCore : GameCoreBase
             var authResult = settings.Authenticator switch
             {
                 OfflineAuthenticator off => off.Auth(),
-                YggdrasilAuthenticator ygg => await ygg.AuthTaskAsync(true),
+                YggdrasilAuthenticator ygg => await ygg.AuthForProfileTaskAsync(settings.SelectedProfile, true),
                 MicrosoftAuthenticator mic => await mic.AuthTaskAsync(),
                 _ => null
             };
@@ -244,7 +250,7 @@ public sealed partial class DefaultGameCore : GameCoreBase
                     }
                 };
 
-            if (settings.SelectedProfile != null)
+            if (settings.SelectedProfile != null && settings.Authenticator is not YggdrasilAuthenticator)
                 authResult.SelectedProfile = settings.SelectedProfile;
 
             #endregion
@@ -415,8 +421,7 @@ public sealed partial class DefaultGameCore : GameCoreBase
                 // Patch for third-party launcher
                 psi.EnvironmentVariables.Remove("JAVA_TOOL_OPTIONS");
 
-                foreach (var (k, v) in ParseGameEnv(settings.GameEnvironmentVariables))
-                    psi.EnvironmentVariables.Add(k, v);
+                ApplyEnvironmentVariables(psi, settings.GameEnvironmentVariables);
             }
 
             #region log4j 缓解措施
