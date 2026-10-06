@@ -14,6 +14,8 @@ public class GameArguments
     public ResolutionModel? Resolution { get; set; }
     public required GcType GcType { get; init; }
     public IReadOnlyList<string>? AdditionalJvmArguments { get; set; }
+    /// <summary>Additional Minecraft arguments as individual unquoted tokens.</summary>
+    public IReadOnlyList<string>? AdditionalGameArguments { get; set; }
     public ServerSettings? ServerSettings { get; set; }
 
     /// <summary>
@@ -59,6 +61,9 @@ public class LaunchSettings
     public required IAuthenticator Authenticator { get; init; }
 
     public ProfileInfoModel? SelectedProfile { get; init; }
+
+    /// <summary>Use caller-owned settings without legacy launcher profile overrides.</summary>
+    public bool IgnoreLauncherProfileSettings { get; init; }
 
     public bool VersionInsulation { get; init; }
     public string? LauncherName { get; init; }

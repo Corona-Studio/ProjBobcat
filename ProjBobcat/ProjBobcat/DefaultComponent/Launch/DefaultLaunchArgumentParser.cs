@@ -45,16 +45,16 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
             ? launchSettings.FallBackGameArguments?.MinMemory ?? 0
             : launchSettings.GameArguments.MinMemory;
 
-        var maxMemory = gameProfile.MaxMemory ??
+        var maxMemory = (launchSettings.IgnoreLauncherProfileSettings ? null : gameProfile.MaxMemory) ??
                         (launchSettings.GameArguments.MaxMemory == 0
                             ? launchSettings.FallBackGameArguments?.MaxMemory ?? 0
                             : launchSettings.GameArguments.MaxMemory);
 
         if (maxMemory > 0)
         {
-            if (minMemory < maxMemory)
+            if (minMemory <= maxMemory)
             {
-                yield return $"-Xms{minMemory}m";
+                if (minMemory > 0) yield return $"-Xms{minMemory}m";
                 yield return $"-Xmx{maxMemory}m";
             }
             else
@@ -225,7 +225,7 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
         var mcArgumentsDic = new Dictionary<string, string>
         {
             { "${version_name}", $"\"{launchSettings.Version}\"" },
-            { "${version_type}", $"\"{gameProfile.Type ?? launchSettings.LauncherName}\"" },
+            { "${version_type}", $"\"{(launchSettings.IgnoreLauncherProfileSettings ? null : gameProfile.Type) ?? launchSettings.LauncherName}\"" },
             { "${assets_root}", $"\"{assetRoot}\"" },
             {
                 "${assets_index_name}",
@@ -252,7 +252,9 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
         LaunchSettings launchSettings,
         AuthResultBase authResult)
     {
-        var gameProfile = this.LauncherProfileParser.GetGameProfile(launchSettings.GameName);
+        var gameProfile = launchSettings.IgnoreLauncherProfileSettings
+            ? new GameProfileModel()
+            : this.LauncherProfileParser.GetGameProfile(launchSettings.GameName);
 
         ArgumentOutOfRangeException.ThrowIfEqual(resolvedVersion, null);
 
@@ -312,78 +314,150 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
         LaunchSettings launchSettings,
         GameProfileModel gameProfile)
     {
-        if ((version.AvailableGameArguments?.Count ?? 0) == 0) yield break;
-        if (!version.AvailableGameArguments!.ContainsKey("has_custom_resolution")) yield break;
-
-        if (!(launchSettings.GameArguments.Resolution?.IsDefault() ?? true))
+        var resolution = launchSettings.IgnoreLauncherProfileSettings
+            ? launchSettings.GameArguments.Resolution ?? launchSettings.FallBackGameArguments?.Resolution
+            : !(launchSettings.GameArguments.Resolution?.IsDefault() ?? true)
+                ? launchSettings.GameArguments.Resolution
+                : !(launchSettings.FallBackGameArguments?.Resolution?.IsDefault() ?? true)
+                    ? launchSettings.FallBackGameArguments.Resolution : gameProfile.Resolution;
+        if (resolution?.FullScreen == true) yield return "--fullscreen";
+        if (version.AvailableGameArguments?.ContainsKey("has_custom_resolution") == true)
         {
-            yield return "--width";
-            yield return launchSettings.GameArguments.Resolution.Width.ToString();
-
-            yield return "--height";
-            yield return launchSettings.GameArguments.Resolution.Height.ToString();
-        }
-        else if (!(launchSettings.FallBackGameArguments?.Resolution?.IsDefault() ?? true))
-        {
-            yield return "--width";
-            yield return launchSettings.FallBackGameArguments.Resolution.Width.ToString();
-
-            yield return "--height";
-            yield return launchSettings.FallBackGameArguments.Resolution.Height.ToString();
-        }
-        else if (!(gameProfile.Resolution?.IsDefault() ?? true))
-        {
-            yield return "--width";
-            yield return gameProfile.Resolution.Width.ToString();
-
-            yield return "--height";
-            yield return gameProfile.Resolution.Height.ToString();
-        }
-
-        if (launchSettings.GameArguments.ServerSettings == null &&
-            launchSettings.FallBackGameArguments?.ServerSettings == null) yield break;
-
-        var serverSettings = launchSettings.GameArguments.ServerSettings ??
-                             launchSettings.FallBackGameArguments?.ServerSettings;
-        var joinWorldName = launchSettings.GameArguments.JoinWorldName ??
-                            launchSettings.FallBackGameArguments?.JoinWorldName;
-
-        // Starting from 1.20, we need to use the new command line arguments
-        var newFormatVersionLimit = new ComparableVersion("1.20");
-        var gameVersion = new ComparableVersion(((VersionInfo)versionInfo).GameBaseVersion);
-        var shouldUseNewCommand = gameVersion >= newFormatVersionLimit;
-
-        if (serverSettings != null && !serverSettings.IsDefault())
-        {
-            if (string.IsNullOrEmpty(serverSettings.Address)) yield break;
-
-            if (shouldUseNewCommand)
+            if (!(resolution?.IsDefault() ?? true))
             {
-                if (serverSettings.Port != 0)
-                    yield return $"--quickPlayMultiplayer \"{serverSettings.Address}:{serverSettings.Port}\"";
-                else
-                    yield return $"--quickPlayMultiplayer \"{serverSettings.Address}\"";
-            }
-            else
-            {
-                yield return "--server";
-                yield return serverSettings.Address;
-
-                if (serverSettings.Port != 0)
-                {
-                    yield return "--port";
-                    yield return serverSettings.Port.ToString();
-                }
+                yield return "--width";
+                yield return resolution!.Width.ToString();
+                yield return "--height";
+                yield return resolution.Height.ToString();
             }
         }
-        else if (!string.IsNullOrEmpty(joinWorldName) && shouldUseNewCommand)
+
+        var server = launchSettings.GameArguments.ServerSettings ?? launchSettings.FallBackGameArguments?.ServerSettings;
+        var world = launchSettings.GameArguments.JoinWorldName ?? launchSettings.FallBackGameArguments?.JoinWorldName;
+        foreach (var argument in ParseJoinArguments(((VersionInfo)versionInfo).GameBaseVersion,
+                     version.AvailableGameArguments, server, world)) yield return argument;
+
+        var extraArguments = launchSettings.GameArguments.AdditionalGameArguments
+                             ?? launchSettings.FallBackGameArguments?.AdditionalGameArguments;
+        if (extraArguments is not null)
         {
-            yield return $"--quickPlaySingleplayer \"{joinWorldName}\"";
+            if (launchSettings.UseShellExecute && extraArguments.Count > 0)
+                throw new NotSupportedException("Tokenized game arguments require direct process launch.");
+            foreach (var argument in extraArguments) yield return QuoteProcessArgument(argument);
+            yield break;
         }
 
         if (!string.IsNullOrEmpty(launchSettings.GameArguments.AdvanceArguments))
             yield return launchSettings.GameArguments.AdvanceArguments;
         else if (!string.IsNullOrEmpty(launchSettings.FallBackGameArguments?.AdvanceArguments))
             yield return launchSettings.FallBackGameArguments.AdvanceArguments;
+    }
+
+    /// <summary>Splits user-entered process arguments using double quotes and
+    /// backslash-before-quote rules, without evaluating shell syntax.</summary>
+    public static IReadOnlyList<string> ParseCommandLineArguments(string? commandLine)
+    {
+        if (string.IsNullOrWhiteSpace(commandLine)) return [];
+        if (commandLine.IndexOfAny(['\0', '\r', '\n']) >= 0)
+            throw new ArgumentException("Invalid process arguments.", nameof(commandLine));
+        var result = new List<string>();
+        var token = new StringBuilder();
+        var quoted = false;
+        var started = false;
+        for (var index = 0; index < commandLine.Length; index++)
+        {
+            var character = commandLine[index];
+            if (!quoted && char.IsWhiteSpace(character))
+            {
+                if (started) { result.Add(token.ToString()); token.Clear(); started = false; }
+                continue;
+            }
+            started = true;
+            if (character == '\\')
+            {
+                var slashes = 1;
+                while (index + 1 < commandLine.Length && commandLine[index + 1] == '\\')
+                { slashes++; index++; }
+                if (index + 1 < commandLine.Length && commandLine[index + 1] == '\"')
+                {
+                    token.Append('\\', slashes / 2);
+                    index++;
+                    if (slashes % 2 != 0) token.Append('\"');
+                    else quoted = !quoted;
+                }
+                else token.Append('\\', slashes);
+            }
+            else if (character == '\"') quoted = !quoted;
+            else token.Append(character);
+        }
+        if (quoted) throw new ArgumentException("Unclosed quote in process arguments.", nameof(commandLine));
+        if (started) result.Add(token.ToString());
+        return result;
+    }
+
+    /// <summary>Quotes one token for ProcessStartInfo.Arguments, preserving whitespace,
+    /// literal quotes and backslashes. This is not a shell-command encoder.</summary>
+    public static string QuoteProcessArgument(string argument)
+    {
+        if (argument.IndexOfAny(['\0', '\r', '\n']) >= 0)
+            throw new ArgumentException("Invalid process argument.", nameof(argument));
+        var result = new StringBuilder("\"");
+        var backslashes = 0;
+        foreach (var character in argument)
+        {
+            if (character == '\\') { backslashes++; continue; }
+            if (character == '\"')
+            {
+                result.Append('\\', backslashes * 2 + 1).Append(character);
+                backslashes = 0;
+                continue;
+            }
+            result.Append('\\', backslashes).Append(character);
+            backslashes = 0;
+        }
+        return result.Append('\\', backslashes * 2).Append('\"').ToString();
+    }
+
+    public static bool SupportsQuickPlay(string? gameVersion,
+        IReadOnlyDictionary<string, string>? features, bool singleplayer)
+    {
+        var feature = singleplayer ? "is_quick_play_singleplayer" : "is_quick_play_multiplayer";
+        if (features?.ContainsKey(feature) == true) return true;
+        // Feature declarations cover snapshots; numeric versions cover older metadata from mod loaders.
+        return Version.TryParse(gameVersion, out var version) && version >= new Version(1, 20);
+    }
+
+    public static IEnumerable<string> ParseJoinArguments(string? gameVersion,
+        IReadOnlyDictionary<string, string>? features, ServerSettings? server, string? world)
+    {
+        if (server is not null && !server.IsDefault() && !string.IsNullOrEmpty(server.Address))
+        {
+            var address = server.Address;
+            if (address.IndexOfAny(['"', '\r', '\n', '\0']) >= 0) throw new ArgumentException("Invalid server address.");
+            if (SupportsQuickPlay(gameVersion, features, false))
+            {
+                if (address.Contains(':') && !address.StartsWith('[')) address = $"[{address}]";
+                yield return "--quickPlayMultiplayer";
+                yield return StringHelper.FixArgument(server.Port == 0 ? address : $"{address}:{server.Port}");
+            }
+            else
+            {
+                yield return "--server";
+                yield return StringHelper.FixArgument(address);
+                if (server.Port != 0)
+                {
+                    yield return "--port";
+                    yield return server.Port.ToString();
+                }
+            }
+        }
+        else if (!string.IsNullOrEmpty(world))
+        {
+            if (!SupportsQuickPlay(gameVersion, features, true))
+                throw new NotSupportedException("This game version does not support single-player Quick Play.");
+            if (world.IndexOfAny(['"', '\r', '\n', '\0']) >= 0) throw new ArgumentException("Invalid world directory.");
+            yield return "--quickPlaySingleplayer";
+            yield return StringHelper.FixArgument(world);
+        }
     }
 }
