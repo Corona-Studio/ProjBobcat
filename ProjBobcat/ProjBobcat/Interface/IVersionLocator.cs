@@ -6,7 +6,6 @@ namespace ProjBobcat.Interface;
 
 public interface IVersionLocator
 {
-    ILauncherProfileParser? LauncherProfileParser { get; init; }
     ILauncherAccountParser? LauncherAccountParser { get; init; }
 
     /// <summary>

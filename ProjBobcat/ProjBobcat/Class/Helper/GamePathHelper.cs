@@ -140,15 +140,6 @@ public static class GamePathHelper
     }
 
     /// <summary>
-    ///     .minecraft/launcher_profiles.json
-    /// </summary>
-    /// <returns></returns>
-    public static string GetLauncherProfilePath()
-    {
-        return "launcher_profiles.json";
-    }
-
-    /// <summary>
     ///     .minecraft/launcher_accounts.json
     /// </summary>
     /// <returns></returns>

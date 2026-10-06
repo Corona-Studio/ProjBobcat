@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Text;
-using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.YggdrasilAuth;
 using ProjBobcat.Interface;
 
@@ -62,8 +61,8 @@ public class LaunchSettings
 
     public ProfileInfoModel? SelectedProfile { get; init; }
 
-    /// <summary>Use caller-owned settings without legacy launcher profile overrides.</summary>
-    public bool IgnoreLauncherProfileSettings { get; init; }
+    /// <summary>Launcher client identity supplied by the caller.</summary>
+    public string? ClientToken { get; init; }
 
     public bool VersionInsulation { get; init; }
     public string? LauncherName { get; init; }

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text.Json.Serialization;
 
-namespace ProjBobcat.Class.Model.LauncherProfile;
+namespace ProjBobcat.Class.Model.Auth;
 
 /// <summary>
 ///     Auth Property类

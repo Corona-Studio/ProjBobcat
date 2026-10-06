@@ -6,7 +6,6 @@ using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Auth;
-using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.Version;
 using ProjBobcat.Interface;
 
@@ -17,21 +16,17 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
     /// <summary>
     ///     构造函数
     /// </summary>
-    /// <param name="launcherProfileParser">Mojang官方launcher_profiles.json适配组件</param>
     /// <param name="versionLocator"></param>
     /// <param name="rootPath"></param>
     public DefaultLaunchArgumentParser(
-        ILauncherProfileParser launcherProfileParser,
         IVersionLocator versionLocator,
-        string rootPath) : base(rootPath, launcherProfileParser, versionLocator)
+        string rootPath) : base(rootPath, versionLocator)
     {
         this.VersionLocator = versionLocator;
-        this.LauncherProfileParser = launcherProfileParser;
     }
 
     public IEnumerable<string> ParseJvmHeadArguments(
-        LaunchSettings launchSettings,
-        GameProfileModel gameProfile)
+        LaunchSettings launchSettings)
     {
         var additionalJvmArguments =
             launchSettings.GameArguments.AdditionalJvmArguments ??
@@ -45,8 +40,7 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
             ? launchSettings.FallBackGameArguments?.MinMemory ?? 0
             : launchSettings.GameArguments.MinMemory;
 
-        var maxMemory = (launchSettings.IgnoreLauncherProfileSettings ? null : gameProfile.MaxMemory) ??
-                        (launchSettings.GameArguments.MaxMemory == 0
+        var maxMemory = (launchSettings.GameArguments.MaxMemory == 0
                             ? launchSettings.FallBackGameArguments?.MaxMemory ?? 0
                             : launchSettings.GameArguments.MaxMemory);
 
@@ -82,8 +76,6 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
             yield return gcArg;
         }
 
-        if (!string.IsNullOrEmpty(gameProfile.JavaArgs))
-            yield return gameProfile.JavaArgs;
     }
 
     public IEnumerable<string> ParseJvmArguments(
@@ -189,7 +181,6 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
     public IEnumerable<string> ParseGameArguments(
         IVersionInfo versionInfo,
         ResolvedGameVersion resolvedGameVersion,
-        GameProfileModel gameProfile,
         LaunchSettings launchSettings,
         AuthResultBase authResult)
     {
@@ -201,7 +192,7 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
         var gameDir = launchSettings.VersionInsulation
             ? Path.Combine(this.RootPath, GamePathHelper.GetGamePath(launchSettings.Version))
             : this.RootPath;
-        var clientIdUpper = (this.VersionLocator.LauncherProfileParser?.LauncherProfile.ClientToken ??
+        var clientIdUpper = (launchSettings.ClientToken ??
                              Guid.Empty.ToString("D"))
             .Replace("-", string.Empty).ToUpper();
         var clientIdBytes = Encoding.ASCII.GetBytes(clientIdUpper);
@@ -225,7 +216,7 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
         var mcArgumentsDic = new Dictionary<string, string>
         {
             { "${version_name}", $"\"{launchSettings.Version}\"" },
-            { "${version_type}", $"\"{(launchSettings.IgnoreLauncherProfileSettings ? null : gameProfile.Type) ?? launchSettings.LauncherName}\"" },
+            { "${version_type}", $"\"{launchSettings.LauncherName}\"" },
             { "${assets_root}", $"\"{assetRoot}\"" },
             {
                 "${assets_index_name}",
@@ -252,15 +243,9 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
         LaunchSettings launchSettings,
         AuthResultBase authResult)
     {
-        var gameProfile = launchSettings.IgnoreLauncherProfileSettings
-            ? new GameProfileModel()
-            : this.LauncherProfileParser.GetGameProfile(launchSettings.GameName);
-
-        ArgumentOutOfRangeException.ThrowIfEqual(resolvedVersion, null);
-
         var arguments = new List<string>();
 
-        arguments.AddRange(this.ParseJvmHeadArguments(launchSettings, gameProfile));
+        arguments.AddRange(this.ParseJvmHeadArguments(launchSettings));
         arguments.AddRange(this.ParseJvmArguments(nativePath, versionInfo, resolvedVersion, launchSettings));
 
         if (launchSettings.EnableXmlLoggingOutput)
@@ -268,9 +253,9 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
 
         arguments.Add(resolvedVersion.MainClass);
 
-        arguments.AddRange(this.ParseGameArguments(versionInfo, resolvedVersion, gameProfile, launchSettings,
+        arguments.AddRange(this.ParseGameArguments(versionInfo, resolvedVersion, launchSettings,
             authResult));
-        arguments.AddRange(this.ParseAdditionalArguments(versionInfo, resolvedVersion, launchSettings, gameProfile));
+        arguments.AddRange(this.ParseAdditionalArguments(versionInfo, resolvedVersion, launchSettings));
 
         for (var i = 0; i < arguments.Count; i++)
             arguments[i] = arguments[i].Trim();
@@ -311,15 +296,9 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
     public IEnumerable<string> ParseAdditionalArguments(
         IVersionInfo versionInfo,
         ResolvedGameVersion version,
-        LaunchSettings launchSettings,
-        GameProfileModel gameProfile)
+        LaunchSettings launchSettings)
     {
-        var resolution = launchSettings.IgnoreLauncherProfileSettings
-            ? launchSettings.GameArguments.Resolution ?? launchSettings.FallBackGameArguments?.Resolution
-            : !(launchSettings.GameArguments.Resolution?.IsDefault() ?? true)
-                ? launchSettings.GameArguments.Resolution
-                : !(launchSettings.FallBackGameArguments?.Resolution?.IsDefault() ?? true)
-                    ? launchSettings.FallBackGameArguments.Resolution : gameProfile.Resolution;
+        var resolution = launchSettings.GameArguments.Resolution ?? launchSettings.FallBackGameArguments?.Resolution;
         if (resolution?.FullScreen == true) yield return "--fullscreen";
         if (version.AvailableGameArguments?.ContainsKey("has_custom_resolution") == true)
         {

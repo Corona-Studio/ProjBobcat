@@ -90,7 +90,6 @@ ProjBobcat provides 3 main components & a core to form the whole core framework.
 | ---------------------------- | ---------------------- | ------------------------- | -------------------------------------------------- |
 | DefaultGameCore              | IGameCore              | NG                        | All Implementations of the Default Launch Core     |
 | DefaultLaunchArgumentParser  | IArgumentParser        | LaunchArgumentParserBase  | The Default Argument Analysis Tool                 |
-| DefaultLauncherProfileParser | ILauncherProfileParser | LauncherProfileParserBase | The Default launcher_profiles.json Analysis Module |
 | DefaultVersionLocator        | IVersionLocator        | VersionLocatorBase        | Game Version Locator                               |
 
 Selective components:
@@ -114,9 +113,8 @@ var core = new DefaultGameCore
 {
   ClientToken = clientToken,
   RootPath = rootPath,
-  VersionLocator = new DefaultVersionLocator(rootPath, clientToken)
+  VersionLocator = new DefaultVersionLocator(rootPath)
   {
-    LauncherProfileParser = new DefaultLauncherProfileParser(rootPath, clientToken),
     LauncherAccountParser = new DefaultLauncherAccountParser(rootPath, clientToken)
   },
   GameLogResolver = new DefaultGameLogResolver()

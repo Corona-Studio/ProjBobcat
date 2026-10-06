@@ -1,7 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 using ProjBobcat.Interface;
 
-namespace ProjBobcat.Class.Model.LauncherProfile;
+namespace ProjBobcat.Class.Model;
 
 public class ResolutionModel : IDefaultValueChecker
 {

@@ -1,6 +1,6 @@
-﻿using System;
+﻿using ProjBobcat.Class.Model.Auth;
+using System;
 using System.Text.Json.Serialization;
-using ProjBobcat.Class.Model.LauncherProfile;
 
 namespace ProjBobcat.Class.Model.LauncherAccount;
 

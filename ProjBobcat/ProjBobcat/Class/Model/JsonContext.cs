@@ -8,7 +8,6 @@ using ProjBobcat.Class.Model.Forge;
 using ProjBobcat.Class.Model.GameResource;
 using ProjBobcat.Class.Model.GameResource.ResolvedInfo;
 using ProjBobcat.Class.Model.LauncherAccount;
-using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.LiteLoader;
 using ProjBobcat.Class.Model.Microsoft.Graph;
 using ProjBobcat.Class.Model.MicrosoftAuth;
@@ -50,8 +49,6 @@ namespace ProjBobcat.Class.Model;
 [JsonSerializable(typeof(ObjectResourcePackDescription[]))]
 [JsonSerializable(typeof(NativeReplaceModel))]
 [JsonSerializable(typeof(LauncherAccountModel),
-    GenerationMode = JsonSourceGenerationMode.Metadata | JsonSourceGenerationMode.Serialization)]
-[JsonSerializable(typeof(LauncherProfileModel),
     GenerationMode = JsonSourceGenerationMode.Metadata | JsonSourceGenerationMode.Serialization)]
 [JsonSerializable(typeof(LiteLoaderDownloadVersionModel))]
 [JsonSerializable(typeof(DeviceIdResponseModel))]

@@ -35,7 +35,7 @@ public class LiteLoaderInstaller : InstallerBase, ILiteLoaderInstaller
 
         this.InvokeStatusChangedEvent("Starting LiteLoader installation", ProgressValue.Start);
 
-        var vl = new DefaultVersionLocator(this.RootPath, Guid.Empty);
+        var vl = new DefaultVersionLocator(this.RootPath);
         var wrappedRawVersion = vl.ParseRawVersion(this.VersionModel.McVersion);
 
         this.InvokeStatusChangedEvent("Resolving version", ProgressValue.FromDisplay(10));

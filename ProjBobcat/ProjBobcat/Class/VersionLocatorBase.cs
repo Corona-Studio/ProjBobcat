@@ -7,7 +7,6 @@ namespace ProjBobcat.Class;
 
 public abstract class VersionLocatorBase : IVersionLocator
 {
-    public ILauncherProfileParser? LauncherProfileParser { get; init; }
     public ILauncherAccountParser? LauncherAccountParser { get; init; }
 
     public abstract IVersionInfo GetGame(string id);

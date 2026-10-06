@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.Auth;
-using ProjBobcat.Class.Model.LauncherProfile;
 
 namespace ProjBobcat.Interface;
 
@@ -19,8 +18,7 @@ public interface IArgumentParser
     /// </summary>
     /// <returns>解析好的JVM核心启动参数</returns>
     IEnumerable<string> ParseJvmHeadArguments(
-        LaunchSettings launchSettings,
-        GameProfileModel gameProfile);
+        LaunchSettings launchSettings);
 
     /// <summary>
     ///     解析游戏JVM参数
@@ -39,7 +37,6 @@ public interface IArgumentParser
     IEnumerable<string> ParseGameArguments(
         IVersionInfo versionInfo,
         ResolvedGameVersion resolvedGameVersion,
-        GameProfileModel gameProfile,
         LaunchSettings launchSettings,
         AuthResultBase authResult);
 

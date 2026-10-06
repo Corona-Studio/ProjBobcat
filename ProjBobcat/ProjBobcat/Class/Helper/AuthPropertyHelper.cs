@@ -1,9 +1,9 @@
-﻿using System;
+﻿using ProjBobcat.Class.Model.Auth;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using ProjBobcat.Class.Model;
-using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.YggdrasilAuth;
 
 namespace ProjBobcat.Class.Helper;

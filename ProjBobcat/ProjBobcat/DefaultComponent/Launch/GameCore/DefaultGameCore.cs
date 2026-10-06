@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -154,9 +154,9 @@ public sealed partial class DefaultGameCore : GameCoreBase
             if (firstEqualIndex == -1) continue;
 
             var key = line[..firstEqualIndex].Trim();
-            var value = line[(firstEqualIndex + 1)..].Trim().Trim('"');
+            var value = line[(firstEqualIndex + 1)..];
 
-            if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(value)) continue;
+            if (string.IsNullOrWhiteSpace(key)) continue;
 
             result[key] = value;
         }
@@ -166,7 +166,6 @@ public sealed partial class DefaultGameCore : GameCoreBase
 
     public override async Task<LaunchResult> LaunchTaskAsync(LaunchSettings settings)
     {
-        ArgumentNullException.ThrowIfNull(this.VersionLocator.LauncherProfileParser);
 
         try
         {
@@ -273,7 +272,6 @@ public sealed partial class DefaultGameCore : GameCoreBase
                 };
 
             var argumentParser = new DefaultLaunchArgumentParser(
-                this.VersionLocator.LauncherProfileParser,
                 this.VersionLocator,
                 this.RootPath);
 

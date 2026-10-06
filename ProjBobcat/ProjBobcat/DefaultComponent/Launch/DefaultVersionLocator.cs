@@ -7,15 +7,10 @@ using ProjBobcat.Class;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Helper.NativeReplace;
 using ProjBobcat.Class.Model;
-using ProjBobcat.Class.Model.LauncherProfile;
 using ProjBobcat.Class.Model.Version;
 using ProjBobcat.Interface;
 using ProjBobcat.JsonConverter;
 using FileInfo = ProjBobcat.Class.Model.FileInfo;
-
-#if NET9_0_OR_GREATER
-using System.Threading;
-#endif
 
 namespace ProjBobcat.DefaultComponent.Launch;
 
@@ -24,11 +19,7 @@ namespace ProjBobcat.DefaultComponent.Launch;
 /// </summary>
 public sealed class DefaultVersionLocator : VersionLocatorBase
 {
-#if NET9_0_OR_GREATER
-    readonly Lock _lock = new();
-#else
-    readonly object _lock = new();
-#endif
+
 
     private readonly string _rootPath;
 
@@ -37,11 +28,9 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
     ///     Constructor.
     /// </summary>
     /// <param name="rootPath">指.minecraft/ Refers to .minecraft/</param>
-    /// <param name="clientToken"></param>
-    public DefaultVersionLocator(string rootPath, Guid clientToken)
+    public DefaultVersionLocator(string rootPath)
     {
         this._rootPath = rootPath;
-        this.LauncherProfileParser ??= new DefaultLauncherProfileParser(rootPath, clientToken);
 
         //防止给定路径不存在的时候Parser遍历文件夹爆炸。
         //Prevents errors in the parser's folder traversal when the given path does not exist.
@@ -782,47 +771,10 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                     result.JavaVersion = inherits[i].JavaVersion;
         }
 
-        this.ProcessProfile(result, id);
-
         return result;
     }
 
-    void ProcessProfile(VersionInfo result, string id)
-    {
-        if (this.LauncherProfileParser == null) return;
 
-        var gameId = id.ToGuidHash().ToString("N");
-        var gamePath = Path.Combine(this._rootPath, GamePathHelper.GetGamePath(id));
-
-#if NET9_0_OR_GREATER
-        using (this._lock.EnterScope())
-#else
-        lock (this._lock)
-#endif
-        {
-            if (this.LauncherProfileParser.LauncherProfile.Profiles!.TryGetValue(gameId, out var oldProfileModel))
-            {
-                result.Name = oldProfileModel.Name!;
-                oldProfileModel.GameDir = gamePath;
-                oldProfileModel.LastVersionId = id;
-                this.LauncherProfileParser.LauncherProfile.Profiles![gameId] = oldProfileModel;
-                this.LauncherProfileParser.SaveProfile();
-
-                return;
-            }
-
-            var gameProfile = new GameProfileModel
-            {
-                GameDir = gamePath,
-                LastVersionId = id,
-                Name = id,
-                Created = DateTime.Now
-            };
-
-            this.LauncherProfileParser.LauncherProfile.Profiles!.Add(gameId, gameProfile);
-            this.LauncherProfileParser.SaveProfile();
-        }
-    }
 }
 
 file class KeyValuePairStringStringComparer : IEqualityComparer<KeyValuePair<string, string>>

@@ -100,7 +100,6 @@ ProjBobcat提供了3大必要组件和一个核心总成来支撑起整个核心
 | ---------------------------- | ---------------------- | ------------------------- | --------------------------------- |
 | DefaultGameCore              | IGameCore              | NG                        | 提供默认启动核心所有实现            |
 | DefaultLaunchArgumentParser  | IArgumentParser        | LaunchArgumentParserBase  | 提供默认启动参数解析                |
-| DefaultLauncherProfileParser | ILauncherProfileParser | LauncherProfileParserBase | 提供默认launcher_profiles.json解析 |
 | DefaultVersionLocator        | IVersionLocator        | VersionLocatorBase        | 定位游戏版本                       |
 
 选择性组件：
@@ -124,9 +123,8 @@ var core = new DefaultGameCore
 {
   ClientToken = clientToken, // 游戏客户端识别码，你可以设置成你喜欢的任何GUID，例如88888888-8888-8888-8888-888888888888，或者自己随机生成一个！
   RootPath = rootPath, // .minecraft\的路径
-  VersionLocator = new DefaultVersionLocator(rootPath, clientToken)
+  VersionLocator = new DefaultVersionLocator(rootPath)
   {
-    LauncherProfileParser = new DefaultLauncherProfileParser(rootPath, clientToken),
     LauncherAccountParser = new DefaultLauncherAccountParser(rootPath, clientToken)
   },
   GameLogResolver = new DefaultGameLogResolver()
