@@ -394,6 +394,15 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             // Go through all inherits
             for (var i = inherits.Count - 1; i >= 0; i--)
             {
+                var inheritsLibs = NativeReplaceHelper.Replace(
+                    inherits,
+                    inherits[i].Libraries.ToList(),
+                    nativeReplacementPolicy,
+                    javaRuntimeInfo?.JavaPlatform,
+                    javaRuntimeInfo?.JavaArch,
+                    javaRuntimeInfo?.UseSystemGlfwOnLinux ?? false,
+                    javaRuntimeInfo?.UseSystemOpenAlOnLinux ?? false);
+
                 if (assets == null && inherits[i].AssetsVersion != null)
                     assets = inherits[i].AssetsVersion;
                 if (assetInfo == null && inherits[i].AssetIndex != null)
@@ -403,16 +412,6 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
 
                 if (flag)
                 {
-                    var inheritsLibs = inherits[i].Libraries.ToList();
-                    inheritsLibs = NativeReplaceHelper.Replace(
-                        [versionInfo.RawVersion, .. inherits],
-                        inheritsLibs,
-                        nativeReplacementPolicy,
-                        javaRuntimeInfo?.JavaPlatform,
-                        javaRuntimeInfo?.JavaArch,
-                        javaRuntimeInfo?.UseSystemGlfwOnLinux ?? false,
-                        javaRuntimeInfo?.UseSystemOpenAlOnLinux ?? false);
-
                     var rootLibs = this.GetNatives([.. inheritsLibs]);
                     libraries = rootLibs.Item2;
                     natives = rootLibs.Item1;
@@ -430,7 +429,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                     continue;
                 }
 
-                var middleLibs = this.GetNatives(inherits[i].Libraries);
+                var middleLibs = this.GetNatives([.. inheritsLibs]);
 
                 foreach (var mL in middleLibs.Item2)
                 {

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using ProjBobcat.Class.Model;
@@ -57,6 +58,24 @@ public static partial class NativeReplaceHelper
         javaPlatform ??= SystemInfoHelper.GetOsPlatform();
         javaArch ??= RuntimeInformation.OSArchitecture;
 
+        if (javaPlatform == OSPlatform.Linux)
+        {
+            if (useSystemGlfwOnLinux || useSystemOpenAlOnLinux)
+                libs = libs.Where(original =>
+                {
+                    var maven = original.Name.ResolveMavenString();
+                    return maven == null || maven.OrganizationName != "org.lwjgl" ||
+                           !maven.Classifier.StartsWith("natives", StringComparison.Ordinal) ||
+                           !(useSystemGlfwOnLinux && maven.ArtifactId == "lwjgl-glfw" ||
+                             useSystemOpenAlOnLinux && maven.ArtifactId == "lwjgl-openal");
+                }).ToList();
+
+            // Modern Mojang manifests still only list Linux x64 natives. Selecting the
+            // JVM architecture must also work under LegacyOnly and for unknown game IDs.
+            if (javaArch == Architecture.Arm64)
+                libs = ReplaceModernLinuxArm64Natives(libs);
+        }
+
         var replaceKey = GetNativeKey(javaPlatform.Value, javaArch.Value);
         var replaceDic = replaceKey switch
         {
@@ -74,30 +93,6 @@ public static partial class NativeReplaceHelper
 
         var replaced = new List<Library>();
 
-        // Replace special LWJGL and OpenAL libraries on Linux
-        if (OperatingSystem.IsLinux() && (useSystemGlfwOnLinux || useSystemOpenAlOnLinux))
-            foreach (var original in libs)
-            {
-                var originalMaven = original.Name.ResolveMavenString();
-
-                if (originalMaven == null) continue;
-                if (!string.IsNullOrEmpty(originalMaven.Classifier) &&
-                    originalMaven.Classifier.StartsWith("natives", StringComparison.OrdinalIgnoreCase) &&
-                    originalMaven.OrganizationName.Equals("org.lwjgl", StringComparison.OrdinalIgnoreCase))
-                {
-                    if (useSystemGlfwOnLinux &&
-                        !originalMaven.ArtifactId.Equals("lwjgl-glfw", StringComparison.OrdinalIgnoreCase))
-                    {
-                        replaced.Add(original);
-                        continue;
-                    }
-
-                    if (useSystemOpenAlOnLinux &&
-                        !originalMaven.ArtifactId.Equals("lwjgl-openal", StringComparison.OrdinalIgnoreCase))
-                        replaced.Add(original);
-                }
-            }
-
         var osCheckFlag = OperatingSystem.IsWindows() || OperatingSystem.IsMacOS() || OperatingSystem.IsLinux();
 
         if (javaArch.Value == Architecture.X86 && osCheckFlag)
@@ -111,7 +106,9 @@ public static partial class NativeReplaceHelper
         var versionsArr = mcVersion?.Split('.', StringSplitOptions.RemoveEmptyEntries);
         var minor = -1;
 
-        if (versionsArr is { Length: >= 2 }) minor = int.TryParse(versionsArr[1], out var outMinor) ? outMinor : -1;
+        // Year-based versions such as 26.3 are not legacy Minecraft 1.x releases.
+        if (versionsArr is { Length: >= 2 } && versionsArr[0] == "1")
+            minor = int.TryParse(versionsArr[1], out var outMinor) ? outMinor : -1;
 
         if (javaArch.Value == Architecture.Arm64 &&
             isNotLinux &&
@@ -148,6 +145,59 @@ public static partial class NativeReplaceHelper
             }
 
             replaced.Add(candidateLib);
+        }
+
+        return replaced;
+    }
+
+    static List<Library> ReplaceModernLinuxArm64Natives(List<Library> libs)
+    {
+        var replaced = new List<Library>(libs.Count);
+        foreach (var original in libs)
+        {
+            // Legacy classifier dictionaries still require the version replacement table.
+            if (original.Natives != null || !original.Name.StartsWith("org.lwjgl:", StringComparison.Ordinal))
+            {
+                replaced.Add(original);
+                continue;
+            }
+
+            var maven = original.Name.ResolveMavenString();
+            // Earlier LWJGL releases use the table to upgrade Java bindings and natives together.
+            if (maven == null || maven.Classifier != "natives-linux" ||
+                !Version.TryParse(maven.Version, out var version) || version < new Version(3, 3, 2))
+            {
+                replaced.Add(original);
+                continue;
+            }
+
+            var name = $"org.lwjgl:{maven.ArtifactId}:{maven.Version}:natives-linux-arm64";
+            // Prefer a native already supplied by the manifest, including its checksums.
+            if (libs.Any(lib => lib.Name == name)) continue;
+
+            var path = name.ResolveMavenString()!.Path;
+            NativeReplaceModel.LinuxArm64.TryGetValue(original.Name, out var candidate);
+            var download = candidate?.Name == name ? candidate.Downloads?.Artifact : null;
+            replaced.Add(new Library
+            {
+                Name = name,
+                Rules = original.Rules,
+                Extract = original.Extract,
+                ClientRequired = original.ClientRequired,
+                ServerRequired = original.ServerRequired,
+                Downloads = new Downloads
+                {
+                    Artifact = new FileInfo
+                    {
+                        Name = name,
+                        Path = path,
+                        Url = $"https://repo1.maven.org/maven2/{path}",
+                        // The x64 artifact's SHA1 and size cannot validate the ARM64 JAR.
+                        Sha1 = download?.Sha1,
+                        Size = download?.Size ?? 0
+                    }
+                }
+            });
         }
 
         return replaced;

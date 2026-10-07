@@ -225,6 +225,12 @@ public sealed class LibraryInfoResolver : ResolverBase
         if (IsFabricLib(fi)) return LibraryType.Fabric;
         if (IsQuiltLib(fi) && !string.IsNullOrEmpty(fi.Url)) return LibraryType.Quilt;
 
+        // Linux ARM64 LWJGL natives are hosted on Maven Central, not Mojang's mirror.
+        // LauncherX's slim resolver also uses this classification to preserve the URL.
+        if (fi.Url?.StartsWith("https://repo1.maven.org/maven2/org/lwjgl/", StringComparison.OrdinalIgnoreCase) == true ||
+            fi.Url?.StartsWith("https://repo.maven.apache.org/maven2/org/lwjgl/", StringComparison.OrdinalIgnoreCase) == true)
+            return LibraryType.ReplacementNative;
+
         if (!string.IsNullOrEmpty(fi.Url) &&
             fi.Url.Contains("hmcl", StringComparison.OrdinalIgnoreCase))
             return LibraryType.ReplacementNative;
