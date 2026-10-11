@@ -7,6 +7,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
+using System.Threading;
 using System.Threading.Tasks;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
@@ -458,7 +459,8 @@ public class MicrosoftAuthenticator : IAuthenticator
 
     public static async Task<GraphAuthResultModel?> GetMSAuthResult(
         IHttpClientFactory httpClientFactory,
-        Action<DeviceIdResponseModel> deviceTokenNotifier)
+        Action<DeviceIdResponseModel> deviceTokenNotifier,
+        CancellationToken cancellationToken = default)
     {
         #region SEND DEVICE TOKEN REQUEST
 
@@ -473,9 +475,9 @@ public class MicrosoftAuthenticator : IAuthenticator
 
         deviceTokenReq.Content = new FormUrlEncodedContent(deviceTokenRequestDic);
 
-        using var deviceTokenRes = await client.SendAsync(deviceTokenReq);
+        using var deviceTokenRes = await client.SendAsync(deviceTokenReq, cancellationToken);
 
-        var deviceTokenContent = await deviceTokenRes.Content.ReadAsStringAsync();
+        var deviceTokenContent = await deviceTokenRes.Content.ReadAsStringAsync(cancellationToken);
         var deviceTokenModel =
             ResolveMSGraphResult(deviceTokenContent, SerializerContext.Default.DeviceIdResponseModel);
 
@@ -483,6 +485,7 @@ public class MicrosoftAuthenticator : IAuthenticator
 
         #endregion
 
+        cancellationToken.ThrowIfCancellationRequested();
         deviceTokenNotifier.Invoke(deviceTokenResModel);
 
         #region FETCH USER AUTH RESULT
@@ -497,15 +500,15 @@ public class MicrosoftAuthenticator : IAuthenticator
         GraphAuthResultModel? result;
         while (true)
         {
-            await Task.Delay(TimeSpan.FromSeconds(deviceTokenResModel.Interval + 2));
+            await Task.Delay(TimeSpan.FromSeconds(deviceTokenResModel.Interval + 2), cancellationToken);
 
             using var userAuthResultReq = new HttpRequestMessage(HttpMethod.Post, MSDeviceTokenStatusUrl);
 
             userAuthResultReq.Content = new FormUrlEncodedContent(userAuthResultDic);
 
-            using var userAuthResultRes = await client.SendAsync(userAuthResultReq);
+            using var userAuthResultRes = await client.SendAsync(userAuthResultReq, cancellationToken);
 
-            var userAuthResultContent = await userAuthResultRes.Content.ReadAsStringAsync();
+            var userAuthResultContent = await userAuthResultRes.Content.ReadAsStringAsync(cancellationToken);
             var userAuthResultModel =
                 ResolveMSGraphResult(userAuthResultContent, SerializerContext.Default.GraphAuthResultModel);
 
