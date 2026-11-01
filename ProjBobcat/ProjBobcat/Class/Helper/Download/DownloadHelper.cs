@@ -39,15 +39,16 @@ public static partial class DownloadHelper
     public static string AutoFormatSpeedString(double speedInBytePerSecond)
     {
         var (speed, sizeUnit) = AutoFormatSpeed(speedInBytePerSecond);
+#pragma warning disable CS8524 // AutoFormatSpeed only returns named units; adding a unit must update both switches.
         var unit = sizeUnit switch
         {
             SizeUnit.B => " B / s",
             SizeUnit.Kb => "Kb / s",
             SizeUnit.Mb => "Mb / s",
             SizeUnit.Gb => "Gb / s",
-            SizeUnit.Tb => "Tb / s",
-            _ => " B / s"
+            SizeUnit.Tb => "Tb / s"
         };
+#pragma warning restore CS8524
 
         return $"{speed:F1} {unit,6}";
     }
@@ -68,14 +69,16 @@ public static partial class DownloadHelper
             _ => SizeUnit.B
         };
 
+#pragma warning disable CS8524 // The unit is selected from the named cases immediately above.
         var convertedSpeed = unit switch
         {
+            SizeUnit.B => transferSpeed,
             SizeUnit.Kb => transferSpeed / baseNum,
             SizeUnit.Mb => transferSpeed / mbNum,
             SizeUnit.Gb => transferSpeed / gbNum,
-            SizeUnit.Tb => transferSpeed / tbNum,
-            _ => transferSpeed
+            SizeUnit.Tb => transferSpeed / tbNum
         };
+#pragma warning restore CS8524
 
         return (convertedSpeed, unit);
     }
@@ -146,7 +149,7 @@ public static partial class DownloadHelper
     {
         readonly Dictionary<AbstractDownloadBase, FileProgress> _files;
         readonly long _minimumIntervalTicks;
-        readonly object _sync = new();
+        readonly Lock _sync = new();
         long _lastReportTimestamp;
 
         public AggregateDownloadProgress(IEnumerable<AbstractDownloadBase> files, TimeSpan interval)

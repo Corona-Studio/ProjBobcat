@@ -32,10 +32,12 @@ public static class RulesHelper
         if (jvmRules.Count == 0) return true;
 
         var ruleFlag = false;
-        var orderedRules = new List<JvmRules>();
-
-        orderedRules.AddRange(jvmRules.Where(r => r.Action == "disallow"));
-        orderedRules.AddRange(jvmRules.Where(r => r.Action == "allow"));
+        List<JvmRules> orderedRules =
+        [
+            with(capacity: jvmRules.Count),
+            .. jvmRules.Where(r => r.Action == "disallow"),
+            .. jvmRules.Where(r => r.Action == "allow")
+        ];
 
         foreach (var rule in orderedRules)
         {

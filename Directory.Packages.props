@@ -1,7 +1,7 @@
 <Project>
   <!-- Use the parent integration policy when embedded; otherwise keep standalone defaults. -->
   <PropertyGroup>
-    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <ManagePackageVersionsCentrally Condition="'$(ManagePackageVersionsCentrally)' != 'false'">true</ManagePackageVersionsCentrally>
     <_ProjBobcatParentPackages Condition="Exists('$(MSBuildThisFileDirectory)../LauncherX.slnx') And Exists('$(MSBuildThisFileDirectory)../Directory.Packages.props')">$(MSBuildThisFileDirectory)../Directory.Packages.props</_ProjBobcatParentPackages>
   </PropertyGroup>
 
@@ -10,14 +10,14 @@
   <ItemGroup Condition="'$(_ProjBobcatParentPackages)' == ''">
     <PackageVersion Include="coverlet.collector" Version="8.0.0" />
     <PackageVersion Include="DnsClient" Version="1.8.0" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.Extensions.ObjectPool" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="11.0.0-rc.3.26522.148" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="11.0.0-rc.3.26522.148" />
+    <PackageVersion Include="Microsoft.Extensions.ObjectPool" Version="11.0.0-rc.3.26522.148" />
     <PackageVersion Include="Microsoft.IO.RecyclableMemoryStream" Version="3.0.1" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
     <PackageVersion Include="Microsoft.Windows.CsWin32" Version="0.3.347" />
     <PackageVersion Include="MSTest.TestAdapter" Version="4.1.0" />
     <PackageVersion Include="MSTest.TestFramework" Version="4.1.0" />
-    <PackageVersion Include="System.Diagnostics.PerformanceCounter" Version="10.0.12" />
+    <PackageVersion Include="System.Diagnostics.PerformanceCounter" Version="11.0.0-rc.3.26522.148" />
   </ItemGroup>
 </Project>

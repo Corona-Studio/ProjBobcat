@@ -37,6 +37,11 @@ public record McReqModel(
 
 public class MicrosoftAuthenticator : IAuthenticator
 {
+    private static readonly SerializerContext GraphErrorSerializerContext = new(new JsonSerializerOptions
+    {
+        Converters = { new DateTimeConverterUsingDateTimeParse() }
+    });
+
     public const string MSAuthScope = "XboxLive.signin offline_access";
     public const string MSAuthXBLUrl = "https://user.auth.xboxlive.com/user/authenticate";
     public const string MSAuthXSTSUrl = "https://xsts.auth.xboxlive.com/xsts/authorize";
@@ -439,22 +444,19 @@ public class MicrosoftAuthenticator : IAuthenticator
         ApiSettings = apiSettings;
     }
 
-    public static object? ResolveMSGraphResult<T>(string content, JsonTypeInfo<T> typeInfo)
+    public static GraphResponse<T> ResolveMSGraphResult<T>(string content, JsonTypeInfo<T> typeInfo) where T : class
     {
-        var jsonObj = JsonDocument.Parse(content).RootElement;
-        var options = new JsonSerializerOptions
+        using var document = JsonDocument.Parse(content);
+        var jsonObj = document.RootElement;
+
+        if (jsonObj.ValueKind == JsonValueKind.Object &&
+            jsonObj.TryGetProperty("error", out _) && jsonObj.TryGetProperty("error_description", out _))
         {
-            Converters =
-            {
-                new DateTimeConverterUsingDateTimeParse()
-            }
-        };
+            var error = JsonSerializer.Deserialize(content, GraphErrorSerializerContext.GraphResponseErrorModel);
+            return error is null ? default : new GraphResponse<T>(error);
+        }
 
-        if (jsonObj.TryGetProperty("error", out _) && jsonObj.TryGetProperty("error_description", out _))
-            return JsonSerializer.Deserialize(content, typeof(GraphResponseErrorModel),
-                new SerializerContext(options)) as GraphResponseErrorModel;
-
-        return JsonSerializer.Deserialize(content, typeInfo);
+        return new GraphResponse<T>(JsonSerializer.Deserialize(content, typeInfo));
     }
 
     public static async Task<GraphAuthResultModel?> GetMSAuthResult(
@@ -481,7 +483,12 @@ public class MicrosoftAuthenticator : IAuthenticator
         var deviceTokenModel =
             ResolveMSGraphResult(deviceTokenContent, SerializerContext.Default.DeviceIdResponseModel);
 
-        if (deviceTokenModel is not DeviceIdResponseModel deviceTokenResModel) return null;
+        var deviceTokenResModel = deviceTokenModel switch
+        {
+            DeviceIdResponseModel response => response,
+            GraphResponseErrorModel or null => null
+        };
+        if (deviceTokenResModel is null) return null;
 
         #endregion
 
@@ -497,7 +504,6 @@ public class MicrosoftAuthenticator : IAuthenticator
             new KeyValuePair<string, string>("device_code", deviceTokenResModel.DeviceCode)
         };
 
-        GraphAuthResultModel? result;
         while (true)
         {
             await Task.Delay(TimeSpan.FromSeconds(deviceTokenResModel.Interval + 2), cancellationToken);
@@ -512,25 +518,18 @@ public class MicrosoftAuthenticator : IAuthenticator
             var userAuthResultModel =
                 ResolveMSGraphResult(userAuthResultContent, SerializerContext.Default.GraphAuthResultModel);
 
-            if (userAuthResultModel is not GraphAuthResultModel)
-                if (userAuthResultModel is GraphResponseErrorModel error)
-                    switch (error.ErrorType)
-                    {
-                        case "authorization_pending":
-                            continue;
-                        case "authorization_declined":
-                        case "expired_token":
-                        case "bad_verification_code":
-                            return null;
-                    }
+            if (userAuthResultModel is GraphResponseErrorModel { ErrorType: "authorization_pending" })
+                continue;
 
-            result = (GraphAuthResultModel?)userAuthResultModel;
-            break;
+            // Unknown OAuth errors are still failed responses, never successful token payloads.
+            return userAuthResultModel switch
+            {
+                GraphAuthResultModel response => response,
+                GraphResponseErrorModel or null => null
+            };
         }
 
         #endregion
-
-        return result;
     }
 
     private async Task<T?> SendRequest<T, TReq>(

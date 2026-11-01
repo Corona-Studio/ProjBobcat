@@ -152,7 +152,7 @@ public static partial class NativeReplaceHelper
 
     static List<Library> ReplaceModernLinuxArm64Natives(List<Library> libs)
     {
-        var replaced = new List<Library>(libs.Count);
+        List<Library> replaced = [with(capacity: libs.Count)];
         foreach (var original in libs)
         {
             // Legacy classifier dictionaries still require the version replacement table.

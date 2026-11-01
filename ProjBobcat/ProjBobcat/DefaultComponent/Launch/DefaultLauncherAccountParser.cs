@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -10,9 +10,7 @@ using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.LauncherAccount;
 using ProjBobcat.Interface;
 using ProjBobcat.JsonConverter;
-#if NET9_0_OR_GREATER
 using System.Threading;
-#endif
 
 namespace ProjBobcat.DefaultComponent.Launch;
 
@@ -20,11 +18,7 @@ public sealed class DefaultLauncherAccountParser : LauncherParserBase, ILauncher
 {
     readonly string _fullLauncherAccountPath;
 
-#if NET9_0_OR_GREATER
     readonly Lock _lock = new();
-#else
-    readonly object _lock = new();
-#endif
 
     /// <summary>
     ///     构造函数
@@ -69,11 +63,7 @@ public sealed class DefaultLauncherAccountParser : LauncherParserBase, ILauncher
 
     public bool ActivateAccount(string uuid)
     {
-#if NET9_0_OR_GREATER
-        using (this._lock.EnterScope())
-#else
         lock (this._lock)
-#endif
         {
             if (!(this.LauncherAccount.Accounts?.ContainsKey(uuid) ?? false))
                 return false;
@@ -89,11 +79,7 @@ public sealed class DefaultLauncherAccountParser : LauncherParserBase, ILauncher
     {
         this.LauncherAccount.Accounts ??= [];
 
-#if NET9_0_OR_GREATER
-        using (this._lock.EnterScope())
-#else
         lock (this._lock)
-#endif
         {
             if (this.LauncherAccount.Accounts.ContainsKey(uuid))
             {
@@ -102,11 +88,7 @@ public sealed class DefaultLauncherAccountParser : LauncherParserBase, ILauncher
             }
         }
 
-#if NET9_0_OR_GREATER
-        using (this._lock.EnterScope())
-#else
         lock (this._lock)
-#endif
         {
             var oldRecord = this.LauncherAccount.Accounts
                 .FirstOrDefault(a => a.Value.MinecraftProfile?.Id == account.MinecraftProfile?.Id).Value;
@@ -117,11 +99,7 @@ public sealed class DefaultLauncherAccountParser : LauncherParserBase, ILauncher
             }
         }
 
-#if NET9_0_OR_GREATER
-        using (this._lock.EnterScope())
-#else
         lock (this._lock)
-#endif
         {
             var newId = Guid.NewGuid();
             var findResult = this.Find(account.Id);
@@ -147,11 +125,7 @@ public sealed class DefaultLauncherAccountParser : LauncherParserBase, ILauncher
 
     public KeyValuePair<string, AccountModel>? Find(Guid id)
     {
-#if NET9_0_OR_GREATER
-        using (this._lock.EnterScope())
-#else
         lock (this._lock)
-#endif
         {
             return this.LauncherAccount.Accounts?.FirstOrDefault(a => a.Value.Id == id);
         }
@@ -167,11 +141,7 @@ public sealed class DefaultLauncherAccountParser : LauncherParserBase, ILauncher
 
         if (string.IsNullOrEmpty(key)) return false;
 
-#if NET9_0_OR_GREATER
-        using (this._lock.EnterScope())
-#else
         lock (this._lock)
-#endif
         {
             this.LauncherAccount.Accounts?.Remove(key);
             this.Save();

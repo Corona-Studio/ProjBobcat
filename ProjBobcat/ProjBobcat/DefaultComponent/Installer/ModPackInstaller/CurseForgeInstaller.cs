@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -315,14 +315,9 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
     }
 
     private static readonly FrozenSet<long> ResourcePacksFilterIds =
-#if NET9_0_OR_GREATER
         FrozenSet.Create<long>(4465, 5193, 5244);
-#else
-        new[] { 4465L, 5193L, 5244L }.ToFrozenSet();
-#endif
 
     private static readonly FrozenSet<long> ModFilterIds =
-#if NET9_0_OR_GREATER
         FrozenSet.Create<long>(
             4485, 4545, 4558,
             4671, 4672, 4773,
@@ -331,17 +326,6 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
             6145, 6484, 6814,
             6821, 6954
         );
-#else
-        new[]
-        {
-            4485L, 4545L, 4558L,
-            4671L, 4672L, 4773L,
-            4843L, 4906L, 5191L,
-            5232L, 5299L, 5314L,
-            6145L, 6484L, 6814L,
-            6821L, 6954L
-        }.ToFrozenSet();
-#endif
 
     private static string? GetResourceFolderName(long type)
     {

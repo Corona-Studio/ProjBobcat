@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 
 namespace ProjBobcat.Class.Helper;
@@ -101,11 +101,7 @@ public static class GamePathHelper
     /// <returns></returns>
     public static string CreateNativeRoot(string versionId)
     {
-#if NET9_0_OR_GREATER
         return Path.Combine("versions", versionId, "natives", $"{Guid.CreateVersion7():N}_natives");
-#else
-        return Path.Combine("versions", versionId, "natives", $"{Guid.NewGuid():N}_natives");
-#endif
     }
 
     /// <summary>
