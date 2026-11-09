@@ -778,7 +778,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
 
 file class KeyValuePairStringStringComparer : IEqualityComparer<KeyValuePair<string, string>>
 {
-    public static KeyValuePairStringStringComparer Default => new();
+    public static KeyValuePairStringStringComparer Default { get; } = new();
 
     public bool Equals(KeyValuePair<string, string> x, KeyValuePair<string, string> y)
     {
