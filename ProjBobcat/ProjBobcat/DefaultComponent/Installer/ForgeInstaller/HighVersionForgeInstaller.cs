@@ -526,7 +526,7 @@ public partial class HighVersionForgeInstaller : InstallerBase, IForgeInstaller
             totalLibs.Add(processor.Processor.Jar);
 
             var cp = totalLibs
-                .Select(MavenHelper.ResolveMavenString)
+                .Select(lib => lib.ResolveMavenString())
                 .Select(m => Path.Combine(this.RootPath, GamePathHelper.GetLibraryPath(m!.Path)));
             var cpStr = string.Join(Path.PathSeparator, cp);
             var parameter = new List<string>

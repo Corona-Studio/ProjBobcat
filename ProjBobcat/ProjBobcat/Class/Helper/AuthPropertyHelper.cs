@@ -13,58 +13,58 @@ namespace ProjBobcat.Class.Helper;
 /// </summary>
 public static class AuthPropertyHelper
 {
-    /// <summary>
-    ///     解析User Property
-    /// </summary>
-    /// <param name="properties">Property 集合</param>
-    /// <returns>解析好的User Property</returns>
-    public static string ResolveUserProperties(this IEnumerable<PropertyModel>? properties)
+    extension(IEnumerable<PropertyModel>? properties)
     {
-        if (properties == null) return "{}";
+        /// <summary>
+        ///     解析User Property
+        /// </summary>
+        /// <returns>解析好的User Property</returns>
+        public string ResolveUserProperties()
+        {
+            if (properties == null) return "{}";
 
-        var keyValues = properties
-            .ToDictionary(
-                item => item.Name,
-                item => new[] { item.Value });
+            var keyValues = properties
+                .ToDictionary(
+                    item => item.Name,
+                    item => new[] { item.Value });
 
-        return JsonSerializer.Serialize(keyValues, SerializerContext.Default.DictionaryStringStringArray);
+            return JsonSerializer.Serialize(keyValues, SerializerContext.Default.DictionaryStringStringArray);
+        }
+
+        /// <summary>
+        ///     PropertyModels转UserProperties
+        /// </summary>
+        /// <param name="profiles">Profile集合</param>
+        /// <returns>转换好的UserProperty</returns>
+        public IEnumerable<AuthPropertyModel> ToAuthProperties(
+            IReadOnlyDictionary<Guid, AuthProfileModel> profiles)
+        {
+            return properties == null
+                ? []
+                : properties
+                    .Select(model => model.ToAuthProperty(profiles))
+                    .OfType<AuthPropertyModel>();
+        }
     }
 
-
-    /// <summary>
-    ///     PropertyModel转UserProperty
-    /// </summary>
-    /// <param name="model">PropertyModel</param>
-    /// <param name="profiles">Profile集合</param>
-    /// <returns>转换好的UserProperty</returns>
-    public static AuthPropertyModel? ToAuthProperty(
-        this PropertyModel? model,
-        IReadOnlyDictionary<Guid, AuthProfileModel> profiles)
+    extension(PropertyModel? model)
     {
-        return model is null
-            ? null
-            : new AuthPropertyModel
-            {
-                Name = model.Name,
-                UserId = profiles.First().Key,
-                Value = model.Value
-            };
-    }
-
-    /// <summary>
-    ///     PropertyModels转UserProperties
-    /// </summary>
-    /// <param name="models">PropertyModel集合</param>
-    /// <param name="profiles">Profile集合</param>
-    /// <returns>转换好的UserProperty</returns>
-    public static IEnumerable<AuthPropertyModel> ToAuthProperties(
-        this IEnumerable<PropertyModel>? models,
-        IReadOnlyDictionary<Guid, AuthProfileModel> profiles)
-    {
-        return models == null
-            ? []
-            : models
-                .Select(model => model.ToAuthProperty(profiles))
-                .OfType<AuthPropertyModel>();
+        /// <summary>
+        ///     PropertyModel转UserProperty
+        /// </summary>
+        /// <param name="profiles">Profile集合</param>
+        /// <returns>转换好的UserProperty</returns>
+        public AuthPropertyModel? ToAuthProperty(
+            IReadOnlyDictionary<Guid, AuthProfileModel> profiles)
+        {
+            return model is null
+                ? null
+                : new AuthPropertyModel
+                {
+                    Name = model.Name,
+                    UserId = profiles.First().Key,
+                    Value = model.Value
+                };
+        }
     }
 }

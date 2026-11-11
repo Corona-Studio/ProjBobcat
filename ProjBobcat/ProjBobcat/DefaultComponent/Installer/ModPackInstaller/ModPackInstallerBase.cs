@@ -11,7 +11,7 @@ using ProjBobcat.Event;
 
 namespace ProjBobcat.DefaultComponent.Installer.ModPackInstaller;
 
-public abstract class ModPackInstallerBase : InstallerBase
+public closed class ModPackInstallerBase : InstallerBase
 {
     protected readonly ConcurrentDictionary<AbstractDownloadBase, byte> FailedFiles = [];
     protected int TotalDownloaded, NeedToDownload;
@@ -99,8 +99,7 @@ public abstract class ModPackInstallerBase : InstallerBase
             var urls = failedFile switch
             {
                 SimpleDownloadFile simple => [simple.DownloadUri],
-                MultiSourceDownloadFile multi => multi.DownloadUris.Select(uri => uri.DownloadUri).ToArray(),
-                _ => []
+                MultiSourceDownloadFile multi => multi.DownloadUris.Select(uri => uri.DownloadUri).ToArray()
             };
 
             return new Exception($"""

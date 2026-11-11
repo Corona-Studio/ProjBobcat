@@ -1,29 +1,28 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
-#pragma warning disable
-
 namespace ProjBobcat.Class.Helper.TOMLParser;
 
 #region TOML Nodes
 
-public abstract class TomlNode : IEnumerable
+public closed class TomlNode : IEnumerable
 {
-    public virtual bool HasValue { get; } = false;
-    public virtual bool IsArray { get; } = false;
-    public virtual bool IsTable { get; } = false;
-    public virtual bool IsString { get; } = false;
-    public virtual bool IsInteger { get; } = false;
-    public virtual bool IsFloat { get; } = false;
-    public virtual bool IsDateTime { get; } = false;
-    public virtual bool IsBoolean { get; } = false;
-    public virtual string Comment { get; set; }
+    public virtual bool HasValue { get; }
+    public virtual bool IsArray { get; }
+    public virtual bool IsTable { get; }
+    public virtual bool IsString { get; }
+    public virtual bool IsInteger { get; }
+    public virtual bool IsFloat { get; }
+    public virtual bool IsDateTime { get; }
+    public virtual bool IsBoolean { get; }
+    public virtual string? Comment { get; set; }
     public virtual int CollapseLevel { get; set; }
 
     public virtual TomlTable? AsTable => this as TomlTable;
@@ -63,7 +62,7 @@ public abstract class TomlNode : IEnumerable
         return this.Children.GetEnumerator();
     }
 
-    public virtual bool TryGetNode(string key, out TomlNode? node)
+    public virtual bool TryGetNode(string key, [MaybeNullWhen(false)] out TomlNode node)
     {
         node = null;
         return false;
@@ -104,14 +103,14 @@ public abstract class TomlNode : IEnumerable
         foreach (var tomlNode in nodes) this.Add(tomlNode);
     }
 
-    public virtual void WriteTo(TextWriter tw, string name = null)
+    public virtual void WriteTo(TextWriter tw, string? name = null)
     {
         tw.WriteLine(this.ToInlineToml());
     }
 
     public virtual string ToInlineToml()
     {
-        return this.ToString();
+        return this.ToString() ?? string.Empty;
     }
 
     #region Native type to TOML cast
@@ -159,37 +158,37 @@ public abstract class TomlNode : IEnumerable
 
     public static implicit operator string(TomlNode value)
     {
-        return value.ToString();
+        return value.ToString() ?? string.Empty;
     }
 
     public static implicit operator int(TomlNode value)
     {
-        return (int)value.AsInteger.Value;
+        return (int)value.AsInteger!.Value;
     }
 
     public static implicit operator long(TomlNode value)
     {
-        return value.AsInteger.Value;
+        return value.AsInteger!.Value;
     }
 
     public static implicit operator float(TomlNode value)
     {
-        return (float)value.AsFloat.Value;
+        return (float)value.AsFloat!.Value;
     }
 
     public static implicit operator double(TomlNode value)
     {
-        return value.AsFloat.Value;
+        return value.AsFloat!.Value;
     }
 
     public static implicit operator bool(TomlNode value)
     {
-        return value.AsBoolean.Value;
+        return value.AsBoolean!.Value;
     }
 
     public static implicit operator DateTime(TomlNode value)
     {
-        return value.AsDateTime.Value;
+        return value.AsDateTime!.Value;
     }
 
     #endregion
@@ -202,7 +201,7 @@ public class TomlString : TomlNode
     public bool IsMultiline { get; set; }
     public bool PreferLiteral { get; set; }
 
-    public string Value { get; set; }
+    public string Value { get; set; } = string.Empty;
 
     public override string ToString()
     {
@@ -211,7 +210,7 @@ public class TomlString : TomlNode
 
     public override string ToInlineToml()
     {
-        if (this.Value.IndexOf(TomlSyntax.LITERAL_STRING_SYMBOL) != -1 && this.PreferLiteral)
+        if (this.Value.Contains(TomlSyntax.LITERAL_STRING_SYMBOL) && this.PreferLiteral)
             this.PreferLiteral = false;
         var quotes = new string(this.PreferLiteral ? TomlSyntax.LITERAL_STRING_SYMBOL : TomlSyntax.BASIC_STRING_SYMBOL,
             this.IsMultiline ? 3 : 1);
@@ -344,8 +343,9 @@ public class TomlArray : TomlNode
     public override bool HasValue { get; } = true;
     public override bool IsArray { get; } = true;
     public bool IsTableArray { get; set; }
-    public List<TomlNode> RawArray => field ??= new List<TomlNode>();
+    public List<TomlNode> RawArray => field ??= [];
 
+    [AllowNull]
     public override TomlNode this[int index]
     {
         get
@@ -358,9 +358,9 @@ public class TomlArray : TomlNode
         set
         {
             if (index == this.RawArray.Count)
-                this.RawArray.Add(value);
+                this.RawArray.Add(value!);
             else
-                this.RawArray[index] = value;
+                this.RawArray[index] = value!;
         }
     }
 
@@ -402,7 +402,7 @@ public class TomlArray : TomlNode
         return sb.ToString();
     }
 
-    public override void WriteTo(TextWriter tw, string name = null)
+    public override void WriteTo(TextWriter tw, string? name = null)
     {
         // If it's a normal array, write it as usual
         if (!this.IsTableArray)
@@ -455,11 +455,12 @@ public class TomlArray : TomlNode
 
 public class TomlTable : TomlNode
 {
-    public override bool HasValue { get; } = false;
+    public override bool HasValue => false;
     public override bool IsTable { get; } = true;
     public bool IsInline { get; set; }
-    public Dictionary<string, TomlNode> RawTable => field ??= new Dictionary<string, TomlNode>();
+    public Dictionary<string, TomlNode> RawTable => field ??= [];
 
+    [AllowNull]
     public override TomlNode this[string key]
     {
         get
@@ -469,7 +470,7 @@ public class TomlTable : TomlNode
             this.RawTable[key] = lazy;
             return lazy;
         }
-        set => this.RawTable[key] = value;
+        set => this.RawTable[key] = value!;
     }
 
     public override int ChildrenCount => this.RawTable.Count;
@@ -486,7 +487,7 @@ public class TomlTable : TomlNode
         this.RawTable.Add(key, node);
     }
 
-    public override bool TryGetNode(string key, out TomlNode node)
+    public override bool TryGetNode(string key, [MaybeNullWhen(false)] out TomlNode node)
     {
         return this.RawTable.TryGetValue(key, out node);
     }
@@ -529,13 +530,13 @@ public class TomlTable : TomlNode
 
     Dictionary<string, TomlNode> CollectCollapsedItems(out HashSet<string> nonCollapsibleItems,
         string prefix = "",
-        Dictionary<string, TomlNode> nodes = null,
+        Dictionary<string, TomlNode>? nodes = null,
         int level = 0)
     {
-        nonCollapsibleItems = new HashSet<string>();
+        nonCollapsibleItems = [];
         if (nodes == null)
         {
-            nodes = new Dictionary<string, TomlNode>();
+            nodes = [];
             foreach (var keyValuePair in this.RawTable)
             {
                 var node = keyValuePair.Value;
@@ -579,7 +580,7 @@ public class TomlTable : TomlNode
         return nodes;
     }
 
-    public override void WriteTo(TextWriter tw, string name = null)
+    public override void WriteTo(TextWriter tw, string? name = null)
     {
         // The table is inline table
         if (this.IsInline && name != null)
@@ -617,7 +618,7 @@ public class TomlTable : TomlNode
         foreach (var child in this.RawTable)
         {
             // If value should be parsed as section, separate if from the bunch
-            if (child.Value is TomlArray { IsTableArray: true } || child.Value is TomlTable { IsInline: false })
+            if (child.Value is TomlArray { IsTableArray: true } or TomlTable { IsInline: false })
             {
                 sectionableItems.Add(child.Key, child.Value);
                 continue;
@@ -642,8 +643,7 @@ public class TomlTable : TomlNode
 
         foreach (var collapsedItem in collapsedItems)
         {
-            if (collapsedItem.Value is TomlArray { IsTableArray: true } ||
-                collapsedItem.Value is TomlTable { IsInline: false })
+            if (collapsedItem.Value is TomlArray { IsTableArray: true } or TomlTable { IsInline: false })
                 throw new
                     TomlFormatException(
                         $"Value {collapsedItem.Key} cannot be defined as collapsed, because it is not an inline value!");
@@ -678,41 +678,43 @@ public class TomlTable : TomlNode
 class TomlLazy : TomlNode
 {
     readonly TomlNode parent;
-    TomlNode replacement;
+    TomlNode? replacement;
 
     public TomlLazy(TomlNode parent)
     {
         this.parent = parent;
     }
 
+    [AllowNull]
     public override TomlNode this[int index]
     {
-        get => this.Set<TomlArray>()[index];
-        set => this.Set<TomlArray>()[index] = value;
+        get => this.Set<TomlArray>()![index]!;
+        set => this.Set<TomlArray>()![index] = value;
     }
 
+    [AllowNull]
     public override TomlNode this[string key]
     {
-        get => this.Set<TomlTable>()[key];
-        set => this.Set<TomlTable>()[key] = value;
+        get => this.Set<TomlTable>()![key]!;
+        set => this.Set<TomlTable>()![key] = value;
     }
 
     public override void Add(TomlNode node)
     {
-        this.Set<TomlArray>().Add(node);
+        this.Set<TomlArray>()!.Add(node);
     }
 
     public override void Add(string key, TomlNode node)
     {
-        this.Set<TomlTable>().Add(key, node);
+        this.Set<TomlTable>()!.Add(key, node);
     }
 
     public override void AddRange(IEnumerable<TomlNode> nodes)
     {
-        this.Set<TomlArray>().AddRange(nodes);
+        this.Set<TomlArray>()!.AddRange(nodes);
     }
 
-    TomlNode Set<T>() where T : TomlNode, new()
+    TomlNode? Set<T>() where T : TomlNode, new()
     {
         if (this.replacement != null) return this.replacement;
 
@@ -762,7 +764,7 @@ public class TOMLParser : IDisposable
     readonly TextReader reader;
     ParseState currentState;
     int line, col;
-    List<TomlSyntaxException> syntaxErrors;
+    List<TomlSyntaxException> syntaxErrors = [];
 
     public TOMLParser(TextReader reader)
     {
@@ -779,10 +781,10 @@ public class TOMLParser : IDisposable
 
     public TomlTable Parse()
     {
-        this.syntaxErrors = new List<TomlSyntaxException>();
+        this.syntaxErrors = [];
         this.line = this.col = 0;
         var rootNode = new TomlTable();
-        var currentNode = rootNode;
+        TomlTable? currentNode = rootNode;
         this.currentState = ParseState.None;
         var keyParts = new List<string>();
         var arrayTable = false;
@@ -858,7 +860,7 @@ public class TOMLParser : IDisposable
                 }
 
                 keyValuePair.Comment = latestComment.ToString().TrimEnd();
-                var inserted = this.InsertNode(keyValuePair, currentNode, keyParts);
+                var inserted = this.InsertNode(keyValuePair, currentNode!, keyParts);
                 latestComment.Length = 0;
                 keyParts.Clear();
                 if (inserted) this.currentState = ParseState.SkipToNextLine;
@@ -946,7 +948,7 @@ public class TOMLParser : IDisposable
                 if (TomlSyntax.IsWhiteSpace(c) || c == TomlSyntax.NEWLINE_CARRIAGE_RETURN_CHARACTER)
                     goto consume_character;
 
-                if (c == TomlSyntax.COMMENT_SYMBOL || c == TomlSyntax.NEWLINE_CHARACTER)
+                if (c is TomlSyntax.COMMENT_SYMBOL or TomlSyntax.NEWLINE_CHARACTER)
                 {
                     this.currentState = ParseState.None;
                     this.AdvanceLine();
@@ -969,7 +971,7 @@ public class TOMLParser : IDisposable
             this.col++;
         }
 
-        if (this.currentState != ParseState.None && this.currentState != ParseState.SkipToNextLine)
+        if (this.currentState is not ParseState.None and not ParseState.SkipToNextLine)
             this.AddError("Unexpected end of file!");
 
         if (this.syntaxErrors.Count > 0)
@@ -1011,7 +1013,7 @@ public class TOMLParser : IDisposable
          * foo = "bar"  ==> foo = "bar"
          * ^                           ^
          */
-    TomlNode ReadKeyValuePair(List<string> keyParts)
+    TomlNode? ReadKeyValuePair(List<string> keyParts)
     {
         int cur;
         while ((cur = this.reader.Peek()) >= 0)
@@ -1060,7 +1062,7 @@ public class TOMLParser : IDisposable
          * "test"  ==> "test"
          * ^                 ^
          */
-    TomlNode ReadValue(bool skipNewlines = false)
+    TomlNode? ReadValue(bool skipNewlines = false)
     {
         int cur;
         while ((cur = this.reader.Peek()) >= 0)
@@ -1103,6 +1105,9 @@ public class TOMLParser : IDisposable
                 var value = isMultiline
                     ? this.ReadQuotedValueMultiLine(c)
                     : this.ReadQuotedValueSingleLine(c, excess);
+
+                if (value is null)
+                    return null;
 
                 return new TomlString
                 {
@@ -1254,10 +1259,10 @@ public class TOMLParser : IDisposable
          *     ==>  1_0_0_0 # This is a comment
          *     ^                                                  ^
          */
-    TomlNode ReadTomlValue()
+    TomlNode? ReadTomlValue()
     {
         var value = this.ReadRawValue();
-        TomlNode node = value switch
+        TomlNode? node = value switch
         {
             var v when TomlSyntax.IsBoolean(v) => bool.Parse(v),
             var v when TomlSyntax.IsNaN(v) => double.NaN,
@@ -1335,12 +1340,12 @@ public class TOMLParser : IDisposable
          * [1, 2, 3]  ==>  [1, 2, 3]
          * ^                        ^
          */
-    TomlArray ReadArray()
+    TomlArray? ReadArray()
     {
         // Consume the start of array character
         this.ConsumeChar();
         var result = new TomlArray();
-        TomlNode currentValue = null;
+        TomlNode? currentValue = null;
 
         int cur;
         while ((cur = this.reader.Peek()) >= 0)
@@ -1410,11 +1415,11 @@ public class TOMLParser : IDisposable
          * { test = "foo", value = 1 }  ==>  { test = "foo", value = 1 }
          * ^                                                            ^
          */
-    TomlNode ReadInlineTable()
+    TomlNode? ReadInlineTable()
     {
         this.ConsumeChar();
         var result = new TomlTable { IsInline = true };
-        TomlNode currentValue = null;
+        TomlNode? currentValue = null;
         var keyParts = new List<string>();
         int cur;
         while ((cur = this.reader.Peek()) >= 0)
@@ -1559,7 +1564,7 @@ public class TOMLParser : IDisposable
          * "test"  ==>  "test"
          * ^                 ^
          */
-    string ReadQuotedValueSingleLine(char quote, char initialData = '\0')
+    string? ReadQuotedValueSingleLine(char quote, char initialData = '\0')
     {
         var isNonLiteral = quote == TomlSyntax.BASIC_STRING_SYMBOL;
         var sb = new StringBuilder();
@@ -1710,7 +1715,7 @@ public class TOMLParser : IDisposable
         return true;
     }
 
-    TomlTable CreateTable(TomlNode root, IList<string> path, bool arrayTable)
+    TomlTable? CreateTable(TomlNode root, IList<string> path, bool arrayTable)
     {
         if (path.Count == 0) return null;
         var latestNode = root;
@@ -1804,7 +1809,7 @@ public class TOMLParser : IDisposable
 
 public static class TOML
 {
-    public static bool ForceASCII { get; set; } = false;
+    public static bool ForceASCII { get; set; }
 
     public static TomlTable Parse(TextReader reader)
     {
@@ -1935,23 +1940,23 @@ static partial class TomlSyntax
          * Valid date formats with timezone as per RFC3339.
          */
     public static readonly string[] RFC3339Formats =
-    {
+    [
         "yyyy'-'MM-dd HH':'mm':'ssK", "yyyy'-'MM-dd HH':'mm':'ss'.'fK", "yyyy'-'MM-dd HH':'mm':'ss'.'ffK",
         "yyyy'-'MM-dd HH':'mm':'ss'.'fffK", "yyyy'-'MM-dd HH':'mm':'ss'.'ffffK",
         "yyyy'-'MM-dd HH':'mm':'ss'.'fffffK", "yyyy'-'MM-dd HH':'mm':'ss'.'ffffffK",
         "yyyy'-'MM-dd HH':'mm':'ss'.'fffffffK"
-    };
+    ];
 
     /**
          * Valid date formats without timezone (assumes local) as per RFC3339.
          */
     public static readonly string[] RFC3339LocalDateTimeFormats =
-    {
+    [
         "yyyy'-'MM-dd HH':'mm':'ss", "yyyy'-'MM-dd HH':'mm':'ss'.'f", "yyyy'-'MM-dd HH':'mm':'ss'.'ff",
         "yyyy'-'MM-dd HH':'mm':'ss'.'fff", "yyyy'-'MM-dd HH':'mm':'ss'.'ffff",
         "yyyy'-'MM-dd HH':'mm':'ss'.'fffff", "yyyy'-'MM-dd HH':'mm':'ss'.'ffffff",
         "yyyy'-'MM-dd HH':'mm':'ss'.'fffffff"
-    };
+    ];
 
     /**
          * Valid full date format as per TOML spec.
@@ -1962,10 +1967,10 @@ static partial class TomlSyntax
          * Valid time formats as per TOML spec.
          */
     public static readonly string[] RFC3339LocalTimeFormats =
-    {
+    [
         "HH':'mm':'ss", "HH':'mm':'ss'.'f", "HH':'mm':'ss'.'ff", "HH':'mm':'ss'.'fff", "HH':'mm':'ss'.'ffff",
         "HH':'mm':'ss'.'fffff", "HH':'mm':'ss'.'ffffff", "HH':'mm':'ss'.'fffffff"
-    };
+    ];
 
     #endregion
 
@@ -1988,7 +1993,7 @@ static partial class TomlSyntax
     public const char LITERAL_STRING_SYMBOL = '\'';
     public const char INT_NUMBER_SEPARATOR = '_';
 
-    public static readonly char[] NewLineCharacters = { NEWLINE_CHARACTER, NEWLINE_CARRIAGE_RETURN_CHARACTER };
+    public static readonly char[] NewLineCharacters = [NEWLINE_CHARACTER, NEWLINE_CARRIAGE_RETURN_CHARACTER];
 
     public static bool IsQuoted(char c)
     {

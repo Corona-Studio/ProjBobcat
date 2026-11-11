@@ -11,9 +11,12 @@ public static class ArchiveHelper
     private const int ValidZipDateYearMin = 1980;
     private const int ValidZipDateYearMax = 2107;
 
-    public static bool IsDirectory(this ZipArchiveEntry entry)
+    extension(ZipArchiveEntry entry)
     {
-        return entry.Length == 0 && entry.FullName.EndsWith('/');
+        public bool IsDirectory()
+        {
+            return entry.Length == 0 && entry.FullName.EndsWith('/');
+        }
     }
 
     public static bool TryOpenRead(Stream stream, [MaybeNullWhen(false)] out ZipArchive archive)

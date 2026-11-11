@@ -45,7 +45,7 @@ public class MicrosoftGraphResponseTests
             """, SerializerContext.Default.GraphAuthResultModel);
 
         Assert.IsTrue(result is GraphResponseErrorModel);
-        var error = (GraphResponseErrorModel)result.Value!;
+        var error = (GraphResponseErrorModel)result.Value;
         Assert.AreEqual("authorization_declined", error.ErrorType);
         Assert.AreEqual("Declined", error.ErrorDescription);
         Assert.AreEqual(2026, error.TimeStamp.Year);

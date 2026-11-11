@@ -402,7 +402,7 @@ public sealed class DownloadHelperTests
 
     sealed class RangeHandler(byte[] data, string? failingHost = null) : HttpMessageHandler
     {
-        readonly object _sync = new();
+        readonly Lock _sync = new();
         bool _truncated;
         int _wholeFileRequests;
         (long Start, long End)? _truncatedRange;

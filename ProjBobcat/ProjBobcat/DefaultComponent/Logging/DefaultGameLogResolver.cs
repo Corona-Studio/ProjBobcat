@@ -158,7 +158,7 @@ public partial class DefaultGameLogResolver : IGameLogResolver
     #region Source-generated regex patterns
 
     // ANSI SGR escape sequences: ESC[ (params) m — emitted by log4j2 for terminal coloring
-    [GeneratedRegex(@"\x1b\[[0-9;]*m")]
+    [GeneratedRegex("\e\\[[0-9;]*m")]
     private static partial Regex AnsiEscapeRegex();
 
     // Forge / NeoForge log4j2 — date + time with milliseconds, thread/level, optional [source].

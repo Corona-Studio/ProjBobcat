@@ -6,3 +6,46 @@ insert_final_newline = true
 
 [*.{bat,cmd}]
 end_of_line = crlf
+
+[*.cs]
+# Keep imports clean and make IDE0005 available to command-line formatting.
+dotnet_diagnostic.IDE0005.severity = warning
+
+# Keep modernizations semantics-preserving. In particular, only use collection
+# expressions when the constructed type remains exactly the same.
+dotnet_style_prefer_collection_expression = when_types_exactly_match:suggestion
+csharp_prefer_static_anonymous_function = true:suggestion
+csharp_prefer_system_threading_lock = true:suggestion
+dotnet_diagnostic.IDE0330.severity = suggestion
+csharp_style_prefer_unbound_generic_type_in_nameof = true:suggestion
+csharp_style_prefer_implicitly_typed_lambda_expression = true:suggestion
+csharp_style_prefer_simple_property_accessors = true:suggestion
+csharp_style_prefer_labeled_jump_statements = true:suggestion
+dotnet_style_prefer_auto_properties = true:suggestion
+dotnet_style_null_propagation = true:suggestion
+
+# C# 15 / modern C# language simplifications.
+dotnet_diagnostic.IDE0028.severity = suggestion
+dotnet_diagnostic.IDE0031.severity = suggestion
+dotnet_diagnostic.IDE0032.severity = suggestion
+dotnet_diagnostic.IDE0240.severity = suggestion
+dotnet_diagnostic.IDE0300.severity = suggestion
+dotnet_diagnostic.IDE0301.severity = suggestion
+dotnet_diagnostic.IDE0302.severity = suggestion
+dotnet_diagnostic.IDE0303.severity = suggestion
+dotnet_diagnostic.IDE0304.severity = suggestion
+dotnet_diagnostic.IDE0305.severity = suggestion
+dotnet_diagnostic.IDE0306.severity = suggestion
+dotnet_diagnostic.IDE0320.severity = suggestion
+dotnet_diagnostic.IDE0340.severity = suggestion
+dotnet_diagnostic.IDE0350.severity = suggestion
+dotnet_diagnostic.IDE0360.severity = suggestion
+dotnet_diagnostic.IDE0370.severity = suggestion
+dotnet_diagnostic.IDE0380.severity = suggestion
+dotnet_diagnostic.IDE0410.severity = suggestion
+
+# Allocation and dispatch improvements that have safe automated fixes.
+dotnet_diagnostic.CA1805.severity = suggestion
+dotnet_diagnostic.CA1822.severity = suggestion
+dotnet_diagnostic.CA1826.severity = suggestion
+dotnet_diagnostic.CA1829.severity = suggestion

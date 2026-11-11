@@ -2,7 +2,7 @@
 
 public class RepairDataHolder(string text)
 {
-    public int Index { get; set; } = 0;
+    public int Index { get; set; }
     public string Text { get; set; } = text;
     public string Output { get; set; } = string.Empty;
 

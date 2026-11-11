@@ -12,37 +12,40 @@ namespace ProjBobcat.Class.Helper.TOMLParser;
 /// </summary>
 public static class TommyExtensions
 {
-    /// <summary>
-    ///     Tries to parse TOML file.
-    /// </summary>
     /// <param name="self">TOML parser to use.</param>
-    /// <param name="rootNode">Parsed root node. If parsing fails, the parsed document might not contain all values.</param>
-    /// <param name="errors">Parse errors, if any occur.</param>
-    /// <returns>True, if parsing succeeded without errors. Otherwise false.</returns>
-    public static bool TryParse(this TOMLParser self,
-        out TomlNode rootNode,
-        out IEnumerable<TomlSyntaxException> errors)
+    extension(TOMLParser self)
     {
-        try
+        /// <summary>
+        ///     Tries to parse TOML file.
+        /// </summary>
+        /// <param name="rootNode">Parsed root node. If parsing fails, the parsed document might not contain all values.</param>
+        /// <param name="errors">Parse errors, if any occur.</param>
+        /// <returns>True, if parsing succeeded without errors. Otherwise false.</returns>
+        public bool TryParse(
+            out TomlNode rootNode,
+            out IEnumerable<TomlSyntaxException> errors)
         {
-            rootNode = self.Parse();
-            errors = [];
-            return true;
-        }
-        catch (TomlParseException ex)
-        {
-            rootNode = ex.ParsedTable;
-            errors = ex.SyntaxErrors;
-            return false;
-        }
-        catch (Exception ex)
-        {
-            if (!ex.Message.StartsWith("The character", StringComparison.OrdinalIgnoreCase))
-                throw;
+            try
+            {
+                rootNode = self.Parse();
+                errors = [];
+                return true;
+            }
+            catch (TomlParseException ex)
+            {
+                rootNode = ex.ParsedTable;
+                errors = ex.SyntaxErrors;
+                return false;
+            }
+            catch (Exception ex)
+            {
+                if (!ex.Message.StartsWith("The character", StringComparison.OrdinalIgnoreCase))
+                    throw;
 
-            rootNode = null;
-            errors = [new TomlSyntaxException(ex.Message, TOMLParser.ParseState.None, 0, 0)];
-            return false;
+                rootNode = null;
+                errors = [new TomlSyntaxException(ex.Message, TOMLParser.ParseState.None, 0, 0)];
+                return false;
+            }
         }
     }
 

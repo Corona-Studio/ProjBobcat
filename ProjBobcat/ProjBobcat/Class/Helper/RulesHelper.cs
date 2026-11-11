@@ -10,49 +10,54 @@ namespace ProjBobcat.Class.Helper;
 /// </summary>
 public static class RulesHelper
 {
-    public static bool IsNewNativeLib(this Library lib)
+    extension(Library lib)
     {
-        return lib.Name.Contains("natives", StringComparison.OrdinalIgnoreCase) &&
-               lib.Downloads?.Artifact != null;
+        public bool IsNewNativeLib()
+        {
+            return lib.Name.Contains("natives", StringComparison.OrdinalIgnoreCase) &&
+                   lib.Downloads?.Artifact != null;
+        }
     }
 
-    /// <summary>
-    ///     检查该Rule是否被允许
-    /// </summary>
-    /// <param name="rules"></param>
-    /// <returns></returns>
-    public static bool CheckAllow(this IEnumerable<JvmRules?>? rules)
+    extension(IEnumerable<JvmRules?>? rules)
     {
-        if (rules == null) return true;
-
-        var jvmRules = rules
-            .OfType<JvmRules>()
-            .ToList();
-
-        if (jvmRules.Count == 0) return true;
-
-        var ruleFlag = false;
-        List<JvmRules> orderedRules =
-        [
-            with(capacity: jvmRules.Count),
-            .. jvmRules.Where(r => r.Action == "disallow"),
-            .. jvmRules.Where(r => r.Action == "allow")
-        ];
-
-        foreach (var rule in orderedRules)
+        /// <summary>
+        ///     检查该Rule是否被允许
+        /// </summary>
+        /// <returns></returns>
+        public bool CheckAllow()
         {
-            if (rule.OperatingSystem == null) return rule.Action == "allow";
-            if (rule.Action == "disallow")
-            {
-                if (rule.OperatingSystem.Name?.Equals(Constants.OsSymbol, StringComparison.OrdinalIgnoreCase) ?? false)
-                    return false;
+            if (rules == null) return true;
 
-                continue;
+            var jvmRules = rules
+                .OfType<JvmRules>()
+                .ToList();
+
+            if (jvmRules.Count == 0) return true;
+
+            var ruleFlag = false;
+            List<JvmRules> orderedRules =
+            [
+                with(capacity: jvmRules.Count),
+                .. jvmRules.Where(r => r.Action == "disallow"),
+                .. jvmRules.Where(r => r.Action == "allow")
+            ];
+
+            foreach (var rule in orderedRules)
+            {
+                if (rule.OperatingSystem == null) return rule.Action == "allow";
+                if (rule.Action == "disallow")
+                {
+                    if (rule.OperatingSystem.Name?.Equals(Constants.OsSymbol, StringComparison.OrdinalIgnoreCase) ?? false)
+                        return false;
+
+                    continue;
+                }
+
+                ruleFlag = ruleFlag || rule.OperatingSystem.IsAllow();
             }
 
-            ruleFlag = ruleFlag || rule.OperatingSystem.IsAllow();
+            return ruleFlag;
         }
-
-        return ruleFlag;
     }
 }

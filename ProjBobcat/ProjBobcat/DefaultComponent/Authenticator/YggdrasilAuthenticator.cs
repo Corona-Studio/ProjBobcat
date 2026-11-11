@@ -4,7 +4,6 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
-using System.Text.Json;
 using System.Threading.Tasks;
 using ProjBobcat.Class.Helper;
 using ProjBobcat.Class.Model;
@@ -58,12 +57,6 @@ public class YggdrasilAuthenticator : IAuthenticator
     /// </summary>
     string ValidateAddress =>
         $"{this.AuthServer?.TrimEnd('/')}{(string.IsNullOrEmpty(this.AuthServer) ? OfficialAuthServer : "/authserver")}/validate";
-
-    /// <summary>
-    ///     获取令牌吊销Api地址。
-    /// </summary>
-    string RevokeAddress =>
-        $"{this.AuthServer?.TrimEnd('/')}{(string.IsNullOrEmpty(this.AuthServer) ? OfficialAuthServer : "/authserver")}/invalidate";
 
     /// <summary>
     ///     获取登出Api地址。

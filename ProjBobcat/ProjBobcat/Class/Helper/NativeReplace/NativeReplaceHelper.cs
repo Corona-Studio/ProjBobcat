@@ -61,14 +61,17 @@ public static partial class NativeReplaceHelper
         if (javaPlatform == OSPlatform.Linux)
         {
             if (useSystemGlfwOnLinux || useSystemOpenAlOnLinux)
-                libs = libs.Where(original =>
-                {
-                    var maven = original.Name.ResolveMavenString();
-                    return maven == null || maven.OrganizationName != "org.lwjgl" ||
-                           !maven.Classifier.StartsWith("natives", StringComparison.Ordinal) ||
-                           !(useSystemGlfwOnLinux && maven.ArtifactId == "lwjgl-glfw" ||
-                             useSystemOpenAlOnLinux && maven.ArtifactId == "lwjgl-openal");
-                }).ToList();
+                libs =
+                [
+                    .. libs.Where(original =>
+                    {
+                        var maven = original.Name.ResolveMavenString();
+                        return maven == null || maven.OrganizationName != "org.lwjgl" ||
+                               !maven.Classifier.StartsWith("natives", StringComparison.Ordinal) ||
+                               !(useSystemGlfwOnLinux && maven.ArtifactId == "lwjgl-glfw" ||
+                                 useSystemOpenAlOnLinux && maven.ArtifactId == "lwjgl-openal");
+                    })
+                ];
 
             // Modern Mojang manifests still only list Linux x64 natives. Selecting the
             // JVM architecture must also work under LegacyOnly and for unknown game IDs.

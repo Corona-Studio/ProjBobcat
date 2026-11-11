@@ -5,13 +5,16 @@ namespace ProjBobcat.Class.Helper;
 
 public static class ListHelper
 {
-    public static async Task<List<T>> ToListAsync<T>(this IAsyncEnumerable<T> asyncEnumerable)
+    extension<T>(IAsyncEnumerable<T> asyncEnumerable)
     {
-        var result = new List<T>();
+        public async Task<List<T>> ToListAsync()
+        {
+            var result = new List<T>();
 
-        await foreach (var element in asyncEnumerable)
-            result.Add(element);
+            await foreach (var element in asyncEnumerable)
+                result.Add(element);
 
-        return result;
+            return result;
+        }
     }
 }

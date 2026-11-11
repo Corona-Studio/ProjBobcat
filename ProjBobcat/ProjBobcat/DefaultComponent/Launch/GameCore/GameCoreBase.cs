@@ -9,7 +9,7 @@ using ProjBobcat.Interface;
 
 namespace ProjBobcat.DefaultComponent.Launch.GameCore;
 
-public abstract class GameCoreBase : IGameCore
+public closed class GameCoreBase : IGameCore
 {
     static readonly object GameExitEventKey = new();
     static readonly object GameLogEventKey = new();

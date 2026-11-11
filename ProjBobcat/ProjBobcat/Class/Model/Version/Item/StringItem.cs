@@ -62,7 +62,7 @@ public class StringItem : IItem
 
     public bool IsNull()
     {
-        return Compare(ComparableQualifier(this._value), ReleaseVersionIndex, StringComparison.Ordinal) == 0;
+        return string.Equals(ComparableQualifier(this._value), ReleaseVersionIndex, StringComparison.Ordinal);
     }
 
     /**

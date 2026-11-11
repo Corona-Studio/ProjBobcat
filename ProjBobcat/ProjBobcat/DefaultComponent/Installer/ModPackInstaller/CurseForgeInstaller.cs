@@ -13,7 +13,6 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using ProjBobcat.Class.Helper;
-using ProjBobcat.Class.Helper.Download;
 using ProjBobcat.Class.Model;
 using ProjBobcat.Class.Model.CurseForge;
 using ProjBobcat.Class.Model.Downloading;
@@ -377,8 +376,7 @@ public sealed class CurseForgeInstaller : ModPackInstallerBase, ICurseForgeInsta
         }
         catch (HttpRequestException e)
         {
-            if (e.StatusCode != HttpStatusCode.BadRequest &&
-                e.StatusCode != HttpStatusCode.UnprocessableEntity)
+            if (e.StatusCode is not HttpStatusCode.BadRequest and not HttpStatusCode.UnprocessableEntity)
                 throw;
 
             return await RetryLogicAsync();

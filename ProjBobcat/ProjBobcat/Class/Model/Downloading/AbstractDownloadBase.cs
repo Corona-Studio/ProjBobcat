@@ -4,7 +4,7 @@ using ProjBobcat.Interface;
 
 namespace ProjBobcat.Class.Model.Downloading;
 
-public abstract class AbstractDownloadBase : IDownloadFile
+public closed class AbstractDownloadBase : IDownloadFile
 {
     int _completionRaised;
     int _retryCount;

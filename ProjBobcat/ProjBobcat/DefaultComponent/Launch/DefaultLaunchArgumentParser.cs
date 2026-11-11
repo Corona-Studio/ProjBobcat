@@ -296,6 +296,7 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
     ///     解析额外参数（分辨率，服务器地址）
     /// </summary>
     /// <returns></returns>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Public instance API used by consumers.")]
     public IEnumerable<string> ParseAdditionalArguments(
         IVersionInfo versionInfo,
         ResolvedGameVersion version,
@@ -308,7 +309,7 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
             if (!(resolution?.IsDefault() ?? true))
             {
                 yield return "--width";
-                yield return resolution!.Width.ToString();
+                yield return resolution.Width.ToString();
                 yield return "--height";
                 yield return resolution.Height.ToString();
             }

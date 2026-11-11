@@ -147,7 +147,7 @@ public sealed class DefaultResourceCompleterTests
         }
     }
 
-    public TestContext TestContext { get; set; }
+    public TestContext TestContext { get; set; } = null!;
 
     static TestResource CreateResource(string directory, string fileName, byte[] data)
     {

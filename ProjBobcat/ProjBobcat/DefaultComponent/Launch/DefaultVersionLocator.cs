@@ -104,7 +104,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
     ///     解析游戏参数
     /// </summary>
     /// <returns></returns>
-    private (IEnumerable<string>, Dictionary<string, string>) ParseGameArguments(string? minecraftArgs,
+    private static (IEnumerable<string>, Dictionary<string, string>) ParseGameArguments(string? minecraftArgs,
         JsonElement[]? gameArgs)
     {
         var argList = new List<string>();
@@ -396,7 +396,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
             {
                 var inheritsLibs = NativeReplaceHelper.Replace(
                     inherits,
-                    inherits[i].Libraries.ToList(),
+                    [.. inherits[i].Libraries],
                     nativeReplacementPolicy,
                     javaRuntimeInfo?.JavaPlatform,
                     javaRuntimeInfo?.JavaArch,
@@ -418,7 +418,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
 
                     jvmArgList.AddRange(this.ParseJvmArguments(inherits[i].Arguments?.Jvm));
 
-                    var rootArgs = this.ParseGameArguments(
+                    var rootArgs = ParseGameArguments(
                         inherits[i].MinecraftArguments,
                         inherits[i].Arguments?.Game);
 
@@ -475,7 +475,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
                 natives.AddRange(moreMiddleNatives);
 
                 var jvmArgs = this.ParseJvmArguments(inherits[i].Arguments?.Jvm);
-                var middleGameArgs = this.ParseGameArguments(
+                var middleGameArgs = ParseGameArguments(
                     inherits[i].MinecraftArguments,
                     inherits[i].Arguments?.Game);
 
@@ -669,7 +669,7 @@ public sealed class DefaultVersionLocator : VersionLocatorBase
         natives = libs.Item1;
         jvmArguments = [.. this.ParseJvmArguments(versionInfo.RawVersion.Arguments?.Jvm)];
 
-        var gameArgs = this.ParseGameArguments(
+        var gameArgs = ParseGameArguments(
             versionInfo.RawVersion.MinecraftArguments,
             versionInfo.RawVersion.Arguments?.Game);
 
