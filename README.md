@@ -39,7 +39,7 @@ All you need for Minecraft launcher in typescript. https://voxelum.github.io/min
 
 ## Reminder before installation
 
-+ Projbobcat now only supports the latest LTS .NET version 10.0.
++ ProjBobcat targets .NET 11.
 + Due to the limitation of the default number of connections in .NET, you need to manually override the number of connections to ensure that some methods in <DownloadHelper> are executed typically. You can add the following code in App.xaml.cs or the entry point of the program to complete the modification (The maximum value should not exceed 1024)
 
 ```c#

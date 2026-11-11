@@ -68,7 +68,7 @@ public sealed class VersionInfoResolver : ResolverBase
         if (string.IsNullOrEmpty(clientDownload.Url))
             yield break;
 
-        var fallbackUrls = new List<DownloadUriInfo>(this.VersionUriRoots?.Count ?? 1);
+        List<DownloadUriInfo> fallbackUrls = [with(capacity: this.VersionUriRoots?.Count ?? 1)];
         var initUrl = new DownloadUriInfo(clientDownload.Url, 1);
 
         if (this.VersionUriRoots is { Count: > 0 })

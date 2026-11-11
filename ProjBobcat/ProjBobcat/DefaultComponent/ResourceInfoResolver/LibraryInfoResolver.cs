@@ -176,6 +176,7 @@ public sealed class LibraryInfoResolver : ResolverBase
     LibraryDownloadInfo GetDownloadFile(string basePath, FileInfo lL)
     {
         var libType = GetLibType(lL);
+#pragma warning disable CS8524 // GetLibType returns only named cases; new library kinds require a URL policy.
         var uris = libType switch
         {
             LibraryType.ForgeMaven => this.ForgeMavenUriRoots.Select(r =>
@@ -188,9 +189,9 @@ public sealed class LibraryInfoResolver : ResolverBase
             LibraryType.Quilt => this.QuiltMavenUriRoots.Select(r =>
                 r with { DownloadUri = $"{r.DownloadUri}{lL.Path}" }),
             LibraryType.ReplacementNative => [new DownloadUriInfo(lL.Url!, 1)],
-            LibraryType.Other => this.LibraryUriRoots.Select(r => r with { DownloadUri = $"{r.DownloadUri}{lL.Path}" }),
-            _ => []
+            LibraryType.Other => this.LibraryUriRoots.Select(r => r with { DownloadUri = $"{r.DownloadUri}{lL.Path}" })
         };
+#pragma warning restore CS8524
 
         var symbolIndex = lL.Path!.LastIndexOf('/');
         var fileName = lL.Path[(symbolIndex + 1)..];

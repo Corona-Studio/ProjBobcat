@@ -61,21 +61,24 @@ public sealed class DefaultLaunchArgumentParser : LaunchArgumentParserBase, IArg
             yield return "-Xmx2G";
         }
 
-        if (launchSettings.GameArguments.GcType != GcType.Disable)
+        var gcType = launchSettings.GameArguments.GcType;
+        // Settings can contain numeric values written by other versions; keep the G1 fallback.
+        if ((uint)gcType > (uint)GcType.ZGc)
+            gcType = GcType.G1Gc;
+
+#pragma warning disable CS8524 // Undefined values are normalized above; newly named collectors must be handled.
+        var gcArg = gcType switch
         {
-            var gcArg = launchSettings.GameArguments.GcType switch
-            {
-                GcType.CmsGc => "-XX:+UseConcMarkSweepGC",
-                GcType.G1Gc => "-XX:+UseG1GC",
-                GcType.ParallelGc => "-XX:+UseParallelGC",
-                GcType.SerialGc => "-XX:+UseSerialGC",
-                GcType.ZGc => "-XX:+UseZGC",
-                _ => "-XX:+UseG1GC"
-            };
-
+            GcType.Disable => null,
+            GcType.CmsGc => "-XX:+UseConcMarkSweepGC",
+            GcType.G1Gc => "-XX:+UseG1GC",
+            GcType.ParallelGc => "-XX:+UseParallelGC",
+            GcType.SerialGc => "-XX:+UseSerialGC",
+            GcType.ZGc => "-XX:+UseZGC"
+        };
+#pragma warning restore CS8524
+        if (gcArg is not null)
             yield return gcArg;
-        }
-
     }
 
     public IEnumerable<string> ParseJvmArguments(

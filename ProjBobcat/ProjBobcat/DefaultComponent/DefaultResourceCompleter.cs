@@ -21,7 +21,7 @@ public class DefaultResourceCompleter : IResourceCompleter
 {
     readonly ConcurrentBag<MultiSourceDownloadFile> _failedFiles = [];
     readonly SemaphoreSlim _operationLock = new(1, 1);
-    readonly object _progressLock = new();
+    readonly Lock _progressLock = new();
 
     ulong _needToDownload;
     double _lastReportedProgress;

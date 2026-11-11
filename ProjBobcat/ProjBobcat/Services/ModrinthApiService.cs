@@ -123,12 +123,18 @@ public class ModrinthApiService(
         string hash,
         HashType hashType)
     {
+        if ((uint)hashType > (uint)HashType.SHA512)
+            throw new ArgumentOutOfRangeException(nameof(hashType), hashType, null);
+
+#pragma warning disable CS8524 // Undefined values are rejected above; unsupported named algorithms are explicit.
         var para = hashType switch
         {
             HashType.SHA1 => "?algorithm=sha1",
             HashType.SHA512 => "?algorithm=sha512",
-            _ => throw new ArgumentOutOfRangeException(nameof(hashType), hashType, null)
+            HashType.MD5 or HashType.SHA256 or HashType.SHA384 =>
+                throw new ArgumentOutOfRangeException(nameof(hashType), hashType, null)
         };
+#pragma warning restore CS8524
         var reqUrl = $"{this.GetApiRoot()}/version_file/{hash}{para}";
 
         using var res = await this.Get(reqUrl);

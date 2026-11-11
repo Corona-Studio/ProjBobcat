@@ -103,7 +103,7 @@ public sealed class AssetInfoResolver : ResolverBase
 
                 if (versionObject == null) yield break;
 
-                var fallbackUrls = new List<DownloadUriInfo>(this.AssetIndexUriRoots?.Count ?? 1);
+                List<DownloadUriInfo> fallbackUrls = [with(capacity: this.AssetIndexUriRoots?.Count ?? 1)];
                 var initUrl = new DownloadUriInfo(versionObject.Url, 1);
 
                 if (this.AssetIndexUriRoots is { Count: > 0 })
@@ -147,7 +147,7 @@ public sealed class AssetInfoResolver : ResolverBase
 
             if (string.IsNullOrEmpty(assetIndexDownloadUri)) yield break;
 
-            var urls = new List<DownloadUriInfo>(this.AssetIndexUriRoots?.Count ?? 1);
+            List<DownloadUriInfo> urls = [with(capacity: this.AssetIndexUriRoots?.Count ?? 1)];
 
             if (this.AssetIndexUriRoots is { Count: > 0 })
             {

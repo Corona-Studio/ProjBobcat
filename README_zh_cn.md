@@ -22,7 +22,7 @@
 
 ## Native AOT （提前编译为本地代码） 支持
 
-ProjBobcat 为 [NativeAot](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/) 提供全面支持。Native AOT 应用程序启动非常快，并且使用较少的内存。应用程序的用户可以在没有安装 .NET 运行时的机器上运行它。如果你想在你的项目中使用Native AOT，请将你的目标框架切换到 **net8.0 或更高版本**。
+ProjBobcat 为 [NativeAot](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/) 提供全面支持。Native AOT 应用程序启动非常快，并且使用较少的内存。应用程序的用户可以在没有安装 .NET 运行时的机器上运行它。如果你想在你的项目中使用Native AOT，请将你的目标框架切换到 **net11.0 或更高版本**。
 
 ## 跨平台支持
 
@@ -52,7 +52,7 @@ All you need for Minecraft launcher in typescript. https://voxelum.github.io/min
 + 日冕开发组官方审核群：1040526762
 
 ## 安装前提醒
-+ 现在 ProjBobcat 将仅支持 .NET 10.0 LTS 及以上的版本。
++ ProjBobcat 的目标框架为 .NET 11。
 + 由于.NET的默认连接数限制，您需要手动覆盖掉默认的连接数才能保证 <DownloadHelper> 中的部分方法正常执行，您可以在App.xaml.cs或程序入口点添加下面的代码来完成修改（最大值不宜超过1024）
 
 ```c#

@@ -59,14 +59,18 @@ public class DownloadSettings
 
     internal HashAlgorithm GetCryptoTransform()
     {
+        if ((uint)this.HashType > (uint)HashType.SHA512)
+            throw new NotSupportedException();
+
+#pragma warning disable CS8524 // Preserve undefined-value validation without hiding a newly named algorithm.
         return this.HashType switch
         {
             HashType.MD5 => MD5.Create(),
             HashType.SHA1 => SHA1.Create(),
             HashType.SHA256 => SHA256.Create(),
             HashType.SHA384 => SHA384.Create(),
-            HashType.SHA512 => SHA512.Create(),
-            _ => throw new NotSupportedException()
+            HashType.SHA512 => SHA512.Create()
         };
+#pragma warning restore CS8524
     }
 }

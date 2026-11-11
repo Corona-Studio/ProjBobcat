@@ -54,11 +54,11 @@ jobs:
         # Prefix the list here with "+" to use these queries and those in the config file.
         # queries: ./path/to/local/query, your-org/your-repo/queries@main
 
-    # setup .net 10.0
+    # setup .NET 11.0
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 10.0.x
+        dotnet-version: '11.0.100'
 
     - name: Restore packages
       run: dotnet restore ProjBobcat/ProjBobcat.slnx
