@@ -43,6 +43,12 @@ public partial class DefaultLogAnalyzer : ILogAnalyzer
         }
 
         var hasLogAnalysisResult = false;
+        foreach (var (fileName, content) in logs.Values.SelectMany(value => value))
+        foreach (var report in AnalyzeJavaClassVersions(content))
+        {
+            hasLogAnalysisResult = true;
+            yield return report with { From = fileName };
+        }
         foreach (var report in AnalysisLogs(logs))
         {
             hasLogAnalysisResult = true;
@@ -53,6 +59,23 @@ public partial class DefaultLogAnalyzer : ILogAnalyzer
 
         foreach (var report in AnalysisLogs2(logs))
             yield return report;
+    }
+
+    [GeneratedRegex(@"UnsupportedClassVersionError:\s*(?<class>[^\r\n]+?)\s+has been compiled by a more recent version[^\r\n]*?class file version\s+(?<required>\d+)(?:\.\d+)?\)[^\r\n]*?up to\s+(?<current>\d+)(?:\.\d+)?", RegexOptions.IgnoreCase)]
+    private static partial Regex JavaClassVersionMismatch();
+
+    public static IEnumerable<AnalysisReport.AnalysisReport> AnalyzeJavaClassVersions(string log)
+    {
+        foreach (Match match in JavaClassVersionMismatch().Matches(log))
+        {
+            if (!int.TryParse(match.Groups["required"].Value, out var required) ||
+                !int.TryParse(match.Groups["current"].Value, out var current) ||
+                required is < 45 or > 100 || current is < 45 or > 100) continue;
+            yield return new AnalysisReport.AnalysisReport(CrashCauses.UnsupportedJavaVersion)
+            {
+                Details = [$"{match.Groups["class"].Value}: Java {required - 44}+ required; current runtime supports Java {current - 44} (class {required} / {current})."]
+            };
+        }
     }
 
     [GeneratedRegex(@"(?<=\]: Warnings were found! ?[\n]+)[\w\W]+?(?=[\n]+\[)")]

@@ -70,6 +70,9 @@ public class LaunchSettings
     public GameArguments? FallBackGameArguments { get; init; }
     public required GameArguments GameArguments { get; init; }
     public required string[] GameEnvironmentVariables { get; init; }
+    public IReadOnlyList<string> GameWrapperCommand { get; init; } = [];
+    public string? PreLaunchCommand { get; init; }
+    public string? PostExitCommand { get; init; }
     public required bool UseV4NetworkingStack { get; init; }
     public required bool PreferUtf8Encoding { get; init; }
     public required bool AutoApplyFixForOldMultiPlayerGame { get; init; }

@@ -25,7 +25,22 @@ public static class GameResourcesResolveHelper
         if (rawVersion != "${file.jarVersion}")
             return rawVersion;
 
-        return FileVersionInfo.GetVersionInfo(path).FileVersion ?? "-";
+        using var archive = ZipFile.OpenRead(path);
+        var manifest = archive.GetEntry("META-INF/MANIFEST.MF");
+        if (manifest == null) return null;
+        using var reader = new StreamReader(manifest.Open());
+        var attributes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        string? key = null;
+        while (reader.ReadLine() is { } line && line.Length > 0)
+        {
+            if (line.StartsWith(' ') && key != null) { attributes[key] += line[1..]; continue; }
+            var separator = line.IndexOf(':');
+            if (separator <= 0) { key = null; continue; }
+            key = line[..separator];
+            attributes[key] = line[(separator + 1)..].Trim();
+        }
+        return attributes.GetValueOrDefault("Implementation-Version") ??
+               attributes.GetValueOrDefault("Specification-Version");
     }
 
     static async Task<GameModResolvedInfo?> GetTomlModInfo(
@@ -84,10 +99,10 @@ public static class GameResourcesResolveHelper
             author?.Value,
             file,
             modList.Select(m => m.Trim()).Where(m => !string.IsNullOrWhiteSpace(m)).ToImmutableList(),
-            title,
+            infoTable.HasKey("displayName") ? infoTable["displayName"]?.AsString?.Value ?? title : title,
             TryGetVersion(file, version?.Value),
             isNeoForge ? "NeoForge" : "Forge",
-            isEnabled);
+            isEnabled) { ModIds = [title] };
     }
 
     static async Task<GameModResolvedInfo?> GetNewModInfo(
@@ -153,7 +168,7 @@ public static class GameResourcesResolveHelper
                 modList,
                 titleResult,
                 TryGetVersion(file, baseMod.Version),
-                "Forge *", isEnabled);
+                "Forge *", isEnabled) { ModIds = model.Select(m => m.ModId).OfType<string>().ToArray() };
 
             return displayModel;
         }
@@ -183,12 +198,13 @@ public static class GameResourcesResolveHelper
                 ? string.Join(',', tempModel.Authors)
                 : null;
             var modList = tempModel?.Depends?.Select(d => d.Key)?.ToImmutableList();
-            var titleResult = string.IsNullOrEmpty(tempModel?.Id) ? Path.GetFileName(file) : tempModel.Id;
+            var titleResult = tempModel?.Name ?? tempModel?.Id ?? Path.GetFileName(file);
             var versionResult = string.IsNullOrEmpty(tempModel?.Version)
                 ? null
                 : TryGetVersion(file, tempModel.Version);
 
-            return new GameModResolvedInfo(author, file, modList, titleResult, versionResult, "Fabric", isEnabled);
+            return new GameModResolvedInfo(author, file, modList, titleResult, versionResult, "Fabric", isEnabled)
+                { ModIds = tempModel?.Id is { } id ? [id] : [] };
         }
         catch (JsonException e)
         {

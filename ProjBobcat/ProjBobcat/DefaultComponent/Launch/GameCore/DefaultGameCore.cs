@@ -49,6 +49,16 @@ public sealed partial class DefaultGameCore : GameCoreBase
             process.EnvironmentVariables[key] = value;
     }
 
+    public static void ApplyWrapperCommand(ProcessStartInfo process, IReadOnlyList<string> wrapper)
+    {
+        if (wrapper.Count == 0) return;
+        ArgumentException.ThrowIfNullOrWhiteSpace(wrapper[0]);
+        var prefix = wrapper.Skip(1).Append(process.FileName)
+            .Select(DefaultLaunchArgumentParser.QuoteProcessArgument);
+        process.Arguments = string.Join(' ', prefix) + " " + process.Arguments;
+        process.FileName = wrapper[0];
+    }
+
     private void CleanupOldNatives(LaunchSettings settings)
     {
         var nativeRoot = Path.Combine(this.RootPath, GamePathHelper.GetNativeRoot(settings.Version));
@@ -416,6 +426,7 @@ public sealed partial class DefaultGameCore : GameCoreBase
 
             if (!settings.UseShellExecute)
             {
+                ApplyWrapperCommand(psi, settings.GameWrapperCommand);
                 // Patch for third-party launcher
                 psi.EnvironmentVariables.Remove("JAVA_TOOL_OPTIONS");
 
